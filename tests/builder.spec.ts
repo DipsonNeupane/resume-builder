@@ -7,7 +7,7 @@ test('edit, autosave, reload, custom sections and print layout',async({page})=>{
  await expect(page.locator('.preview-panel')).toContainText('Community organizer');await page.getByRole('button',{name:'Design & format'}).click();await page.getByLabel('Paper size').selectOption('Letter');await page.getByLabel('Writing direction').selectOption('rtl');await expect(page.locator('.preview-panel article')).toHaveAttribute('dir','rtl');
  await page.emulateMedia({media:'print'});await expect(page.locator('.print-only')).toBeVisible();await expect(page.locator('.site-header')).toBeHidden();await expect(page.locator('.print-only')).toContainText('नमस्ते विश्व');await page.pdf({path:'test-results/resume-letter.pdf',preferCSSPageSize:true});
 });
-test('invalid backup leaves current resume intact',async({page})=>{await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Keep My Work');await page.locator('input[type=file]').setInputFiles({name:'bad.json',mimeType:'application/json',buffer:Buffer.from('{"version":1}')});await expect(page.getByRole('status').first()).toBeVisible();await expect(page.getByText('This is not a valid ResumeBuild’r JSON backup.',{exact:false})).toBeVisible();await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toHaveValue('Keep My Work');});
+test('invalid backup leaves current resume intact',async({page})=>{await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Keep My Work');await page.locator('input[type=file]').setInputFiles({name:'bad.json',mimeType:'application/json',buffer:Buffer.from('{"version":1}')});await expect(page.getByRole('status').first()).toBeVisible();await expect(page.getByText('This is not a valid ResumeStride JSON backup.',{exact:false})).toBeVisible();await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toHaveValue('Keep My Work');});
 test('mobile editor and preview work without horizontal overflow',async({page})=>{await page.setViewportSize({width:390,height:844});await page.goto('/');expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.getByRole('button',{name:'Build my resume',exact:true}).last().click();await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Alex');await page.getByRole('button',{name:'Preview resume',exact:true}).click();await expect(page.locator('.preview-panel')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:'test-results/mobile-preview.png',fullPage:true});});
 test('home screenshot',async({page})=>{await page.setViewportSize({width:1440,height:1000});await page.goto('/');await page.screenshot({path:'test-results/home.png',fullPage:true});});
 
@@ -20,20 +20,20 @@ test('typing then reloading immediately does not lose the edit, even before the 
 });
 
 test('an unreadable saved draft is preserved for recovery, not silently overwritten',async({page})=>{
- await page.addInitScript(()=>{localStorage.setItem('resumebuildr.resume.v1',JSON.stringify({version:1,name:'Old Unreadable Draft'}));});
+ await page.addInitScript(()=>{localStorage.setItem('resumestride.resume.v1',JSON.stringify({version:1,name:'Old Unreadable Draft'}));});
  await page.goto('/');
  await expect(page.getByRole('status').filter({hasText:'could not be read'})).toBeVisible();
  await expect(page.getByRole('status').filter({hasText:'could not be loaded'})).toBeVisible();
  await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Fresh Draft After Recovery');
  await expect(page.getByRole('status').filter({hasText:'Saved on this device'})).toBeVisible();
- const rescue=await page.evaluate(()=>localStorage.getItem('resumebuildr.resume.v1.rescue'));
+ const rescue=await page.evaluate(()=>localStorage.getItem('resumestride.resume.v1.rescue'));
  expect(rescue).toContain('Old Unreadable Draft');
  const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Download it'}).click()]);
  expect(download.suggestedFilename()).toBe('unreadable-draft-recovery.json');
  await page.getByRole('button',{name:'Discard the unreadable draft'}).click();
  await expect(page.getByRole('status').filter({hasText:'could not be loaded'})).toHaveCount(0);
- expect(await page.evaluate(()=>localStorage.getItem('resumebuildr.resume.v1.rescue'))).toBeNull();
+ expect(await page.evaluate(()=>localStorage.getItem('resumestride.resume.v1.rescue'))).toBeNull();
 });
 
 test('a completely denied storage does not crash the app or destroy in-progress edits',async({page})=>{

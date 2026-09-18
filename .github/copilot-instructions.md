@@ -1,7 +1,7 @@
-# ResumeBuild'r - AI Coding Agent Instructions
+# ResumeStride - AI Coding Agent Instructions
 
 ## Project Overview
-ResumeBuild'r is a web application designed to help users create, manage, and export professional resumes. This is a new project with an evolving architecture.
+ResumeStride is a web application designed to help users create, manage, and export professional resumes. This is a new project with an evolving architecture.
 
 ## Tech Stack
 - **Frontend**: React with TypeScript (assumed primary UI framework)

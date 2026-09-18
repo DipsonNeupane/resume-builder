@@ -24,5 +24,5 @@ export function isResume(value: unknown): value is Resume {
   return section.entries.every(item => {if (!object(item) || !strings(item,['id','title','organization','location','dates','description']) || ids.has(String(item.id))) return false; ids.add(String(item.id)); return true;});
  });
 }
-export const storageKey = 'resumebuildr.resume.v1';
-export const rescueKey = 'resumebuildr.resume.v1.rescue';
+export const storageKey = 'resumestride.resume.v1';
+export const rescueKey = 'resumestride.resume.v1.rescue';

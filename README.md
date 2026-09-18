@@ -1,4 +1,4 @@
-# ResumeBuild’r
+# ResumeStride
 
 A local-first resume builder for every career and location. React + TypeScript + Vite.
 
@@ -15,7 +15,7 @@ The builder includes three templates, flexible sections, local autosave, validat
 
 ## Current boundaries
 
-This is a functional local beta, not a production paid service. No accounts, cloud sync, AI, payments, DOCX export, or PDF/Word import are connected. The import button accepts ResumeBuild’r JSON backups only. Data is stored on the current browser/device; download backups before clearing browser data. Google Fonts is the only external UI resource; resume content is not transmitted by the application.
+This is a functional local beta, not a production paid service. No accounts, cloud sync, AI, payments, DOCX export, or PDF/Word import are connected. The import button accepts ResumeStride JSON backups only. Data is stored on the current browser/device; download backups before clearing browser data. Google Fonts is the only external UI resource; resume content is not transmitted by the application. Support contact: support@resumestride.com. Production domain: resumestride.com (not yet deployed there — see HANDOFF.md).
 
 ## Launch sequence
 
