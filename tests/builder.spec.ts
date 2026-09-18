@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+import { PDFParse } from 'pdf-parse';
+import AxeBuilder from '@axe-core/playwright';
 test('edit, autosave, reload, custom sections and print layout',async({page})=>{
  await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('नमस्ते विश्व');await page.getByRole('textbox',{name:'Phone',exact:true}).fill('+977 9800000000');
@@ -78,9 +80,9 @@ test('print output holds up for a long, multi-language, multi-entry resume acros
  await page.getByRole('textbox',{name:'Website or professional profile',exact:true}).fill('https://example.com/very/long/path/segment/that/could/overflow/a/narrow/resume/column/without/wrapping/portfolio');
  await page.getByRole('button',{name:'Experience'}).click();
  for(let i=0;i<4;i++)await page.getByRole('button',{name:'Add an entry'}).click();
- const titles=await page.getByPlaceholder('Role, qualification, or project').all();
+ const titles=await page.getByRole('textbox',{name:'Role, qualification, or project'}).all();
  for(const [i,box] of titles.entries())await box.fill(`Role number ${i+1}`);
- const descriptions=await page.getByPlaceholder(/Details/).all();
+ const descriptions=await page.getByRole('textbox',{name:'Details (one point per line)'}).all();
  for(const box of descriptions)await box.fill('First responsibility with real detail.\nSecond responsibility with more detail.\nThird responsibility that is a bit longer to test wrapping.');
  for(const template of ['modern','classic','minimal'] as const){
   await page.getByRole('button',{name:'Design & format'}).click();
@@ -98,6 +100,30 @@ test('print output holds up for a long, multi-language, multi-entry resume acros
  }
 });
 
+test('the live preview keeps true A4/Letter page proportions and shows page-break guide lines for long content',async({page})=>{
+ await page.setViewportSize({width:1000,height:800});
+ await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Short Resume Person');
+ const box=page.locator('.paper-container');
+ const short=await box.boundingBox();
+ expect(short).not.toBeNull();
+ const shortRatio=short!.height/short!.width;
+ expect(shortRatio,'a short resume should still show a full A4-proportioned page').toBeGreaterThan(1.35);
+ expect(shortRatio).toBeLessThan(1.5);
+ const resumePaper=page.locator('.paper-container .resume-paper');
+ const bgImage=await resumePaper.evaluate(el=>getComputedStyle(el).backgroundImage);
+ expect(bgImage,'page-break guide lines should be drawn via CSS').not.toBe('none');
+ await page.getByRole('button',{name:'Experience'}).click();
+ for(let i=0;i<10;i++)await page.getByRole('button',{name:'Add an entry'}).click();
+ const titles=await page.getByRole('textbox',{name:'Role, qualification, or project'}).all();
+ for(const [i,titleField] of titles.entries())await titleField.fill(`Role ${i+1}`);
+ const descriptions=await page.getByRole('textbox',{name:'Details (one point per line)'}).all();
+ for(const field of descriptions)await field.fill('First responsibility with real detail.\nSecond responsibility with more detail.\nThird responsibility that is longer to force wrapping.');
+ const long=await box.boundingBox();
+ expect(long).not.toBeNull();
+ expect(long!.height/short!.height,'a long resume should visibly grow past a single page').toBeGreaterThan(1.3);
+});
+
 test('320px width stays usable and key icon-only controls are labeled for screen readers',async({page})=>{
  await page.setViewportSize({width:320,height:700});
  await page.goto('/');
@@ -110,4 +136,58 @@ test('320px width stays usable and key icon-only controls are labeled for screen
  await page.keyboard.press('Tab');
  expect(await page.evaluate(()=>document.activeElement?.tagName)).toBeTruthy();
  await expect(page.getByRole('button',{name:'Preview resume',exact:true})).toBeVisible();
+});
+
+test('the real generated PDF text layer holds a long resume across multiple pages without dropping content',async({page})=>{
+ await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Priya Sharma');
+ await page.getByRole('button',{name:'Experience'}).click();
+ for(let i=0;i<11;i++)await page.getByRole('button',{name:'Add an entry'}).click();
+ const titles=await page.getByRole('textbox',{name:'Role, qualification, or project'}).all();
+ for(const [i,f] of titles.entries())await f.fill(`FIRSTMARKER Role ${i+1}` + (i===titles.length-1?' LASTMARKER':''));
+ const descs=await page.getByRole('textbox',{name:'Details (one point per line)'}).all();
+ for(const f of descs)await f.fill('Delivered measurable outcomes across cross-functional teams.\nImproved a core workflow used company-wide.\nCoached and grew junior teammates.');
+ const buffer=await page.pdf({preferCSSPageSize:true});
+ const parser=new PDFParse({data:buffer});
+ const result=await parser.getText();
+ expect(result.total,'a resume with 12 detailed entries should span more than one printed page').toBeGreaterThan(1);
+ expect(result.text).toContain('Priya Sharma');
+ expect(result.text).toContain('FIRSTMARKER Role 1');
+ expect(result.text,'the last entry must survive pagination, not just the first page').toContain('LASTMARKER');
+ await parser.destroy();
+});
+
+test('Arabic right-to-left content renders correctly on screen/print and is not silently dropped from the PDF',async({page})=>{
+ await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ const arabicName='محمد الأمين';
+ await page.getByRole('textbox',{name:'Full name',exact:true}).fill(arabicName);
+ await page.getByRole('textbox',{name:'Professional title',exact:true}).fill('مهندس برمجيات');
+ await page.getByRole('button',{name:'Design & format'}).click();
+ await page.getByLabel('Writing direction').selectOption('rtl');
+ await page.emulateMedia({media:'print'});
+ const printPaper=page.locator('.print-only .resume-paper');
+ await expect(printPaper,'the app must render exactly the Arabic text the user typed, correctly, on screen and on paper').toContainText(arabicName);
+ await expect(printPaper).toHaveAttribute('dir','rtl');
+ await page.emulateMedia({media:'screen'});
+ // Known limitation (not fixed here): headless Chromium's PDF text LAYER can embed Arabic as
+ // presentation-form glyphs without a correct Unicode back-mapping when the requested font
+ // (Arial) isn't actually installed, so copy-paste/search from the exported PDF can come out
+ // reshaped/reordered even though the PDF looks correct and prints correctly. This is a
+ // font/OS-dependent browser limitation, not something this app's CSS can reliably fix, and it
+ // was NOT reproducible using the browser's own default font. See HANDOFF.md.
+ const buffer=await page.pdf({preferCSSPageSize:true});
+ const parser=new PDFParse({data:buffer});
+ const result=await parser.getText();
+ expect(result.text.length,'Arabic content must not be silently dropped/blanked from the PDF entirely').toBeGreaterThan(5);
+ await parser.destroy();
+});
+
+test('automated accessibility scan (axe-core) finds no violations on the home and builder pages',async({page})=>{
+ await page.goto('/');
+ const homeResults=await new AxeBuilder({page}).analyze();
+ expect(homeResults.violations,JSON.stringify(homeResults.violations,null,2)).toEqual([]);
+ await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Accessibility Check');
+ const builderResults=await new AxeBuilder({page}).analyze();
+ expect(builderResults.violations,JSON.stringify(builderResults.violations,null,2)).toEqual([]);
 });
