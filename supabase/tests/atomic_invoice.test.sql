@@ -1,0 +1,12 @@
+begin;
+select plan(4);
+insert into auth.users(id) values ('aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa');
+set local role service_role;
+select public.billing_record_subscription('aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa','sub_atomic','price_atomic',false,'active');
+select lives_ok($$select public.billing_apply_mapped_subscription_invoice('sub_atomic','in_atomic_1','aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa','price_atomic',false,1999,'usd','2026-01-01','2026-01-31','2026-01-01','pi_atomic')$$,'mapped invoice commits');
+select throws_ok($$select public.billing_apply_mapped_subscription_invoice('sub_atomic','in_atomic_2','aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa','price_atomic',false,1999,'usd','2026-01-31','2026-03-02','2026-01-31','pi_atomic')$$,'23505',null,'conflicting payment cannot grant second invoice');
+reset role;
+select is((select count(*)::integer from public.billing_subscription_invoices where invoice_id='in_atomic_2'),0,'failed mapping rolls back invoice insert');
+select is((select paid_through from public.billing_entitlements where owner_id='aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa'),'2026-01-31'::timestamptz,'failed mapping rolls back paid access extension');
+select * from finish();
+rollback;

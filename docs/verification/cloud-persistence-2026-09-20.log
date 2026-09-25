@@ -1,0 +1,4 @@
+PASS: real Auth session reaches cloud consent without mocked network
+PASS: consent insert and edited resume persist to hosted recovery database
+PASS: reload recovers hosted edited document; guest draft remains unchanged
+PASS: fictional Auth user and owned resume cleaned up

@@ -1,0 +1,10 @@
+{
+  "name": "ResumeStride",
+  "short_name": "ResumeStride",
+  "description": "A resume builder for every career and location.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#fcfcfa",
+  "theme_color": "#14213d",
+  "icons": [{ "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }]
+}

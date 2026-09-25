@@ -1,0 +1,6 @@
+PASS: first isolated browser client consented and created hosted revision 1
+PASS: authorized second browser client saved a newer hosted revision 2
+PASS: stale first client surfaced hosted revision conflict and preserved second client revision 2
+PASS: Use the other version loaded the second client copy without an overwrite
+PASS: Keep my edits explicitly replaced newer hosted revision with revision 4
+PASS: fictional Auth user and all hosted conflict fixtures cleaned up

@@ -105,3 +105,8 @@ export function ResumeEditor({ resumeId }: Props) {
 - Browser print styles provide A4/Letter PDF output. Do not claim a dedicated PDF download or DOCX export until implemented.
 - Preserve global scope: flexible section titles, international contact formats, Unicode content, and right-to-left layout. Current UI is English.
 - Playwright tests cover persistence, invalid imports, mobile overflow, and print output.
+
+## Incremental authentication foundation
+- `src/services/supabase.ts` uses only VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY. Never use service-role credentials in frontend code.
+- `src/features/auth/AuthPanel.tsx` implements the account UI; read docs/SUPABASE_SETUP.md before configuration. Cloud storage, backend authorization and mandatory signup remain pending.
+- `npm run test:auth` runs mocked auth tests on a separate configured Vite server. It does not verify production auth.

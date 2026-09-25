@@ -1,0 +1,131 @@
+{
+  "result": [
+    {
+      "title": "Senior Software Engineer",
+      "company": "Acme Robotics",
+      "countryCode": "US",
+      "state": "TX",
+      "city": "Austin",
+      "workPlace": "Remote",
+      "dateCreated": "2026-09-10T00:00:00Z",
+      "dateActive": "2026-10-10T00:00:00Z",
+      "dateExpired": "2026-10-10T00:00:00Z",
+      "isDirect": true,
+      "isRecruiter": false,
+      "portal": "acme-careers",
+      "source": "employer",
+      "jsonLD": {
+        "identifier": "job-1",
+        "description": "Build backend services for our robotics fleet.",
+        "url": "https://jobs.acme.example/postings/job-1",
+        "baseSalary": {
+          "@type": "MonetaryAmount",
+          "currency": "USD",
+          "value": { "@type": "QuantitativeValue", "minValue": 140000, "maxValue": 180000, "unitText": "YEAR" }
+        },
+        "validThrough": "2026-10-10T00:00:00Z"
+      }
+    },
+    {
+      "title": "Senior Software Engineer",
+      "company": "Acme Robotics",
+      "countryCode": "US",
+      "state": "TX",
+      "city": "Austin",
+      "workPlace": "Remote",
+      "dateCreated": "2026-09-11T00:00:00Z",
+      "dateActive": "2026-10-11T00:00:00Z",
+      "dateExpired": "2026-10-11T00:00:00Z",
+      "isDirect": false,
+      "isRecruiter": true,
+      "portal": "mirror-board",
+      "source": "aggregator",
+      "jsonLD": {
+        "identifier": "job-2",
+        "description": "Build backend services for our robotics fleet.",
+        "url": "https://mirror.example/jobs/job-2",
+        "baseSalary": {
+          "currency": "USD",
+          "value": { "minValue": 140000, "maxValue": 180000, "unitText": "1 YEAR" }
+        },
+        "validThrough": "2026-10-11T00:00:00Z"
+      }
+    },
+    {
+      "title": "Warehouse Associate",
+      "company": "Northwind Logistics",
+      "countryCode": "US",
+      "state": "CO",
+      "city": "Denver",
+      "dateCreated": "2026-09-20T00:00:00Z",
+      "dateExpired": "2026-10-20T00:00:00Z",
+      "isDirect": true,
+      "isRecruiter": false,
+      "portal": "northwind-careers",
+      "source": "employer",
+      "jsonLD": {
+        "identifier": "job-3",
+        "description": "Pick, pack and ship orders.",
+        "url": "https://careers.northwind.example/job-3",
+        "baseSalary": {
+          "currency": "usd",
+          "value": { "minValue": 19.5, "maxValue": 24, "unitText": "HOUR" }
+        },
+        "validThrough": "2026-10-20T00:00:00Z"
+      }
+    },
+    {
+      "title": "Old Listing With No Expiry Signal",
+      "company": "Stale Corp",
+      "countryCode": "US",
+      "dateCreated": "2026-06-01T00:00:00Z",
+      "jsonLD": {
+        "identifier": "job-4",
+        "description": "Posted well outside the trusted freshness window.",
+        "url": "https://careers.stalecorp.example/job-4"
+      }
+    },
+    {
+      "title": "Unsafe Link Listing",
+      "company": "Bad Actor Co",
+      "countryCode": "US",
+      "dateCreated": "2026-09-20T00:00:00Z",
+      "jsonLD": {
+        "identifier": "job-5",
+        "description": "This one should be dropped for an unsafe URL.",
+        "url": "javascript:alert(1)"
+      }
+    },
+    {
+      "title": "Missing Company Listing",
+      "countryCode": "US",
+      "dateCreated": "2026-09-20T00:00:00Z",
+      "jsonLD": {
+        "identifier": "job-6",
+        "description": "This one should be dropped for a missing company.",
+        "url": "https://careers.example/job-6"
+      }
+    },
+    {
+      "title": "Hybrid Workplace Array Listing",
+      "company": "Multiwork Co",
+      "countryCode": "US",
+      "state": "NY",
+      "city": "New York",
+      "workPlace": ["Hybrid", "Onsite"],
+      "dateCreated": "2026-09-21T00:00:00Z",
+      "isDirect": true,
+      "portal": "multiwork-careers",
+      "source": "employer",
+      "jsonLD": {
+        "identifier": "job-7",
+        "description": "Real-shaped workPlace as an array, as Techmap commonly returns it.",
+        "url": "https://careers.multiwork.example/job-7",
+        "salaryCurrency": "USD",
+        "baseSalary": {
+          "value": { "minValue": 90000, "maxValue": 120000, "unitText": "YEAR" }
+        }
+      }
+    }
+  ]
+}

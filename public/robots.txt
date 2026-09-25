@@ -1,0 +1,6 @@
+# Public documents may be crawled. Private URLs emit noindex; do not hide
+# that directive behind a robots.txt disallow. APIs still require authentication.
+User-agent: *
+Allow: /
+
+Sitemap: https://resumestride.com/sitemap.xml

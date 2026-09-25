@@ -1,0 +1,23 @@
+:root{--ink:#14213d;--text:#263244;--muted:#536176;--action:#2457e6;--line:#dce1e5;--canvas:#fcfcfa}
+*{box-sizing:border-box}
+body{width:360px;max-width:100vw;margin:0;font:13px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);background:var(--canvas)}
+#app{padding:20px}
+h1{font-size:19px;line-height:1.3;letter-spacing:-.5px;margin:0 0 18px;padding:0 0 16px;border-bottom:2px solid var(--ink);color:var(--ink)}
+.capture-steps{display:flex;gap:16px;margin:0 0 18px;font-size:11px;color:var(--muted)}
+.capture-steps strong{color:var(--action);font-weight:600}
+.notice{background:#eef4ff;border-left:2px solid var(--action);padding:12px 14px;margin:0 0 18px;font-size:12px;line-height:1.7}
+.field{display:block;margin-bottom:16px;font-size:12px;color:var(--text)}
+.field span{display:block;margin-bottom:6px;font-weight:600}
+input,textarea,select{width:100%;min-height:44px;padding:10px 11px;border:1px solid #aebac8;border-radius:4px;font:inherit;color:var(--ink);background:white}
+textarea{resize:vertical;line-height:1.7}
+button{cursor:pointer;min-height:44px;padding:11px 14px;border-radius:4px;border:1px solid var(--action);background:var(--action);color:white;font:inherit;font-weight:600;width:100%;margin-top:10px}
+button:hover{background:#1d46bd}
+button[type=button]{background:transparent;color:var(--muted);border-color:var(--line);font-weight:400}
+.status{font-size:12px;margin-top:14px;min-height:18px;overflow-wrap:anywhere;color:var(--text)}
+.hint{font-size:11px;color:var(--muted);margin:-6px 0 18px;line-height:1.7}
+button:disabled{background:#e5e9ef;color:#536176;border-color:var(--line);cursor:wait}
+:focus-visible{outline:3px solid var(--action);outline-offset:3px}
+.capture-options{border-block:1px solid var(--line);padding:10px 0;margin:8px 0 18px}
+.capture-options summary{cursor:pointer;min-height:40px;align-content:center;font-weight:600;color:var(--ink)}
+.capture-options[open] summary{margin-bottom:12px}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}

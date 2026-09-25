@@ -5,3 +5,13 @@ playwright-report/
 .env*
 !.env.example
 .DS_Store
+.vercel
+
+# Local development / agent state
+.agents/
+.claude/
+.codex/
+.flow/
+graphify-out/
+*.code-workspace
+docs/verification/backup-canary.json
