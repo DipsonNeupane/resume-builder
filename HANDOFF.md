@@ -1,3 +1,58 @@
+## September 25 — Vercel packaged DOCX runtime resolution repair
+
+Fixed the local standalone `api/export-docx` package failure without deploying or
+changing PDF behavior, pricing, database, environment configuration, authentication,
+consent, reservation/idempotency, validation or security behavior. The DOCX server
+handler imported only `docxMimeType` from the browser import/parser module
+`src/services/docx.ts`; Vercel consequently packaged that unnecessary graph, preserved
+its extensionless `../model` import in `src/services/docx.js`, and Node failed with
+`ERR_MODULE_NOT_FOUND` before the handler could run.
+
+Added dependency-free `src/services/docx-format.ts` as the shared MIME metadata leaf.
+The browser DOCX service re-exports it, while `server/export/docx-handler.ts` imports it
+through an explicit `.js` runtime specifier. Existing consumers and output are unchanged,
+but the server package no longer includes the browser DOCX parser. The Build Output
+checker now requires the leaf module, rejects the parser dependency, and still imports
+and invokes the actual packaged `export-docx` handler.
+
+Observed verification: focused DOCX/export tests **18/18 PASS** (OOXML generation and
+round-trip, validation, shared mixed-format Free allowance, format-bound idempotency,
+reservation cleanup, completed retries and all seven templates); production frontend
+build/client TypeScript **PASS**; server TypeScript **PASS**; standalone production Vercel
+build **PASS**. After the required PDF architecture preparation, the complete packaged-
+function verifier **PASS**, including `export-docx` resolving and failing closed at 503
+with local feature flags disabled, plus unchanged PDF CSS/font/Chromium/renderer checks.
+`git diff --check` **PASS**. `graphify` remains unavailable on PATH, so the requested
+AST-only refresh could not run. No deployment or remote mutation occurred.
+
+## September 25 — Vercel middleware package resolution repair
+
+Fixed the production middleware startup failure shown in Vercel logs without deploying
+or changing Vercel settings, Deployment Protection, DNS, environment values, database,
+pricing, authentication or product behavior. The deployed `middleware.js` retained the
+extensionless import `./src/seo/policy`, but Vercel's middleware function package did not
+contain a runtime-resolvable module at `/var/task/src/seo/policy`; every request therefore
+failed before the SEO policy ran.
+
+`middleware.ts` is now the single, self-contained owner of the unchanged SEO request
+policy and has no runtime imports. `src/seo/policy.ts` is the application-facing re-export,
+so the Vite adapter, SEO generator and client continue to consume the same implementation.
+Public/private indexing, `X-Robots-Tag`, canonical redirects, middleware continuation and
+real HTML/HEAD 404 behavior are preserved. Added an isolated regression that transpiles
+and imports only `middleware.ts`, plus a real Build Output package check that rejects
+source-tree imports and invokes the emitted middleware entry.
+
+Observed verification: `npm run test:seo` **13/13 PASS**; production `npm run build` with
+the repository's documented ARM esbuild override **PASS**; `npm run check:server` **PASS**;
+`vercel build --yes --prod --standalone` **PASS** locally and emitted a 5,466-byte
+`middleware.js` with no imports or `src/seo/policy` reference. The package verifier's new
+middleware phase **PASS** for public continuation/indexability, API noindex and HEAD 404.
+The verifier later stopped on a separate pre-existing `export-docx` extensionless
+`src/model` resolution failure; that unrelated export code was not changed. Vercel CLI
+pulled local production-settings placeholders for the build but no deployment or remote
+mutation was performed. `graphify` was unavailable on PATH, so its AST refresh could not
+be run.
+
 ## September 25 — task #68: local database template-validator repair
 
 Added forward migration `20260925120000_resume_template_validation.sql` so

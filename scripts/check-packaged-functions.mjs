@@ -8,6 +8,42 @@ const output = path.resolve(process.argv[2] || '.vercel/output');
 // Never inherit real provider credentials into this offline smoke check.
 for (const key of ['STRIPE_SECRET_KEY','STRIPE_WEBHOOK_SECRET','SUPABASE_SERVICE_ROLE_KEY','OPENAI_API_KEY']) delete process.env[key];
 for (const key of ['BILLING_ENABLED', 'AI_ENABLED', 'EXPORTS_ENABLED']) process.env[key] = 'false';
+{
+ const root = path.join(output, 'functions/middleware.func');
+ process.chdir(root);
+ const config = JSON.parse(await readFile('.vc-config.json', 'utf8'));
+ const entry = await readFile(config.entrypoint, 'utf8');
+ assert.doesNotMatch(entry, /src\/seo\/policy/, 'Packaged middleware must not reference application source modules');
+ assert.doesNotMatch(entry, /^\s*import(?:\s|\()/m, 'Packaged middleware must be self-contained');
+ const previousVercelEnv = process.env.VERCEL_ENV;
+ try {
+  process.env.VERCEL_ENV = 'production';
+  const mod = await import(pathToFileURL(path.join(root, config.entrypoint)));
+  const home = await mod.default(new Request('https://resumestride.com/'));
+  assert.equal(home.status, 200);
+  assert.equal(home.headers.get('x-middleware-next'), '1');
+  assert.equal(home.headers.get('x-robots-tag'), null);
+  const api = await mod.default(new Request('https://resumestride.com/api/tailor'));
+  assert.equal(api.headers.get('x-middleware-next'), '1');
+  assert.equal(api.headers.get('x-robots-tag'), 'noindex, nofollow, noarchive');
+  const missing = await mod.default(new Request('https://resumestride.com/not-a-page', { method: 'HEAD' }));
+  assert.equal(missing.status, 404);
+  assert.equal(missing.body, null);
+  assert.equal(missing.headers.get('x-robots-tag'), 'noindex, nofollow, noarchive');
+ } finally {
+  if (previousVercelEnv === undefined) delete process.env.VERCEL_ENV;
+  else process.env.VERCEL_ENV = previousVercelEnv;
+ }
+ console.log('Packaged middleware is self-contained and preserves SEO continuation and real 404 behavior.');
+}
+{
+ const root = path.join(output, 'functions/api/export-docx.func');
+ const handler = await readFile(path.join(root, 'server/export/docx-handler.js'), 'utf8');
+ assert.doesNotMatch(handler, /src\/services\/docx\.js/, 'Packaged DOCX export must not pull in the browser import/parser graph');
+ assert.match(handler, /src\/services\/docx-format\.js/, 'Packaged DOCX export must use the dependency-free format module');
+ assert.ok((await stat(path.join(root, 'src/services/docx-format.js'))).size > 0, 'Packaged DOCX format module missing');
+ console.log('Packaged DOCX handler uses the dependency-free runtime format module.');
+}
 for (const name of ['checkout','subscribe','cancel-subscription','stripe-webhook','billing-status','tailor','export-status','export-pdf','export-docx']) {
  const root = path.join(output, 'functions/api', `${name}.func`);
  process.chdir(root);

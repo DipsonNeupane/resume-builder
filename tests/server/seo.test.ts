@@ -1,9 +1,13 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import { IncomingMessage, ServerResponse } from 'node:http';
 import { Socket } from 'node:net';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import ts from 'typescript';
 import type { Connect } from 'vite';
 import middleware from '../../middleware';
 import { seoPolicy } from '../../vite.config';
@@ -198,4 +202,29 @@ test('Vercel middleware emits HTTP noindex, safe continuation, redirect and HEAD
   assert.equal(middleware(new Request('https://www.resumestride.com/')).status, 308);
   process.env.VERCEL_ENV = 'preview'; assert.equal(middleware(new Request(`${productionOrigin}/`)).headers.get('X-Robots-Tag'), noindex);
  } finally { if (before === undefined) delete process.env.VERCEL_ENV; else process.env.VERCEL_ENV = before; }
+});
+
+test('Vercel middleware package loads without the application source tree', async () => {
+ const source = read('middleware.ts');
+ assert.doesNotMatch(source, /^\s*import(?:\s|\()/m, 'The Vercel middleware runtime must be self-contained');
+ assert.doesNotMatch(source, /src\/seo\/policy/, 'The packaged middleware must not resolve application source modules');
+ const compiled = ts.transpileModule(source, {
+  fileName: 'middleware.ts',
+  compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
+ }).outputText;
+ const isolated = mkdtempSync(path.join(tmpdir(), 'resumestride-middleware-'));
+ const packagedEntry = path.join(isolated, 'middleware.mjs');
+ try {
+  writeFileSync(packagedEntry, compiled);
+  const packaged = await import(`${pathToFileURL(packagedEntry).href}?isolated=${Date.now()}`) as typeof import('../../middleware');
+  const home = packaged.default(new Request(`${productionOrigin}/`));
+  assert.equal(home.status, 200);
+  assert.equal(home.headers.get('x-middleware-next'), '1');
+  const missing = packaged.default(new Request(`${productionOrigin}/not-a-page`, { method: 'HEAD' }));
+  assert.equal(missing.status, 404);
+  assert.equal(missing.body, null);
+  assert.equal(missing.headers.get('X-Robots-Tag'), noindex);
+ } finally {
+  rmSync(isolated, { recursive: true, force: true });
+ }
 });

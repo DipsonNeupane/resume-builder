@@ -4,6 +4,7 @@
 import { blank, entry, type Entry, type Resume, type Section } from '../model';
 import { readZip } from './zip';
 import { cleanHeading, parseExperienceEntries, type ImportLine } from './resumeImport';
+export { docxMimeType } from './docx-format.js';
 
 const NAME_SIZE = 32; // 16pt
 const HEADING_SIZE = 24; // 12pt, bold section headings
@@ -185,8 +186,6 @@ export function docxToResume(xml: string): DocxImportResult {
  if (skillsLines.length) result.skills = skillsLines.join('\n');
  return { resume: result, sections };
 }
-
-export const docxMimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
 const clampField = (value: string | undefined, max = 50000): string => (value ?? '').slice(0, max);
 
