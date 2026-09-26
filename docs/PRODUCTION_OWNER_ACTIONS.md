@@ -4,9 +4,10 @@ Task #60 audit completed locally September 25, 2026. **Nothing deployed, migrate
 unlocked, backed up or restored by this task.** Full [audit](PRODUCTION_READINESS_AUDIT.md)
 and [acceptance plan](PRODUCTION_CLOUD_ACCEPTANCE.md) contain the execution details.
 
-- [x] The cloud validator forward fix is implemented locally: all seven templates now pass
-  the disposable database replay and pgTAP coverage. It is not evidence that the migration
-  is applied to the hosted catalog.
+- [x] The cloud validator forward fix is implemented and recorded in the hosted catalog;
+  all seven templates pass the disposable database replay and pgTAP coverage. The final Jobs
+  refresh-reservation migration is also recorded, with service-role-only function ACLs and
+  pinned empty search paths verified after application.
 - [ ] Resolve version-storage growth, retention, support recovery and account-deletion
   handling before broad cloud enablement.
 - [ ] Authorize a separate dashboard/read-only inventory session: exact deployment/project,

@@ -17,12 +17,11 @@ as audit history, with these corrections:
 - Native PostgreSQL concurrency remains blocked because `initdb` is not installed. The
   populated restore, current hosted catalog/config inventory, legal/provider review,
   synthetic protected-production acceptance and owner opening decision remain real gates.
-- Read-only hosted inventory now confirms production has migrations through
-  `20260925120000_resume_template_validation` but does **not** have the candidate's final
-  `20260926120000_jobs_refresh_reservations` migration. Do not deploy this code against the
-  current catalog: the recommendation-refresh path requires those service-role-only RPCs.
-  The newest scheduled physical backup shown is September 26 08:39:28 UTC; snapshot presence
-  is not a populated restore drill.
+- After explicit owner approval, production migration history now contains all 25 candidate
+  migrations through `20260926120000_jobs_refresh_reservations`. Both new functions were
+  verified security-definer with an empty pinned search path and execute privileges only for
+  Postgres/service-role, not browser roles. The pre-migration scheduled physical backup shown
+  is September 26 08:39:28 UTC; snapshot presence is not a populated restore drill.
 - Deployment Protection remains required. No merge, push, deployment, migration, DNS,
   provider purchase/call, charge or public-access change is authorized by this checklist.
 

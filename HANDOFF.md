@@ -76,6 +76,15 @@ write and must be separately authorized before code deployment. Scheduled physic
 are present daily through **2026-09-26 08:39:28 UTC**. No Restore was clicked; backup
 presence still does not prove populated recovery, measured RPO/RTO or deletion reconciliation.
 
+**Owner-approved production continuation:** applied the exact additive
+`20260926120000_jobs_refresh_reservations.sql` implementation in one transaction and recorded
+version `20260926120000` / name `jobs_refresh_reservations` in Supabase migration history.
+Post-apply catalog verification returned both functions with `prosecdef=true`,
+`search_path=""`, and ACLs limited to Postgres and `service_role`; no browser-role execute
+grant exists. No user row, preference timestamp or entitlement was touched. The current
+08:39:28 UTC physical backup predates this function-only migration. This application used
+the repository file whose SHA-256 is recorded above; no rollback or Restore was run.
+
 ## September 26 — task #73: Final copy / conversion pass
 
 Wording, product communication and limit disclosure only on `ui/final-launch-polish`. No
