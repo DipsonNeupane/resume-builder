@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import { IncomingMessage, ServerResponse } from 'node:http';
@@ -10,7 +10,7 @@ import { pathToFileURL } from 'node:url';
 import ts from 'typescript';
 import type { Connect } from 'vite';
 import middleware from '../../middleware';
-import { seoPolicy } from '../../vite.config';
+import { devSourceModules, seoPolicy } from '../../vite.config';
 import browserConfig from '../../playwright.config';
 import { initialPage, isPublicLocation, noindex, productionOrigin, publicPages, requestSeo, websiteSchema } from '../../src/seo/policy';
 const read = (file: string) => readFileSync(file, 'utf8');
@@ -39,14 +39,14 @@ test('Vite dev and preview register HTTP policy before the SPA fallback', () => 
   assert.equal(register.call({} as ThisParameterType<typeof register>, server as Parameters<typeof plugin.configureServer>[0] & Parameters<typeof plugin.configurePreviewServer>[0]), undefined);
   assert.ok(handler);
   for (const method of ['GET', 'HEAD']) {
-   for (const path of ['/', '/privacy.html', '/terms.html', '/?account=1', '/api/tailor', '/not-a-page', '/account', '/jobs/private', '/privacy.html/', '/index.html?account=1', '/src/main.tsx', '/@vite/client', '/node_modules/.vite/deps/react.js?v=test', '/apps/extension/src/lib/capture.ts', '/apps/extension/src/lib/capture.ts?t=123', '/apps', '/apps/private', '/apps/extension/src/lib/capture.ts/extra']) {
+   for (const path of ['/', '/privacy.html', '/terms.html', '/?account=1', '/api/tailor', '/not-a-page', '/account', '/jobs/private', '/privacy.html/', '/index.html?account=1', '/src/main.tsx', '/@vite/client', '/node_modules/.vite/deps/react.js?v=test', '/apps/extension/src/lib/capture.ts', '/apps/extension/src/lib/capture.ts?t=123', '/apps', '/apps/private', '/apps/extension/src/lib/capture.ts/extra', '/middleware.ts', '/middleware.ts?t=123', '/middleware.ts/extra', '/middleware']) {
     const request = new IncomingMessage(new Socket());
     request.url = path; request.method = method;
     const response = new ServerResponse(request);
     let ended = false; let body: unknown; let continued = false;
     response.end = ((chunk?: unknown) => { ended = true; body = chunk; return response; }) as typeof response.end;
     handler(request, response, () => { continued = true; });
-    const devModule = path.startsWith('/src/') || path.startsWith('/@') || path.startsWith('/node_modules/') || path.split('?')[0] === '/apps/extension/src/lib/capture.ts';
+    const devModule = path.startsWith('/src/') || path.startsWith('/@') || path.startsWith('/node_modules/') || ['/apps/extension/src/lib/capture.ts', '/middleware.ts'].includes(path.split('?')[0]);
     if (hook === 'configureServer' && devModule) {
      assert.equal(continued, true); assert.equal(ended, false);
      assert.equal(response.getHeader('X-Robots-Tag'), undefined);
@@ -62,6 +62,27 @@ test('Vite dev and preview register HTTP policy before the SPA fallback', () => 
    }
   }
  }
+});
+
+test('every module the browser app imports from outside src/ is served by the dev server', () => {
+ // A browser import that escapes src/ is requested by path during `npm run dev`. If the dev SEO
+ // filter does not allow that exact path it 404s and the whole app renders blank (regression
+ // from the self-contained middleware move, where src/seo/policy.ts began importing /middleware.ts).
+ const root = path.resolve(import.meta.dirname, '../..');
+ const escaping = new Set<string>();
+ const walk = (dir: string): string[] => readdirSync(dir, { withFileTypes: true }).flatMap(entry =>
+  entry.isDirectory() ? walk(path.join(dir, entry.name)) : /\.(ts|tsx)$/.test(entry.name) ? [path.join(dir, entry.name)] : []);
+ for (const file of walk(path.join(root, 'src'))) {
+  for (const [, specifier] of readFileSync(file, 'utf8').matchAll(/(?:from|import)\s*\(?\s*['"](\.[^'"]+)['"]/g)) {
+   const target = path.resolve(path.dirname(file), specifier);
+   if (target.startsWith(path.join(root, 'src') + path.sep)) continue;
+   const resolved = ['', '.ts', '.tsx'].map(ext => target + ext).find(candidate => existsSync(candidate) && statSync(candidate).isFile());
+   assert.ok(resolved, `${path.relative(root, file)} imports unresolved ${specifier}`);
+   escaping.add('/' + path.relative(root, resolved).split(path.sep).join('/'));
+  }
+ }
+ assert.ok(escaping.has('/middleware.ts'), 'The browser SEO policy is expected to re-export the self-contained middleware');
+ assert.deepEqual([...escaping].sort(), [...devSourceModules].sort());
 });
 
 test('robots allows public crawling and directs crawlers to the exact public-only sitemap', () => {
@@ -130,7 +151,7 @@ test('query states and private paths never enter the index, canonical or sitemap
    assert.equal(result.body, ''); assert.equal(result.headers.Location, undefined);
   }
  }
- for (const path of ['/account', '/auth/callback', '/editor', '/resumes/private', '/jobs', '/saved-jobs', '/match', '/tailoring', '/job-resume/123', '/reset', '/token/secret', '/missing', '/privacy.html/', '/404.html', '/apps', '/apps/extension/src/lib/capture.ts', '/apps/extension/src/lib/capture.ts?t=123']) {
+ for (const path of ['/account', '/auth/callback', '/editor', '/resumes/private', '/jobs', '/saved-jobs', '/match', '/tailoring', '/job-resume/123', '/reset', '/token/secret', '/missing', '/privacy.html/', '/404.html', '/apps', '/apps/extension/src/lib/capture.ts', '/apps/extension/src/lib/capture.ts?t=123', '/middleware.ts', '/middleware.ts?t=123']) {
   const result = policy(path); assert.equal(result.status, 404); assert.equal(result.headers['X-Robots-Tag'], noindex);
   assert.match(result.body, /Page not found/); assert.doesNotMatch(result.body, /rel="canonical"|application\/ld\+json/);
  }

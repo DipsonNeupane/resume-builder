@@ -4,7 +4,7 @@
   "description": "A resume builder for every career and location.",
   "start_url": "/",
   "display": "browser",
-  "background_color": "#fcfcfa",
-  "theme_color": "#14213d",
+  "background_color": "#f6f5f2",
+  "theme_color": "#0b0a09",
   "icons": [{ "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }]
 }

@@ -39,6 +39,28 @@ const LABEL_ORDER: Record<MatchLabel, number> = { strong: 0, good: 1, stretch: 2
 // trip it.
 const SECOND_PAGE_DELAY_MS = 1100
 
+type RefreshReservation = {
+  allowed: boolean
+  isPro: boolean
+  reservedAt: string | null
+  previousRefreshAt: string | null
+  nextRefreshAt: string | null
+}
+
+function refreshReservation(value: unknown): RefreshReservation {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new HttpError(503, 'Job refresh allowance returned an unusable response')
+  const row = value as Record<string, unknown>
+  const timestamp = (item: unknown): item is string | null => item === null || (typeof item === 'string' && !Number.isNaN(Date.parse(item)))
+  if (typeof row.allowed !== 'boolean' || typeof row.isPro !== 'boolean'
+    || !timestamp(row.reservedAt) || !timestamp(row.previousRefreshAt) || !timestamp(row.nextRefreshAt)
+    || (row.isPro && row.reservedAt !== null)
+    || (!row.isPro && row.allowed && (row.reservedAt === null || row.nextRefreshAt === null))
+    || (!row.allowed && row.nextRefreshAt === null)) {
+    throw new HttpError(503, 'Job refresh allowance returned an unusable response')
+  }
+  return row as RefreshReservation
+}
+
 export type JobCardView = {
   id: string
   title: string
@@ -76,6 +98,7 @@ function toCardView(job: NormalizedJob, match: MatchResult, isPro: boolean): Job
 }
 
 export async function searchJobs(request: Request, env: NodeJS.ProcessEnv = process.env, deps: Dependencies = dependencies): Promise<Response> {
+  let failedFreeReservation: { owner: string; reservedAt: string; previousRefreshAt: string | null; db: ReturnType<typeof serviceDatabase> } | null = null
   try {
     if (!env.APP_ORIGIN) throw new HttpError(503, 'Job search is not configured', 'configuration')
     requirePost(request, env.APP_ORIGIN)
@@ -96,9 +119,19 @@ export async function searchJobs(request: Request, env: NodeJS.ProcessEnv = proc
     const throttled = await db.rpc('jobs_throttle_search_attempt', { p_owner: owner })
     if (throttled.error?.code === '54000') throw new HttpError(429, 'Too many job searches. Wait a few minutes and try again.')
     if (throttled.error) throw new HttpError(503, 'Job search throttle unavailable')
-    const entitlement = await db.rpc('billing_get_entitlement', { p_owner: owner })
-    if (entitlement.error) throw new HttpError(503, 'Unable to verify Pro access')
-    const isPro = entitlement.data?.[0]?.is_pro === true
+    const reservationResult = await db.rpc('jobs_reserve_recommendation_refresh', { p_owner: owner })
+    if (reservationResult.error) throw new HttpError(503, 'Unable to verify job refresh allowance')
+    const reservation = refreshReservation(reservationResult.data)
+    if (!reservation.allowed) {
+      return json(429, {
+        error: 'Free recommendations can refresh once every 24 hours. Your existing recommendations and saved jobs are still available.',
+        retryAt: reservation.nextRefreshAt,
+      })
+    }
+    const isPro = reservation.isPro
+    if (!isPro && reservation.reservedAt) failedFreeReservation = {
+      owner, reservedAt: reservation.reservedAt, previousRefreshAt: reservation.previousRefreshAt, db,
+    }
     const matchContext = await db.rpc('jobs_match_context', { p_owner: owner })
     if (matchContext.error) throw new HttpError(503, 'Unable to load match preferences')
     let clarifications = {}
@@ -164,6 +197,21 @@ export async function searchJobs(request: Request, env: NodeJS.ProcessEnv = proc
       p_job_hashes: observations.map(jobMatchHash),
     })
 
-    return json(200, { jobs: cards, isPro, availableCount: diverseRanked.length, proLimit: PRO_JOB_LIMIT })
-  } catch (error) { return safeError(error) }
+    failedFreeReservation = null
+    return json(200, {
+      jobs: cards, isPro, availableCount: diverseRanked.length, proLimit: PRO_JOB_LIMIT,
+      nextRefreshAt: isPro ? null : reservation.nextRefreshAt,
+    })
+  } catch (error) {
+    if (failedFreeReservation) {
+      try {
+        await failedFreeReservation.db.rpc('jobs_release_recommendation_refresh', {
+          p_owner: failedFreeReservation.owner,
+          p_reserved_at: failedFreeReservation.reservedAt,
+          p_previous_refresh_at: failedFreeReservation.previousRefreshAt,
+        })
+      } catch { /* best effort; compare-and-restore RPC cannot erase a later refresh */ }
+    }
+    return safeError(error)
+  }
 }

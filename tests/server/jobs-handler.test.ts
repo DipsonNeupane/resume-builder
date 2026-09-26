@@ -54,13 +54,18 @@ function fixture(options: { isPro?: boolean; page1?: NormalizedJob[]; page2?: No
   }) as unknown as typeof dependencies.techmapSearch
   const dbCalls: string[] = []
   const rpcCalls: Array<{ name: string; args: Record<string, unknown> | undefined }> = []
+  const reservedAt = '2026-09-26T12:00:00.000Z'
   const deps = {
     ...dependencies,
     authenticate: async () => { dbCalls.push('authenticate'); return options.owner ?? `owner-${Math.random().toString(36).slice(2)}` },
     serviceDatabase: ((..._args: unknown[]) => { dbCalls.push('serviceDatabase'); return {
       rpc: async (name: string, args?: Record<string, unknown>) => {
         rpcCalls.push({ name, args })
-        return name === 'billing_get_entitlement' ? { data: [{ is_pro: options.isPro ?? false }], error: null } : { data: null, error: null }
+        return name === 'jobs_reserve_recommendation_refresh'
+          ? { data: options.isPro
+            ? { allowed: true, isPro: true, reservedAt: null, previousRefreshAt: null, nextRefreshAt: null }
+            : { allowed: true, isPro: false, reservedAt, previousRefreshAt: null, nextRefreshAt: '2026-09-27T12:00:00.000Z' }, error: null }
+          : { data: null, error: null }
       },
     } }) as unknown as typeof dependencies.serviceDatabase,
     techmapSearch,
@@ -227,15 +232,63 @@ test('an identical normalized public query is reused across different accounts (
   assert.equal(calls.length, 1)
 })
 
-test('calls the per-owner search throttle before touching Techmap or the entitlement lookup', async () => {
+test('calls the per-owner short-window throttle before the atomic product refresh reservation or Techmap', async () => {
   const { deps, rpcCalls, calls } = fixture({ owner: 'owner-throttle-order' })
   await searchJobs(request({ criteria: { title: uniqueTitle() }, evidence }), env, deps)
   const throttleCall = rpcCalls.find(call => call.name === 'jobs_throttle_search_attempt')
   assert.deepEqual(throttleCall?.args, { p_owner: 'owner-throttle-order' })
   const throttleIndex = rpcCalls.findIndex(call => call.name === 'jobs_throttle_search_attempt')
-  const entitlementIndex = rpcCalls.findIndex(call => call.name === 'billing_get_entitlement')
-  assert.ok(throttleIndex < entitlementIndex, 'throttle must be checked before the entitlement lookup')
+  const reservationIndex = rpcCalls.findIndex(call => call.name === 'jobs_reserve_recommendation_refresh')
+  assert.ok(throttleIndex < reservationIndex, 'short-window throttle must be checked before the product reservation')
   assert.equal(calls.length, 1, 'a permitted request still reaches the provider')
+})
+
+test('an authoritative Free cadence rejection returns the next refresh time without reaching Techmap', async () => {
+  const { deps, calls, rpcCalls } = fixture({ owner: 'owner-free-cadence' })
+  deps.serviceDatabase = (() => ({
+    rpc: async (name: string, args?: Record<string, unknown>) => {
+      rpcCalls.push({ name, args })
+      if (name === 'jobs_reserve_recommendation_refresh') return { data: {
+        allowed: false, isPro: false, reservedAt: null,
+        previousRefreshAt: '2026-09-26T12:00:00.000Z', nextRefreshAt: '2026-09-27T12:00:00.000Z',
+      }, error: null }
+      return { data: null, error: null }
+    },
+  })) as unknown as typeof dependencies.serviceDatabase
+  const response = await searchJobs(request({ criteria: { title: uniqueTitle() }, evidence }), env, deps)
+  assert.equal(response.status, 429)
+  assert.deepEqual(await response.json(), {
+    error: 'Free recommendations can refresh once every 24 hours. Your existing recommendations and saved jobs are still available.',
+    retryAt: '2026-09-27T12:00:00.000Z',
+  })
+  assert.equal(calls.length, 0)
+  assert.equal(rpcCalls.some(call => call.name === 'jobs_release_recommendation_refresh'), false)
+})
+
+test('a failed provider request releases only its exact Free refresh reservation', async () => {
+  const { deps, calls, rpcCalls } = fixture({ owner: 'owner-free-provider-failure' })
+  deps.techmapSearch = (async () => { calls.push({ page: 1, params: {} }); throw new HttpError(502, 'provider failed') }) as unknown as typeof dependencies.techmapSearch
+  const response = await searchJobs(request({ criteria: { title: uniqueTitle() }, evidence }), env, deps)
+  assert.equal(response.status, 502)
+  assert.equal(calls.length, 1)
+  const release = rpcCalls.find(call => call.name === 'jobs_release_recommendation_refresh')
+  assert.deepEqual(release?.args, {
+    p_owner: 'owner-free-provider-failure',
+    p_reserved_at: '2026-09-26T12:00:00.000Z',
+    p_previous_refresh_at: null,
+  })
+})
+
+test('a successful Free refresh keeps its reservation, while Pro can manually refresh repeatedly', async () => {
+  const free = fixture({ owner: 'owner-free-success' })
+  assert.equal((await searchJobs(request({ criteria: { title: uniqueTitle() }, evidence }), env, free.deps)).status, 200)
+  assert.equal(free.rpcCalls.some(call => call.name === 'jobs_release_recommendation_refresh'), false)
+
+  const pro = fixture({ owner: 'owner-pro-repeat', isPro: true })
+  assert.equal((await searchJobs(request({ criteria: { title: uniqueTitle() }, evidence }), env, pro.deps)).status, 200)
+  assert.equal((await searchJobs(request({ criteria: { title: uniqueTitle() }, evidence }), env, pro.deps)).status, 200)
+  assert.equal(pro.rpcCalls.filter(call => call.name === 'jobs_reserve_recommendation_refresh').length, 2)
+  assert.equal(pro.rpcCalls.some(call => call.name === 'jobs_release_recommendation_refresh'), false)
 })
 
 test('a throttled owner receives 429 without reaching Techmap', async () => {

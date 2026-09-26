@@ -1,3 +1,162 @@
+## September 26 — task #73: Final copy / conversion pass
+
+Wording, product communication and limit disclosure only on `ui/final-launch-polish`. No
+visual-system, layout, behavior, API, entitlement or legal-substance change. Not committed,
+not deployed.
+
+- **Landing:** hero deck now reveals the full story (master → find roles → evidence →
+  separate version). Evidence section says plainly that Match reads evidence and does not
+  predict hiring; "Worth reviewing" is defined as partly shown. How-it-works step 02 carries
+  the single landing use of "opportunities sourced across 190+ job portals and employer
+  career sites" (no per-search coverage claim). Step 03 and the decision section spell out
+  accept / reject / edit yourself and that AI never changes the master. The line "They don't
+  add new credentials" was deliberately not used: the tailoring prompt forbids it but
+  nothing guarantees it. CTAs: "Find jobs and see the match", "Find jobs", "See tailoring
+  with Pro".
+- **Pricing truth:** Free now discloses **1 job search every 24 hours, up to 5 results**
+  (server-enforced, previously undisclosed). Pro lists full Match Analysis, up to 20
+  results with no once-a-day limit, more saved jobs each with its own resume, and AI
+  suggestions you accept/reject/edit. "PDF and Word downloads included" moved into the Pro
+  plan note to keep the tested 4-item card balance. Pro page list matches.
+- **Jobs:** heading carries the 190+ sourcing line. Signed-out notice states the Free search
+  allowance; its button reads "Sign in or create account". Free accounts see the
+  once-every-24-hours rule *before* searching (guarded by a new `accountLoaded` flag so Pro
+  users never see it flash). The refresh-blocked notice explains that Pro has no daily limit
+  and links to Pro. The results summary says "Pro shows up to 20 per search." At the
+  saved-job limit the copy now fits a Free user (the old copy mentioned "if Pro ends").
+  Free users see **"Tailor my resume with Pro"** instead of a Pro-labelled button that
+  silently redirected. The Match hint adds "not a prediction of hiring". Re-analysis and
+  clarification messages confirm they "didn't use a job search".
+- **Tailoring:** the consequences of Accept, Reject and manual edit are stated explicitly,
+  grounding is described as design intent ("designed to rework only what your resume already
+  says, so check each one"), and an accepted item confirms it was saved to the job-specific
+  resume.
+- **Downloads:** the allowance shows "N of 3 Free downloads left for this 30-day period",
+  and the exhausted state shows the reset date plus a "Need it sooner?" Pro link. The
+  signed-out notice states the Free allowance. The upgrade modal names what Pro includes.
+- **Terminology:** user-facing "base resume" is now "master resume" everywhere (code
+  comments unchanged).
+- **Not changed (follow-up candidate):** SEO title/meta still say "Resume builder for every
+  career". These are generated and separately tested, so they were left out of scope.
+
+Tests updated deliberately for changed copy: `tests/accessibility.spec.ts` (Find jobs),
+`tests/paid/flows.spec.ts` (allowance count, reset-date regex, master-resume button),
+`tests/paid/jobs.spec.ts` (didn't-use-a-search messages, scoped results Pro link and
+"up to 20" text, stay-available wording, saved empty state), and
+`tests/extension/jobCapture.spec.ts` (master resume). New assertions cover the Free
+"Tailor my resume with Pro" label and the pre-search Free allowance hint.
+
+Verification: app and server TypeScript PASS; production build PASS (existing chunk-size
+warning); `git diff --check` PASS. Paid **72/72** (jobs file 50/50 after updates), auth
+**40/40**, extension **42/42**, server/billing **383/383**, `test:seo` **14/14**. The default
+Playwright suite did not have one clean full run. With 2 workers it was **73/74**: the one
+failure (`security.spec.ts` corrupted .docx) passed alone and touches no changed copy. With
+the default worker count, 3–6 different builder/premium-ux tests failed intermittently per
+run; every one passed when rerun in isolation. A temporary check (removed afterwards) at
+1920/1366/768/390/320 across home and Pro found no page overflow, no clipped copy and zero
+axe violations; screenshots were reviewed. Graphify was not updated because there was no
+structural change.
+
+## September 26 — task #72: Patina visual system implemented in the real app
+
+Implemented the approved Patina system (source of truth: `experiments/patina`, see its
+README) across the real application on `ui/final-launch-polish`. Visual only: no product
+behavior, API contract, persistence, billing, entitlement, Jobs/Match/Tailoring logic,
+export, template or database change. Not committed, not deployed.
+
+- **Tokens/fonts:** `--rs-*` tokens in `src/design-system.css` remapped to Patina (ink
+  `#1b1a19`, cream canvas `#f6f5f2`, copper action `#ad521b`, mint proof `#0e6a5b`, rust
+  attention). DM Sans/Manrope replaced by Geist (UI), Bricolage Grotesque (display),
+  Instrument Serif (italic emphasis), Geist Mono (labels) in `src/styles.css`.
+- **Product layer:** new `src/patina.css` (loaded after design-system.css): carbon header,
+  journey rail and Builder sidebar; calm white editor; dotted desk preview; petrol Jobs
+  heading; evidence pills (Clearly/Partially/Not demonstrated, Confirmed incompatibility as
+  a distinct error treatment) and evidence quotes as paper scraps; petrol job-specific
+  document bar; Tailoring control strip (Master unchanged → Job-specific version → AI
+  suggestions → You) added to `TailoringPanel.tsx` as a labelled list; Account petrol
+  panel; carbon Pro page with folded checkout card; modals, 404, loading and notices.
+- **Landing:** `PatinaHero.tsx` (layered master / opportunity / tailored sheets, static
+  fold, mint evidence threads, WebGL copper silk from `src/components/Silk.tsx`) and
+  `MatchShowcase.tsx` (decorative Jobs/Match board quoting the fictional sample resume;
+  no scores). Section copy, ids and actions unchanged; the evidence section moved directly
+  after the hero; How it works + Templates sit on a light sheet that rises over the petrol.
+  The previous uncommitted Stride hero/journey moved to `experiments/stride-landing/`.
+- **Public assets:** legal pages, generated 404 (`middleware.ts` string), theme-color
+  (`#0b0a09`, via `scripts/generate-seo.ts` + regenerated artifacts), manifest, favicon,
+  touch icon and social card regenerated in Patina.
+- **Motion/performance:** silk renders at half resolution, pauses offscreen and in hidden
+  tabs, releases its WebGL context on unmount, freezes under reduced motion; parallax,
+  scroll drift, entrances and the sheet rise are disabled under reduced motion. Hero text
+  reveals use clip-path, never opacity, so axe never samples partial contrast. Button
+  colour transitions are deliberately off for the same reason.
+
+Tests: one obsolete visual assertion updated deliberately — the focus-ring colour in
+`tests/accessibility.spec.ts` now expects the Patina action colour; its width/style
+assertions are unchanged. Verification: default Playwright **74/74**, paid **72/72**, auth
+**40/40**, extension **42/42**, server/billing **383/383**, `test:seo` **14/14**, app and
+server TypeScript PASS, production build PASS (existing chunk-size/analytics warnings),
+`git diff --check` PASS. Visual review at 1920, 1440, 1366, 768, 390 and 320 with a mocked
+signed-in Pro harness (Jobs results, full Match, saved jobs, Tailoring accept/reject): no
+page-level horizontal overflow and axe clean at every width.
+
+## September 26 — task #71: Local template-gallery verification repair
+
+Repaired the Ledger reload coverage without changing product behavior. The gallery already
+updates the shared resume and persists `template: "ledger"`; after reload, the named saved
+draft correctly changes the home CTA from **Build my resume** to **Continue my resume**.
+The test now targets that exact persisted-draft CTA before re-entering Preview and asserting
+the Ledger control/current data, instead of waiting for a button that should no longer exist.
+No template, preview, accessibility, mobile, content or export implementation was changed.
+
+The two previously failing browser tests were attempted first, then the full default browser
+suite. All runs were blocked before assertions because the npm runner selected the absent
+`@rollup/rollup-darwin-x64`; direct ARM Vite reached startup but this managed session denied
+its localhost listener with `EPERM`. The focused tests do list successfully (2 tests). The
+aggregate-content-limit timeout therefore could not be rerun to a verdict here and remains
+an unverified transient-versus-regression question; its source and assertion were left
+unchanged. An available existing Chrome localhost tab could not be used because browser-use
+permission was denied, and no workaround was attempted.
+
+Equivalent explicit-ARM frontend TypeScript + production Vite build **PASS** and server
+TypeScript **PASS**. Literal `arch -arm64 npm run build` reaches SEO generation, then fails
+on the same x64 Rollup mismatch. `graphify update .` **PASS** with no topology changes.
+No deployment or external mutation occurred.
+
+## September 26 — task #70: Builder template gallery
+
+Added an obvious **Templates · Current template** control to the Builder preview toolbar.
+It opens an accessible, responsive gallery of all seven existing templates (modern,
+classic, minimal, compact, bold, executive and ledger). Every thumbnail reuses the shared
+`ResumePreview` renderer with the live resume object; no sample content, AI, rewriting,
+deletion or fabrication is involved. The active layout has an explicit Current state and
+native `aria-pressed` semantics. Selecting another layout changes only `resume.template`,
+then follows the existing local/cloud/job-version persistence and shared preview/PDF/DOCX
+paths. Existing Design & format selection and every template implementation remain intact.
+Descriptions now state observable layout traits rather than career or outcome claims.
+
+The picker is mounted only on demand, traps/restores focus through the existing native
+dialog component, uses keyboard-operable buttons, becomes a full-screen scrollable mobile
+surface, and retains the existing preview/export renderer instead of introducing a compare
+renderer. A separate full-document Compare mode was intentionally skipped to avoid a
+second pagination/layout path; the seven live-data thumbnails provide visual comparison.
+
+Focused coverage added: all seven gallery previews/classes and current-data markers, no
+generic sample leakage, current selection, template-only content immutability, session
+persistence/reload, mobile overflow, dialog focus/Escape restoration, axe scan, and the
+selected template in both PDF and Word request snapshots. Existing server export coverage
+continues to render both formats for all seven templates.
+
+Observed verification: frontend TypeScript and production Vite build **PASS** when invoked
+with explicit ARM Node binaries; server TypeScript **PASS**; focused all-seven server export
+test **PASS**; full server run reached **366/367 PASS**, with only the unrelated dirty SEO
+test process failing to load the missing x64 Rollup optional package. Focused default/paid
+browser tests list successfully but runtime is **BLOCKED before assertions**: the standard
+runner selects missing `@rollup/rollup-darwin-x64`, while an explicit ARM Vite retry reaches
+startup and is denied `listen EPERM` on localhost. Literal `arch -arm64 npm test` and
+`arch -arm64 npm run build` therefore stop on that existing optional-package mismatch;
+the equivalent explicit-ARM production build passes. No browser pass is claimed. No
+deployment, branch merge, provider call, pricing, entitlement or unrelated-surface change.
+
 ## September 25 — Vercel packaged DOCX runtime resolution repair
 
 Fixed the local standalone `api/export-docx` package failure without deploying or

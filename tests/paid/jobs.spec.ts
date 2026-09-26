@@ -242,6 +242,9 @@ test('Free saved analysis reload renders only the bounded preview and never Pro 
   await expect(savedCard.getByRole('heading', { name: 'What your resume shows' })).toBeVisible();
   await expect(savedCard.getByText('Required', { exact: true })).toHaveCount(0);
   await expect(savedCard.getByRole('button', { name: 'View the full evidence analysis with Pro' })).toBeVisible();
+  // A Free account is told up front that tailoring is a Pro step, rather than being redirected unexpectedly.
+  await expect(savedCard.getByRole('button', { name: 'Tailor my resume with Pro' })).toBeVisible();
+  await expect(page.getByText('Free accounts get one search every 24 hours, with up to 5 results.', { exact: false })).toBeVisible();
 });
 
 test('stale saved analysis has a manual deterministic refresh path with zero provider searches', async ({ page }) => {
@@ -259,7 +262,7 @@ test('stale saved analysis has a manual deterministic refresh path with zero pro
   await openJobs(page);
   await page.getByRole('button', { name: 'Refresh match analysis' }).click();
   await expect(page.getByRole('heading', { name: 'What your resume shows' })).toBeVisible();
-  await expect(page.getByText(/without running another job search/i)).toBeVisible();
+  await expect(page.getByText(/didn.t use a job search/i)).toBeVisible();
   expect(searchCalls).toBe(0);
 });
 
@@ -276,7 +279,7 @@ test('saving a visible clarification updates its analysis without another provid
   await page.getByRole('button', { name: 'Search jobs' }).click();
   await page.getByRole('button', { name: 'I don’t have this' }).click();
   await expect(page.getByText(/confirmed incompatibility/i)).toBeVisible();
-  await expect(page.getByText(/without running another job search/i)).toBeVisible();
+  await expect(page.getByText(/didn.t use a job search/i)).toBeVisible();
   expect(searchCalls).toBe(1);
 });
 
@@ -388,7 +391,8 @@ test('Free accounts see an honest available-count summary, a five-item limit, an
   await openJobs(page);
   await page.getByRole('button', { name: 'Search jobs' }).click();
   await expect(page.getByText('Showing 1 of 8 matching jobs.')).toBeVisible();
-  await page.getByRole('button', { name: 'View Pro options' }).click();
+  await expect(page.getByText('Pro shows up to 20 per search.', { exact: false })).toBeVisible();
+  await page.getByText('Showing 1 of 8 matching jobs.').getByRole('button', { name: 'View Pro options' }).click();
   await expect(page.getByRole('heading', { name: 'A promising role. A considered application.' })).toBeVisible();
 });
 
@@ -498,13 +502,32 @@ test('Auto Refresh defaults off and persists an explicit opt-in, scoped to the s
   });
   await page.route('**/api/jobs-search', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(sampleResponse) }));
   await openJobs(page);
-  const toggle = page.getByRole('checkbox', { name: 'Auto Refresh (at most once a day)' });
+  const toggle = page.getByRole('checkbox', { name: 'Auto Refresh (once a day)' });
   await expect(toggle).not.toBeChecked();
   await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toHaveCount(0);
   await toggle.check();
   await expect.poll(() => savedPreference?.autoRefresh).toBe(true);
   await page.getByRole('button', { name: 'Search jobs' }).click();
-  await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeDisabled();
+  await expect(page.getByText(/Free recommendations can refresh again/)).toBeVisible();
+  await expect(page.getByText(/current results and saved jobs stay available/i)).toBeVisible();
+});
+
+test('Pro has no Free daily manual-refresh restriction while retaining daily background refresh', async ({ page }) => {
+  await seed(page);
+  await page.unroute('**/api/jobs-account');
+  await page.route('**/api/jobs-account', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+    isPro: true, saveLimit: 10000, savedJobs: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: new Date().toISOString() },
+  }) }));
+  await page.route('**/api/jobs-search', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...sampleResponse, isPro: true }) }));
+  await openJobs(page);
+  await expect(page.getByRole('checkbox', { name: 'Auto Refresh (daily background update)' })).not.toBeChecked();
+  await page.getByRole('button', { name: 'Search jobs' }).click();
+  const refresh = page.getByRole('button', { name: 'Refresh', exact: true });
+  await expect(refresh).toBeEnabled();
+  await refresh.click();
+  await expect(refresh).toBeEnabled();
+  await expect(page.getByText(/Free recommendations can refresh again/)).toHaveCount(0);
 });
 
 test('a second account signing in on the same browser never inherits the first account\'s auto-refresh or saved search', async ({ page }) => {
@@ -512,7 +535,7 @@ test('a second account signing in on the same browser never inherits the first a
   await page.route('**/api/jobs-search', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(sampleResponse) }));
   await openJobs(page);
   await page.getByRole('button', { name: 'Search jobs' }).click();
-  await page.getByRole('checkbox', { name: 'Auto Refresh (at most once a day)' }).check();
+  await page.getByRole('checkbox', { name: 'Auto Refresh (once a day)' }).check();
 
   // Simulate a second account signing in on the same browser: re-seed with a different
   // user id and reload so the app picks up the new session.
@@ -520,7 +543,7 @@ test('a second account signing in on the same browser never inherits the first a
   await page.reload();
   await page.getByRole('button', { name: /^(Continue my resume|Build my resume)$/, exact: true }).first().click();
   await page.locator('.builder-sidebar').getByRole('button', { name: 'Find jobs', exact: true }).click();
-  const toggle = page.getByRole('checkbox', { name: 'Auto Refresh (at most once a day)' });
+  const toggle = page.getByRole('checkbox', { name: 'Auto Refresh (once a day)' });
   await expect(toggle).not.toBeChecked();
 });
 
@@ -546,7 +569,7 @@ test('a second account never inherits the first account saved match analysis', a
   await page.getByRole('button', { name: /^(Continue my resume|Build my resume)$/, exact: true }).first().click();
   await page.locator('.builder-sidebar').getByRole('button', { name: 'Find jobs', exact: true }).click();
   await expect(page.locator('.saved-job-card')).toHaveCount(0);
-  await expect(page.getByText(/Jobs you save will stay here/i)).toBeVisible();
+  await expect(page.getByText(/keep it and its match evidence here/i)).toBeVisible();
 });
 
 test('the jobs panel passes an automated accessibility scan and works at a mobile viewport', async ({ page }) => {

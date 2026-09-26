@@ -75,7 +75,8 @@ test('builder fields expose input purpose and a visible keyboard focus ring', as
  });
  expect(outline.width).toBeGreaterThanOrEqual(2);
  expect(outline.style).toBe('solid');
- expect(outline.color).toBe('rgb(36, 87, 230)');
+ // The Patina action colour (#ad521b): the ring must stay the brand's visible action colour.
+ expect(outline.color).toBe('rgb(173, 82, 27)');
  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
@@ -107,7 +108,7 @@ test('delayed lazy route focuses only its loaded heading and cached routes still
   await expect(page.getByRole('heading', { level: 1, name: 'Make room for your next move.' })).toBeFocused();
   await page.getByRole('button', { name: 'Back to home', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'One career. More than one version.', exact: true })).toBeFocused();
-  await page.getByRole('button', { name: 'Find opportunities', exact: true }).click();
+  await page.getByRole('button', { name: 'Find jobs', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Find jobs' })).toBeFocused();
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'One career. More than one version.', exact: true })).toBeFocused();

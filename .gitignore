@@ -13,5 +13,7 @@ playwright-report/
 .codex/
 .flow/
 graphify-out/
+experiments/
+.mcp.json
 *.code-workspace
 docs/verification/backup-canary.json

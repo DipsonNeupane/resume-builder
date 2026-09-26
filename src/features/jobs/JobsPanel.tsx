@@ -92,6 +92,10 @@ function formatSalary(salary: JobCard['salary']): string {
   return `${salary.currency} ${salary.min.toLocaleString()}–${salary.max.toLocaleString()} / ${salary.period === 'year' ? 'year' : 'hour'}`;
 }
 
+function formatRefreshTime(value: number): string {
+  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+}
+
 function isValidLocation(value: unknown): value is JobCard['location'] {
   if (!record(value)) return false;
   const { city, region, country } = value;
@@ -218,7 +222,7 @@ function MatchAnalysisPanel({ analysis, isPro, onViewPro, onClarify, jobTitle }:
   const full = analysis.fullAnalysis;
   return <section className="match-analysis" role="group" aria-label={`Match analysis — ${jobTitle}`}>
     <div className="match-analysis-header"><h3>What your resume shows</h3><span>Resume evidence · Match Analysis</span></div>
-    <p>{analysis.whyPromising}</p><p className="field-hint">Based on what your resume shows. “Not demonstrated” does not mean you don’t have it.</p>
+    <p>{analysis.whyPromising}</p><p className="field-hint">Based only on what your resume shows, not a prediction of hiring. “Not demonstrated” doesn’t mean you don’t have it.</p>
     <ul>{analysis.observations.slice(0, 3).map((item, index) => <li key={index}>{item}</li>)}</ul>
     {analysis.importantWarning && <div className="match-warning" role="note"><strong>Important requirement</strong><span>{analysis.importantWarning}</span></div>}
     {analysis.seniorityMessage && <p className="match-seniority">{analysis.seniorityMessage}</p>}
@@ -241,7 +245,7 @@ function MatchAnalysisPanel({ analysis, isPro, onViewPro, onClarify, jobTitle }:
       {full.buriedEvidence.length > 0 && <><h4>Relevant experience that may be buried</h4><ul>{full.buriedEvidence.map((item,index)=><li key={index}>{item}</li>)}</ul></>}
       {full.areasWorthStrengthening.length > 0 && <><h4>Areas worth strengthening</h4><ul>{full.areasWorthStrengthening.map((item,index)=><li key={index}>{item}</li>)}</ul></>}
       {full.constraints.length > 0 && <><h4>Important constraints</h4><ul>{full.constraints.map((item,index)=><li key={index}>{item}</li>)}</ul></>}
-      <p className="field-hint">Save this job to start a separate job-specific resume. Your master resume stays unchanged, and every AI suggestion requires your review.</p>
+      <p className="field-hint">Save this job to start a separate job-specific resume. Your master resume stays unchanged, and no AI suggestion is applied without your review.</p>
     </details>}
   </section>;
 }
@@ -265,6 +269,8 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
   const [saveLimit, setSaveLimit] = useState(3);
   const [accountIsPro, setAccountIsPro] = useState(false);
+  const [accountLoaded, setAccountLoaded] = useState(false);
+  const [nextFreeRefreshAt, setNextFreeRefreshAt] = useState(0);
   const [jobResumeVersions, setJobResumeVersions] = useState<JobResumeVersionSummary[]>([]);
   const inFlight = useRef(false);
   const active = useRef(true);
@@ -309,6 +315,8 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
     setJobResumeVersions([]);
     setSaveLimit(3);
     setAccountIsPro(false);
+    setAccountLoaded(false);
+    setNextFreeRefreshAt(0);
     lastProviderRefreshRef.current = 0;
     lastCriteriaRef.current = null;
     if (ownerId) void accountRequest({ action: 'load', evidence: buildResumeEvidence(resume) }, controller.signal).then(body => {
@@ -321,9 +329,11 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
       setJobResumeVersions(parseJobResumeSummaries(body.jobResumeVersions ?? []));
       setSaveLimit(body.saveLimit);
       setAccountIsPro(body.isPro);
+      setAccountLoaded(true);
       setAutoRefresh(preferences.autoRefresh);
       lastCriteriaRef.current = criteria;
       lastProviderRefreshRef.current = typeof preferences.lastProviderRefreshAt === 'string' ? Date.parse(preferences.lastProviderRefreshAt) : 0;
+      setNextFreeRefreshAt(body.isPro || !lastProviderRefreshRef.current ? 0 : lastProviderRefreshRef.current + DAY_MS);
       if (criteria && typeof criteria.title === 'string') applyCriteria(criteria);
     }).catch(error => {
       if (!controller.signal.aborted) setMessage(error instanceof Error ? error.message : 'Saved jobs are temporarily unavailable.');
@@ -338,6 +348,14 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
     const timer = window.setTimeout(() => setMessage(''), 6000);
     return () => window.clearTimeout(timer);
   }, [message]);
+
+  useEffect(() => {
+    if (accountIsPro || !nextFreeRefreshAt) return;
+    const remaining = nextFreeRefreshAt - Date.now();
+    if (remaining <= 0) { setNextFreeRefreshAt(0); return; }
+    const timer = window.setTimeout(() => setNextFreeRefreshAt(0), Math.min(remaining, 2_147_483_647));
+    return () => window.clearTimeout(timer);
+  }, [accountIsPro, nextFreeRefreshAt]);
 
   function buildCriteria(): Criteria | null {
     const trimmedTitle = title.trim();
@@ -384,18 +402,25 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
       let body: unknown;
       try { body = await response.json(); } catch { throw new Error('Job search returned an unusable response.'); }
       if (!response.ok) {
+        if (record(body) && typeof body.retryAt === 'string') {
+          const retryAt = Date.parse(body.retryAt);
+          if (!Number.isNaN(retryAt)) setNextFreeRefreshAt(retryAt);
+        }
         const text = record(body) && typeof body.error === 'string' ? body.error : 'Job search is temporarily unavailable.';
         throw new Error(text);
       }
       if (!active.current || controller.signal.aborted) return;
       const parsed = parseJobCards(body);
       setResults(parsed);
+      setAccountIsPro(parsed.isPro);
       lastCriteriaRef.current = criteria;
       const now = Date.now();
       lastProviderRefreshRef.current = now;
+      const serverNextRefreshAt = record(body) && typeof body.nextRefreshAt === 'string' ? Date.parse(body.nextRefreshAt) : Number.NaN;
+      setNextFreeRefreshAt(parsed.isPro ? 0 : Number.isNaN(serverNextRefreshAt) ? now + DAY_MS : serverNextRefreshAt);
       try { await accountRequest({ action: 'preferences', criteria, autoRefresh }); }
       catch { setMessage('Jobs loaded, but your search preferences could not be saved.'); }
-      if (parsed.jobs.length === 0) setMessage('No matching jobs were found for this search yet. Try broadening your criteria.');
+      if (parsed.jobs.length === 0) setMessage('No matching jobs for this search yet. Try a broader title or location.');
     } catch (error) {
       if (controller.signal.aborted || !active.current) return;
       setMessage(error instanceof Error ? error.message : 'Job search is temporarily unavailable.');
@@ -422,7 +447,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
     try {
       await accountRequest({ action: 'preferences', criteria: lastCriteriaRef.current, autoRefresh: next });
       if (currentOwnerRef.current !== requestedOwner) return;
-      setMessage(next ? 'Auto Refresh is on. Your last search can refresh at most once a day.' : 'Auto Refresh is off.');
+      setMessage(next ? (accountIsPro ? 'Auto Refresh is on for a daily background update. You can still refresh manually as needed.' : 'Auto Refresh is on. Free recommendations refresh once a day.') : 'Auto Refresh is off.');
     } catch (error) {
       if (currentOwnerRef.current !== requestedOwner) return;
       setAutoRefresh(!next);
@@ -437,7 +462,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
       const body = await accountRequest({ action: 'load', evidence: buildResumeEvidence(resume) });
       if (currentOwnerRef.current !== requestedOwner) return;
       setSavedJobs(parseSavedJobs(body.savedJobs));
-      setMessage('Job saved to your account.');
+      setMessage('Job saved. Its Match Analysis is in Saved jobs.');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to save this job.'); }
   }
 
@@ -451,7 +476,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
       setSavedJobs(current => current.map(saved => saved.id === savedJobId
         ? { ...saved, matchAnalysis: analysis, analysisCurrent: true, analysisInvalidationReason: null }
         : saved));
-      setMessage('Saved match analysis refreshed without running another job search.');
+      setMessage('Match Analysis updated for your current resume. This didn’t use a job search.');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to refresh this saved analysis.'); }
   }
 
@@ -474,7 +499,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
           ? { ...job, matchLabel: analysis.label, matchAnalysis: analysis }
           : job) } : current);
       }
-      setMessage('Clarification saved and this analysis was updated without running another job search.');
+      setMessage('Thanks. Match Analysis updated with your answer. This didn’t use a job search.');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to save this clarification.'); }
   }
 
@@ -485,7 +510,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
       if (currentOwnerRef.current !== requestedOwner) return;
       setSavedJobs(current => current.filter(job => job.id !== savedJobId));
       setJobResumeVersions(current => current.map(version => version.savedJobId === savedJobId ? { ...version, savedJobExists: false } : version));
-      setMessage('Saved job removed.');
+      setMessage('Saved job removed. Any job-specific resume for it is kept.');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to remove this saved job.'); }
   }
 
@@ -539,22 +564,24 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRefresh, ownerId]);
 
+  const freeRefreshBlocked = !accountIsPro && nextFreeRefreshAt > Date.now();
+
   if (!ownerId) {
     return <section className="field jobs-panel" aria-label="Job search">
       <div className="jobs-panel-heading">
-        <div><span className="section-label">Your opportunity workspace</span><h1>Find jobs</h1><p>Find the connection before you make the application.</p></div>
+        <div><span className="section-label">Your opportunity workspace</span><h1>Find jobs</h1><p>Opportunities sourced across 190+ job portals and employer career sites. See what each role asks for, and what your resume already shows.</p></div>
         <button className="back-link" onClick={onBack}>Back</button>
       </div>
       <div className="notice" role="status">
-        Sign in to search for jobs based on your resume. Save opportunities, understand the match, and return when you’re ready to apply.
-        <button className="text-button" onClick={onSignIn}>Sign in</button>
+        Sign in to search for jobs based on your resume. Save opportunities, understand the match, and return when you’re ready to apply. A free account includes one search every 24 hours, with up to 5 results.
+        <button className="text-button" onClick={onSignIn}>Sign in or create account</button>
       </div>
     </section>;
   }
 
   return <section className="field jobs-panel" aria-label="Job search">
     <div className="jobs-panel-heading">
-      <div><span className="section-label">Your opportunity workspace</span><h1>Find jobs</h1><p>Find the connection before you make the application.</p></div>
+      <div><span className="section-label">Your opportunity workspace</span><h1>Find jobs</h1><p>Opportunities sourced across 190+ job portals and employer career sites. See what each role asks for, and what your resume already shows.</p></div>
       <button className="back-link" onClick={onBack}>Back</button>
     </div>
     <div className="opportunity-desk"><aside className="opportunity-search" aria-label="Search preferences"><h2>Find your next fit</h2>
@@ -591,21 +618,23 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
         ? `Comparing ${salaryPeriod === 'year' ? 'annual' : 'hourly'} salary only against postings listing an amount in the exact same currency and period; jobs with an unlisted or differently formatted salary stay eligible.`
         : 'No salary preference set — jobs with any salary, or none listed, stay eligible.'}
     </p>
-    <button className="button" disabled={busy} onClick={search}><Search size={16} />{busy ? 'Searching…' : 'Search jobs'}</button>
+    {accountLoaded && !accountIsPro && !freeRefreshBlocked && <p className="field-hint">Free accounts get one search every 24 hours, with up to 5 results. Set your criteria first.</p>}
+    <button className="button" disabled={busy || freeRefreshBlocked} onClick={search}><Search size={16} />{busy ? 'Searching…' : 'Search jobs'}</button>
+    {freeRefreshBlocked && <p className="field-hint" role="status">Free recommendations can refresh again {formatRefreshTime(nextFreeRefreshAt)}. Your current results and saved jobs stay available. Pro has no once-a-day limit. <button className="text-button" onClick={onViewPro}>View Pro options</button></p>}
 
     <div className="jobs-toolbar">
-      {results && <button className="text-button" disabled={busy} onClick={refresh}><RefreshCw size={14} />Refresh</button>}
-      <label className="jobs-auto-refresh"><input type="checkbox" checked={autoRefresh} onChange={event => void toggleAutoRefresh(event.target.checked)} />Auto Refresh (at most once a day)</label>
+      {results && <button className="text-button" disabled={busy || freeRefreshBlocked} onClick={refresh}><RefreshCw size={14} />Refresh</button>}
+      <label className="jobs-auto-refresh"><input type="checkbox" checked={autoRefresh} onChange={event => void toggleAutoRefresh(event.target.checked)} />{accountIsPro ? 'Auto Refresh (daily background update)' : 'Auto Refresh (once a day)'}</label>
     </div>
 
     </aside><div className="opportunity-content">
     {message && <p role="status" className="field-hint">{message}</p>}
-    {busy && <div className="jobs-skeleton" role="status"><strong>Looking for opportunities…</strong><span aria-hidden="true"/><span aria-hidden="true"/><p className="field-hint">Comparing roles with your search preferences.</p></div>}
+    {busy && <div className="jobs-skeleton" role="status"><strong>Looking for opportunities…</strong><span aria-hidden="true"/><span aria-hidden="true"/><p className="field-hint">Checking each role against your preferences and the evidence in your resume.</p></div>}
     {!results && !busy && savedJobs.length === 0 && <div className="empty-state"><strong>Your experience is the starting point.</strong><p>Choose a suggested role or enter your own criteria, then search. You’ll see why each opportunity may fit before deciding what to save.</p></div>}
 
     <section className="saved-jobs-section" aria-labelledby="saved-jobs-heading">
       <div className="saved-jobs-heading"><h2 id="saved-jobs-heading">Saved jobs</h2><span>{savedJobs.length}{accountIsPro ? '' : ` of ${saveLimit}`}</span></div>
-      {savedJobs.length === 0 ? <div className="empty-state"><strong>Keep the roles worth a second look.</strong><p>Choose “Save job” on a result to bring its match evidence here. Jobs you save will stay here even if they are no longer available or your Pro access ends.</p></div> :
+      {savedJobs.length === 0 ? <div className="empty-state"><strong>Keep the roles worth a second look.</strong><p>Choose “Save job” on a result to keep it and its match evidence here, even if the listing closes{accountIsPro ? ' or your Pro access ends' : ''}.{accountIsPro ? '' : ` Free accounts can save up to ${saveLimit}.`}</p></div> :
         <ul className="jobs-results" aria-label="Saved jobs">{savedJobs.map(saved => {
           const job = saved.snapshot;
           return <li className="job-card saved-job-card" key={saved.id}>
@@ -628,7 +657,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
             {saved.analysisCurrent !== false && saved.matchAnalysis && <MatchAnalysisPanel jobTitle={`Saved: ${job.title} at ${job.company}`} analysis={saved.matchAnalysis} isPro={accountIsPro} onViewPro={onViewPro} onClarify={(id, value) => void clarify(id, value, { savedJobId: saved.id })} />}
             <div className="job-card-actions">
               <button className="button" onClick={() => void startTailoring(saved)}>
-                {jobResumeVersions.some(version => version.savedJobId === saved.id) ? 'Open tailored resume' : 'Tailor my resume for this job'}
+                {jobResumeVersions.some(version => version.savedJobId === saved.id) ? 'Open tailored resume' : accountIsPro ? 'Tailor my resume for this job' : 'Tailor my resume with Pro'}
               </button>
               {saved.providerAvailable && <a className="button outline" href={job.sourceUrl} target="_blank" rel="noopener noreferrer">View job<ExternalLink size={14} /></a>}
               <button className="button outline remove-saved" onClick={() => void removeSavedJob(saved.id)}>Remove saved job</button>
@@ -636,7 +665,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
           </li>;
         })}</ul>}
       {!accountIsPro && savedJobs.length >= saveLimit && <p className="field-hint">
-        Free accounts can save up to {saveLimit} jobs. Your saved jobs stay here if Pro ends; only new saves are blocked.{' '}
+        You’ve used all {saveLimit} Free saved-job slots. Remove one to save another, or choose Pro to save more and tailor a separate resume for each.{' '}
         <button className="text-button" onClick={onViewPro}>View Pro options</button>
       </p>}
     </section>
@@ -655,7 +684,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
       {results.jobs.length === 0 && <div className="empty-state"><strong>No matching roles in this search.</strong><p>Try a broader title or location, or remove a preference. Your saved jobs are still here.</p></div>}
       <p className="field-hint" role="status">
         {`Showing ${results.jobs.length} of ${results.availableCount} matching jobs.`}{' '}
-        {!results.isPro && results.availableCount > results.jobs.length && <button className="text-button" onClick={onViewPro}>View Pro options</button>}
+        {!results.isPro && results.availableCount > results.jobs.length && <>{`Pro shows up to ${results.proLimit} per search. `}<button className="text-button" onClick={onViewPro}>View Pro options</button></>}
       </p>
       <ul className="jobs-results" aria-label="Job results">
         {results.jobs.map(job => <li className={`job-card job-card-${job.matchLabel}`} key={job.id}>

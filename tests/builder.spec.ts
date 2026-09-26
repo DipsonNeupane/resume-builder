@@ -196,6 +196,42 @@ test('all seven templates are available and selectable for a signed-out/free vis
   await expect(select).toHaveValue(label.toLowerCase());
  }
 });
+test('template gallery previews current data, persists selection, and stays keyboard-accessible on mobile',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ const draft=example();draft.name='CURRENT DATA ONLY';draft.summary='UNCHANGED SUMMARY MARKER';draft.template='modern';
+ await page.addInitScript(value=>{
+  if(!sessionStorage.getItem('resumestride.resume.v1'))sessionStorage.setItem('resumestride.resume.v1',JSON.stringify(value));
+ },draft);
+ await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.getByRole('button',{name:'Preview resume',exact:true}).click();
+ const opener=page.getByRole('button',{name:'Templates Modern',exact:true});
+ await opener.focus();await page.keyboard.press('Enter');
+ let dialog=page.getByRole('dialog',{name:'Choose your layout'});
+ await expect(dialog.getByRole('button',{name:'Close templates',exact:true})).toBeFocused();
+ const options=dialog.locator('.template-picker-option');
+ await expect(options).toHaveCount(7);
+ const ids=['modern','classic','minimal','compact','bold','executive','ledger'];
+ for(const [index,id] of ids.entries()){
+  const preview=options.nth(index).locator('.template-option-preview .resume-paper');
+  await expect(preview).toHaveClass(new RegExp(`\\b${id}\\b`));
+  await expect(preview).toContainText('CURRENT DATA ONLY');
+  await expect(preview).toContainText('UNCHANGED SUMMARY MARKER');
+  await expect(preview).not.toContainText('Alex Morgan');
+ }
+ await expect(dialog.getByRole('button',{name:/^Modern/})).toHaveAttribute('aria-pressed','true');
+ expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
+ expect(await dialog.evaluate(node=>node.scrollWidth<=node.clientWidth)).toBe(true);
+ await page.keyboard.press('Escape');await expect(dialog).toHaveCount(0);await expect(opener).toBeFocused();
+ await opener.click();dialog=page.getByRole('dialog',{name:'Choose your layout'});
+ await dialog.getByRole('button',{name:/^Ledger/}).click();
+ await expect(page.locator('.paper-container .resume-paper').first()).toHaveClass(/\bledger\b/);
+ await expect.poll(()=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('resumestride.resume.v1')!))).toMatchObject({template:'ledger'});
+ const after=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('resumestride.resume.v1')!));
+ expect(after).toEqual({...draft,template:'ledger'});
+ await page.reload();await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();await page.getByRole('button',{name:'Preview resume',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Templates Ledger',exact:true})).toBeVisible();
+ await expect(page.locator('.paper-container .resume-paper').first()).toContainText('CURRENT DATA ONLY');
+});
 test('the templates showcase on the landing page has no Pro badges and every card leads straight into the builder',async({page})=>{
  await page.goto('/');
  await expect(page.getByRole('heading',{name:/Let the work.*do the talking/})).toBeVisible();

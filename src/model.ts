@@ -7,13 +7,13 @@ export type Resume = { version: 1; name: string; headline: string; email: string
 // All seven templates are available to every account; entitlement differences
 // (Pro vs Free) are about generated-PDF download volume, not template access.
 export const templates: { id: TemplateId; label: string; tagline: string }[] = [
- { id: 'modern', label: 'Modern', tagline: 'A fresh, confident introduction' },
- { id: 'classic', label: 'Classic', tagline: 'Timeless, polished, professional' },
- { id: 'minimal', label: 'Minimal', tagline: 'Your experience takes center stage' },
- { id: 'compact', label: 'Compact', tagline: 'Dense and efficient for a longer history' },
- { id: 'bold', label: 'Bold', tagline: 'A strong accent header that stands out' },
- { id: 'executive', label: 'Executive', tagline: 'Refined styling for senior roles' },
- { id: 'ledger', label: 'Ledger', tagline: 'Structured, detail-oriented layout' },
+ { id: 'modern', label: 'Modern', tagline: 'Clean lines with an accent-led header' },
+ { id: 'classic', label: 'Classic', tagline: 'Traditional type with balanced spacing' },
+ { id: 'minimal', label: 'Minimal', tagline: 'Open spacing with quiet section dividers' },
+ { id: 'compact', label: 'Compact', tagline: 'Tighter spacing for information-rich resumes' },
+ { id: 'bold', label: 'Bold', tagline: 'High-contrast header and strong section markers' },
+ { id: 'executive', label: 'Executive', tagline: 'Refined headings with restrained rules' },
+ { id: 'ledger', label: 'Ledger', tagline: 'Structured bands and detailed section labels' },
 ];
 export const templateIds = templates.map(t => t.id);
 export const entry = (): Entry => ({ id: crypto.randomUUID(), title: '', organization: '', location: '', dates: '', description: '' });

@@ -12,9 +12,10 @@ export function ProPage({ ownerId, onBack, onSignIn }: Props) {
     <h1>A promising role. A considered application.</h1>
     <p>Get 30 days of ResumeStride Pro for US$19.99. Choose a one-time pass by default, or deliberately opt in to automatic renewal.</p>
     <ul>
-     <li><Check size={18}/>Generated PDF and Word downloads included</li>
-     <li><Check size={18}/>Job-specific AI suggestions you review before applying</li>
-     <li><Check size={18}/>Full Match Analysis and separate resumes for saved jobs</li>
+     <li><Check size={18}/>Full Match Analysis, requirement by requirement</li>
+     <li><Check size={18}/>Up to 20 job results per search, with no once-a-day limit</li>
+     <li><Check size={18}/>A separate resume for each saved job, with AI suggestions you accept, reject or edit</li>
+     <li><Check size={18}/>PDF and Word downloads included</li>
     </ul>
     <p className="pro-outcome">Understand the match → review each suggestion → download your tailored resume. Your master stays separate. All seven templates remain Free.</p>
     <div className="pro-page-trust"><ShieldCheck size={20}/><span>Checkout is handled securely by Stripe. Fair-use limits apply.</span></div>

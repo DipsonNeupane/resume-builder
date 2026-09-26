@@ -147,7 +147,7 @@ test('storage failure prevents starting a draft that cannot preserve its base', 
  await page.evaluate(()=>{Storage.prototype.setItem=()=>{throw new Error('Storage denied');};});
  await postJobImport(page,{title:'Example job',company:'Example',description:'Example duties',sourceUrl:'',capturedAt:new Date().toISOString()});
  await page.getByRole('button',{name:'Start job-specific draft'}).click();
- await expect(page.getByText('Could not preserve your base resume.',{exact:false})).toBeVisible();
+ await expect(page.getByText('Could not preserve your master resume.',{exact:false})).toBeVisible();
  await expect(page.getByRole('status').filter({hasText:/Job-specific draft — Tailored for/})).toHaveCount(0);
  await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toHaveValue('Alex Morgan');
 });

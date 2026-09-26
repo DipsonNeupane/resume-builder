@@ -68,7 +68,8 @@ export function GeneratedDocumentControls({ resume, ownerId, onSignIn, onViewPro
     if (typeof data.isPro !== 'boolean' || !Number.isInteger(data.remaining) || data.remaining < 0 || data.remaining > 3 || typeof data.resetsAt !== 'string' || !Number.isFinite(Date.parse(data.resetsAt))) throw new Error('Invalid allowance');
     const current = (await client.auth.getSession()).data.session;
     if (disposed || request !== generation || current?.user.id !== ownerId) return;
-    setAllowance(data.isPro ? 'Pro document downloads are included.' : data.remaining > 0 ? 'A document download is available.' : 'Your Free document download allowance is used for this period.');
+    const resets = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(data.resetsAt));
+    setAllowance(data.isPro ? 'Pro document downloads are included.' : data.remaining > 0 ? `${data.remaining} of 3 Free downloads left for this 30-day period.` : `Your Free document download allowance is used for this period. It resets ${resets}.`);
     setExhausted(!data.isPro && data.remaining === 0);
     setAvailabilityUnknown(false);
    } catch {
@@ -143,19 +144,19 @@ export function GeneratedDocumentControls({ resume, ownerId, onSignIn, onViewPro
  }
 
  if (!ownerId) return <div className="notice" role="status">
-  Sign in to download your resume as PDF or Word. Download limits apply to Free accounts.
+  Sign in to download your resume as PDF or Word. A free account includes 3 downloads every 30 days.
   <button className="text-button" onClick={onSignIn}>Sign in</button>
  </div>;
 
  return <><div ref={downloadGroup} role="group" aria-label="Document downloads" tabIndex={-1} className="field checkbox-field">
   <label><input type="checkbox" checked={consent} disabled={busyFormat !== null} onChange={event => setConsent(event.target.checked)} />I consent to uploading my resume content to ResumeStride’s server to generate my document.</label>
   <p className="field-hint">PDF and Word share your download allowance. Choose the format you need.</p>
-  {availabilityUnknown?<p className="field-hint" aria-live="polite">Free downloads exhausted? <button className="text-button" onClick={()=>{setUpgradeConfirmed(false);setUpgradeOpen(true);}}>View Pro options</button></p>:<p className="field-hint" aria-live="polite">{allowance}</p>}
+  {availabilityUnknown?<p className="field-hint" aria-live="polite">We couldn’t check your download allowance. Free accounts include 3 downloads every 30 days. Free downloads exhausted? <button className="text-button" onClick={()=>{setUpgradeConfirmed(false);setUpgradeOpen(true);}}>View Pro options</button></p>:<p className="field-hint" aria-live="polite">{allowance}</p>}
   <div className="document-download-actions">
    <button className="button" disabled={!consent || busyFormat !== null || exhausted} onClick={() => download('pdf')}><Download size={16} />{busyFormat === 'pdf' ? 'Generating PDF…' : 'Download PDF'}</button>
    <button className="button outline" disabled={!consent || busyFormat !== null || exhausted} onClick={() => download('docx')}><Download size={16} />{busyFormat === 'docx' ? 'Generating Word…' : 'Download Word (.docx)'}</button>
   </div>
-  {exhausted && <p className="field-hint"><button className="text-button" onClick={onViewPro}>View Pro options</button> to continue downloading documents.</p>}
+  {exhausted && <p className="field-hint">Need it sooner? <button className="text-button" onClick={onViewPro}>View Pro options</button> to download now.</p>}
   {message && <p role="status" className="field-hint">{message}</p>}
- </div>{upgradeOpen&&<Modal fallbackFocus={downloadGroup} className="upgrade-modal" labelledBy="upgrade-title" describedBy="upgrade-description" onClose={()=>setUpgradeOpen(false)}><span className="price-tag">PRO PASS</span><h2 id="upgrade-title">Keep downloading with Pro</h2><p id="upgrade-description">{upgradeConfirmed?'Your Free download allowance has been used for this period. ':"If you’ve used your Free downloads for this period, "}Get PDF and Word downloads with a 30-day Pro pass for US$19.99.</p><div className="upgrade-modal-actions"><button className="button" onClick={onViewPro}>View Pro options</button><button className="button outline" onClick={()=>setUpgradeOpen(false)}>Not now</button></div></Modal>}</>;
+ </div>{upgradeOpen&&<Modal fallbackFocus={downloadGroup} className="upgrade-modal" labelledBy="upgrade-title" describedBy="upgrade-description" onClose={()=>setUpgradeOpen(false)}><span className="price-tag">PRO PASS</span><h2 id="upgrade-title">Keep downloading with Pro</h2><p id="upgrade-description">{upgradeConfirmed?'Your Free download allowance has been used for this period. ':"If you’ve used your Free downloads for this period, "}A 30-day Pro pass (US$19.99) includes PDF and Word downloads, plus full Match Analysis and tailoring for saved jobs.</p><div className="upgrade-modal-actions"><button className="button" onClick={onViewPro}>View Pro options</button><button className="button outline" onClick={()=>setUpgradeOpen(false)}>Not now</button></div></Modal>}</>;
 }

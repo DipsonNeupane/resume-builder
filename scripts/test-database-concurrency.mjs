@@ -71,6 +71,24 @@ try{
  assert.equal(await sql(`select attempt_count from public.billing_checkout_attempts where owner_id='${owner}'`),'20');
  console.log('PASS 25 simultaneous checkout attempts admit exactly 20');
 
+ // Four direct/stale Free refresh requests racing for the same account must produce
+ // exactly one atomic reservation. They return ordinary JSON decisions rather than
+ // raising, so inspect the authoritative allowed flag from each connection.
+ const refreshRace=await Promise.all(Array.from({length:4},()=>sql(`set role service_role;select public.jobs_reserve_recommendation_refresh('${raceOwnerB}')::text;`)));
+ const refreshDecisions=refreshRace.map(value=>JSON.parse(value));
+ assert.equal(refreshDecisions.filter(value=>value.allowed===true).length,1);
+ assert.equal(refreshDecisions.filter(value=>value.allowed===false).length,3);
+ const refreshWinner=refreshDecisions.find(value=>value.allowed===true);
+ assert.ok(refreshWinner?.reservedAt);
+ console.log('PASS concurrent Free recommendation refreshes admit exactly one reservation');
+
+ // A provider failure can release only that exact winning reservation, after which a
+ // retry is immediately eligible instead of losing the daily allowance.
+ assert.equal(await sql(`set role service_role;select public.jobs_release_recommendation_refresh('${raceOwnerB}','${refreshWinner.reservedAt}',null);`),'t');
+ const refreshRetry=JSON.parse(await sql(`set role service_role;select public.jobs_reserve_recommendation_refresh('${raceOwnerB}')::text;`));
+ assert.equal(refreshRetry.allowed,true);
+ console.log('PASS exact failed refresh release restores Free eligibility');
+
  // Mixed-mode race: a manual pass checkout and a subscription checkout, both
  // launched concurrently for the SAME owner (two browser tabs) — the exact
  // race that separate preflight checks alone could not serialize, because

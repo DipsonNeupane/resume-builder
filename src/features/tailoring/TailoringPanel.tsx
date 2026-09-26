@@ -197,7 +197,7 @@ export function TailoringPanel({ resume, ownerId, onSignIn, onViewPro, versionId
  }
  if (!ownerId) {
   return <div className="notice" role="status">
-   Sign in to try Pro job tailoring suggestions.
+   Sign in to get AI tailoring suggestions for a saved job. Requires Pro.
    <button className="text-button" onClick={onSignIn}>Sign in</button>
   </div>;
  }
@@ -209,6 +209,12 @@ export function TailoringPanel({ resume, ownerId, onSignIn, onViewPro, versionId
 
  return <section className="field tailoring-panel" aria-label="Job tailoring">
   <div className="tailoring-heading"><div><span className="section-label">From match to application</span><h3>AI tailoring suggestions</h3><p className="field-hint">Make the connection clearer. Keep the experience yours.</p></div><span>AI suggests. You decide.</span></div>
+  <ol className="tailoring-flow" aria-label="How tailoring keeps you in control">
+   <li><strong>Master resume</strong>Remains unchanged</li>
+   <li><strong>Job-specific version</strong>A separate document</li>
+   <li><strong>AI suggestions</strong>Each one reviewable</li>
+   <li><strong>You</strong>Accept, reject or edit</li>
+  </ol>
   <ol className="review-progress" aria-label="Tailoring progress"><li aria-current={!draft?'step':undefined}>01 / Get suggestions</li><li aria-current={draft&&items.some(item=>item.status==='pending')?'step':undefined}>02 / Review each change</li><li aria-current={draft&&!items.some(item=>item.status==='pending')?'step':undefined}>03 / Your resume</li></ol>
   {!jobDescriptionAvailable && <p className="notice" role="status">This saved job has no description available, so ResumeStride cannot generate grounded tailoring suggestions.</p>}
   <div className="field checkbox-field">
@@ -221,7 +227,7 @@ export function TailoringPanel({ resume, ownerId, onSignIn, onViewPro, versionId
    {busy ? 'Getting suggestions…' : 'Get tailoring suggestions'}
   </button>
   <p className="field-hint">ResumeStride sends your headline, summary, skills, section entries and relevant Match Analysis evidence to OpenAI. Dedicated contact fields are excluded; contact details you write in summaries or entries may still be included.</p>
-  <p className="field-hint">An active Pro pass is required. AI suggests; you decide. {onAcceptedResume ? 'Accepted changes update only this saved job-specific resume; your master stays unchanged.' : 'Accepted changes go into a separate draft; your original stays unchanged.'}</p>
+  <p className="field-hint">Requires an active Pro pass. Suggestions are designed to rework only what your resume already says, so check each one before you accept it. {onAcceptedResume ? 'Accept applies a change to this job-specific resume only. Reject leaves it as it is. You can still edit any wording yourself in the editor. Your master never changes.' : 'Accepted changes go into a separate draft; your original stays unchanged.'}</p>
   {message && <p role="status" className="field-hint">{message}</p>}
   {items.length > 0 && <p role="status" className="field-hint">{items.filter(item=>item.status!=='pending').length} of {items.length} suggestions reviewed · {items.filter(item=>item.status==='accepted').length} accepted</p>}
   {items.map((item, index) => <article className="suggestion-card" tabIndex={-1} data-status={item.status} key={`${item.field}-${item.sectionId ?? ''}-${item.entryId ?? ''}`} aria-label={`Suggestion ${index + 1}`}>
@@ -229,7 +235,7 @@ export function TailoringPanel({ resume, ownerId, onSignIn, onViewPro, versionId
    <div className="pro-preview-compare"><div><span>Before</span><p>{item.originalText || 'No text yet'}</p></div><div><span>After</span><p>{item.suggestedText}</p></div></div>
    <p className="tailoring-why"><strong>Why this helps:</strong> {item.why}</p>
    {item.status === 'pending' && <div className="section-actions"><button className="text-button" onClick={event => { event.currentTarget.closest('article')?.focus({preventScroll:true}); reject(index); }}>Reject</button><button className="button" onClick={event => { event.currentTarget.closest('article')?.focus({preventScroll:true}); accept(index); }}>Accept</button></div>}
-   {item.status === 'accepted' && <p className="field-hint">Accepted into the draft below.</p>}
+   {item.status === 'accepted' && <p className="field-hint">{onAcceptedResume ? 'Accepted and saved to this job-specific resume. Edit it any time in the editor.' : 'Accepted into the draft below.'}</p>}
    {item.status === 'rejected' && <p className="field-hint">Rejected — your draft is unchanged.</p>}
   </article>)}
   {draft && <div className="review-document">

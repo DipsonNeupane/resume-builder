@@ -113,7 +113,7 @@ test('PDF and Word use shared server availability, format-specific endpoints, an
  await page.route('**/api/export-status',route=>{statusRequests++;return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:false,remaining,resetsAt:'2026-10-19T12:00:00Z'})});});
  const requests:{format:'pdf'|'docx';requestId:string}[]=[];
  for(const format of ['pdf','docx'] as const)await page.route(`**/api/export-${format}`,async route=>{const body=route.request().postDataJSON();requests.push({format,requestId:body.requestId});remaining=1;await route.fulfill({status:503,contentType:'application/json',body:'{}'});});
- await builder(page);await expect(page.getByText('A document download is available.',{exact:true})).toBeVisible();
+ await builder(page);await expect(page.getByText('2 of 3 Free downloads left for this 30-day period.',{exact:true})).toBeVisible();
  await page.getByRole('checkbox',{name:'I consent to uploading my resume content',exact:false}).check();
  await page.getByRole('button',{name:'Download PDF',exact:true}).click();
  await expect.poll(()=>statusRequests).toBeGreaterThan(1);
@@ -124,11 +124,29 @@ test('PDF and Word use shared server availability, format-specific endpoints, an
  expect(requests[0].requestId).toBe(requests[1].requestId);
  expect(requests[2].requestId).not.toBe(requests[0].requestId);
 });
+test('the selected preview template is sent unchanged to both PDF and Word exports',async({page})=>{
+ await seed(page);
+ const exported:Record<string,unknown>[]=[];
+ for(const format of ['pdf','docx'] as const)await page.route(`**/api/export-${format}`,async route=>{exported.push(route.request().postDataJSON());await route.fulfill({status:503,contentType:'application/json',body:'{}'});});
+ await page.goto('/');await page.getByRole('button',{name:'Continue my resume',exact:true}).first().click();
+ await page.getByRole('button',{name:'Preview resume',exact:true}).click();
+ await page.getByRole('button',{name:'Templates Modern',exact:true}).click();
+ await page.getByRole('dialog',{name:'Choose your layout'}).getByRole('button',{name:/^Executive/}).click();
+ await page.getByRole('button',{name:'Back to editing',exact:true}).click();
+ await page.getByRole('button',{name:'Design & format',exact:true}).click();await page.getByRole('button',{name:'Confirm',exact:true}).click();
+ await page.getByRole('checkbox',{name:'I consent to uploading my resume content',exact:false}).check();
+ await page.getByRole('button',{name:'Download PDF',exact:true}).click();
+ await page.getByRole('button',{name:'Download Word (.docx)',exact:true}).click();
+ await expect.poll(()=>exported.length).toBe(2);
+ for(const body of exported){
+  expect(body.resume).toMatchObject({template:'executive',name:'Alex Morgan',summary:example().summary});
+ }
+});
 test('an exhausted free allowance shows a clear upgrade path to Pro',async({page})=>{
  await seed(page);
  await page.route('**/api/export-status',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:false,remaining:0,resetsAt:'2026-10-19T12:00:00Z'})}));
  await builder(page);
- await expect(page.getByText('Your Free document download allowance is used for this period.',{exact:true})).toBeVisible();
+ await expect(page.getByText(/^Your Free document download allowance is used for this period\. It resets .+\.$/)).toBeVisible();
  await expect(page.getByRole('button',{name:'Download PDF',exact:true})).toBeDisabled();
  await expect(page.getByRole('button',{name:'Download Word (.docx)',exact:true})).toBeDisabled();
  await page.getByRole('button',{name:'View Pro options',exact:true}).click();
@@ -176,7 +194,7 @@ test('already signed-in user starts separate captured job draft without replacin
  const before=await page.evaluate(()=>sessionStorage.getItem('resumestride.resume.v1'));
  await page.evaluate(()=>window.postMessage({type:'resumestride:job-import',payload:{title:'Support role',company:'Example',description:'Help customers with order questions.',sourceUrl:'https://job-boards.greenhouse.io/example/jobs/123',capturedAt:new Date().toISOString()}},location.origin));
  await page.getByRole('button',{name:'Start job-specific draft',exact:true}).click();
- await expect(page.getByRole('button',{name:'Discard draft & return to base resume'})).toBeVisible();
+ await expect(page.getByRole('button',{name:'Discard draft & return to master resume'})).toBeVisible();
  await page.getByRole('button',{name:'Preview resume',exact:true}).click();
  await expect(page.getByText('AI suggestions are available only from a saved job-specific resume.',{exact:false})).toBeVisible();
  expect(await page.evaluate(()=>sessionStorage.getItem('resumestride.resume.v1'))).toBe(before);
@@ -193,7 +211,7 @@ for (const nextId of ['bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',null]) test(`accoun
   const channel=new BroadcastChannel('sb-auth-test-auth-token');
   channel.postMessage({event:id?'SIGNED_IN':'SIGNED_OUT',session:id?{access_token:'other-token',refresh_token:'other-refresh',token_type:'bearer',expires_in:3600,expires_at:Math.floor(Date.now()/1000)+3600,user:{id,aud:'authenticated',role:'authenticated',email:'other@example.com',app_metadata:{},user_metadata:{},created_at:new Date().toISOString()}}:null});
  },nextId);
- await expect(page.getByRole('button',{name:'Discard draft & return to base resume'})).toHaveCount(0);
+ await expect(page.getByRole('button',{name:'Discard draft & return to master resume'})).toHaveCount(0);
  await page.waitForTimeout(500);
  expect(await page.evaluate(()=>localStorage.getItem('resumestride.jobDraft'))).toBeNull();
  expect(await page.evaluate(()=>sessionStorage.getItem('resumestride.resume.v1'))).toBe(base);
