@@ -2,26 +2,27 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { example } from '../src/model';
 
-test('mobile navigation has sequential keyboard access, Escape, and destination focus', async ({ page }) => {
+test('mobile navigation has sequential keyboard access, Escape, and destination focus', async ({ page, browserName }) => {
+ const tab = browserName === 'webkit' ? 'Alt+Tab' : 'Tab';
  await page.setViewportSize({ width: 320, height: 700 });
  await page.goto('/');
- await page.keyboard.press('Tab');
+ await page.keyboard.press(tab);
  await expect(page.getByRole('link', { name: 'Skip to main content' })).toBeFocused();
- await page.keyboard.press('Tab');
+ await page.keyboard.press(tab);
  await expect(page.getByRole('button', { name: 'ResumeStride home' })).toBeFocused();
- await page.keyboard.press('Tab');
+ await page.keyboard.press(tab);
  const toggle = page.getByRole('button', { name: 'Toggle navigation' });
  await expect(toggle).toBeFocused();
  await expect(toggle).toHaveAttribute('aria-controls', 'main-navigation');
  await page.keyboard.press('Enter');
- await page.keyboard.press('Tab');
+ await page.keyboard.press(tab);
  await expect(page.getByRole('link', { name: 'How it works' })).toBeFocused();
  await page.keyboard.press('Escape');
  await expect(toggle).toBeFocused();
  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
  await page.keyboard.press('Enter');
- await page.keyboard.press('Tab');
- await page.keyboard.press('Tab');
+ await page.keyboard.press(tab);
+ await page.keyboard.press(tab);
  await expect(page.getByRole('link', { name: 'Templates', exact: true })).toBeFocused();
  await page.keyboard.press('Enter');
  await expect(toggle).toHaveAttribute('aria-expanded', 'false');

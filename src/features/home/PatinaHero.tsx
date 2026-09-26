@@ -69,13 +69,15 @@ export function PatinaHero({ sample, onBuild, onUpload }: Props) {
    y += (ty - y) * 0.07;
    // Scroll drift is atmosphere, not information: none under reduced motion.
    const s = reduced ? 0 : Math.min(1, Math.max(0, window.scrollY / (window.innerHeight * 0.9)));
+   // Read layout before writing transforms so each frame avoids a forced
+   // read-after-write layout flush.
+   measure();
    for (const [name, depth] of Object.entries(DEPTH) as [Layer, number][]) {
     const node = layers.current[name];
     if (!node) continue;
     node.style.setProperty('--px', `${(x * depth * 14).toFixed(2)}px`);
     node.style.setProperty('--py', `${(y * depth * 10 - s * depth * 80).toFixed(2)}px`);
    }
-   measure();
    if (Math.abs(tx - x) > 0.001 || Math.abs(ty - y) > 0.001) raf = requestAnimationFrame(frame);
   };
   const kick = () => { if (!raf && visible) raf = requestAnimationFrame(frame); };
@@ -110,7 +112,7 @@ export function PatinaHero({ sample, onBuild, onUpload }: Props) {
    <p className="pt-hero-kicker"><span className="pt-dot" aria-hidden="true"/>Your experience. Your next move.</p>
    <h1 className="pt-hero-title"><span>One career.</span> <span>More than</span> <span><em>one version.</em></span></h1>
    <p className="hero-deck">You shouldn’t have to start over for every application. Build your master resume once, find roles worth your time, see the evidence for each fit, and shape a separate version for the one you want.</p>
-   <div className="hero-actions"><button className="button large" onClick={onBuild}>Build my resume<ArrowRight size={18}/></button><button className="text-button" onClick={onUpload}><Upload size={16}/>Upload a resume</button></div>
+   <div className="hero-actions"><button className="button large" onClick={onBuild}>Build my resume<ArrowRight size={18} aria-hidden="true"/></button><button className="text-button" onClick={onUpload}><Upload size={16} aria-hidden="true"/>Upload a resume</button></div>
    <p className="hero-footnote">All seven templates free. No card needed to begin.</p>
   </div>
   <figure className="pt-stage">

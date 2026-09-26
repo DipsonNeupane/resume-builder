@@ -4,9 +4,11 @@ Task #60 audit completed locally September 25, 2026. **Nothing deployed, migrate
 unlocked, backed up or restored by this task.** Full [audit](PRODUCTION_READINESS_AUDIT.md)
 and [acceptance plan](PRODUCTION_CLOUD_ACCEPTANCE.md) contain the execution details.
 
-- [ ] Commission the cloud validator forward fix: four of seven templates currently fail
-  master saving. Require all-template SQL/browser evidence. Resolve version-storage growth,
-  retention, support recovery and account-deletion handling before broad enablement.
+- [x] The cloud validator forward fix is implemented locally: all seven templates now pass
+  the disposable database replay and pgTAP coverage. It is not evidence that the migration
+  is applied to the hosted catalog.
+- [ ] Resolve version-storage growth, retention, support recovery and account-deletion
+  handling before broad cloud enablement.
 - [ ] Authorize a separate dashboard/read-only inventory session: exact deployment/project,
   migration history/catalog drift, environment names/scopes, Auth redirects/SMTP, current
   locks, runtime, DNS/HTTPS and provider/catalog state. Supply access through secure account
@@ -17,8 +19,10 @@ and [acceptance plan](PRODUCTION_CLOUD_ACCEPTANCE.md) contain the execution deta
 - [ ] Approve recovery objectives, encrypted backup location/retention, migration window
   and quoted isolated restore compute cost. Require a fresh pre-migration recovery point
   and a populated restore drill with measured recovery time/data-loss window.
-- [ ] Have engineering finish local browser/axe and native Postgres concurrency checks in
-  a permitted environment; include the two Jobs routes in function packaging verification.
+- [ ] Native Postgres concurrency still needs a host with `initdb`. Local Chromium,
+  Firefox and WebKit acceptance is current; all 11 packaged APIs, including both Jobs
+  routes, pass the standalone output verifier. Retain physical-device/screen-reader review
+  as human acceptance rather than representing it as automated evidence.
 - [ ] Review the exact pending migration list/checksums and catalog comparison; separately
   authorize history repair/forward migrations and locked candidate deployment. Keep current
   production access protection in place. DNS changes only if independently necessary and

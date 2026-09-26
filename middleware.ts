@@ -3,7 +3,7 @@
 // though they resolve during local TypeScript execution.
 export const productionOrigin = 'https://resumestride.com';
 export const publicPages = {
- '/': { title: 'ResumeStride — Resume builder for every career', description: 'Build your resume with seven free templates, flexible sections, A4 and US Letter formats, and right-to-left support. Start with your experience.' },
+ '/': { title: 'ResumeStride — Build, match and tailor your resume', description: 'Build a master resume, find relevant jobs, review evidence-based Match Analysis and create separate job-specific versions without changing your original.' },
  '/privacy.html': { title: 'Privacy notice | ResumeStride', description: 'Read how ResumeStride handles resume drafts, account information, document uploads, payments and optional AI processing, and how to contact support.' },
  '/terms.html': { title: 'Terms and refunds | ResumeStride', description: 'Read the ResumeStride terms of service, Pro purchase and renewal conditions, refund information, usage limits and support details.' },
 } as const;

@@ -6,7 +6,7 @@ import { brotliDecompressSync } from 'node:zlib';
 import { pathToFileURL } from 'node:url';
 const output = path.resolve(process.argv[2] || '.vercel/output');
 // Never inherit real provider credentials into this offline smoke check.
-for (const key of ['STRIPE_SECRET_KEY','STRIPE_WEBHOOK_SECRET','SUPABASE_SERVICE_ROLE_KEY','OPENAI_API_KEY']) delete process.env[key];
+for (const key of ['STRIPE_SECRET_KEY','STRIPE_WEBHOOK_SECRET','SUPABASE_SERVICE_ROLE_KEY','OPENAI_API_KEY','TECHMAP_API_KEY']) delete process.env[key];
 for (const key of ['BILLING_ENABLED', 'AI_ENABLED', 'EXPORTS_ENABLED']) process.env[key] = 'false';
 {
  const root = path.join(output, 'functions/middleware.func');
@@ -44,7 +44,7 @@ for (const key of ['BILLING_ENABLED', 'AI_ENABLED', 'EXPORTS_ENABLED']) process.
  assert.ok((await stat(path.join(root, 'src/services/docx-format.js'))).size > 0, 'Packaged DOCX format module missing');
  console.log('Packaged DOCX handler uses the dependency-free runtime format module.');
 }
-for (const name of ['checkout','subscribe','cancel-subscription','stripe-webhook','billing-status','tailor','export-status','export-pdf','export-docx']) {
+for (const name of ['checkout','subscribe','cancel-subscription','stripe-webhook','billing-status','tailor','export-status','export-pdf','export-docx','jobs-search','jobs-account']) {
  const root = path.join(output, 'functions/api', `${name}.func`);
  process.chdir(root);
  const config = JSON.parse(await readFile('.vc-config.json', 'utf8'));

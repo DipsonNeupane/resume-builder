@@ -152,12 +152,15 @@ export function Silk({ className, offset = 0, slope = -0.6, lift = 0.08, intensi
    size();
    px += (tx - px) * 0.04;
    py += (ty - py) * 0.04;
-   const t = reduced ? 14 : (now - t0) / 1000 + 14;
+   // Five seconds establishes the atmosphere, then the field freezes. Pointer
+   // response can still redraw it without leaving a decorative loop running forever.
+   const elapsed = Math.min((now - t0) / 1000, 5);
+   const t = reduced ? 14 : elapsed + 14;
    gl.uniform3f(uS, canvas.width, canvas.height, t);
    gl.uniform4f(uP, px, py, offset, intensity);
    gl.uniform2f(uD, slope, lift);
    gl.drawArrays(gl.TRIANGLES, 0, 3);
-   if (!reduced) kick();
+   if (!reduced && (elapsed < 5 || Math.abs(tx - px) > 0.001 || Math.abs(ty - py) > 0.001)) kick();
   };
   const kick = () => { if (!raf && onScreen && tab) raf = requestAnimationFrame(frame); };
 

@@ -1,3 +1,81 @@
+## September 26 — task #74: remote final-launch candidate closeout
+
+Continued the owner’s remote final-launch handoff after Claude’s copy pass completed.
+Patina remains visually locked; no redesign, pricing, entitlement, provider, hosted database,
+DNS, access-protection or production change was made. The Chrome extension remains V1.1.
+
+- Created clean checkpoint commit `fa9ff43` (`feat: finalize Patina launch candidate`) on
+  `ui/final-launch-polish`. `.mcp.json` (contains local credentials) and `experiments/`
+  remain ignored and were not committed. No generated design-lab artifact is exposed.
+- Updated production/search identity from the generic builder description to the actual
+  master-resume → Jobs/Match → separate tailored-version workflow; regenerated source SEO
+  HTML. Robots, sitemap, canonical/OG identity, structured data, private-state noindex,
+  favicon/touch/manifest/social assets and real middleware 404 remain verified.
+- Brought public privacy/terms wording in line with Techmap job search, shared public-result
+  caching, saved Jobs/Match/version persistence, the shared three-download Free allowance,
+  and the signup-anchored fixed 30-day period. This is factual disclosure work, not legal
+  approval; provider/DPA, retention/deletion/refund/support and final policy approval remain
+  owner/legal gates.
+- Extended the standalone Build Output verifier to all 11 APIs (`jobs-search` and
+  `jobs-account` included) and removed `TECHMAP_API_KEY` from its offline environment.
+  Local `vercel build --yes --prod --standalone`, PDF architecture preparation and the
+  packaged verifier pass; all API probes fail closed at 503 without live configuration.
+- Capped the decorative Silk auto-animation at five seconds while preserving pointer
+  response, avoided hero read-after-write layout measurement, and hid decorative icons from
+  assistive technology. Existing main-chunk warning remains (~545 kB minified / 160 kB
+  gzip); major feature panels and PDF/import work remain split/lazy.
+- Fixed a real cross-engine preview race: pagination now recomputes when web fonts finish
+  loading. The quality assertion now verifies page-count coverage and visible clipping
+  instead of treating intentional multi-column flow as horizontal overflow. Safari/WebKit
+  keyboard acceptance uses its real Option+Tab link-navigation model.
+- Reconciled the dated launch documents: the repository has 25 migrations; the seven-
+  template validator fix is complete locally; Jobs refresh reservations are included;
+  hosted migration/catalog state is still unverified. Native PostgreSQL concurrency remains
+  blocked because this Mac has no `initdb`; the disposable PGlite replay is not represented
+  as native concurrency evidence.
+
+Fresh verification for this candidate: default browser **74/74 Chromium, 74/74 Firefox,
+74/74 WebKit** (final combined Chromium/WebKit **148/148**); repeated Firefox template
+pagination **70/70**; paid **72/72**; auth **40/40**; server/billing **383/383**; database
+replay/pgTAP PASS; SEO **14/14**; extension **42/42**; frontend production build/client
+TypeScript PASS; server TypeScript PASS; `npm audit --omit=dev --audit-level=high` reports
+zero vulnerabilities; `git diff --check` PASS. Responsive/axe coverage includes 1920, 1440,
+1366, 768, 390 and 320 through the default/paid suites. The local WebKit engine was
+installed for acceptance; the temporary Firefox engine cache was removed afterward.
+
+**Remaining genuine gates:** current hosted catalog/config/provider inventory; owner-approved
+storage/retention/deletion/support policy; fresh encrypted recovery point plus populated
+isolated restore with measured RPO/RTO and reconciliation; protected-production synthetic
+acceptance/monitoring; legal/provider review; native Postgres concurrency or an explicitly
+accepted exception; exact merge/push/protected-deployment authorization; and the final owner
+decision to remove protection/open access. Vercel Deployment Protection must remain enabled
+through locked acceptance. No merge, push, deployment, migration, restore, charge, purchase,
+live OpenAI/Techmap call, DNS change or public opening occurred in this session.
+
+Read-only release-target check: local project `.vercel/project.json` resolves to Vercel
+project `dipsons-projects/resumestride` (`prj_W7PZMjcFj5LnmPtZ2x9QGwIkP6tC`), Node 24.x.
+The current production deployment is Ready and aliases `resumestride.com`, `www` and the
+Vercel domains. Anonymous requests to both the custom domain and deployment URL return
+HTTP 401 with `cache-control: no-store`; the deployment URL also emits `X-Robots-Tag:
+noindex`. This confirms the current lock from outside, but not that it will remain configured;
+recheck immediately after any authorized deployment. Git remote is
+`DipsonNeupane/resume-builder`; local `master`/`origin/master` remain at `34fe1eb` and the
+candidate branch is two commits ahead. A push/merge/deploy still requires exact approval.
+
+Additional read-only dashboard inventory (no values revealed or settings changed): Vercel
+Password Protection is checked for **All Deployments**, with protected sourcemaps enabled;
+the required Supabase, Stripe, OpenAI, Techmap, billing/export/AI and client configuration
+variable names are present in Production scope. Supabase Auth's Site URL is
+`https://resumestride.com`; its four allowlisted redirects are the production/local account
+and password-reset URLs. The hosted migration table contains every repository migration
+through `20260925120000_resume_template_validation` but is missing the candidate's final
+`20260926120000_jobs_refresh_reservations` file (SHA-256
+`fec07e71b2f260cc90999079598e12b839e987a422d99a934a9e5daaf92f4cd3`). That forward file
+only creates/revokes/grants the two atomic Jobs refresh RPCs, but it is a production database
+write and must be separately authorized before code deployment. Scheduled physical backups
+are present daily through **2026-09-26 08:39:28 UTC**. No Restore was clicked; backup
+presence still does not prove populated recovery, measured RPO/RTO or deletion reconciliation.
+
 ## September 26 — task #73: Final copy / conversion pass
 
 Wording, product communication and limit disclosure only on `ui/final-launch-polish`. No

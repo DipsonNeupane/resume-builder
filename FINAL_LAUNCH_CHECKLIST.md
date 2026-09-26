@@ -1,5 +1,31 @@
 # ResumeStride V1 — final launch checklist
 
+## Current candidate update — September 26, 2026
+
+The Patina/copy candidate is checkpointed at `fa9ff43`; the remaining launch-readiness
+fixes are local on `ui/final-launch-polish`. The dated Task #64 findings below remain useful
+as audit history, with these corrections:
+
+- The seven-template database-validator blocker is fixed by a new forward migration and the
+  repository now contains 25 migrations. Full disposable migration replay/pgTAP passes.
+- Standalone Vercel packaging passes for middleware, PDF/DOCX and all 11 API functions,
+  including `jobs-search` and `jobs-account`; every offline API probe fails closed at 503.
+- Default browser acceptance passes 74/74 in Chromium, Firefox and WebKit (148/148 in the
+  final combined Chromium/WebKit run). Paid 72/72, auth 40/40, extension 42/42, server/billing,
+  database, SEO, app/server TypeScript and production build pass in this candidate's local
+  evidence. The extension remains explicitly deferred to V1.1 and does not block web V1.
+- Native PostgreSQL concurrency remains blocked because `initdb` is not installed. The
+  populated restore, current hosted catalog/config inventory, legal/provider review,
+  synthetic protected-production acceptance and owner opening decision remain real gates.
+- Read-only hosted inventory now confirms production has migrations through
+  `20260925120000_resume_template_validation` but does **not** have the candidate's final
+  `20260926120000_jobs_refresh_reservations` migration. Do not deploy this code against the
+  current catalog: the recommendation-refresh path requires those service-role-only RPCs.
+  The newest scheduled physical backup shown is September 26 08:39:28 UTC; snapshot presence
+  is not a populated restore drill.
+- Deployment Protection remains required. No merge, push, deployment, migration, DNS,
+  provider purchase/call, charge or public-access change is authorized by this checklist.
+
 Task #64 / Task H, September 25, 2026. **HOLD: this candidate is not ready to open to users.**
 This local audit does not change or certify the historically deployed website. No external
 actions, deployment, hosted migration, provider call, access-lock change or store submission

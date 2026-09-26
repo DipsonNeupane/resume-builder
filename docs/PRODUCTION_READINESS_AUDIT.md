@@ -1,5 +1,15 @@
 # Production and cloud readiness audit — Task #60
 
+> **September 26 candidate addendum:** F1 is resolved locally by forward migration
+> `20260925120000_resume_template_validation.sql`, which preserves the validator's
+> protections and accepts all seven supported templates; the full disposable database
+> replay and pgTAP suite pass. A later forward migration,
+> `20260926120000_jobs_refresh_reservations.sql`, adds the account-scoped refresh
+> reservation used by the current Jobs implementation. The repository therefore has
+> **25 migrations**, not the 23 inventoried below. Treat the F1 finding and 23-file table
+> as dated evidence; hosted catalog reconciliation, storage/recovery decisions, native
+> concurrency, populated restore and owner-authorized cloud acceptance remain open.
+
 Audited September 24–25, 2026. **Audit and plan only; not release approval.** No deployment,
 hosted SQL, dashboard changes, access-lock changes, DNS changes, provider calls, backup,
 or restore was performed. No secret files or secret values were inspected. Environment

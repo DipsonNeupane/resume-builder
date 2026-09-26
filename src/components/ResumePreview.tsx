@@ -38,7 +38,15 @@ export function PaginatedResumePreview({ resume }: { resume: Resume }) {
   observer.observe(firstPage);
   const paper = firstPage.querySelector<HTMLElement>('.resume-paper');
   if (paper) observer.observe(paper);
-  return () => observer.disconnect();
+  let cancelled = false;
+  const updateAfterFontsLoad = () => { if (!cancelled) update(); };
+  document.fonts?.addEventListener('loadingdone', updateAfterFontsLoad);
+  void document.fonts?.ready.then(updateAfterFontsLoad);
+  return () => {
+   cancelled = true;
+   observer.disconnect();
+   document.fonts?.removeEventListener('loadingdone', updateAfterFontsLoad);
+  };
  }, [resume]);
  const variables = {
   '--preview-margin': `${layout.margin}px`,
