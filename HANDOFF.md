@@ -29,11 +29,21 @@ provider-model change was made.
   server/billing 383/383; database replay/pgTAP, SEO 14/14, extension 42/42, build and both
   TypeScript checks PASS; production dependency audit reports zero high vulnerabilities.
 
-The next and only launch mutation is to remove the existing Vercel Password Protection,
-then verify public HTTP/SEO/security behavior and record the resulting public state. Known
-accepted follow-ups are a populated physical restore/RPO-RTO exercise, native PostgreSQL
-concurrency on a host with `initdb`, and owner/legal/provider-policy review. They are not
-represented as completed evidence.
+**Public web V1 launch completed.** Vercel Password Protection was disabled only after the
+locked checks above passed. Anonymous verification then returned: apex homepage 200;
+privacy/terms/robots/sitemap 200; the synthetic missing path 404; private `?jobs=1` state
+200 with `private, no-store` plus `noindex`; and unauthenticated billing status 401 with
+`no-store` plus `noindex`. The homepage emits the intended canonical, CSP, HSTS,
+nosniff/frame/referrer controls; `www` redirects 308 to the apex; Vercel and immutable
+deployment domains remain `noindex`. Robots allows public crawling and references the
+three-URL sitemap. The first public production deployment was
+`dpl_E2aWch15SkgmHiw3T9gm1akiEUn6` at
+`https://resumestride-hovd35kwo-dipsons-projects.vercel.app`, with no error-level or 5xx
+logs during launch verification.
+
+Known accepted follow-ups are a populated physical restore/RPO-RTO exercise, native
+PostgreSQL concurrency on a host with `initdb`, final owner/legal/provider-policy review,
+and search-console submission/monitoring. They are not represented as completed evidence.
 
 ## September 26 — task #74: remote final-launch candidate closeout
 

@@ -2,14 +2,17 @@
 
 ## Current candidate update — September 26, 2026
 
-**Owner-approved locked production launch is complete and healthy.** Production migration
+**Owner-approved public web V1 launch is complete and healthy.** Production migration
 history contains all 25 files, `master` is pushed at `11a62c0`, Vercel deployment
 `dpl_6TZxBHapU6woWZ4TtEUn6L6zcZ6E` is Ready, and authenticated production acceptance passed
 for landing, Jobs/Match, builder, account/billing status, privacy, terms, and custom 404.
 No error-level or 5xx Vercel logs were present during the acceptance window. Password
 Protection remained active and externally returned HTTP 401 throughout that review. The
-owner explicitly authorized removing that protection after this verified checkpoint; final
-public HTTP/SEO/security verification must immediately follow the switch.
+owner explicitly authorized removing that protection after this verified checkpoint.
+Password Protection was then disabled and anonymous public verification passed: apex/legal/
+robots/sitemap 200, true 404 behavior, private-state noindex/no-store, unauthenticated API
+401, canonical/security headers, `www` redirect, and noncanonical-domain noindex. Vercel
+reported no error-level or 5xx logs for the public verification window.
 
 Accepted follow-ups that are not falsely claimed as completed: populated physical restore
 with measured RPO/RTO, native PostgreSQL concurrency on a host with `initdb`, and final
