@@ -2,6 +2,20 @@
 
 ## Current candidate update — September 26, 2026
 
+**Owner-approved locked production launch is complete and healthy.** Production migration
+history contains all 25 files, `master` is pushed at `11a62c0`, Vercel deployment
+`dpl_6TZxBHapU6woWZ4TtEUn6L6zcZ6E` is Ready, and authenticated production acceptance passed
+for landing, Jobs/Match, builder, account/billing status, privacy, terms, and custom 404.
+No error-level or 5xx Vercel logs were present during the acceptance window. Password
+Protection remained active and externally returned HTTP 401 throughout that review. The
+owner explicitly authorized removing that protection after this verified checkpoint; final
+public HTTP/SEO/security verification must immediately follow the switch.
+
+Accepted follow-ups that are not falsely claimed as completed: populated physical restore
+with measured RPO/RTO, native PostgreSQL concurrency on a host with `initdb`, and final
+owner/legal/provider-policy review. The web V1 launch excludes the Chrome extension, which
+remains V1.1.
+
 The Patina/copy candidate is checkpointed at `fa9ff43`; the remaining launch-readiness
 fixes are local on `ui/final-launch-polish`. The dated Task #64 findings below remain useful
 as audit history, with these corrections:

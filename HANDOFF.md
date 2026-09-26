@@ -1,3 +1,40 @@
+## September 26 — task #75: owner-approved production launch
+
+The owner explicitly approved all pending V1 web launch actions, including the final
+production migration, merge/push, protected deployment acceptance, and removal of Vercel
+Password Protection only after the locked site was verified. The Chrome extension remains
+separately deferred to V1.1. No DNS, price, entitlement, purchase, live card, Restore, or
+provider-model change was made.
+
+- Applied the additive `20260926120000_jobs_refresh_reservations` implementation to
+  production in one transaction. Verified both functions are security-definer with pinned
+  empty `search_path` and execute ACLs only for Postgres/service-role. Production migration
+  history now contains all 25 repository migrations. The latest visible physical backup
+  before application was 2026-09-26 08:39:28 UTC; no Restore was run.
+- Fast-forwarded `master` to candidate commit `11a62c0` and pushed it to
+  `DipsonNeupane/resume-builder`. Vercel production deployment
+  `dpl_6TZxBHapU6woWZ4TtEUn6L6zcZ6E` completed Ready at
+  `https://resumestride-9wv2hpk94-dipsons-projects.vercel.app` and received the
+  `resumestride.com`, `www.resumestride.com`, and Vercel aliases.
+- Locked production acceptance passed in the authenticated browser: current Patina landing
+  and seven templates; Jobs/Match with the existing Free allowance, refresh date, saved-job
+  limit and Pro tailoring boundary; builder; account/billing status with US$19.99 one-time
+  offer and unselected recurring consent; privacy; terms; and the custom not-found page.
+  No job-provider refresh, AI request, purchase, or charge was triggered.
+- Vercel reported no error-level or 5xx logs for the acceptance window. An external request
+  still returned HTTP 401 with `cache-control: no-store`, proving Password Protection
+  remained active throughout locked acceptance.
+- Local release evidence remains: Chromium/Firefox/WebKit 74/74 each; combined final
+  Chromium/WebKit 148/148; repeated Firefox pagination 70/70; paid 72/72; auth 40/40;
+  server/billing 383/383; database replay/pgTAP, SEO 14/14, extension 42/42, build and both
+  TypeScript checks PASS; production dependency audit reports zero high vulnerabilities.
+
+The next and only launch mutation is to remove the existing Vercel Password Protection,
+then verify public HTTP/SEO/security behavior and record the resulting public state. Known
+accepted follow-ups are a populated physical restore/RPO-RTO exercise, native PostgreSQL
+concurrency on a host with `initdb`, and owner/legal/provider-policy review. They are not
+represented as completed evidence.
+
 ## September 26 — task #74: remote final-launch candidate closeout
 
 Continued the owner’s remote final-launch handoff after Claude’s copy pass completed.
