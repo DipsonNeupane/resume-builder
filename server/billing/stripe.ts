@@ -58,7 +58,11 @@ export async function createPassCheckout(stripe: Stripe, config: BillingConfig, 
     client_reference_id: checkoutId, metadata: { checkout_id: checkoutId },
     success_url: `${config.origin}/?account=1&checkout=success`,
     cancel_url: `${config.origin}/?account=1&checkout=cancelled`,
-    payment_method_types: ['card'], allow_promotion_codes: false,
+    allow_promotion_codes: false,
+    // Do not pin this session to US-centric cards. Omitting
+    // payment_method_types lets Stripe dynamically offer only the Dashboard-
+    // enabled methods compatible with the buyer's location, device, USD
+    // presentment and this one-time flow. Cards remain available worldwide.
     // Price/owner/return URLs are never accepted from the browser.
   }, { idempotencyKey: `pass:${ownerId}:${checkoutId}` })
   if (!session.url || new URL(session.url).origin !== 'https://checkout.stripe.com' || session.livemode !== config.live) throw new Error('Unexpected checkout response')
@@ -119,7 +123,10 @@ export async function createSubscriptionCheckout(stripe: Stripe, config: Recurri
     client_reference_id: checkoutId, metadata: { checkout_id: checkoutId },
     success_url: `${config.origin}/?account=1&checkout=success`,
     cancel_url: `${config.origin}/?account=1&checkout=cancelled`,
-    payment_method_types: ['card'], allow_promotion_codes: false,
+    allow_promotion_codes: false,
+    // Dynamic payment methods are filtered by Stripe for subscription
+    // compatibility as well as location, device and the USD Price. This keeps
+    // the explicit renewal-consent and exact-price verification below intact.
     // Price/owner/return URLs are never accepted from the browser.
   }, { idempotencyKey: `sub:${ownerId}:${checkoutId}` })
   if (!session.url || new URL(session.url).origin !== 'https://checkout.stripe.com' || session.livemode !== config.live) throw new Error('Unexpected checkout response')

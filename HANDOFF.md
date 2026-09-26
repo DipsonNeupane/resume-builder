@@ -1,3 +1,31 @@
+## September 26 — task #76: international checkout eligibility
+
+Audited the production Stripe account and checkout implementation for the worldwide,
+all-occupation audience. Live Stripe settings show Cards enabled for all regions and a set
+of compatible wallets/regional methods enabled; no country allowlist exists in application
+code. The existing USD 19.99 Checkout already accepts supported international cards, with
+any issuer conversion/foreign-transaction fee controlled by the customer's bank.
+
+- Removed the explicit `payment_method_types: ['card']` restriction from both one-time and
+  opt-in recurring Checkout Session creation. Stripe can now dynamically show only the
+  Dashboard-enabled methods compatible with the customer's country, device, USD
+  presentment, and payment mode. The fixed USD price, explicit renewal consent, trusted
+  owner binding, signed webhook verification, exact amount/currency checks, refunds,
+  disputes, and entitlement accounting are unchanged.
+- Added a regression covering both Checkout modes and requiring Dashboard-managed dynamic
+  methods rather than a card-only pin. Targeted test 4/4 PASS; complete server/billing suite
+  384/384 PASS; server TypeScript and production build PASS. Existing Vercel Analytics and
+  main-chunk warnings remain non-failing.
+- Adaptive Pricing remains disabled. Although this Stripe account is eligible to display
+  many local currencies, enabling converted presentment would change the currency/amount
+  facts intentionally bound to the USD ledger and webhook policy. It requires a separate
+  accounting design and migration, not a dashboard-only toggle. This work makes payment
+  methods more internationally eligible without weakening settlement verification.
+
+No test/live purchase, card charge, refund, currency conversion, or Stripe product/price
+change was made. Availability can never be universal: issuer declines, sanctions, local
+regulation, Stripe coverage, and method-specific currency rules still apply.
+
 ## September 26 — task #75: owner-approved production launch
 
 The owner explicitly approved all pending V1 web launch actions, including the final

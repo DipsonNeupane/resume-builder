@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { billingConfig, stripeClient, verifyEvent } from '../../server/billing/stripe.ts'
+import type Stripe from 'stripe'
+import { billingConfig, createPassCheckout, createSubscriptionCheckout, stripeClient, verifyEvent, type BillingConfig, type RecurringBillingConfig } from '../../server/billing/stripe.ts'
 const env={BILLING_ENABLED:'true',STRIPE_MODE:'test',STRIPE_SECRET_KEY:'sk_test_fixture',STRIPE_WEBHOOK_SECRET:'whsec_fixture',STRIPE_ACCOUNT_ID:'acct_fixture',STRIPE_PASS_PRICE_ID:'price_fixture',APP_ORIGIN:'https://resumestride.com'}
 test('billing fails closed when gated, incomplete or key mode mismatches',()=>{
   assert.throws(()=>billingConfig({}))
@@ -28,4 +29,23 @@ test('development checkout return origin permits HTTP localhost only, never FTP 
  }
  assert.equal(billingConfig({...env,NODE_ENV:'development',APP_ORIGIN:'http://localhost:5173'}).origin,'http://localhost:5173')
  assert.throws(()=>billingConfig({...env,NODE_ENV:'production',APP_ORIGIN:'http://localhost:5173'}))
+})
+
+test('checkout sessions use Stripe dynamic payment methods for international eligibility',async()=>{
+ const captured: Stripe.Checkout.SessionCreateParams[]=[]
+ const stripe={checkout:{sessions:{create:async(params:Stripe.Checkout.SessionCreateParams)=>{
+  captured.push(params)
+  return {id:`cs_${captured.length}`,url:'https://checkout.stripe.com/c/pay/fixture',livemode:false}
+ }}}} as unknown as Stripe
+ const config: BillingConfig={secret:'sk_test_fixture',webhookSecret:'whsec_fixture',accountId:'acct_fixture',priceId:'price_manual',live:false,origin:'https://resumestride.com'}
+ const recurring: RecurringBillingConfig={...config,recurringPriceId:'price_recurring'}
+ await createPassCheckout(stripe,config,'11111111-1111-4111-8111-111111111111','owner')
+ await createSubscriptionCheckout(stripe,recurring,'22222222-2222-4222-8222-222222222222','owner')
+ assert.equal(captured.length,2)
+ assert.equal(captured[0].mode,'payment')
+ assert.equal(captured[1].mode,'subscription')
+ for(const params of captured){
+  assert.equal(params.payment_method_types,undefined,'Dashboard-managed dynamic methods must not be pinned to card')
+  assert.equal(params.allow_promotion_codes,false)
+ }
 })
