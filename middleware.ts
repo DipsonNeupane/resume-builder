@@ -3,7 +3,7 @@
 // though they resolve during local TypeScript execution.
 export const productionOrigin = 'https://resumestride.com';
 export const publicPages = {
- '/': { title: 'ResumeStride — Build, match and tailor your resume', description: 'Build a master resume, find relevant jobs, review evidence-based Match Analysis and create separate job-specific versions without changing your original.' },
+ '/': { title: 'ResumeStride — Resume Builder, Job Match & Tailoring', description: 'Build a master resume, find relevant jobs, compare your evidence with each role, and create truthful job-specific versions without changing your original.' },
  '/resources/': { title: 'Resume resources: evidence-first job search guides | ResumeStride', description: 'Practical, evidence-first resume guides for comparing roles, deciding whether to apply and tailoring your resume without making things up.' },
  '/resources/tailor-resume-to-job-description/': { title: 'How to tailor a resume to a job description | ResumeStride', description: 'Tailor your resume by mapping the role’s real requirements to evidence you already have—without rewriting everything or adding unsupported claims.' },
  '/resources/should-you-tailor-resume-for-every-job/': { title: 'Should you tailor your resume for every job? | ResumeStride', description: 'Decide when a job deserves a fully tailored resume, a light role-family edit or no application at all—with a practical effort framework.' },
@@ -67,7 +67,7 @@ export const notFoundHtml = '<!doctype html><html lang="en"><head><meta charset=
 export function requestSeo(url: URL, production: boolean) {
  const headers: Record<string, string> = {};
  const canonicalHost = url.origin === productionOrigin;
- const crawlerAsset = url.pathname === '/robots.txt' || url.pathname === '/sitemap.xml';
+ const crawlerAsset = ['/robots.txt', '/sitemap.xml', '/favicon.ico', '/favicon.svg', '/favicon.png', '/favicon-192.png', '/favicon-512.png', '/apple-touch-icon.png'].includes(url.pathname);
  if (!production || !canonicalHost || (!isPublicLocation(url) && !isPublicAttributionLocation(url) && !crawlerAsset)) headers['X-Robots-Tag'] = noindex;
  if (url.search) headers['Cache-Control'] = 'private, no-store';
  if (['resumestride.com', 'www.resumestride.com'].includes(url.hostname) &&

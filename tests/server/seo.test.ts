@@ -118,6 +118,8 @@ test('all public source HTML has unique, consistent metadata before JavaScript',
   assert.match(html, /<script src="\/seo-guard.js"><\/script>/);
  }
  assert.equal(titles.size, Object.keys(publicPages).length); assert.equal(descriptions.size, Object.keys(publicPages).length);
+ assert.equal(publicPages['/'].title, 'ResumeStride — Resume Builder, Job Match & Tailoring');
+ assert.equal(publicPages['/'].description, 'Build a master resume, find relevant jobs, compare your evidence with each role, and create truthful job-specific versions without changing your original.');
 });
 
 test('structured data describes only the real website, with no unsupported product claims', () => {
@@ -146,7 +148,10 @@ test('canonical public production URLs are indexable and crawlable, previews nev
  assert.equal(isPublicAttributionLocation(new URL('/?utm_source=google&utm_medium=organic&utm_campaign=launch', productionOrigin)), true);
  assert.equal(isPublicAttributionLocation(new URL('/?utm_source=google&code=secret', productionOrigin)), false);
  assert.equal(isPublicAttributionLocation(new URL('/?utm_term=private%20content', productionOrigin)), false);
- for (const path of ['/robots.txt', '/sitemap.xml']) assert.equal(policy(path).headers['X-Robots-Tag'], undefined);
+ for (const path of ['/robots.txt', '/sitemap.xml', '/favicon.ico', '/favicon.svg', '/favicon.png', '/favicon-192.png', '/favicon-512.png', '/apple-touch-icon.png']) {
+  assert.equal(policy(path).headers['X-Robots-Tag'], undefined);
+  assert.equal(policy(path, false).headers['X-Robots-Tag'], noindex);
+ }
 });
 
 test('query states and private paths never enter the index, canonical or sitemap', () => {
@@ -285,6 +290,7 @@ test('Vercel middleware emits HTTP noindex, safe continuation, redirect and HEAD
    assert.equal(response.headers.get('X-Robots-Tag'), noindex); assert.equal(response.headers.get('x-middleware-next'), '1');
   }
   const home = middleware(new Request(`${productionOrigin}/`)); assert.equal(home.headers.get('X-Robots-Tag'), null);
+  const favicon = middleware(new Request(`${productionOrigin}/favicon.ico`)); assert.equal(favicon.headers.get('X-Robots-Tag'), null);
   assert.equal(middleware(new Request(`${productionOrigin}/?code=secret`)).headers.get('X-Robots-Tag'), noindex);
   const missing = middleware(new Request(`${productionOrigin}/missing`, { method: 'HEAD' }));
   assert.equal(missing.status, 404); assert.equal(missing.body, null); assert.equal(missing.headers.get('x-middleware-next'), null);
