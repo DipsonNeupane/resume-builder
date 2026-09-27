@@ -15,6 +15,7 @@ import type { Resume } from '../../model';
 import { buildResumeEvidence, proposeSearchesFromResume } from './evidence';
 import { startAutoRefreshLoop } from './autoRefreshScheduler';
 import { fingerprintResume, parseJobResumeSummaries, parseJobResumeVersion, type JobResumeVersion, type JobResumeVersionSummary } from '../../services/jobResumeVersions';
+import { trackProductEvent } from '../../services/analytics';
 
 type Workplace = 'remote' | 'hybrid' | 'onsite' | 'field';
 type EmploymentType = 'full_time' | 'part_time' | 'contract' | 'temporary' | 'internship';
@@ -220,7 +221,22 @@ const STATUS_LABELS = { demonstrated: 'Clearly demonstrated', partially_demonstr
 
 function MatchAnalysisPanel({ analysis, isPro, onViewPro, onClarify, jobTitle }: { jobTitle: string; analysis: MatchAnalysis; isPro: boolean; onViewPro: () => void; onClarify: (id: string, value: 'demonstrated'|'not_have'|'unsure') => void }) {
   const full = analysis.fullAnalysis;
-  return <section className="match-analysis" role="group" aria-label={`Match analysis — ${jobTitle}`}>
+  const panel = useRef<HTMLElement>(null);
+  const viewed = useRef(false);
+  useEffect(() => {
+    const node = panel.current;
+    if (!node || viewed.current) return;
+    const observer = new IntersectionObserver(entries => {
+      if (!viewed.current && entries.some(entry => entry.isIntersecting)) {
+        viewed.current = true;
+        trackProductEvent('match_opened', { surface: 'match', user_state: 'authenticated', plan: isPro ? 'Pro' : 'Free' });
+        observer.disconnect();
+      }
+    }, { threshold: 0.35 });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [isPro]);
+  return <section ref={panel} className="match-analysis" role="group" aria-label={`Match analysis — ${jobTitle}`}>
     <div className="match-analysis-header"><h3>What your resume shows</h3><span>Resume evidence · Match Analysis</span></div>
     <p>{analysis.whyPromising}</p><p className="field-hint">Based only on what your resume shows, not a prediction of hiring. “Not demonstrated” doesn’t mean you don’t have it.</p>
     <ul>{analysis.observations.slice(0, 3).map((item, index) => <li key={index}>{item}</li>)}</ul>
@@ -277,8 +293,15 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
   const controllerRef = useRef<AbortController | null>(null);
   const lastCriteriaRef = useRef<Criteria | null>(null);
   const lastProviderRefreshRef = useRef(0);
+  const savedJobsViewed = useRef(false);
   const currentOwnerRef = useRef(ownerId);
   currentOwnerRef.current = ownerId;
+
+  useEffect(() => {
+    if (!accountLoaded || savedJobsViewed.current) return;
+    savedJobsViewed.current = true;
+    trackProductEvent('saved_jobs_viewed', { surface: 'jobs', user_state: ownerId ? 'authenticated' : 'anonymous', plan: accountIsPro ? 'Pro' : 'Free' });
+  }, [accountLoaded]);
 
   async function accountRequest(action: Record<string, unknown>, signal?: AbortSignal): Promise<Record<string, unknown>> {
     if (!supabase || !ownerId) throw new Error('Please sign in again and retry.');
@@ -413,6 +436,8 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
       const parsed = parseJobCards(body);
       setResults(parsed);
       setAccountIsPro(parsed.isPro);
+      trackProductEvent('jobs_search_performed', { surface: 'jobs', user_state: 'authenticated', plan: parsed.isPro ? 'Pro' : 'Free', outcome: 'success', result_bucket: parsed.jobs.length ? 'some' : 'none' });
+      trackProductEvent('match_completed', { surface: 'match', user_state: 'authenticated', plan: parsed.isPro ? 'Pro' : 'Free', outcome: 'success', result_bucket: parsed.jobs.length ? 'some' : 'none' });
       lastCriteriaRef.current = criteria;
       const now = Date.now();
       lastProviderRefreshRef.current = now;
@@ -463,6 +488,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
       if (currentOwnerRef.current !== requestedOwner) return;
       setSavedJobs(parseSavedJobs(body.savedJobs));
       setMessage('Job saved. Its Match Analysis is in Saved jobs.');
+      trackProductEvent('job_saved', { surface: 'jobs', user_state: 'authenticated', plan: accountIsPro ? 'Pro' : 'Free', outcome: 'success' });
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to save this job.'); }
   }
 

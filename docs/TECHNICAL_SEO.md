@@ -14,7 +14,8 @@ not new pages. Pro renders account billing controls and is not public content.
 | `/privacy.html`, `/terms.html` | Indexable static documents; self canonicals |
 | `/#how-it-works`, `/#templates`, `/#pricing` | Same homepage; canonical `/`, no separate sitemap entry |
 | Account/sign-in/signup/recovery, editor/private resume, Jobs/Saved Jobs/Match, tailoring/job-specific version, Pro/billing, captured-job/recovery overlays | `noindex, nofollow, noarchive`; remove canonical, `og:url` and public schema from the rendered head; generic metadata never includes user data |
-| Any query string, including unknown keys and campaign parameters | HTTP noindex and `private, no-store`; no stripping of auth/payment parameters; early browser guard removes public canonical/schema |
+| Strictly validated standard UTM-only query strings | Indexable landing document with the clean path as canonical; analytics receives only bounded token values; response remains `private, no-store` |
+| Any other query string, including mixed UTM/private or unknown keys | HTTP noindex and `private, no-store`; no stripping of auth/payment parameters; early browser guard removes public canonical/schema |
 | Token/error/recovery or unknown fragments | Early browser noindex guard before auth startup; fragments cannot reach HTTP middleware |
 | API responses (including errors) | HTTP noindex; existing authentication/authorization unchanged |
 | Unknown paths, including invented `/account`, `/jobs`, `/editor`, `/callback`, `/reset`, `/token/...` paths | Real 404 and noindex. No catch-all homepage rewrite. These never were supported app entry points |

@@ -7,7 +7,7 @@ import { billingError } from '../../server/billing/stripe.ts'
 import { runObservedRequest, emitDiagnostic, observeOperation, diagnosticFetch, type Diagnostic } from '../../server/observability.ts'
 import { authenticate, HttpError, json, safeError } from '../../server/http/security.ts'
 import { techmapSearch } from '../../server/jobs/techmap.ts'
-import { safeAnalyticsEvent } from '../../src/services/analytics.ts'
+import { captureFirstTouchAttribution, safeAnalyticsEvent, safeSpeedInsight, sanitizeProductProperties } from '../../src/services/analytics.ts'
 import { clearBrowserDiagnostics, readBrowserDiagnostics, recordBrowserDiagnostic, observeBrowserOperation } from '../../src/services/diagnostics.ts'
 
 const secret = 'PRIVATE resume job suggestion password Bearer sk_key card@example.test'
@@ -165,14 +165,23 @@ test('all deployed API entrypoints generate IDs and ignore attacker-controlled I
  }
 })
 
-test('analytics drops private URLs, arbitrary paths, custom events and unknown payload properties', () => {
+test('analytics permits only sanitized public pageviews, closed product events and coarse properties', () => {
  const origin = 'https://resumestride.com'
  for (const path of ['/?account=1', '/?code=private-token', '/#access_token=private-token', '/resume/private-name', '/jobs', '/?job=private-description']) {
   assert.equal(safeAnalyticsEvent({ type: 'pageview', url: origin + path }), null)
  }
  for (const url of ['garbage', 'https://evil.test/', 'https://user:password@resumestride.com/']) assert.equal(safeAnalyticsEvent({ type: 'pageview', url }), null)
- assert.equal(safeAnalyticsEvent({ type: 'event', url: origin }), null)
+ assert.deepEqual(safeAnalyticsEvent({ type: 'event', url: origin + '/?code=private-token' }), { type: 'event', url: origin + '/' })
+ assert.deepEqual(safeSpeedInsight({ type: 'vital', url: origin + '/?code=private-token', route: '/private' }), { type: 'vital', url: origin + '/', route: '/' })
+ assert.equal(safeSpeedInsight({ type: 'vital', url: 'https://evil.test/?token=secret' }), null)
+ assert.deepEqual(safeAnalyticsEvent({ type: 'pageview', url: origin + '/?utm_source=google&utm_campaign=launch' }), { type: 'pageview', url: origin + '/' })
  assert.deepEqual(safeAnalyticsEvent(Object.assign({ type: 'pageview' as const, url: origin + '/#pricing' }, { resume: secret, properties: { password: secret } })), { type: 'pageview', url: origin + '/' })
+ assert.deepEqual(sanitizeProductProperties({ user_state: 'authenticated', plan: 'Pro', export_type: 'PDF', utm_source: 'google', utm_term: secret, referrer_host: 'Search.Google.com' }), { user_state: 'authenticated', plan: 'Pro', export_type: 'PDF', utm_source: 'google', referrer_host: 'search.google.com' })
+ assert.deepEqual(sanitizeProductProperties({ surface: 'resources', article_slug: 'resume-keywords', cta_destination: 'match' }), { surface: 'resources', article_slug: 'resume-keywords', cta_destination: 'match' })
+ const memory = new Map<string, string>()
+ const storage = { getItem: (key: string) => memory.get(key) ?? null, setItem: (key: string, value: string) => { memory.set(key, value) } }
+ assert.deepEqual(captureFirstTouchAttribution(new URL(origin + '/?utm_source=google&utm_medium=organic&utm_term=product-manager'), 'https://www.google.com/search?q=private', storage), { utm_source: 'google', utm_medium: 'organic', utm_term: 'product-manager', referrer_host: 'www.google.com' })
+ assert.deepEqual(captureFirstTouchAttribution(new URL(origin + '/?utm_source=changed'), 'https://example.com/private', storage), { utm_source: 'google', utm_medium: 'organic', utm_term: 'product-manager', referrer_host: 'www.google.com' })
 })
 
 test('browser diagnostics are bounded, content-free, clearable and preserve thrown errors', async () => {

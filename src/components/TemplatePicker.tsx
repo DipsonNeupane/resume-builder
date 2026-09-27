@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { templates, type Resume, type TemplateId } from '../model';
 import { Modal } from './Modal';
 import { ResumePreview } from './ResumePreview';
+import { trackProductEvent } from '../services/analytics';
 
 export function TemplatePicker({ resume, onSelect }: { resume: Resume; onSelect: (template: TemplateId) => void }) {
  const [open, setOpen] = useState(false);
@@ -20,7 +21,7 @@ export function TemplatePicker({ resume, onSelect }: { resume: Resume; onSelect:
     {templates.map(template => {
      const selected = resume.template === template.id;
      return <li key={template.id}>
-      <button className="template-picker-option" type="button" aria-pressed={selected} onClick={() => { if (!selected) onSelect(template.id); setOpen(false); }}>
+      <button className="template-picker-option" type="button" aria-pressed={selected} onClick={() => { if (!selected) { trackProductEvent('template_selected', { surface: 'builder', template: template.id }); onSelect(template.id); } setOpen(false); }}>
        <span className="template-option-preview" aria-hidden="true"><ResumePreview resume={{ ...resume, template: template.id }} /></span>
        <span className="template-option-copy"><span><strong>{template.label}</strong>{selected && <span className="template-current"><Check size={13} aria-hidden="true" />Current</span>}</span><small>{template.tagline}</small></span>
       </button>

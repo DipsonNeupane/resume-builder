@@ -4,6 +4,19 @@
 export const productionOrigin = 'https://resumestride.com';
 export const publicPages = {
  '/': { title: 'ResumeStride — Build, match and tailor your resume', description: 'Build a master resume, find relevant jobs, review evidence-based Match Analysis and create separate job-specific versions without changing your original.' },
+ '/resources/': { title: 'Resume resources: evidence-first job search guides | ResumeStride', description: 'Practical, evidence-first resume guides for comparing roles, deciding whether to apply and tailoring your resume without making things up.' },
+ '/resources/tailor-resume-to-job-description/': { title: 'How to tailor a resume to a job description | ResumeStride', description: 'Tailor your resume by mapping the role’s real requirements to evidence you already have—without rewriting everything or adding unsupported claims.' },
+ '/resources/should-you-tailor-resume-for-every-job/': { title: 'Should you tailor your resume for every job? | ResumeStride', description: 'Decide when a job deserves a fully tailored resume, a light role-family edit or no application at all—with a practical effort framework.' },
+ '/resources/compare-resume-to-job-description/': { title: 'How to compare your resume to a job description | ResumeStride', description: 'Compare a resume with a job description using a requirement-to-evidence table, not a misleading keyword percentage or interview prediction.' },
+ '/resources/how-to-know-if-qualified-for-job/': { title: 'How to know if you’re qualified for a job | ResumeStride', description: 'Evaluate job qualifications without arbitrary percentage rules: check eligibility, core work, evidence, transferable experience and genuine gaps.' },
+ '/resources/master-resume-vs-tailored-resume/': { title: 'Master resume vs. tailored resume: what to keep in each | ResumeStride', description: 'Learn the difference between a complete master resume and a focused tailored resume, what belongs in each and how to keep versions organized.' },
+ '/resources/how-much-resume-should-change/': { title: 'How much should your resume change for each job? | ResumeStride', description: 'Learn what to change, what to keep fixed and when a resume needs a light edit versus a deeper job-specific version.' },
+ '/resources/resume-keywords/': { title: 'Resume keywords: what actually belongs in your resume | ResumeStride', description: 'Choose resume keywords that describe real skills, tools, methods and qualifications—and place them where your evidence supports them.' },
+ '/resources/tailor-resume-without-lying/': { title: 'How to tailor a resume without lying or making things up | ResumeStride', description: 'Tailor your resume honestly by clarifying, selecting and translating real experience—without inventing skills, titles, results or credentials.' },
+ '/tools/': { title: 'Free resume and job search tools | ResumeStride', description: 'Free, private resume and job-description tools: extract requirements, compare evidence and improve resume bullets without ATS scores or signup.' },
+ '/tools/job-requirement-extractor/': { title: 'Free job requirement extractor | ResumeStride', description: 'Extract required, preferred and other signals from a job description with source text you can verify. Free, private and no signup required.' },
+ '/tools/resume-job-match/': { title: 'Compare your resume to a job description free | ResumeStride', description: 'Compare resume evidence with job requirements—clearly demonstrated, worth reviewing or not demonstrated. No ATS score, signup or upload.' },
+ '/tools/resume-bullet-checker/': { title: 'Free resume bullet point checker | ResumeStride', description: 'Check one resume bullet for action, specificity, context, evidence, readability and filler—without an ATS score or invented metrics.' },
  '/privacy.html': { title: 'Privacy notice | ResumeStride', description: 'Read how ResumeStride handles resume drafts, account information, document uploads, payments and optional AI processing, and how to contact support.' },
  '/terms.html': { title: 'Terms and refunds | ResumeStride', description: 'Read the ResumeStride terms of service, Pro purchase and renewal conditions, refund information, usage limits and support details.' },
 } as const;
@@ -19,10 +32,26 @@ export function isPublicPath(path: string): path is keyof typeof publicPages {
  return Object.hasOwn(publicPages, path);
 }
 export function isPublicLocation(url: URL): boolean {
- return isPublicPath(url.pathname) && !url.search && publicAnchors.has(url.hash);
+ return isPublicPath(url.pathname) && !url.search && isPublicAnchor(url.pathname, url.hash);
+}
+function isPublicAnchor(path: string, hash: string): boolean {
+ return path.startsWith('/resources/') || path.startsWith('/tools/') ? hash === '' || /^#[a-z0-9]+(?:-[a-z0-9]+)*$/.test(hash) : publicAnchors.has(hash);
+}
+const campaignKeys = new Set(['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term']);
+const campaignToken = /^[A-Za-z0-9][A-Za-z0-9._~-]{0,79}$/;
+export function isPublicAttributionLocation(url: URL): boolean {
+ if (!isPublicPath(url.pathname) || !isPublicAnchor(url.pathname, url.hash) || !url.search) return false;
+ const seen = new Set<string>();
+ for (const [key, value] of url.searchParams) {
+  if (!campaignKeys.has(key) || seen.has(key) || !campaignToken.test(value)) return false;
+  seen.add(key);
+ }
+ return seen.size > 0;
 }
 export function initialPage(url: URL): AppPage {
  if (['account', 'reset', 'code', 'token', 'token_hash', 'error'].some(key => url.searchParams.has(key)) || /(?:access_token|refresh_token|type=recovery|error)=?/.test(url.hash)) return 'account';
+ if (url.searchParams.has('jobs')) return 'jobs';
+ if (url.searchParams.has('builder')) return 'builder';
  return url.searchParams.has('pro') ? 'pro' : 'home';
 }
 export const websiteSchema = {
@@ -38,14 +67,15 @@ export const notFoundHtml = '<!doctype html><html lang="en"><head><meta charset=
 export function requestSeo(url: URL, production: boolean) {
  const headers: Record<string, string> = {};
  const canonicalHost = url.origin === productionOrigin;
- if (!production || !canonicalHost || !isPublicLocation(url)) headers['X-Robots-Tag'] = noindex;
+ const crawlerAsset = url.pathname === '/robots.txt' || url.pathname === '/sitemap.xml';
+ if (!production || !canonicalHost || (!isPublicLocation(url) && !isPublicAttributionLocation(url) && !crawlerAsset)) headers['X-Robots-Tag'] = noindex;
  if (url.search) headers['Cache-Control'] = 'private, no-store';
  if (['resumestride.com', 'www.resumestride.com'].includes(url.hostname) &&
      (url.origin !== productionOrigin || url.pathname === '/index.html')) {
   return { status: 308, headers: { ...headers, Location: `${productionOrigin}${url.pathname === '/index.html' ? '/' : url.pathname}${url.search}` }, body: '' };
  }
  if (url.pathname === '/index.html') return { status: 308, headers: { ...headers, Location: `/${url.search}` }, body: '' };
- const asset = ['/robots.txt', '/sitemap.xml', '/favicon.ico', '/favicon.svg', '/favicon.png', '/favicon-192.png', '/favicon-512.png', '/apple-touch-icon.png', '/social-card.png', '/site.webmanifest', '/seo-guard.js'].includes(url.pathname);
+ const asset = ['/robots.txt', '/sitemap.xml', '/favicon.ico', '/favicon.svg', '/favicon.png', '/favicon-192.png', '/favicon-512.png', '/apple-touch-icon.png', '/social-card.png', '/site.webmanifest', '/seo-guard.js', '/resources.css', '/content-analytics.js', '/tools.css', '/tools/analysis.js', '/tools/public-tools.js', '/tools/tool-analytics.js'].includes(url.pathname);
  const infrastructure = /^\/(?:api(?:\/|$)|assets\/|_vercel\/|\.well-known\/)/.test(url.pathname);
  // The extension fixture remains reachable for local installed-extension tests,
  // but must never be an indexable job page.

@@ -1,4 +1,4 @@
-import { isPublicLocation, noindex, privateMetadata, productionOrigin, publicPages, websiteSchema, type AppPage } from './policy';
+import { isPublicAttributionLocation, isPublicLocation, noindex, privateMetadata, productionOrigin, publicPages, websiteSchema, type AppPage } from './policy';
 
 function meta(key: string, value: string, property = false) {
  const attr = property ? 'property' : 'name';
@@ -8,7 +8,7 @@ function meta(key: string, value: string, property = false) {
 }
 export function updateAppHead(page: AppPage, privateOverlay: boolean, sensitiveEntry: boolean) {
  const url = new URL(window.location.href);
- const isHome = page === 'home' && !privateOverlay && !sensitiveEntry && isPublicLocation(url);
+ const isHome = page === 'home' && !privateOverlay && !sensitiveEntry && (isPublicLocation(url) || isPublicAttributionLocation(url));
  const details = page === 'home' ? publicPages['/'] : privateMetadata[page];
  document.title = details.title;
  meta('description', details.description);

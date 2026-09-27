@@ -91,17 +91,19 @@ whenever the underlying behavior changes.
   server-side RPCs, never by a client-asserted purchase state.
 
 ## Analytics / monitoring
-- Task C: `src/services/analytics.ts` restricts pageviews to known public production
-  URLs, rejects queries/unknown fragments/custom events, and reconstructs event
-  fields. Server diagnostics contain only fixed categories, timing, generated
+- `src/services/analytics.ts` restricts pageviews to known public production URLs,
+  reconstructs event URLs without query strings, and permits only a closed product-
+  event/property vocabulary. Strictly validated UTM-only landing URLs retain the
+  clean canonical; private/unknown queries and fragments remain excluded. First-touch
+  campaign values and referrer hostname are session-scoped. Server diagnostics contain
+  only fixed categories, timing, generated
   request IDs and boolean feature gates. Browser diagnostics are bounded memory;
   extension delivery diagnostics remain in the worker console. See
   [OBSERVABILITY.md](OBSERVABILITY.md) for exact boundaries and owner verification
   of host metadata, retention and any future monitoring integration.
-- `@vercel/analytics` (`src/main.tsx`) provides Vercel's standard page-view analytics;
-  no resume, job, or tailoring content is passed into analytics calls anywhere in the
-  codebase (verified by search — analytics usage is limited to the `<Analytics />`
-  mount, no custom event payloads carrying user content).
+- `@vercel/analytics` and `@vercel/speed-insights` (`src/main.tsx`) provide page,
+  product-funnel and Core Web Vitals measurement. Event calls pass only coarse enums;
+  no resume, job, tailoring, identity, token, payment or raw search content is passed.
 - Server error responses are sanitized (`safeError()` in `server/http/security.ts`):
   only an `HttpError`'s own message or a generic 503 is ever returned, never a stack
   trace, internal path, or secret.

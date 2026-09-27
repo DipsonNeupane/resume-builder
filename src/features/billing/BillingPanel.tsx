@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../../services/supabase';
+import { trackProductEvent } from '../../services/analytics';
 
 // Mirrors the four "in force" statuses server/billing SQL's
 // billing_lookup_owner_subscription itself filters to — a status outside
@@ -44,7 +45,7 @@ export function BillingPanel({ ownerId, surface='account' }: { ownerId: string; 
      ||(result.paidThrough!==null&&(typeof result.paidThrough!=='string'||!Number.isFinite(Date.parse(result.paidThrough))))
      ||(result.subscription!==null&&!isSubscriptionState(result.subscription))
     ) throw new Error();
-    if(!controller.signal.aborted){setStatus(result);setMessage('');}
+    if(!controller.signal.aborted){setStatus(result);setMessage('');if(result.isPro)trackProductEvent('pro_activated',{surface:surface==='purchase'?'pricing':'account',user_state:'authenticated',plan:'Pro'});}
    } catch {if(!controller.signal.aborted)setMessage('Purchases are not available yet. Your resume remains available.');}
   }
   void load();
@@ -63,7 +64,7 @@ export function BillingPanel({ ownerId, surface='account' }: { ownerId: string; 
    if(destination.origin!=='https://checkout.stripe.com')throw new Error();
    // Re-check account after the asynchronous checkout; never redirect a new user.
    const current=await supabase.auth.getSession();
-   if(active.current&&current.data.session?.user.id===ownerId)window.location.assign(destination.href);
+   if(active.current&&current.data.session?.user.id===ownerId){trackProductEvent('checkout_started',{surface:surface==='purchase'?'pricing':'account',user_state:'authenticated',plan:status.isPro?'Pro':'Free'});window.location.assign(destination.href);}
   } catch {if(active.current)setMessage('Checkout could not open. Retry safely, or contact support if you already paid.');}
   finally{inFlight.current=false;if(active.current)setBusy(false);}
  }
@@ -87,7 +88,7 @@ export function BillingPanel({ ownerId, surface='account' }: { ownerId: string; 
    const destination=new URL(result.url);
    if(destination.origin!=='https://checkout.stripe.com')throw new Error();
    const current=await supabase.auth.getSession();
-   if(active.current&&current.data.session?.user.id===ownerId)window.location.assign(destination.href);
+   if(active.current&&current.data.session?.user.id===ownerId){trackProductEvent('checkout_started',{surface:surface==='purchase'?'pricing':'account',user_state:'authenticated',plan:'Free'});window.location.assign(destination.href);}
   } catch(error){if(active.current)setMessage(error instanceof Error&&error.message?error.message:'Checkout could not open. Retry safely, or contact support if you already paid.');}
   finally{subscribeInFlight.current=false;if(active.current)setSubscribeBusy(false);}
  }

@@ -12,9 +12,12 @@ import type { Connect } from 'vite';
 import middleware from '../../middleware';
 import { devSourceModules, seoPolicy } from '../../vite.config';
 import browserConfig from '../../playwright.config';
-import { initialPage, isPublicLocation, noindex, productionOrigin, publicPages, requestSeo, websiteSchema } from '../../src/seo/policy';
+import { initialPage, isPublicAttributionLocation, isPublicLocation, noindex, productionOrigin, publicPages, requestSeo, websiteSchema } from '../../src/seo/policy';
+import { guides } from '../../src/content/guides';
+import { publicTools } from '../../src/content/tools';
 const read = (file: string) => readFileSync(file, 'utf8');
 const policy = (path: string, production = true) => requestSeo(new URL(path, productionOrigin), production);
+const publicHtmlFile = (publicPath: string) => publicPath === '/' ? 'index.html' : publicPath.endsWith('/') ? `public${publicPath}index.html` : `public${publicPath}`;
 
 test('browser verification always starts its own configured application server', () => {
  const servers = Array.isArray(browserConfig.webServer) ? browserConfig.webServer : [browserConfig.webServer];
@@ -92,14 +95,14 @@ test('robots allows public crawling and directs crawlers to the exact public-onl
  assert.match(robots, /^Sitemap: https:\/\/resumestride.com\/sitemap.xml$/m);
  const xml = read('public/sitemap.xml');
  assert.match(xml, /<urlset xmlns="http:\/\/www.sitemaps.org\/schemas\/sitemap\/0.9">/);
- assert.deepEqual([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1]), ['https://resumestride.com/', 'https://resumestride.com/privacy.html', 'https://resumestride.com/terms.html']);
+ assert.deepEqual([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1]), Object.keys(publicPages).map(path => `${productionOrigin}${path}`));
  assert.doesNotMatch(xml.replace(/^<\?xml[^>]+>/, ''), /<lastmod>|\?|#|JobPosting/);
 });
 
 test('all public source HTML has unique, consistent metadata before JavaScript', () => {
  const titles = new Set(); const descriptions = new Set();
  for (const path of Object.keys(publicPages)) {
-  const html = read(path === '/' ? 'index.html' : `public${path}`);
+  const html = read(publicHtmlFile(path));
   const title = html.match(/<title>(.*?)<\/title>/)?.[1];
   const description = html.match(/<meta name="description" content="([^"]+)"/ )?.[1];
   assert.ok(title && title.includes('ResumeStride')); assert.ok(description && description.length > 60);
@@ -114,7 +117,7 @@ test('all public source HTML has unique, consistent metadata before JavaScript',
   assert.match(html, /property="og:image" content="https:\/\/resumestride.com\/social-card.png"/);
   assert.match(html, /<script src="\/seo-guard.js"><\/script>/);
  }
- assert.equal(titles.size, 3); assert.equal(descriptions.size, 3);
+ assert.equal(titles.size, Object.keys(publicPages).length); assert.equal(descriptions.size, Object.keys(publicPages).length);
 });
 
 test('structured data describes only the real website, with no unsupported product claims', () => {
@@ -140,16 +143,25 @@ test('canonical public production URLs are indexable and crawlable, previews nev
  }
  assert.equal(isPublicLocation(new URL('/#templates', productionOrigin)), true);
  assert.equal(isPublicLocation(new URL('/#access_token=secret', productionOrigin)), false);
+ assert.equal(isPublicAttributionLocation(new URL('/?utm_source=google&utm_medium=organic&utm_campaign=launch', productionOrigin)), true);
+ assert.equal(isPublicAttributionLocation(new URL('/?utm_source=google&code=secret', productionOrigin)), false);
+ assert.equal(isPublicAttributionLocation(new URL('/?utm_term=private%20content', productionOrigin)), false);
+ for (const path of ['/robots.txt', '/sitemap.xml']) assert.equal(policy(path).headers['X-Robots-Tag'], undefined);
 });
 
 test('query states and private paths never enter the index, canonical or sitemap', () => {
- for (const query of ['account=1', 'pro=1', 'reset=1', 'code=secret', 'token=secret', 'token_hash=secret', 'access_token=secret', 'checkout=success', 'session_id=secret', 'job=id', 'resume=id', 'utm_source=example', 'unknown=future']) {
+ for (const query of ['account=1', 'pro=1', 'reset=1', 'code=secret', 'token=secret', 'token_hash=secret', 'access_token=secret', 'checkout=success', 'session_id=secret', 'job=id', 'resume=id', 'utm_source=example&code=secret', 'utm_term=private%20content', 'unknown=future']) {
   for (const path of Object.keys(publicPages)) {
    const result = policy(`${path}?${query}`);
    assert.equal(result.status, 0); assert.equal(result.headers['X-Robots-Tag'], noindex);
    assert.equal(result.headers['Cache-Control'], 'private, no-store');
    assert.equal(result.body, ''); assert.equal(result.headers.Location, undefined);
   }
+ }
+ for (const path of Object.keys(publicPages)) {
+  const result = policy(`${path}?utm_source=google&utm_medium=organic&utm_campaign=launch`);
+  assert.equal(result.status, 0); assert.equal(result.headers['X-Robots-Tag'], undefined);
+  assert.equal(result.headers['Cache-Control'], 'private, no-store');
  }
  for (const path of ['/account', '/auth/callback', '/editor', '/resumes/private', '/jobs', '/saved-jobs', '/match', '/tailoring', '/job-resume/123', '/reset', '/token/secret', '/missing', '/privacy.html/', '/404.html', '/apps', '/apps/extension/src/lib/capture.ts', '/apps/extension/src/lib/capture.ts?t=123', '/middleware.ts', '/middleware.ts?t=123']) {
   const result = policy(path); assert.equal(result.status, 404); assert.equal(result.headers['X-Robots-Tag'], noindex);
@@ -177,14 +189,65 @@ test('favicon, app and social metadata refer to real assets without claiming an 
   const png = readFileSync(`public/${file}`); assert.equal(png.toString('ascii', 1, 4), 'PNG');
   assert.equal(png.readUInt32BE(16), width); assert.equal(png.readUInt32BE(20), height);
  }
- for (const asset of ['/favicon.ico', '/favicon.svg', '/favicon-192.png', '/favicon-512.png', '/seo-guard.js', '/social-card.png', '/robots.txt', '/sitemap.xml']) assert.equal(policy(asset).status, 0);
+ for (const asset of ['/favicon.ico', '/favicon.svg', '/favicon-192.png', '/favicon-512.png', '/seo-guard.js', '/content-analytics.js', '/resources.css', '/tools.css', '/tools/analysis.js', '/tools/public-tools.js', '/tools/tool-analytics.js', '/social-card.png', '/robots.txt', '/sitemap.xml']) assert.equal(policy(asset).status, 0);
+});
+
+test('free tools are complete, private-by-design and distinct from paid Match', () => {
+ assert.equal(publicTools.length, 3);
+ assert.deepEqual(publicTools.map(tool => tool.path), ['/tools/job-requirement-extractor/', '/tools/resume-job-match/', '/tools/resume-bullet-checker/']);
+ for (const tool of publicTools) {
+  const html = read(publicHtmlFile(tool.path));
+  assert.equal((html.match(/<h1>/g) || []).length, 1);
+  assert.match(html, /No signup/); assert.match(html, /Processed only in this browser/);
+  assert.match(html, /not uploaded, saved, placed in the URL or sent to analytics/i);
+  assert.match(html, /data-tool-form/); assert.match(html, /data-tool-cta=/);
+  assert.doesNotMatch(html, /(?:score|match)\s*(?:out of 100|\d+\s*%|percentage)|<meter|class="[^"]*score/i);
+ }
+ const controller = read('public/tools/public-tools.js');
+ assert.doesNotMatch(controller, /\bfetch\s*\(|XMLHttpRequest|sendBeacon|localStorage|sessionStorage|console\./);
+ assert.match(controller, /textContent/); assert.doesNotMatch(controller, /innerHTML|insertAdjacentHTML/);
+ const analytics = read('public/tools/tool-analytics.js');
+ assert.match(analytics, /tool_viewed/); assert.match(controller, /tool_started/); assert.match(controller, /tool_completed/); assert.match(analytics, /tool_cta_clicked/);
+ assert.doesNotMatch(analytics, /textarea|resume-text|job-description|FormData|innerText|textContent/);
+});
+
+test('resource content is complete, deliberate and free of disallowed claims', () => {
+ assert.equal(guides.length, 8);
+ assert.equal(new Set(guides.map(guide => guide.slug)).size, 8);
+ for (const guide of guides) {
+  assert.ok(guide.sections.length >= 5, guide.slug);
+  assert.ok(guide.directAnswer.length > 100, guide.slug);
+  assert.equal(guide.related.length, 3, guide.slug);
+  const html = read(publicHtmlFile(`/resources/${guide.slug}/`));
+  assert.equal((html.match(/<h1>/g) || []).length, 1, guide.slug);
+  assert.match(html, /class="direct-answer"/);
+  assert.match(html, /data-content-cta=/);
+  assert.doesNotMatch(html, /in today(?:'|’)?s competitive job market|guarantee(?:d)? (?:an )?interview|ATS score (?:predicts|guarantees)|keyword percentage (?:predicts|guarantees)|universal job-board/i);
+ }
+ assert.doesNotMatch(read('public/resources/index.html'), /blog/i);
 });
 
 test('public pages have crawlable links connecting all three surfaces', () => {
  const home = read('src/features/home/HomePage.tsx');
- for (const path of ['/privacy.html', '/terms.html']) assert.ok(home.includes(`href="${path}"`));
+ for (const path of ['/tools/', '/resources/', '/privacy.html', '/terms.html']) assert.ok(home.includes(`href="${path}"`));
  for (const file of ['public/privacy.html', 'public/terms.html']) {
   for (const path of ['/', '/privacy.html', '/terms.html']) assert.ok(read(file).includes(`href="${path}"`));
+ }
+ const hub = read('public/resources/index.html');
+ for (const path of Object.keys(publicPages).filter(path => path.startsWith('/resources/') && path !== '/resources/')) assert.ok(hub.includes(`href="${path}"`));
+ for (const path of Object.keys(publicPages).filter(path => path.startsWith('/resources/'))) {
+  const html = read(publicHtmlFile(path));
+  assert.match(html, /href="\/(?:\?builder=1|\?jobs=1|#templates|#pricing)/);
+  assert.ok(html.includes('href="/resources/"'));
+ }
+ const toolHub = read('public/tools/index.html');
+ for (const tool of publicTools) assert.ok(toolHub.includes(`href="${tool.path}"`));
+ for (const tool of publicTools) {
+  const html = read(publicHtmlFile(tool.path));
+  assert.ok(html.includes('href="/tools/"')); assert.ok(html.includes('href="/resources/"'));
+ }
+ for (const slug of ['tailor-resume-to-job-description', 'compare-resume-to-job-description', 'resume-keywords', 'tailor-resume-without-lying']) {
+  assert.match(read(`public/resources/${slug}/index.html`), /href="\/tools\/(?:job-requirement-extractor|resume-job-match|resume-bullet-checker)\//);
  }
 });
 
@@ -194,6 +257,9 @@ test('early head guard protects token fragments even before the auth client cons
   ['https://resumestride.com/#templates', false, false],
   ['https://resumestride.com/#access_token=secret', true, true],
   ['https://resumestride.com/?account=1&code=secret', true, true],
+  ['https://resumestride.com/?utm_source=google&utm_campaign=launch', false, false],
+  ['https://resumestride.com/resources/resume-keywords/#placement', false, false],
+  ['https://resumestride.com/resources/resume-keywords/#access_token-secret', true, true],
   ['https://preview.vercel.app/', false, true],
  ] as const) {
   const robots = { content: 'index, follow' }; const dataset: Record<string, string> = {}; let removed = 0;
@@ -206,6 +272,8 @@ test('early head guard protects token fragments even before the auth client cons
  assert.equal(initialPage(new URL('/?reset=1&code=secret', productionOrigin)), 'account');
  assert.equal(initialPage(new URL('/#access_token=secret&type=recovery', productionOrigin)), 'account');
  assert.equal(initialPage(new URL('/?pro=1', productionOrigin)), 'pro');
+ assert.equal(initialPage(new URL('/?jobs=1', productionOrigin)), 'jobs');
+ assert.equal(initialPage(new URL('/?builder=1', productionOrigin)), 'builder');
 });
 
 test('Vercel middleware emits HTTP noindex, safe continuation, redirect and HEAD 404 responses', () => {

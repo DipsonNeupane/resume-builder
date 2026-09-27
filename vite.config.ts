@@ -15,7 +15,13 @@ export function seoPolicy() {
   const result = requestSeo(url, false);
   for (const [key, value] of Object.entries(result.headers)) res.setHeader(key, value);
   if (result.status) { res.statusCode = result.status; res.end(req.method === 'HEAD' ? undefined : result.body); }
-  else next();
+  else {
+   // Vite's SPA fallback does not resolve trailing-slash public directories to
+   // their index files. Keep the browser's clean canonical URL while serving
+   // the generated resource document in development and preview.
+   if ((url.pathname.startsWith('/resources/') || url.pathname.startsWith('/tools/')) && url.pathname.endsWith('/')) req.url = `${url.pathname}index.html${url.search}`;
+   next();
+  }
  };
  return { name: 'resumestride-seo-policy', configureServer(server) { server.middlewares.use(handler(true)); }, configurePreviewServer(server) { server.middlewares.use(handler(false)); } } satisfies Plugin;
 }

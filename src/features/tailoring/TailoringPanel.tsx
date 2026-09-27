@@ -18,6 +18,7 @@ import { PaginatedResumePreview } from '../../components/ResumePreview';
 import { supabase } from '../../services/supabase';
 import { type Resume } from '../../model';
 import { applySuggestion, InvalidSuggestionError, type Suggestion, type SuggestionField } from './applySuggestion';
+import { trackProductEvent } from '../../services/analytics';
 
 const KNOWN_FIELDS: readonly SuggestionField[] = ['headline', 'summary', 'skills', 'title', 'description'];
 
@@ -116,6 +117,7 @@ export function TailoringPanel({ resume, ownerId, onSignIn, onViewPro, versionId
   if (inFlight.current || !supabase || !ownerId) return;
   if (!consent || !versionId || !savedJobId || !jobDescriptionAvailable) return;
   inFlight.current = true;
+  trackProductEvent('tailoring_started', { surface: 'tailoring', user_state: 'authenticated', plan: 'Pro' });
   setBusy(true);
   setMessage('');
   const controller = new AbortController();
@@ -187,6 +189,8 @@ export function TailoringPanel({ resume, ownerId, onSignIn, onViewPro, versionId
     onAcceptedResume(next);
    }
    setItems(current => current.map((entry, i) => i === index ? { ...entry, status: 'accepted' } : entry));
+   trackProductEvent('suggestion_reviewed', { surface: 'tailoring', user_state: 'authenticated', plan: 'Pro' });
+   trackProductEvent('suggestion_accepted', { surface: 'tailoring', user_state: 'authenticated', plan: 'Pro' });
   } catch (error) {
    setMessage(error instanceof InvalidSuggestionError ? error.message : 'This suggestion could no longer be applied.');
    setItems(current => current.map((entry, i) => i === index ? { ...entry, status: 'rejected' } : entry));
@@ -194,6 +198,8 @@ export function TailoringPanel({ resume, ownerId, onSignIn, onViewPro, versionId
  }
  function reject(index: number) {
   setItems(current => current.map((entry, i) => i === index ? { ...entry, status: 'rejected' } : entry));
+  trackProductEvent('suggestion_reviewed', { surface: 'tailoring', user_state: 'authenticated', plan: 'Pro' });
+  trackProductEvent('suggestion_rejected', { surface: 'tailoring', user_state: 'authenticated', plan: 'Pro' });
  }
  if (!ownerId) {
   return <div className="notice" role="status">

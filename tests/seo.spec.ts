@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { publicPages } from '../src/seo/policy';
 
 test('public source documents, robots and sitemap are served with correct metadata', async ({ request, page }) => {
  // This shared source module is required by the development application graph.
@@ -8,16 +9,18 @@ test('public source documents, robots and sitemap are served with correct metada
  expect(captureModule.headers()['content-type']).toContain('javascript');
  expect(await captureModule.text()).toContain('export');
  const robots = await request.get('/robots.txt'); expect(robots.status()).toBe(200); expect(await robots.text()).toContain('Sitemap: https://resumestride.com/sitemap.xml');
- const sitemap = await request.get('/sitemap.xml'); expect(sitemap.status()).toBe(200); expect((await sitemap.text()).match(/<loc>/g)).toHaveLength(3);
- for (const path of ['/', '/privacy.html', '/terms.html']) {
+ const sitemap = await request.get('/sitemap.xml'); expect(sitemap.status()).toBe(200); expect((await sitemap.text()).match(/<loc>/g)).toHaveLength(Object.keys(publicPages).length);
+ for (const path of Object.keys(publicPages)) {
   const response = await request.get(path); expect(response.status()).toBe(200);
   // Development is always noindex, while public HTML is ready for the canonical host.
   expect(response.headers()['x-robots-tag']).toContain('noindex');
   expect(await response.text()).toContain(`rel="canonical" href="https://resumestride.com${path}"`);
   await page.goto(path);
   if (path === '/') await expect(page.getByRole('button', { name: 'Build my resume', exact: true }).first()).toBeVisible();
+  if (path === '/resources/') await expect(page.getByRole('heading', { name: /Make the evidence easy to see/ })).toBeVisible();
+  if (path.startsWith('/resources/') && path !== '/resources/') await expect(page.locator('article.article-body')).toBeVisible();
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `https://resumestride.com${path}`);
-  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /ResumeStride|resume/);
+  expect((await page.locator('meta[name="description"]').getAttribute('content'))?.length).toBeGreaterThan(60);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
  }
 });

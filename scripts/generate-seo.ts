@@ -7,7 +7,7 @@ function output(file: string, text: string) {
  else writeFileSync(file, text);
 }
 for (const [path, details] of Object.entries(publicPages)) {
- const file = path === '/' ? 'index.html' : `public${path}`;
+ const file = path === '/' ? 'index.html' : path.endsWith('/') ? `public${path}index.html` : `public${path}`;
  let html = readFileSync(file, 'utf8');
  const canonical = `${productionOrigin}${path}`;
  const block = `<!-- seo:start -->
@@ -22,7 +22,7 @@ for (const [path, details] of Object.entries(publicPages)) {
 <link rel="icon" href="/favicon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
 <link rel="manifest" href="/site.webmanifest">
-<meta property="og:type" content="website">
+<meta property="og:type" content="${path.startsWith('/resources/') && path !== '/resources/' ? 'article' : 'website'}">
 <meta property="og:site_name" content="ResumeStride">
 <meta property="og:title" content="${escape(details.title)}">
 <meta property="og:description" content="${escape(details.description)}">

@@ -8,6 +8,7 @@ import { Download } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { validateAll, contentLength, maxContentChars, type Resume } from '../../model';
 import { docxMimeType } from '../../services/docx';
+import { trackProductEvent } from '../../services/analytics';
 
 const MAX_DOCUMENT_BYTES = 4_200_000;
 type ExportFormat = 'pdf' | 'docx';
@@ -52,6 +53,10 @@ export function GeneratedDocumentControls({ resume, ownerId, onSignIn, onViewPro
  }, [message]);
 
  useEffect(() => {
+  if (upgradeOpen) trackProductEvent('upgrade_prompt_viewed', { surface: 'export', user_state: ownerId ? 'authenticated' : 'anonymous' });
+ }, [upgradeOpen]);
+
+ useEffect(() => {
   if (!ownerId || !supabase) return;
   const client = supabase;
   let disposed = false;
@@ -90,6 +95,7 @@ export function GeneratedDocumentControls({ resume, ownerId, onSignIn, onViewPro
   inFlight.current = true;
   setBusyFormat(format);
   setMessage('');
+  trackProductEvent('export_started', { surface: 'export', user_state: 'authenticated', export_type: format === 'pdf' ? 'PDF' : 'DOCX' });
   const controller = new AbortController();
   controllerRef.current = controller;
   const selected = formats[format];
@@ -133,6 +139,7 @@ export function GeneratedDocumentControls({ resume, ownerId, onSignIn, onViewPro
    try { const a = document.createElement('a'); a.href = url; a.download = selected.filename; a.click(); }
    finally { setTimeout(() => URL.revokeObjectURL(url), 1000); }
    setMessage(`${selected.label} document generated. Your browser should offer the download.`);
+   trackProductEvent('export_completed', { surface: 'export', user_state: 'authenticated', export_type: format === 'pdf' ? 'PDF' : 'DOCX', outcome: 'success' });
   } catch (error) {
    if (controller.signal.aborted || !active.current) return;
    setMessage(error instanceof Error && error.message !== 'mismatch' ? error.message : 'Could not download this document. Please sign in again and retry.');

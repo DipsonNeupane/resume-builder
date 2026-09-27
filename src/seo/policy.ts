@@ -2,6 +2,7 @@
 // Vercel middleware entry so the packaged runtime cannot lose a source-tree import.
 export {
  initialPage,
+ isPublicAttributionLocation,
  isPublicLocation,
  isPublicPath,
  noindex,
