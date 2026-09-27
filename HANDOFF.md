@@ -1,3 +1,18 @@
+## September 27 — task #77: public favicon identity
+
+Replaced the weak 32px-only fallback setup with a complete public favicon asset suite using
+the existing Patina ResumeStride stride mark (no redesign): root `favicon.ico` at 64px,
+SVG, 32px PNG fallback, 192px and 512px PNGs, plus the existing 180px Apple touch icon.
+The manifest now declares the 192/512 app icons, and generated home/privacy/terms plus the
+real 404 all advertise the same stable icon URLs. The middleware public-asset allowlist now
+serves every favicon directly so crawlers never receive the SPA or a synthetic 404.
+
+This fixes the technical reason Chrome/Google could show a generic globe: the only PNG
+favicon advertised previously was 32px and there was no root `.ico`, while Google recommends
+a square icon larger than 48px. SEO generation/checks and the full 14/14 SEO suite PASS;
+production build PASS with only the existing Analytics/chunk-size warnings. Search-result
+replacement still depends on Google recrawling the homepage and can take days or weeks.
+
 ## September 26 — task #76: international checkout eligibility
 
 Audited the production Stripe account and checkout implementation for the worldwide,

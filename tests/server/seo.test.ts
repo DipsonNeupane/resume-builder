@@ -173,11 +173,11 @@ test('hostname and index aliases redirect once, preserving callback queries', ()
 test('favicon, app and social metadata refer to real assets without claiming an offline app', () => {
  const manifest = JSON.parse(read('public/site.webmanifest'));
  assert.equal(manifest.name, 'ResumeStride'); assert.equal(manifest.display, 'browser'); assert.equal(manifest.start_url, '/');
- for (const [file, width, height] of [['favicon.png', 32, 32], ['apple-touch-icon.png', 180, 180], ['social-card.png', 1200, 630]] as const) {
+ for (const [file, width, height] of [['favicon.png', 32, 32], ['favicon-192.png', 192, 192], ['favicon-512.png', 512, 512], ['apple-touch-icon.png', 180, 180], ['social-card.png', 1200, 630]] as const) {
   const png = readFileSync(`public/${file}`); assert.equal(png.toString('ascii', 1, 4), 'PNG');
   assert.equal(png.readUInt32BE(16), width); assert.equal(png.readUInt32BE(20), height);
  }
- for (const asset of ['/favicon.svg', '/seo-guard.js', '/social-card.png', '/robots.txt', '/sitemap.xml']) assert.equal(policy(asset).status, 0);
+ for (const asset of ['/favicon.ico', '/favicon.svg', '/favicon-192.png', '/favicon-512.png', '/seo-guard.js', '/social-card.png', '/robots.txt', '/sitemap.xml']) assert.equal(policy(asset).status, 0);
 });
 
 test('public pages have crawlable links connecting all three surfaces', () => {

@@ -17,8 +17,9 @@ for (const [path, details] of Object.entries(publicPages)) {
 <link rel="canonical" href="${canonical}">
 <meta name="application-name" content="ResumeStride">
 <meta name="theme-color" content="#0b0a09">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="icon" href="/favicon.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon.ico" sizes="64x64">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any">
+<link rel="icon" href="/favicon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
 <link rel="manifest" href="/site.webmanifest">
 <meta property="og:type" content="website">
