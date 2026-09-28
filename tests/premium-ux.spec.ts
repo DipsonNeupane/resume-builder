@@ -6,7 +6,7 @@ for (const width of [320, 390, 768, 1440, 1920]) test(`premium public and docume
  await page.setViewportSize({width,height:900});
  await page.addInitScript(draft=>sessionStorage.setItem('resumestride.resume.v1',JSON.stringify(draft)),example());
  await page.goto('/');
- await expect(page.getByRole('heading',{name:/One career/})).toBeVisible();
+ await expect(page.getByRole('heading',{name:/Stop searching everywhere/})).toBeVisible();
  const templateHeadingRatio=await page.locator('.template-specimen .resume-paper').evaluate(paper=>parseFloat(getComputedStyle(paper.querySelector('h2')!).fontSize)/parseFloat(getComputedStyle(paper).fontSize));
  expect(templateHeadingRatio).toBeCloseTo(.9,1);
  expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
@@ -17,7 +17,7 @@ for (const width of [320, 390, 768, 1440, 1920]) test(`premium public and docume
   await page.getByRole('link',{name:'Templates',exact:true}).click();
   await expect(page.getByRole('button',{name:'Toggle navigation'})).toHaveAttribute('aria-expanded','false');
  }
- await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await expect(page.getByRole('region',{name:'Active document'})).toContainText('Master resume');
  expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
  await page.screenshot({path:`/tmp/rs-premium-builder-${width}.png`});

@@ -16,7 +16,7 @@ test('public source documents, robots and sitemap are served with correct metada
   expect(response.headers()['x-robots-tag']).toContain('noindex');
   expect(await response.text()).toContain(`rel="canonical" href="https://resumestride.com${path}"`);
   await page.goto(path);
-  if (path === '/') await expect(page.getByRole('button', { name: 'Build my resume', exact: true }).first()).toBeVisible();
+  if (path === '/') await expect(page.getByRole('button', { name: 'Build my master resume', exact: true }).first()).toBeVisible();
   if (path === '/resources/') await expect(page.getByRole('heading', { name: /Make the evidence easy to see/ })).toBeVisible();
   if (path.startsWith('/resources/') && path !== '/resources/') await expect(page.locator('article.article-body')).toBeVisible();
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `https://resumestride.com${path}`);
@@ -28,7 +28,7 @@ test('public source documents, robots and sitemap are served with correct metada
 test('editor, jobs, pro and callback states remove public canonical and structured data', async ({ page }) => {
  await page.goto('/');
  await expect(page.locator('script[data-seo-schema]')).toHaveCount(1);
- await page.getByRole('button', { name: 'Build my resume', exact: true }).first().click();
+ await page.getByRole('button', { name: 'Build my master resume', exact: true }).first().click();
  await expect(page).toHaveTitle('Resume editor | ResumeStride');
  await expect(page.locator('link[rel="canonical"], script[data-seo-schema], meta[property="og:url"]')).toHaveCount(0);
  await page.getByRole('button', { name: 'Find jobs', exact: true }).first().click();

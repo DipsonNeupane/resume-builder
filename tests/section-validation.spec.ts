@@ -12,7 +12,7 @@ test('experience requirement survives renaming and stored-draft migration',()=>{
 test('leaving an incomplete experience step forwards is blocked, backward navigation remains available',async({page})=>{
  const draft=blank();draft.name='Alex';draft.headline='Worker';draft.email='alex@example.com';draft.sections[0].entries[0].description='Actual duties';
  await page.addInitScript(d=>sessionStorage.setItem('resumestride.resume.v1',JSON.stringify(d)),draft);
- await page.goto('/',{waitUntil:'domcontentloaded'});await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/',{waitUntil:'domcontentloaded'});await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('button',{name:'Experience',exact:true}).click();await page.getByRole('button',{name:'Design & format',exact:true}).click();
  await expect(page.getByRole('textbox',{name:'Role, qualification, or project',exact:true})).toBeFocused();
  await page.getByRole('button',{name:'Personal details',exact:true}).click();await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toBeVisible();
@@ -21,7 +21,7 @@ test('leaving an incomplete experience step forwards is blocked, backward naviga
 for(const target of ['Design & format','Add a section'])test(`jumping from personal to ${target} checks skipped experience`,async({page})=>{
  const draft=blank();draft.name='Alex';draft.headline='Worker';draft.email='alex@example.com';
  await page.addInitScript(d=>sessionStorage.setItem('resumestride.resume.v1',JSON.stringify(d)),draft);
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('button',{name:target,exact:true}).click();
  await expect(page.getByRole('checkbox',{name:'I don’t have work experience yet'})).toBeFocused();
  await expect(page.getByRole('button',{name:'Additional experience',exact:true})).toHaveCount(0);

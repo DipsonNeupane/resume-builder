@@ -32,7 +32,7 @@ test('mobile navigation has sequential keyboard access, Escape, and destination 
 
 test('sample dialog isolates focus, cycles both directions, and restores its opener', async ({ page }) => {
  await page.goto('/');
- await page.getByRole('button', { name: 'Build my resume', exact: true }).first().click();
+ await page.getByRole('button', { name: 'Build my master resume', exact: true }).first().click();
  const opener = page.getByRole('button', { name: 'View sample resume', exact: true });
  await opener.focus();
  await page.keyboard.press('Enter');
@@ -57,7 +57,7 @@ test('sample dialog isolates focus, cycles both directions, and restores its ope
 
 test('builder fields expose input purpose and a visible keyboard focus ring', async ({ page }) => {
  await page.goto('/');
- await page.getByRole('button', { name: 'Build my resume', exact: true }).first().click();
+ await page.getByRole('button', { name: 'Build my master resume', exact: true }).first().click();
  const name = page.getByRole('textbox', { name: 'Full name', exact: true });
  await expect(name).toHaveAttribute('autocomplete', 'name');
  for (const [key, type, autocomplete] of [['email', 'email', 'email'], ['phone', 'tel', 'tel'], ['website', 'url', 'url']]) {
@@ -108,11 +108,11 @@ test('delayed lazy route focuses only its loaded heading and cached routes still
   releaseAccount();
   await expect(page.getByRole('heading', { level: 1, name: 'Make room for your next move.' })).toBeFocused();
   await page.getByRole('button', { name: 'Back to home', exact: true }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'One career. More than one version.', exact: true })).toBeFocused();
-  await page.getByRole('button', { name: 'Find jobs', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Stop searching everywhere. Start with jobs that fit your experience.', exact: true })).toBeFocused();
+  await page.getByRole('button', { name: 'Find opportunities', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Find jobs' })).toBeFocused();
   await page.getByRole('button', { name: 'Back', exact: true }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'One career. More than one version.', exact: true })).toBeFocused();
+  await expect(page.getByRole('heading', { level: 1, name: 'Stop searching everywhere. Start with jobs that fit your experience.', exact: true })).toBeFocused();
   await page.getByRole('button', { name: 'View Pro options', exact: true }).click();
   await expect(proHeading).toBeFocused();
   await page.getByRole('button', { name: 'Sign in or create account' }).click();
@@ -134,7 +134,7 @@ test('reduced motion applies to scripted download scrolling as well as CSS', asy
   };
  }, example());
  await page.goto('/');
- await page.getByRole('button', { name: 'Build my resume', exact: true }).first().click();
+ await page.getByRole('button', { name: 'Build my master resume', exact: true }).first().click();
  await page.getByRole('button', { name: 'Design & format', exact: true }).click();
  await page.getByRole('button', { name: 'Confirm', exact: true }).click();
  await expect.poll(() => page.evaluate(() => (window as unknown as { scrollBehaviors: unknown[] }).scrollBehaviors)).toContain('instant');
@@ -153,7 +153,7 @@ for (const width of [320, 390, 768, 1920]) test(`long international content fits
  await page.setViewportSize({ width, height: 900 });
  await page.addInitScript(value => sessionStorage.setItem('resumestride.resume.v1', JSON.stringify(value)), draft);
  await page.goto('/');
- await page.getByRole('button', { name: 'Build my resume', exact: true }).first().click();
+ await page.getByRole('button', { name: 'Build my master resume', exact: true }).first().click();
  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
  await page.getByRole('button', { name: 'Preview resume', exact: true }).click();
  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

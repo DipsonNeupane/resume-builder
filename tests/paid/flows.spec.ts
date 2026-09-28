@@ -9,9 +9,9 @@ async function seed(page:Page){
  await page.route('https://auth-test.supabase.co/rest/v1/**',route=>route.fulfill({status:200,contentType:'application/json',body:'[]'}));
  await page.route('https://auth-test.supabase.co/auth/v1/user',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(session.user)}));
 }
-// Signed in via seed() this reads "Continue my resume"; the one guest-entry test below (job
-// draft prefill, started signed out) reads "Build my resume" instead — see src/main.tsx's header CTA.
-async function builder(page:Page){await page.goto('/');await page.getByRole('button',{name:/^(Continue my resume|Build my resume)$/,exact:true}).first().click();await page.getByRole('button',{name:'Design & format',exact:true}).click();await page.getByRole('button',{name:'Confirm',exact:true}).click();}
+// Desktop uses the signed-in header CTA; narrow viewports use the visible Patina hero CTA.
+// Keep this aligned with both entry points so responsive tests exercise the same builder flow.
+async function builder(page:Page){await page.goto('/');await page.getByRole('button',{name:/^(Continue my resume|Build my resume|Build my master resume)$/,exact:true}).first().click();await page.getByRole('button',{name:'Design & format',exact:true}).click();await page.getByRole('button',{name:'Confirm',exact:true}).click();}
 test('paid checkout is one-time and sends only idempotency request ID',async({page})=>{
  await seed(page);await page.route('**/api/billing-status',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:false,paidThrough:null,manualPassAvailable:true,recurringAvailable:false,subscription:null})}));
  let body:Record<string,unknown>|undefined;

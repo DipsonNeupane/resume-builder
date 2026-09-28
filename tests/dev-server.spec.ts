@@ -7,7 +7,7 @@ test('npm run dev serves every application module and renders the home page', as
  page.on('response', response => { if (response.status() >= 400 && new URL(response.url()).origin === new URL(baseURL!).origin) failed.push(`${response.status()} ${response.url()}`); });
  page.on('pageerror', error => failed.push(`pageerror ${error.message}`));
  await page.goto('/');
- await expect(page.getByRole('heading', { level: 1, name: 'One career. More than one version.', exact: true })).toBeVisible();
- await expect(page.getByRole('button', { name: 'Build my resume', exact: true }).first()).toBeVisible();
+ await expect(page.getByRole('heading', { level: 1, name: 'Stop searching everywhere. Start with jobs that fit your experience.', exact: true })).toBeVisible();
+ await expect(page.getByRole('button', { name: 'Build my master resume', exact: true }).first()).toBeVisible();
  expect(failed).toEqual([]);
 });

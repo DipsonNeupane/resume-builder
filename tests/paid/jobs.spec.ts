@@ -23,7 +23,7 @@ async function seed(page: Page, userId: string = owner) {
 
 async function openBuilder(page: Page) {
   await page.goto('/');
-  await page.getByRole('button', { name: /^(Continue my resume|Build my resume)$/, exact: true }).first().click();
+  await page.getByRole('button', { name: /^(Continue my resume|Build my resume|Build my master resume)$/, exact: true }).first().click();
 }
 
 async function openJobs(page: Page) {
@@ -541,7 +541,7 @@ test('a second account signing in on the same browser never inherits the first a
   // user id and reload so the app picks up the new session.
   await seed(page, otherOwner);
   await page.reload();
-  await page.getByRole('button', { name: /^(Continue my resume|Build my resume)$/, exact: true }).first().click();
+  await page.getByRole('button', { name: /^(Continue my resume|Build my resume|Build my master resume)$/, exact: true }).first().click();
   await page.locator('.builder-sidebar').getByRole('button', { name: 'Find jobs', exact: true }).click();
   const toggle = page.getByRole('checkbox', { name: 'Auto Refresh (once a day)' });
   await expect(toggle).not.toBeChecked();
@@ -566,7 +566,7 @@ test('a second account never inherits the first account saved match analysis', a
 
   await seed(page, otherOwner);
   await page.reload();
-  await page.getByRole('button', { name: /^(Continue my resume|Build my resume)$/, exact: true }).first().click();
+  await page.getByRole('button', { name: /^(Continue my resume|Build my resume|Build my master resume)$/, exact: true }).first().click();
   await page.locator('.builder-sidebar').getByRole('button', { name: 'Find jobs', exact: true }).click();
   await expect(page.locator('.saved-job-card')).toHaveCount(0);
   await expect(page.getByText(/keep it and its match evidence here/i)).toBeVisible();

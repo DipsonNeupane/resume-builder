@@ -30,21 +30,21 @@ function textPdf(lines: string[]): Buffer {
 }
 
 test('edit, autosave, reload and custom sections',async({page})=>{
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('नमस्ते विश्व');await page.getByRole('textbox',{name:'Professional title',exact:true}).fill('Engineer');await page.getByRole('textbox',{name:'Phone',exact:true}).fill('+977 9800000000');
- await expectStoredName(page,'नमस्ते विश्व');await page.reload();await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toHaveValue('नमस्ते विश्व');
+ await expectStoredName(page,'नमस्ते विश्व');await page.reload();await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toHaveValue('नमस्ते विश्व');
  await page.getByRole('button',{name:'Experience',exact:true}).click();await page.getByRole('checkbox',{name:'I don’t have work experience yet'}).check();
  await page.getByRole('button',{name:'Add a section',exact:true}).click();await page.getByRole('textbox',{name:'Section title'}).fill('Volunteering');await page.getByRole('textbox',{name:'Role, qualification, or project'}).fill('Community organizer');
  await expect(page.locator('.preview-panel')).toContainText('Community organizer');await page.getByRole('button',{name:'Design & format'}).click();await page.getByLabel('Paper size').selectOption('Letter');await page.getByLabel('Writing direction').selectOption('rtl');await expect(page.locator('.preview-panel article')).toHaveAttribute('dir','rtl');
  await expect(page.locator('.preview-panel .resume-paper')).toContainText('नमस्ते विश्व');
 });
-test('upload accepts DOCX and PDF but not JSON, and an unsupported file leaves the draft intact',async({page})=>{await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Keep My Work');await expect(page.getByRole('button',{name:/Backup|Export as Word/})).toHaveCount(0);const picker=page.locator('input[type=file]');await expect(picker).toHaveAttribute('accept',/\.docx/);await expect(picker).toHaveAttribute('accept',/\.pdf/);await expect(picker).not.toHaveAttribute('accept',/json/);await picker.setInputFiles({name:'old-backup.json',mimeType:'application/json',buffer:Buffer.from('{"version":1}')});await expect(page.getByRole('status').filter({hasText:'Choose a Word (.docx) or PDF file.'})).toBeVisible();await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toHaveValue('Keep My Work');});
-test('editor and preview are separate workspaces without horizontal overflow',async({page})=>{await page.setViewportSize({width:390,height:844});await page.goto('/');expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.getByRole('button',{name:'Build my resume',exact:true}).last().click();await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Alex');await expect(page.locator('.editor-panel')).toBeVisible();await expect(page.locator('.preview-panel')).toBeHidden();await page.getByRole('button',{name:'Preview resume',exact:true}).click();await expect(page.locator('.editor-panel')).toBeHidden();await expect(page.locator('.builder-sidebar')).toBeHidden();await expect(page.locator('.preview-panel')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.getByRole('button',{name:'Back to editing',exact:true}).click();await expect(page.locator('.editor-panel')).toBeVisible();await page.screenshot({path:'test-results/mobile-editor.png',fullPage:true});});
+test('upload accepts DOCX and PDF but not JSON, and an unsupported file leaves the draft intact',async({page})=>{await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Keep My Work');await expect(page.getByRole('button',{name:/Backup|Export as Word/})).toHaveCount(0);const picker=page.locator('input[type=file]');await expect(picker).toHaveAttribute('accept',/\.docx/);await expect(picker).toHaveAttribute('accept',/\.pdf/);await expect(picker).not.toHaveAttribute('accept',/json/);await picker.setInputFiles({name:'old-backup.json',mimeType:'application/json',buffer:Buffer.from('{"version":1}')});await expect(page.getByRole('status').filter({hasText:'Choose a Word (.docx) or PDF file.'})).toBeVisible();await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toHaveValue('Keep My Work');});
+test('editor and preview are separate workspaces without horizontal overflow',async({page})=>{await page.setViewportSize({width:390,height:844});await page.goto('/');expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.getByRole('button',{name:'Build my master resume',exact:true}).last().click();await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Alex');await expect(page.locator('.editor-panel')).toBeVisible();await expect(page.locator('.preview-panel')).toBeHidden();await page.getByRole('button',{name:'Preview resume',exact:true}).click();await expect(page.locator('.editor-panel')).toBeHidden();await expect(page.locator('.builder-sidebar')).toBeHidden();await expect(page.locator('.preview-panel')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.getByRole('button',{name:'Back to editing',exact:true}).click();await expect(page.locator('.editor-panel')).toBeVisible();await page.screenshot({path:'test-results/mobile-editor.png',fullPage:true});});
 
 test('desktop builder pairs the editing desk with a live document and offers a focused preview',async({page})=>{
  await page.setViewportSize({width:1440,height:900});
  await page.addInitScript(draft=>sessionStorage.setItem('resumestride.resume.v1',JSON.stringify(draft)),example());
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await expect(page.locator('.editor-panel')).toBeVisible();await expect(page.locator('.preview-panel')).toBeVisible();
  const editor=await page.locator('.editor-panel').boundingBox();expect(editor).not.toBeNull();expect(editor!.width).toBeGreaterThan(370);
  const livePaper=await page.locator('.paper-container').boundingBox();expect(livePaper!.width).toBeGreaterThan(460);
@@ -79,10 +79,10 @@ test('all header navigation actions use the same hover color',async({page})=>{
 });
 
 test('typing then reloading immediately does not lose the edit, even before the autosave debounce fires',async({page})=>{
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Immediate Reload Person');
  await page.reload();
- await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toHaveValue('Immediate Reload Person');
 });
 
@@ -91,7 +91,7 @@ test('an unreadable saved draft is preserved for recovery, not silently overwrit
  await page.goto('/');
  await expect(page.getByRole('status').filter({hasText:'could not be read'})).toBeVisible();
  await expect(page.getByRole('status').filter({hasText:'could not be loaded'})).toBeVisible();
- await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Fresh Draft After Recovery');
  await expectStoredName(page,'Fresh Draft After Recovery');
  const rescue=await page.evaluate(()=>sessionStorage.getItem('resumestride.resume.v1.rescue'));
@@ -112,7 +112,7 @@ test('a completely denied storage does not crash the app or destroy in-progress 
  });
  await page.goto('/');
  await expect(page.getByRole('status').filter({hasText:'Browser storage is unavailable'})).toBeVisible();
- await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('No Storage Available');
  await expect(page.getByRole('status').filter({hasText:'Not saved'})).toBeVisible();
  await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toHaveValue('No Storage Available');
@@ -141,7 +141,7 @@ test('a text-based PDF uploads locally and asks the user to review the best-effo
 });
 
 test('scanned/no-text and malformed PDFs are rejected without replacing the draft',async({page})=>{
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Keep Existing Draft');
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Keep Existing Draft');
  await page.setInputFiles('input[type=file]',{name:'scan.pdf',mimeType:'application/pdf',buffer:textPdf([])});
  await expect(page.getByText('scanned or image-only',{exact:false})).toBeVisible();
  await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toHaveValue('Keep Existing Draft');
@@ -151,14 +151,14 @@ test('scanned/no-text and malformed PDFs are rejected without replacing the draf
 });
 
 test('canceling PDF replacement preserves the current draft',async({page})=>{
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Keep Existing Draft');
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Keep Existing Draft');
  page.once('dialog',dialog=>dialog.dismiss());
  await page.setInputFiles('input[type=file]',{name:'replacement.pdf',mimeType:'application/pdf',buffer:textPdf(['Replacement Person','Engineer','replacement@example.com'])});
  await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toHaveValue('Keep Existing Draft');
 });
 
 test('the live preview holds up for a long, multi-language, multi-entry resume across templates and paper sizes',async({page})=>{
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('अनेक भाषामा लामो रिज्यूमे');
  await page.getByRole('textbox',{name:'Professional title',exact:true}).fill('Multilingual Specialist');
  await page.getByRole('textbox',{name:'Website or professional profile',exact:true}).fill('https://example.com/very/long/path/segment/that/could/overflow/a/narrow/resume/column/without/wrapping/portfolio');
@@ -185,7 +185,7 @@ test('the live preview holds up for a long, multi-language, multi-entry resume a
 });
 
 test('all seven templates are available and selectable for a signed-out/free visitor',async({page})=>{
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Free Visitor');await page.getByRole('textbox',{name:'Professional title',exact:true}).fill('Analyst');await page.getByRole('textbox',{name:'Email',exact:true}).fill('free@example.com');
  await page.getByRole('button',{name:'Experience',exact:true}).click();await page.getByRole('checkbox',{name:'I don’t have work experience yet'}).check();
  await page.getByRole('button',{name:'Design & format'}).click();
@@ -202,7 +202,7 @@ test('template gallery previews current data, persists selection, and stays keyb
  await page.addInitScript(value=>{
   if(!sessionStorage.getItem('resumestride.resume.v1'))sessionStorage.setItem('resumestride.resume.v1',JSON.stringify(value));
  },draft);
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('button',{name:'Preview resume',exact:true}).click();
  const opener=page.getByRole('button',{name:'Templates Modern',exact:true});
  await opener.focus();await page.keyboard.press('Enter');
@@ -228,13 +228,13 @@ test('template gallery previews current data, persists selection, and stays keyb
  await expect.poll(()=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('resumestride.resume.v1')!))).toMatchObject({template:'ledger'});
  const after=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('resumestride.resume.v1')!));
  expect(after).toEqual({...draft,template:'ledger'});
- await page.reload();await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();await page.getByRole('button',{name:'Preview resume',exact:true}).click();
+ await page.reload();await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();await page.getByRole('button',{name:'Preview resume',exact:true}).click();
  await expect(page.getByRole('button',{name:'Templates Ledger',exact:true})).toBeVisible();
  await expect(page.locator('.paper-container .resume-paper').first()).toContainText('CURRENT DATA ONLY');
 });
 test('the templates showcase on the landing page has no Pro badges and every card leads straight into the builder',async({page})=>{
  await page.goto('/');
- await expect(page.getByRole('heading',{name:/Let the work.*do the talking/})).toBeVisible();
+ await expect(page.getByRole('heading',{name:/7 layouts.*PDF \+ Word/})).toBeVisible();
  await expect(page.locator('.template-pro-badge')).toHaveCount(0);
  await page.getByRole('button',{name:'Ledger',exact:false}).click();
  await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toBeVisible();
@@ -242,7 +242,7 @@ test('the templates showcase on the landing page has no Pro badges and every car
 
 test('generated PDF and Word controls are offered together and require sign-in',async({page})=>{
  await page.addInitScript(draft=>sessionStorage.setItem('resumestride.resume.v1',JSON.stringify(draft)),example());
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('button',{name:'Design & format',exact:true}).click();
  await page.getByRole('button',{name:'Confirm',exact:true}).click();
  await expect(page.locator('.paid-tools')).toContainText('Sign in to download your resume as PDF or Word');
@@ -251,7 +251,7 @@ test('generated PDF and Word controls are offered together and require sign-in',
 
 test('builder uses Next through every step, Confirm unlocks downloads, and the header action says Download',async({page})=>{
  await page.addInitScript(draft=>sessionStorage.setItem('resumestride.resume.v1',JSON.stringify(draft)),example());
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await expect(page.locator('.site-header').getByRole('button',{name:'Download',exact:true})).toBeVisible();
  await expect(page.locator('.site-header').getByRole('button',{name:'Upload',exact:true})).toHaveCount(0);
  for(const expected of ['Tell your story.','Experience','Education','Make it your own.']){
@@ -264,7 +264,7 @@ test('builder uses Next through every step, Confirm unlocks downloads, and the h
 });
 
 test('temporary import errors disappear automatically and clear immediately when returning home',async({page})=>{
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  const picker=page.locator('input[type=file]');
  await picker.setInputFiles({name:'unsupported.txt',mimeType:'text/plain',buffer:Buffer.from('not a resume')});
  const notice=page.getByRole('status').filter({hasText:'Choose a Word (.docx) or PDF file.'});
@@ -288,7 +288,7 @@ test('Pricing always shows a distinct Free card and a discoverable Pro card, eve
  await expect(free).not.toContainText('3 generated PDF downloads');
  await expect(free).not.toContainText('Print');
  await expect(free.locator('li')).toHaveCount(4);
- await expect(free.getByRole('button',{name:'Build my resume',exact:true})).toBeVisible();
+ await expect(free.getByRole('button',{name:'Build my master resume',exact:true})).toBeVisible();
  const pro=cards.last();
  await expect(pro).toContainText('Pro · 30-day pass');
  await expect(pro).toContainText('US$19.99');
@@ -325,14 +325,14 @@ test('Pricing cards stay balanced on desktop and readable without price wrapping
   expect(Math.abs(freeBox!.x-proBox!.x)).toBeLessThan(2);
   expect(proBox!.y).toBeGreaterThanOrEqual(freeBox!.y+freeBox!.height-1);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
-  await expect(cards.first().getByRole('button',{name:'Build my resume',exact:true})).toBeVisible();
+  await expect(cards.first().getByRole('button',{name:'Build my master resume',exact:true})).toBeVisible();
   await expect(cards.last().getByRole('button',{name:'View Pro options',exact:false})).toBeVisible();
  }
 });
 
 test('the live preview keeps true A4/Letter proportions and separates long content into pages',async({page})=>{
  await page.setViewportSize({width:1000,height:800});
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Short Resume Person');
  await page.getByRole('textbox',{name:'Professional title',exact:true}).fill('Analyst');
  await page.getByRole('textbox',{name:'Email',exact:true}).fill('short@example.com');
@@ -365,7 +365,7 @@ test('320px width stays usable and key icon-only controls are labeled for screen
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.getByRole('button',{name:'Toggle navigation'}).click();
  await expect(page.getByRole('link',{name:'How it works'})).toBeVisible();
- await page.getByRole('button',{name:'Build my resume',exact:true}).last().click();
+ await page.getByRole('button',{name:'Build my master resume',exact:true}).last().click();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Small Screen');
  await page.keyboard.press('Tab');
@@ -374,7 +374,7 @@ test('320px width stays usable and key icon-only controls are labeled for screen
 });
 
 test('the sidebar sample opens without replacing the current draft',async({page})=>{
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('My Current Draft');
  await page.getByRole('button',{name:'View sample resume',exact:true}).click();
  const dialog=page.getByRole('dialog',{name:'Sample resume'});
@@ -387,7 +387,7 @@ test('the sidebar sample opens without replacing the current draft',async({page}
 });
 
 test('the live preview holds a long resume across multiple pages worth of content without dropping any of it',async({page})=>{
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Priya Sharma');
  await page.getByRole('textbox',{name:'Professional title',exact:true}).fill('Program Manager');
  await page.getByRole('textbox',{name:'Email',exact:true}).fill('priya@example.com');
@@ -408,7 +408,7 @@ test('the live preview holds a long resume across multiple pages worth of conten
 });
 
 test('Arabic right-to-left content renders correctly in the live preview and is not silently dropped',async({page})=>{
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  const arabicName='محمد الأمين';
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill(arabicName);
  await page.getByRole('textbox',{name:'Professional title',exact:true}).fill('مهندس برمجيات');
@@ -427,7 +427,7 @@ test('automated accessibility scan (axe-core) finds no violations on the home, b
  await page.goto('/');
  const homeResults=await new AxeBuilder({page}).analyze();
  expect(homeResults.violations,JSON.stringify(homeResults.violations,null,2)).toEqual([]);
- await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Accessibility Check');
  const builderResults=await new AxeBuilder({page}).analyze();
  expect(builderResults.violations,JSON.stringify(builderResults.violations,null,2)).toEqual([]);
@@ -443,7 +443,7 @@ test('automated accessibility scan (axe-core) finds no violations on the home, b
 });
 
 test('typing an invalid language code never persists an unreadable resume',async({page})=>{
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Language Edge Case');
  await page.getByRole('textbox',{name:'Professional title',exact:true}).fill('Tester');
  await page.getByRole('textbox',{name:'Email',exact:true}).fill('edge.case@example.com');
@@ -457,7 +457,7 @@ test('typing an invalid language code never persists an unreadable resume',async
  const invalidStillStored=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('resumestride.resume.v1')!).language);
  expect(invalidStillStored,'an invalid in-progress edit must never overwrite the last valid persisted language').toBe('en');
  await page.reload();
- await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await expect(page.getByRole('status').filter({hasText:'could not be'})).toHaveCount(0);
  await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toHaveValue('Language Edge Case');
  await page.getByRole('button',{name:'Design & format'}).click();
@@ -469,7 +469,7 @@ test('typing an invalid language code never persists an unreadable resume',async
 });
 
 test('the editor blocks growth past the aggregate content limit instead of producing an oversized document request',async({page})=>{
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  const big='a'.repeat(50000);
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Limit Tester');
  await page.getByRole('textbox',{name:'Professional title',exact:true}).fill('Analyst');
@@ -491,7 +491,7 @@ test('the editor blocks growth past the aggregate content limit instead of produ
 
 test('mobile builder keeps Upload available without backup or direct-export actions',async({page})=>{
  await page.setViewportSize({width:390,height:844});
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).last().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).last().click();
  await expect(page.getByRole('button',{name:'Upload',exact:true}).first()).toBeVisible();
  await expect(page.getByRole('button',{name:/Backup|Export as Word/})).toHaveCount(0);
  await expect(page.getByRole('button',{name:'More document actions'})).toHaveCount(0);
@@ -516,14 +516,14 @@ test('occupied rescue keeps both raw drafts after editing and reloading',async({
  const first=JSON.stringify({version:99,name:'First recovery'});
  const second=JSON.stringify({version:99,name:'Second recovery'});
  await page.evaluate(({first,second})=>{sessionStorage.setItem('resumestride.resume.v1.rescue',first);sessionStorage.setItem('resumestride.resume.v1',second);},{first,second});
- await page.reload();await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.reload();await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('New unsaved edits');
  await expect(page.getByRole('status').filter({hasText:'Autosave paused — resolve recovery draft'})).toBeVisible();
  await page.reload();
  expect(await page.evaluate(()=>sessionStorage.getItem('resumestride.resume.v1'))).toBe(second);
  expect(await page.evaluate(()=>sessionStorage.getItem('resumestride.resume.v1.rescue'))).toBe(first);
  await expect(page.getByRole('status').filter({hasText:'A second unreadable draft'})).toBeVisible();
- await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Explicitly saved replacement');
  page.once('dialog',dialog=>dialog.accept());
  await page.getByRole('button',{name:'Discard this additional unreadable draft'}).click();
@@ -533,19 +533,19 @@ test('occupied rescue keeps both raw drafts after editing and reloading',async({
 });
 
 test('unconfigured account screen preserves access to the local draft',async({page})=>{
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Keep my local draft');
  await expectStoredName(page,'Keep my local draft');
  await page.goto('/?account=1');
  await expect(page.getByRole('heading',{name:'Make room for your next move.'})).toBeVisible();
  await expect(page.getByText('Account access is not available',{exact:false})).toBeVisible();
  await page.getByRole('button',{name:'Back to home',exact:true}).click();
- await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toHaveValue('Keep my local draft');
 });
 
 test('Personal details requires a name, title, and one contact method before continuing, with inline errors and focus',async({page})=>{
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Only Name');
  await page.getByRole('button',{name:'Next',exact:true}).click();
  await expect(page.getByRole('heading',{name:'Let’s start with you.'})).toBeVisible();
@@ -561,7 +561,7 @@ test('Personal details requires a name, title, and one contact method before con
 });
 
 test('a mononym name and international phone satisfy Personal details; location alone is insufficient',async({page})=>{
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Madonna');
  await page.getByRole('textbox',{name:'Professional title',exact:true}).fill('Performer');
  await page.getByRole('textbox',{name:'Location',exact:true}).fill('Lagos, Nigeria');
@@ -573,7 +573,7 @@ test('a mononym name and international phone satisfy Personal details; location 
 });
 
 test('forward sidebar navigation and creating a new section cannot bypass Personal details completion, but backward navigation and local saving always work',async({page})=>{
- await page.goto('/');await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('button',{name:'Design & format'}).click();
  await expect(page.getByRole('heading',{name:'Let’s start with you.'})).toBeVisible();
  await expect(page.getByRole('alert').filter({hasText:'Add your name.'})).toBeVisible();
@@ -590,6 +590,6 @@ test('forward sidebar navigation and creating a new section cannot bypass Person
  await expect(page.getByRole('heading',{name:'Let’s start with you.'})).toBeVisible();
  await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toHaveValue('Blocked Add Section');
  await page.reload();
- await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
+ await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toHaveValue('Blocked Add Section');
 });
