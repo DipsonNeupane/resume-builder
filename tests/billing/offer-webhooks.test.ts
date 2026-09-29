@@ -43,3 +43,22 @@ test('terminal subscription status preserves the paid period and queues expirati
  assert.ok(calls.some(call=>call.name==='billing_update_offer_subscription'&&call.args.p_period_end==='2026-11-01T00:00:00.000Z'))
  assert.ok(calls.some(call=>call.name==='billing_enqueue_notice'&&call.args.p_kind==='expiration'))
 })
+
+test('hosted-portal cancel_at at the period end stops renewal and queues cancellation',async()=>{
+ const calls:Array<{name:string;args:Record<string,unknown>}>=[]
+ const db={rpc:async(name:string,args:Record<string,unknown>)=>{calls.push({name,args});return{error:null,data:null}}} as never
+ const subscription={id:'sub_pro',status:'active',cancel_at_period_end:false,cancel_at:1793491200,items:{has_more:false,data:[{quantity:1,current_period_start:1790812800,current_period_end:1793491200}]}} as unknown as Stripe.Subscription
+ const response=await applyOfferSubscriptionStatus(subscription,db,trusted)
+ assert.equal(response.status,200)
+ assert.ok(calls.some(call=>call.name==='billing_update_offer_subscription'&&call.args.p_cancel_at_period_end===true))
+ assert.ok(calls.some(call=>call.name==='billing_enqueue_notice'&&call.args.p_kind==='cancellation'))
+})
+
+test('a future cancel_at beyond the paid period does not masquerade as period-end cancellation',async()=>{
+ const calls:Array<{name:string;args:Record<string,unknown>}>=[]
+ const db={rpc:async(name:string,args:Record<string,unknown>)=>{calls.push({name,args});return{error:null,data:null}}} as never
+ const subscription={id:'sub_pro',status:'active',cancel_at_period_end:false,cancel_at:1796083200,items:{has_more:false,data:[{quantity:1,current_period_start:1790812800,current_period_end:1793491200}]}} as unknown as Stripe.Subscription
+ await applyOfferSubscriptionStatus(subscription,db,trusted)
+ assert.ok(calls.some(call=>call.name==='billing_update_offer_subscription'&&call.args.p_cancel_at_period_end===false))
+ assert.equal(calls.some(call=>call.name==='billing_enqueue_notice'&&call.args.p_kind==='cancellation'),false)
+})

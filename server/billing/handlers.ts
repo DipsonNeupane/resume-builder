@@ -6,7 +6,7 @@ import { assertManualPayment } from './policy.js'
 import { assertFailedSubscriptionInvoice, assertVerifiedSubscriptionInvoice, isInvoiceStatus, isSubscriptionStatus, parseOwnerSubscriptionRow } from './recurring.js'
 import { PRO_PASS_AMOUNT_CENTS, PRO_PASS_CURRENCY } from './constants.js'
 import { acquireOwnerCheckoutLock, releaseOwnerCheckoutBySession, tryRecoverStuckLock, type OwnerCheckoutLock } from './reservation.js'
-import { applyOfferCheckoutSession, applyOfferInvoice, applyOfferSubscriptionStatus } from './offer-handlers.js'
+import { applyOfferCheckoutSession, applyOfferInvoice, applyOfferSubscriptionStatus, subscriptionStopsAtPeriodEnd } from './offer-handlers.js'
 
 export const dependencies = { authenticate, serviceDatabase, stripeClient, validateCatalog, recurringConfig, recurringServiceConfig, validateRecurringCatalog, createSubscriptionCheckout }
 type Dependencies = typeof dependencies
@@ -431,7 +431,7 @@ async function applySubscriptionStatusEvent(event: Stripe.Event, stripe: Stripe,
   if(subscription.id!==eventSubscription.id || subscription.livemode!==event.livemode || subscription.livemode!==trustedRow.live) throw new Error('Subscription identity mismatch')
   if(!isSubscriptionStatus(subscription.status)) throw new Error('Unrecognized subscription status')
   if(trustedRow.offer_key) return applyOfferSubscriptionStatus(subscription,db,trustedRow)
-  const result=await db.rpc('billing_update_subscription_status',{p_subscription_id:subscription.id,p_owner_id:trustedRow.owner_id,p_status:subscription.status,p_cancel_at_period_end:subscription.cancel_at_period_end})
+  const result=await db.rpc('billing_update_subscription_status',{p_subscription_id:subscription.id,p_owner_id:trustedRow.owner_id,p_status:subscription.status,p_cancel_at_period_end:subscriptionStopsAtPeriodEnd(subscription)})
   if(result.error) throw new Error('Subscription status persistence unavailable')
   return json(200,{received:true})
 }

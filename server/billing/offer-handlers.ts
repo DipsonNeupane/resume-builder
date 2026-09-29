@@ -112,10 +112,11 @@ export async function cancelOffer(request: Request, env: NodeJS.ProcessEnv = pro
     const owned = rows.data.find(row => row.subscription_id === body.subscriptionId && ['active','trialing','past_due','unpaid'].includes(row.status))
     if (!owned) throw new HttpError(404, 'Subscription not found')
     const subscription = await deps.stripeClient(config).subscriptions.update(body.subscriptionId, { cancel_at_period_end: true })
-    if (!subscription.cancel_at_period_end) throw new Error('Cancellation was not confirmed')
+    if (!subscriptionStopsAtPeriodEnd(subscription)) throw new Error('Cancellation was not confirmed')
     const updated = await db.rpc('billing_update_offer_subscription', { p_subscription: subscription.id, p_owner: owner, p_status: subscription.status, p_cancel_at_period_end: true, p_period_end: new Date(subscription.items.data[0].current_period_end * 1000).toISOString() })
     if (updated.error) throw new Error('Cancellation persistence unavailable')
-    await db.rpc('billing_enqueue_notice', { p_owner: owner, p_subscription: subscription.id, p_kind: 'cancellation', p_due_at: new Date().toISOString(), p_dedupe_key: `cancellation:${subscription.id}:${subscription.items.data[0].current_period_end}`, p_payload: { offerKey: owned.offer_key, accessEndsAt: new Date(subscription.items.data[0].current_period_end * 1000).toISOString() } })
+    const notice = await db.rpc('billing_enqueue_notice', { p_owner: owner, p_subscription: subscription.id, p_kind: 'cancellation', p_due_at: new Date().toISOString(), p_dedupe_key: `cancellation:${subscription.id}:${subscription.items.data[0].current_period_end}`, p_payload: { offerKey: owned.offer_key, accessEndsAt: new Date(subscription.items.data[0].current_period_end * 1000).toISOString() } })
+    if (notice.error) throw new Error('Cancellation notice persistence unavailable')
     return json(200, { cancelAtPeriodEnd: true, accessEndsAt: new Date(subscription.items.data[0].current_period_end * 1000).toISOString() })
   } catch (error) { return billingError(error) }
 }
@@ -126,6 +127,20 @@ function subscriptionPeriod(subscription: Stripe.Subscription) {
   if (subscription.items.has_more || subscription.items.data.length !== 1 || subscription.items.data[0].quantity !== 1) throw new Error('Unexpected subscription items')
   const item = subscription.items.data[0]
   return { item, start: new Date(item.current_period_start * 1000), end: new Date(item.current_period_end * 1000) }
+}
+
+/** Stripe's hosted portal can represent an end-of-period cancellation with
+ * `cancel_at` equal to the current period end while leaving
+ * `cancel_at_period_end` false (notably for flexible billing mode). Normalize
+ * both provider representations before persisting renewal state. */
+export function subscriptionStopsAtPeriodEnd(subscription: Stripe.Subscription): boolean {
+  const items = subscription.items?.data
+  const item = items?.length === 1 ? items[0] : undefined
+  return subscription.cancel_at_period_end || (
+    typeof subscription.cancel_at === 'number' &&
+    typeof item?.current_period_end === 'number' &&
+    subscription.cancel_at <= item.current_period_end
+  )
 }
 
 export async function applyOfferCheckoutSession(session: Stripe.Checkout.Session, stripe: Stripe, db: ReturnType<typeof serviceDatabase>, env: NodeJS.ProcessEnv): Promise<Response | null> {
@@ -142,7 +157,7 @@ export async function applyOfferCheckoutSession(session: Stripe.Checkout.Session
   if (session.livemode !== config.live || subscription.livemode !== config.live || item.price.id !== offer.priceId || lookup.data.price_id !== offer.priceId) throw new Error('Offer subscription identity mismatch')
   const stored = await db.rpc('billing_record_offer_subscription', {
     p_owner: lookup.data.owner_id, p_subscription: subscription.id, p_price: offer.priceId, p_live: config.live,
-    p_status: subscription.status, p_cancel_at_period_end: subscription.cancel_at_period_end,
+    p_status: subscription.status, p_cancel_at_period_end: subscriptionStopsAtPeriodEnd(subscription),
     p_period_start: start.toISOString(), p_period_end: end.toISOString(), p_offer_key: offer.key, p_offer_kind: offer.kind, p_template_id: offer.templateId,
   })
   if (stored.error) throw new Error('Offer subscription persistence unavailable')
@@ -201,9 +216,16 @@ export async function applyOfferInvoice(invoice: Stripe.Invoice, eventCreated: n
 
 export async function applyOfferSubscriptionStatus(subscription: Stripe.Subscription, db: ReturnType<typeof serviceDatabase>, trustedRow: Record<string, unknown>): Promise<Response> {
   const { end } = subscriptionPeriod(subscription)
-  const updated = await db.rpc('billing_update_offer_subscription', { p_subscription: subscription.id, p_owner: trustedRow.owner_id, p_status: subscription.status, p_cancel_at_period_end: subscription.cancel_at_period_end, p_period_end: end.toISOString() })
+  const stopsAtPeriodEnd = subscriptionStopsAtPeriodEnd(subscription)
+  const updated = await db.rpc('billing_update_offer_subscription', { p_subscription: subscription.id, p_owner: trustedRow.owner_id, p_status: subscription.status, p_cancel_at_period_end: stopsAtPeriodEnd, p_period_end: end.toISOString() })
   if (updated.error) throw new Error('Offer subscription status persistence unavailable')
-  if (subscription.cancel_at_period_end) await db.rpc('billing_enqueue_notice', { p_owner: trustedRow.owner_id, p_subscription: subscription.id, p_kind: 'cancellation', p_due_at: new Date().toISOString(), p_dedupe_key: `cancellation:${subscription.id}:${subscription.items.data[0].current_period_end}`, p_payload: { offerKey: trustedRow.offer_key, accessEndsAt: end.toISOString() } })
-  if (subscription.status === 'canceled' || subscription.status === 'incomplete_expired') await db.rpc('billing_enqueue_notice', { p_owner: trustedRow.owner_id, p_subscription: subscription.id, p_kind: 'expiration', p_due_at: new Date().toISOString(), p_dedupe_key: `expiration:${subscription.id}:${subscription.status}`, p_payload: { offerKey: trustedRow.offer_key } })
+  if (stopsAtPeriodEnd) {
+    const notice = await db.rpc('billing_enqueue_notice', { p_owner: trustedRow.owner_id, p_subscription: subscription.id, p_kind: 'cancellation', p_due_at: new Date().toISOString(), p_dedupe_key: `cancellation:${subscription.id}:${subscription.items.data[0].current_period_end}`, p_payload: { offerKey: trustedRow.offer_key, accessEndsAt: end.toISOString() } })
+    if (notice.error) throw new Error('Cancellation notice persistence unavailable')
+  }
+  if (subscription.status === 'canceled' || subscription.status === 'incomplete_expired') {
+    const notice = await db.rpc('billing_enqueue_notice', { p_owner: trustedRow.owner_id, p_subscription: subscription.id, p_kind: 'expiration', p_due_at: new Date().toISOString(), p_dedupe_key: `expiration:${subscription.id}:${subscription.status}`, p_payload: { offerKey: trustedRow.offer_key } })
+    if (notice.error) throw new Error('Expiration notice persistence unavailable')
+  }
   return json(200, { received: true })
 }
