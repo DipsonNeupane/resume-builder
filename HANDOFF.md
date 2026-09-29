@@ -3882,3 +3882,26 @@ prompts, model output or free-form errors. Browser roles cannot read or write th
 
 See `docs/redesign/BLUEPRINT_STATUS.md` for the truthful task ledger. No merge, push,
 preview, deployment, migration application or production setting change occurred.
+
+## September 29 — redesign Group 2 homepage and navigation batch
+
+On `redesign/g2-home-navigation`, the public first screen now leads with “Find the roles
+worth your effort,” one evidence-led primary action and a truthful Free builder secondary
+action. The Patina demonstration was reduced to one fictional role and three requirement
+states. Directly below it, three equal start cards cover local Word/text-PDF import, build
+from scratch and the current Jobs & Match flow. A five-item proof strip is limited to
+implemented facts: requirement evidence rather than a score, master-resume safety,
+PDF/editable Word, no card to start, and A4/Letter/right-to-left support.
+
+`PublicNavigation` now centralizes the public header. Resume Builder and Jobs & Match use
+the shared `/start/build` and `/start/job` contract; Free Tools and Resources remain real
+public URLs; Templates and Pricing deliberately remain homepage anchors until they have
+meaningful static pages. Ordinary same-tab clicks keep SPA behavior and bounded journey
+analytics, while the anchors retain real `href` values for new tabs. The expanded mobile
+menu retains Escape close/focus restoration and larger touch targets.
+
+The job-first card does not claim pasted-job support because that flow does not yet exist.
+Task 7 and Task 9 therefore remain partial, as do full static discovery navigation and
+hero performance measurement. No template browsing, broad content, pricing, commerce,
+provider, entitlement, database or production behavior was changed. See
+`docs/redesign/BLUEPRINT_STATUS.md` for exact G2 task status.

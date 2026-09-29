@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight, Check, FileText, Search, Upload } from 'lucide-react';
 import { ResumePreview } from '../../components/ResumePreview';
 import { example, templates, type Resume } from '../../model';
 import { PatinaHero } from './PatinaHero';
@@ -35,7 +35,22 @@ export function HomePage({ onBuild, onUpload, onJobs, onPro, onTemplate }: Props
   return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', kick); window.removeEventListener('resize', kick); };
  }, []);
  return <main className="landing" id="main-content">
-  <PatinaHero sample={sample} onBuild={onBuild} onUpload={onUpload} onJobs={onJobs}/>
+  <PatinaHero sample={sample} onBuild={onBuild} onJobs={onJobs}/>
+  <section className="landing-starts" aria-labelledby="start-heading">
+   <div className="landing-starts-heading"><p className="section-label">Start with what you have</p><h2 id="start-heading">Three clear ways in.</h2><p>Choose the next step that matches your situation. Each path uses the same master resume and keeps your original safe.</p></div>
+   <div className="start-card-grid">
+    <article><Upload aria-hidden="true"/><h3>Upload my resume</h3><p>Bring a Word or text-based PDF resume. It is parsed locally and always requires your review.</p><button className="text-button" onClick={onUpload}>Choose a resume file<ArrowRight size={16} aria-hidden="true"/></button><small>Next: review the recovered master resume.</small></article>
+    <article><FileText aria-hidden="true"/><h3>Build from scratch</h3><p>Create a flexible master resume with seven Free templates and PDF or editable Word export.</p><button className="text-button" onClick={onBuild}>Build a resume free<ArrowRight size={16} aria-hidden="true"/></button><small>Next: add the essentials before choosing a design.</small></article>
+    <article><Search aria-hidden="true"/><h3>Start with a job</h3><p>Search from your resume and criteria, or review a job you already saved or captured.</p><button className="text-button" onClick={onJobs}>Find jobs and see the match<ArrowRight size={16} aria-hidden="true"/></button><small>Next: compare role requirements with your evidence.</small></article>
+   </div>
+   <ul className="product-proof-strip" aria-label="Product facts">
+    <li><Check aria-hidden="true"/>Evidence, not a fake score</li>
+    <li><Check aria-hidden="true"/>Your master stays unchanged</li>
+    <li><Check aria-hidden="true"/>PDF and editable Word</li>
+    <li><Check aria-hidden="true"/>No payment card to start</li>
+    <li><Check aria-hidden="true"/>A4, Letter and right-to-left</li>
+   </ul>
+  </section>
   <section className="evidence-story landing-match" id="how-it-works">
    <div><p className="section-label">Match Analysis · requirement by requirement</p><h2>Evidence<br/>before effort.</h2><p>Pick a role. Each requirement sits beside the line of your resume that supports it, or an honest note that nothing does yet. Then you decide whether it deserves your evening. It reads evidence. It doesn’t predict hiring.</p><button className="button outline" onClick={onJobs}>Find jobs and see the match<ArrowRight size={16} aria-hidden="true"/></button></div>
    <p className="landing-sources">Search from your resume or your own criteria. Opportunities are sourced across <strong>190+ job portals</strong> and employer career sites.</p>

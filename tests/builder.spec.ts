@@ -67,7 +67,7 @@ test('home screenshot',async({page})=>{await page.setViewportSize({width:1440,he
 
 test('all header navigation actions use the same hover color',async({page})=>{
  await page.goto('/');
- const navLink=page.getByRole('link',{name:'How it works'});
+ const navLink=page.getByRole('link',{name:'Resume Builder'});
  // The local-only test server intentionally disables auth, so mount the same
  // button class the authenticated header conditionally renders.
  await page.locator('.nav').evaluate(nav=>nav.insertAdjacentHTML('beforeend','<button class="nav-account">Sign in / Sign up</button>'));
@@ -122,7 +122,7 @@ test('Word (.docx) import remains available through the Upload control',async({p
  const source={...example(),name:'Docx Import Person',headline:'Operations Lead'};
  const docx=await renderDocx(source);
  await page.goto('/');
- await expect(page.getByRole('button',{name:'Upload a resume',exact:true}).first()).toBeVisible();
+ await expect(page.getByRole('button',{name:'Choose a resume file',exact:true}).first()).toBeVisible();
  await page.setInputFiles('input[type=file]',{name:'resume.docx',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',buffer:Buffer.from(docx)});
  await expect(page.getByText('Word document uploaded',{exact:false})).toHaveCount(0);
  await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toHaveValue('Docx Import Person');
@@ -364,7 +364,7 @@ test('320px width stays usable and key icon-only controls are labeled for screen
  await page.goto('/');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.getByRole('button',{name:'Toggle navigation'}).click();
- await expect(page.getByRole('link',{name:'How it works'})).toBeVisible();
+ await expect(page.getByRole('link',{name:'Resume Builder'})).toBeVisible();
  await page.getByRole('button',{name:'Build my master resume',exact:true}).last().click();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Small Screen');

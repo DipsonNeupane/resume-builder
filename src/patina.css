@@ -70,6 +70,19 @@ button:disabled { color:#6f6962; background:#eeece8; border-color:#dcd8d2; }
 .site-header :focus-visible { outline-color:var(--pt-copper-hi)!important; }
 .skip-link { background:var(--pt-paper); color:var(--rs-heading); border-color:var(--rs-action); border-radius:8px; }
 
+@media(max-width:1120px) {
+ .public-header .public-nav { gap:0; }
+ .public-header .public-nav a,.public-header .public-nav .nav-account { padding-inline:7px; font-size:12px; }
+ .public-header .header-cta { display:none; }
+}
+@media(max-width:900px) {
+ .public-header { position:relative; }
+ .public-header .mobile-menu { display:flex; margin-left:auto; }
+ .public-header .public-nav { display:none; }
+ .public-header .public-nav.open { position:absolute; z-index:30; display:flex; left:0; right:0; top:100%; align-items:flex-start; flex-direction:column; gap:4px; padding:16px 5%; background:var(--pt-carbon); border-bottom:1px solid var(--pt-line-d); box-shadow:0 30px 40px -20px #000000a6; }
+ .public-header .public-nav.open a,.public-header .public-nav.open .nav-account { width:100%; min-height:48px; padding:0; font-size:16px; }
+}
+
 /* ---------- journey rail + document identity ---------- */
 
 .journey-rail { background:var(--pt-carbon-2); border-bottom:1px solid var(--pt-line-d); gap:28px; min-height:48px; }

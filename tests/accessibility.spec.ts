@@ -16,11 +16,13 @@ test('mobile navigation has sequential keyboard access, Escape, and destination 
  await expect(toggle).toHaveAttribute('aria-controls', 'main-navigation');
  await page.keyboard.press('Enter');
  await page.keyboard.press(tab);
- await expect(page.getByRole('link', { name: 'How it works' })).toBeFocused();
+ await expect(page.getByRole('link', { name: 'Resume Builder' })).toBeFocused();
  await page.keyboard.press('Escape');
  await expect(toggle).toBeFocused();
  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
  await page.keyboard.press('Enter');
+ await page.keyboard.press(tab);
+ await page.keyboard.press(tab);
  await page.keyboard.press(tab);
  await page.keyboard.press(tab);
  await expect(page.getByRole('link', { name: 'Templates', exact: true })).toBeFocused();
@@ -108,11 +110,11 @@ test('delayed lazy route focuses only its loaded heading and cached routes still
   releaseAccount();
   await expect(page.getByRole('heading', { level: 1, name: 'Make room for your next move.' })).toBeFocused();
   await page.getByRole('button', { name: 'Back to home', exact: true }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Stop searching everywhere. Start with jobs that fit your experience.', exact: true })).toBeFocused();
+  await expect(page.getByRole('heading', { level: 1, name: 'Find the roles worth your effort.', exact: true })).toBeFocused();
   await page.getByRole('button', { name: 'Find opportunities', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Find jobs' })).toBeFocused();
   await page.getByRole('button', { name: 'Back', exact: true }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Stop searching everywhere. Start with jobs that fit your experience.', exact: true })).toBeFocused();
+  await expect(page.getByRole('heading', { level: 1, name: 'Find the roles worth your effort.', exact: true })).toBeFocused();
   await page.getByRole('button', { name: 'View Pro options', exact: true }).click();
   await expect(proHeading).toBeFocused();
   await page.getByRole('button', { name: 'Sign in or create account' }).click();

@@ -5,7 +5,7 @@ Status date: 2026-09-29. This ledger reports verified redesign-branch evidence w
 | Group | Status | Current truth |
 | --- | --- | --- |
 | 1. Product strategy and measurement | [~] | Strategy contracts and the north-star measurement foundation are implemented; public rollout, complete funnel coverage and unavailable baseline denominators remain partial. |
-| 2. Homepage and navigation UI | [~] | Shared typed destinations now exist; the redesigned hierarchy, real public discovery links and template browsing remain. |
+| 2. Homepage and navigation UI | [~] | The simplified evidence-led hero, build entry, three truthful start cards, compact proof and reusable discovery navigation are implemented on the redesign branch. A low-friction pasted-job comparison, static template/pricing destinations and complete template browsing remain. |
 | 3. Onboarding and workspace | [~] | Major private screens now have reloadable routes, browser history and owner-safe sign-in continuation; journey screens, object restoration and the shared workspace shell remain. |
 | 4. Trust, pricing and monetization | [ ] | Not started in the redesign. Existing production capabilities remain the truth boundary. |
 | 5. Jobs, Match and application workflow | [~] | Existing saved jobs, deterministic Match, clarifications and job-specific versions are reusable foundations; the broader blueprint workflow is not complete. |
@@ -36,3 +36,15 @@ The governing task definitions remain in `RESUMESTRIDE_PRODUCT_BLUEPRINT.md` out
 | 20. Sign-in/recovery context | [~] | Content-free owner-scoped continuation exists; all journey payload recovery remains. |
 | 38. Public capability URLs | [~] | Public/private publishing rule is locked; new public capability HTML is not yet produced. |
 | 46. Technical quality gate | [~] | Route/SEO/type/build checks exist; consolidated recurring release gate remains. |
+
+## Group 2 task-level status
+
+| # | Task | Status | Verified boundary |
+| --- | --- | --- | --- |
+| 6 | Simplify the homepage hero | [x] | One short promise, one explanatory sentence, one primary action, one secondary action and a reduced one-role/three-requirement demonstration are implemented without changing the Patina identity. |
+| 7 | Make evidence comparison the primary CTA | [~] | Evidence and Match are now the primary hierarchy, but the action truthfully opens the current Jobs & Match entry; a low-friction pasted-job comparison is not yet implemented. |
+| 8 | Keep building a resume as the secondary CTA | [x] | The secondary action opens `/start/build`; seven Free templates, PDF/Word, free-account and no-card boundaries are stated consistently. |
+| 9 | Add the three start cards | [~] | Upload, build and job-first cards each enter a real current flow and emit the existing bounded journey events. Pasted job descriptions remain unavailable, so the job-first card describes search and saved/captured jobs instead. |
+| 10 | Add a compact product-proof strip | [x] | Five implementation-backed facts appear beside the first conversion choices without badges, seals or outcome claims. |
+| 11 | Simplify the hero product illustration | [~] | The first frame now shows one role and three evidence states; deeper WebGL/LCP measurement remains in G6. |
+| 12 | Redesign primary navigation | [~] | A reusable, keyboard-safe public navigation exposes real `/start/*`, Tools and Resources links. Templates and Pricing remain truthful homepage anchors until unique static pages exist. |

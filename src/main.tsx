@@ -3,7 +3,7 @@ import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, Download, FileText, Globe2, GripVertical, LayoutTemplate, Lock, Menu, Plus, RotateCcw, Search, ShieldCheck, Trash2, Upload, UserRound, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Download, FileText, Globe2, GripVertical, LayoutTemplate, Lock, Plus, RotateCcw, Search, ShieldCheck, Trash2, Upload, UserRound, X } from 'lucide-react';
 import { blank, contentLength, entry, example, isExperienceSection, isPremiumTemplate, isResume, languagePattern, maxBackupBytes, maxContentChars, migrate, rescueKey, storageKey, templates, validateAll, validatePersonal, validateSection, type PremiumTemplateId, type Resume } from './model';
 import { PaginatedResumePreview } from './components/ResumePreview';
 import '@fontsource/noto-sans/400.css';
@@ -16,6 +16,7 @@ import { clearContinuation, consumeContinuation, saveContinuation } from './rout
 import { jobResumeRoute, parseAppRoute, routeForPage, type NavigableRoute } from './routing/routes';
 import { useNavigation } from './routing/useNavigation';
 import { HomePage } from './features/home/HomePage';
+import { PublicNavigation } from './features/home/PublicNavigation';
 import { Modal } from './components/Modal';
 import { JourneyRail } from './components/JourneyRail';
 import { TemplatePicker } from './components/TemplatePicker';
@@ -80,7 +81,7 @@ function App(){
  const navigation=useNavigation();
  const {route,navigate:setPage}=navigation;
  const page=navigation.page??'home';
- const [resume,setResume]=useState<Resume>(start.resume); const [tab,setTab]=useState('personal'); const [saveState,setSaveState]=useState(start.warning?'Storage needs attention':'Saved for this session'); const [message,setMessage]=useState(start.warning); const [rescue,setRescue]=useState(start.rescue); const [conflict,setConflict]=useState(start.conflict); const [dirty,setDirty]=useState(false); const [previewMode,setPreviewMode]=useState(false); const [sampleOpen,setSampleOpen]=useState(false); const [unlockTemplate,setUnlockTemplate]=useState<PremiumTemplateId|null>(null); const [menu,setMenu]=useState(false); const [languageInput,setLanguageInput]=useState(resume.language); const [errors,setErrors]=useState<Record<string,string>>({}); const [pendingFocus,setPendingFocus]=useState<string|null>(null); const [confirmed,setConfirmed]=useState(false); const file=useRef<HTMLInputElement>(null); const downloads=useRef<HTMLDivElement>(null);
+ const [resume,setResume]=useState<Resume>(start.resume); const [tab,setTab]=useState('personal'); const [saveState,setSaveState]=useState(start.warning?'Storage needs attention':'Saved for this session'); const [message,setMessage]=useState(start.warning); const [rescue,setRescue]=useState(start.rescue); const [conflict,setConflict]=useState(start.conflict); const [dirty,setDirty]=useState(false); const [previewMode,setPreviewMode]=useState(false); const [sampleOpen,setSampleOpen]=useState(false); const [unlockTemplate,setUnlockTemplate]=useState<PremiumTemplateId|null>(null); const [languageInput,setLanguageInput]=useState(resume.language); const [errors,setErrors]=useState<Record<string,string>>({}); const [pendingFocus,setPendingFocus]=useState<string|null>(null); const [confirmed,setConfirmed]=useState(false); const file=useRef<HTMLInputElement>(null); const downloads=useRef<HTMLDivElement>(null);
  const [jobContext,setJobContext]=useState<JobCapturePayload|null>(null);
  const [activeJobVersion,setActiveJobVersion]=useState<JobResumeVersion|null>(null);
  const [jobVersionMasterChanged,setJobVersionMasterChanged]=useState(false);
@@ -139,18 +140,10 @@ function App(){
  useEffect(()=>{if(languagePattern.test(resume.language))setLanguageInput(resume.language);},[resume.language]);
  useEffect(()=>{if(!message)return;const timer=window.setTimeout(()=>setMessage(''),5000);return()=>window.clearTimeout(timer);},[message]);
  useEffect(()=>{if(confirmed){setPreviewMode(true);window.setTimeout(()=>downloads.current?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'center'}),0);}},[confirmed]);
- const menuToggle = useRef<HTMLButtonElement>(null);
- useEffect(()=>{
-  if(!menu)return;
-  const close=(event:KeyboardEvent)=>{if(event.key==='Escape'){setMenu(false);menuToggle.current?.focus();}};
-  window.addEventListener('keydown',close);
-  return()=>window.removeEventListener('keydown',close);
- },[menu]);
  const previousPage = useRef(page);
  useEffect(()=>{
   if(previousPage.current===page)return;
   previousPage.current=page;
-  setMenu(false);
   // Lazy routes may still show their accessible loading landmark. Focus the
   // destination heading once it exists, without moving focus on initial load.
   const focusHeading=()=>{
@@ -393,12 +386,22 @@ function App(){
   resumeCreatedTracked.current=true;trackProductEvent('import_completed',{surface:'builder',user_state:session.user?'authenticated':'anonymous',...(journey?{journey}:{}),outcome:'success'});if(journey)trackProductEvent('first_useful_input_completed',{surface:'builder',user_state:session.user?'authenticated':'anonymous',journey});
   setResume(data);setLanguageInput(data.language);setDirty(true);setSaveState('Saving…');setTab('personal');setPreviewMode(false);setErrors({});setConfirmed(false);setMessage('');setPage('builder');
  }catch(error){if(!failureTracked)trackProductEvent('import_failed',{surface:'builder',user_state:session.user?'authenticated':'anonymous',...(journey?{journey}:{}),failure_category:'parse_failure'});setMessage(error instanceof Error?error.message:'Unable to import this file.');}finally{event.target.value='';}};
- const begin=(journey?:'build_first')=>{if(journey){selectedJourney.current=journey;trackProductEvent('entry_journey_selected',{surface:'home',user_state:session.user?'authenticated':'anonymous',journey});}trackProductEvent('builder_started',{surface:'builder',user_state:session.user?'authenticated':'anonymous',...(selectedJourney.current?{journey:selectedJourney.current}:{})});setPreviewMode(false);setPage('builder');window.scrollTo(0,0);};
+ const begin=(journey?:'build_first')=>{if(journey){selectedJourney.current=journey;trackProductEvent('entry_journey_selected',{surface:'home',user_state:session.user?'authenticated':'anonymous',journey});}trackProductEvent('builder_started',{surface:'builder',user_state:session.user?'authenticated':'anonymous',...(selectedJourney.current?{journey:selectedJourney.current}:{})});setPreviewMode(false);setPage(journey?{kind:'start_build',path:'/start/build'}:'builder');window.scrollTo(0,0);};
  const selectImportJourney=()=>{selectedJourney.current='import_first';trackProductEvent('entry_journey_selected',{surface:'home',user_state:session.user?'authenticated':'anonymous',journey:'import_first'});file.current?.click();};
- const selectJobJourney=()=>{selectedJourney.current='job_first';trackProductEvent('entry_journey_selected',{surface:'home',user_state:session.user?'authenticated':'anonymous',journey:'job_first'});setPage('jobs');};
+ const selectJobJourney=()=>{selectedJourney.current='job_first';trackProductEvent('entry_journey_selected',{surface:'home',user_state:session.user?'authenticated':'anonymous',journey:'job_first'});setPage({kind:'start_job',path:'/start/job'});};
  const viewPro=()=>{trackProductEvent('upgrade_prompt_viewed',{surface:page==='jobs'?'jobs':page==='builder'?'builder':'home',user_state:session.user?'authenticated':'anonymous'});setPage('pro');};
  const selectTemplate=(template:Resume['template'])=>{trackProductEvent('template_selected',{surface:page==='home'?'home':'builder',user_state:session.user?'authenticated':'anonymous',template});update({template});};
  const returnHome=()=>{setMessage('');setPage('home');window.scrollTo(0,0);};
+ const showHomeSection=(sectionId:'templates'|'pricing')=>{
+  const reveal=()=>{const target=document.getElementById(sectionId);if(!target)return;target.tabIndex=-1;target.focus({preventScroll:true});target.scrollIntoView();};
+  if(page==='home'){
+   window.history.pushState(null,'',`/#${sectionId}`);
+   reveal();
+   return;
+  }
+  setPage('home');
+  window.setTimeout(()=>{window.history.replaceState(null,'',`/#${sectionId}`);reveal();},0);
+ };
  const field=(label:string,key:'name'|'headline'|'email'|'phone'|'location'|'website'|'summary'|'skills',placeholder:string,multiline=false)=>{const err=errors[key];const errId=`${key}-error`;const fieldId=`field-${key}`;return <div className={multiline?'field full':'field'}><label htmlFor={fieldId}>{label}</label>{multiline?<textarea id={fieldId} name={key} autoComplete="off" data-field={key} aria-invalid={!!err} aria-describedby={err?errId:undefined} dir="auto" rows={key==='summary'?5:3} maxLength={50000} value={resume[key]} placeholder={placeholder} onChange={event=>update({[key]:event.target.value})}/>:<input id={fieldId} name={key} type={key==='email'?'email':key==='phone'?'tel':key==='website'?'url':'text'} autoComplete={({name:'name',headline:'organization-title',email:'email',phone:'tel',location:'off',website:'url',summary:'off',skills:'off'})[key]} spellCheck={key==='email'||key==='website'?false:undefined} data-field={key} aria-invalid={!!err} aria-describedby={err?errId:undefined} dir="auto" maxLength={50000} value={resume[key]} placeholder={placeholder} onChange={event=>update({[key]:event.target.value})}/>}{err&&<span id={errId} className="field-error" role="alert">{err}</span>}</div>;};
  const selectedSection=resume.sections.find(section=>section.id===tab);
  const completion=[resume.name,resume.headline,resume.summary,resume.sections.some(section=>section.entries.some(item=>item.title)),resume.skills].filter(Boolean).length;
@@ -406,7 +409,7 @@ function App(){
  const documentSaveLabel=cloud.statusText??(jobContext?(activeJobVersion?(saveState==='Saved for this session'?'Job-specific resume saved to your account':saveState):'Job draft — kept in this browser'):saveState);
  return <><input ref={file} type="file" accept={`.docx,${docxMimeType},.pdf,application/pdf`} hidden onChange={uploadResume}/>
  <a className="skip-link" href="#main-content">Skip to main content</a>
- <header className={`site-header ${page==='home'?'public-header':''}`}><button className="brand" onClick={returnHome} aria-label="ResumeStride home"><span className="brand-icon"><span className="stride-mark" aria-hidden="true"><i/><i/><i/></span></span>Resume<span className="brand-light">Stride</span></button>{page!=='builder'&&page!=='jobs'?<><button ref={menuToggle} className="icon-button mobile-menu" aria-label="Toggle navigation" aria-controls="main-navigation" aria-expanded={menu} onClick={()=>setMenu(!menu)}><Menu aria-hidden="true"/></button><nav id="main-navigation" aria-label="Main navigation" onClick={event=>{setMenu(false);const link=(event.target as HTMLElement).closest('a');if(link&&page==='home'){const target=document.getElementById(link.hash.slice(1));if(target){target.tabIndex=-1;target.focus({preventScroll:true});}}if(link&&page!=='home'){event.preventDefault();setPage('home');const target=link.getAttribute('href')?.slice(1);window.setTimeout(()=>{if(target)document.getElementById(target)?.scrollIntoView();},0);}}} className={menu?'nav open':'nav'}><a href="#how-it-works">How it works</a><a href="#templates">Templates</a><a href="#pricing">Pricing</a>{authConfigured&&!session.user&&<button className="nav-account" onClick={openAccount}>Sign in / Sign up</button>}</nav><div className="site-header-actions">{session.user&&<button className="header-profile" onClick={openAccount} aria-label={`Open profile for ${profileName}`}><UserRound size={16} aria-hidden="true"/>Hello, {profileName}</button>}<button className="button header-cta" onClick={()=>begin()}>{session.user&&resume.name?'Continue my resume':'Build my resume'}<ArrowRight size={16} aria-hidden="true"/></button></div></>:<div className="header-actions">{<span className="save-status" role="status"><CheckCircle2 size={15}/>{documentSaveLabel}</span>}{page==='builder'&&<button className="button outline header-jobs" aria-label="Find jobs" onClick={()=>setPage('jobs')}><Search size={16} aria-hidden="true"/><span>Find jobs</span></button>}{session.user&&<button className="header-profile" onClick={openAccount} aria-label={`Open profile for ${profileName}`}><UserRound size={16}/>Hello, {profileName}</button>}<button className="button outline header-download" aria-label={selectedTemplateLocked?'Unlock to download':'Download'} onClick={requestDownload}>{selectedTemplateLocked?<Lock size={16} aria-hidden="true"/>:<Download size={16} aria-hidden="true"/>}<span>{selectedTemplateLocked?'Unlock to download':'Download'}</span></button></div>}</header>
+ {page!=='builder'&&page!=='jobs'?<PublicNavigation authAvailable={authConfigured} signedIn={Boolean(session.user)} profileName={profileName} resumeReady={Boolean(resume.name)} onHome={returnHome} onBuild={()=>begin('build_first')} onJobs={selectJobJourney} onAccount={openAccount} onHomeSection={showHomeSection}/>:<header className="site-header"><button className="brand" onClick={returnHome} aria-label="ResumeStride home"><span className="brand-icon"><span className="stride-mark" aria-hidden="true"><i/><i/><i/></span></span>Resume<span className="brand-light">Stride</span></button><div className="header-actions">{<span className="save-status" role="status"><CheckCircle2 size={15}/>{documentSaveLabel}</span>}{page==='builder'&&<button className="button outline header-jobs" aria-label="Find jobs" onClick={()=>setPage('jobs')}><Search size={16} aria-hidden="true"/><span>Find jobs</span></button>}{session.user&&<button className="header-profile" onClick={openAccount} aria-label={`Open profile for ${profileName}`}><UserRound size={16}/>Hello, {profileName}</button>}<button className="button outline header-download" aria-label={selectedTemplateLocked?'Unlock to download':'Download'} onClick={requestDownload}>{selectedTemplateLocked?<Lock size={16} aria-hidden="true"/>:<Download size={16} aria-hidden="true"/>}<span>{selectedTemplateLocked?'Unlock to download':'Download'}</span></button></div></header>}
  {message&&<div className="notice" role="status">{message}<button aria-label="Dismiss notification" onClick={()=>setMessage('')}><X size={16}/></button></div>}
  {rescue&&<div className="notice" role="status">An earlier draft on this device could not be loaded and has been kept separately so it isn’t lost.<button className="text-button" onClick={downloadRescue}><Download size={14}/>Download it</button><button aria-label="Discard the unreadable draft" onClick={discardRescue}><X size={16}/></button></div>}
  {conflict&&<div className="notice" role="status">A second unreadable draft was found while an earlier recovered draft above is still waiting. Autosave is paused to keep both recovery drafts safe. Download the unreadable recovery data, then explicitly discard this recovery draft to resume autosave.<button className="text-button" onClick={downloadConflict}><Download size={14}/>Download it</button><button aria-label="Discard this additional unreadable draft" onClick={()=>{if(window.confirm('Discard this recovery draft and allow your current edits to replace it?'))setConflict(null);}}><X size={16}/></button></div>}

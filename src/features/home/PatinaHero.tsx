@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Upload } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { ResumePreview } from '../../components/ResumePreview';
 import { Silk } from '../../components/Silk';
 import type { Resume } from '../../model';
@@ -9,14 +9,10 @@ import type { Resume } from '../../model';
 // evidence states Match Analysis uses; nothing here is a score or a prediction.
 type State = 'shown' | 'review' | 'missing';
 const openings = [
- { title: 'Customer Support Team Lead', org: 'Example Homewares', cells: ['shown', 'shown', 'review', 'missing'] as State[] },
- { title: 'Customer Success Associate', org: 'Example Software', cells: ['shown', 'review', 'missing', 'missing'] as State[] },
- { title: 'Service Desk Coordinator', org: 'Example Council', cells: ['shown', 'missing', 'missing', 'missing'] as State[] },
- { title: 'Operations Assistant', org: 'Example Logistics', cells: ['review', 'missing', 'missing', 'missing'] as State[] },
+ { title: 'Customer Support Team Lead', org: 'Example Homewares', cells: ['shown', 'review', 'missing'] as State[] },
 ];
 const evidence: { ask: string; state: State; label: string; quote?: string; note?: string }[] = [
  { ask: 'Support across email, phone and chat', state: 'shown', label: 'Clearly demonstrated', quote: 'Support customers across email, phone, and live chat…' },
- { ask: 'Coach new team members', state: 'shown', label: 'Clearly demonstrated', quote: 'Help new team members develop product knowledge…' },
  { ask: 'Zendesk administration', state: 'review', label: 'Worth reviewing', note: 'CRM systems are listed. Zendesk isn’t named.' },
  { ask: 'Workforce scheduling', state: 'missing', label: 'Not demonstrated', note: 'Your resume doesn’t show it yet. You may still have it.' },
 ];
@@ -31,9 +27,9 @@ const role = openings[0].title;
 const DEPTH = { openings: 0.35, source: 0.5, evidence: 0.8, decision: 1.15 } as const;
 type Layer = keyof typeof DEPTH;
 
-type Props = { sample: Resume; onBuild: () => void; onUpload: () => void; onJobs: () => void };
+type Props = { sample: Resume; onBuild: () => void; onJobs: () => void };
 
-export function PatinaHero({ sample, onBuild, onUpload, onJobs }: Props) {
+export function PatinaHero({ sample, onBuild, onJobs }: Props) {
  const stack = useRef<HTMLDivElement>(null);
  const layers = useRef<Partial<Record<Layer, HTMLDivElement | null>>>({});
  const scraps = useRef<(HTMLElement | null)[]>([]);
@@ -127,18 +123,17 @@ export function PatinaHero({ sample, onBuild, onUpload, onJobs }: Props) {
  return <section className={`pt-hero ${entered ? 'is-in' : ''}`}>
   <Silk className="pt-hero-silk" offset={narrow ? 0.42 : 0}/>
   <div className="pt-hero-copy">
-   <p className="pt-hero-kicker"><span className="pt-dot" aria-hidden="true"/>Your job search, with less guesswork</p>
-   <h1 className="pt-hero-title"><span>Stop searching</span> <span>everywhere.</span> <span><em>Start with jobs that</em></span> <span><em>fit your experience.</em></span></h1>
-   <p className="hero-deck">ResumeStride helps you find relevant opportunities, see what your experience actually supports, and tailor your resume for the roles you choose.</p>
-   <p className="pt-hero-proof">Opportunities sourced across <strong>190+ job portals</strong> and employer career sites.</p>
-   <div className="hero-actions"><button className="button large" onClick={onJobs}>Find relevant jobs<ArrowRight size={18} aria-hidden="true"/></button><button className="text-button" onClick={onUpload}><Upload size={16} aria-hidden="true"/>Upload a resume</button></div>
-   <p className="pt-hero-free">Just need a resume? <button className="text-button" onClick={onBuild}>Build one free<ArrowRight size={15} aria-hidden="true"/></button><span>7 layouts, PDF or Word. No card needed.</span></p>
+   <p className="pt-hero-kicker"><span className="pt-dot" aria-hidden="true"/>Evidence before effort</p>
+   <h1 className="pt-hero-title"><span>Find the roles</span> <span><em>worth your effort.</em></span></h1>
+   <p className="hero-deck">ResumeStride connects each job requirement to evidence from your experience, then helps you prepare a truthful resume for the roles you choose.</p>
+   <div className="hero-actions"><button className="button large" onClick={onJobs}>Find jobs and see the match<ArrowRight size={18} aria-hidden="true"/></button><button className="text-button" onClick={onBuild}>Build a resume free<ArrowRight size={15} aria-hidden="true"/></button></div>
+   <p className="pt-hero-free">Start without a payment card.<span>Job search and PDF or Word downloads require a free account.</span></p>
   </div>
   <figure className="pt-stage">
    <figcaption className="visually-hidden">An illustration using a fictional sample resume:
     <ol>
-     <li>Four openings are saved. {role} is selected.</li>
-     <li>Two of its requirements are clearly demonstrated, each by a quoted line from the resume.</li>
+     <li>{role} is selected for review.</li>
+     <li>One requirement is clearly demonstrated by a quoted line from the resume.</li>
      <li>Zendesk administration is worth reviewing: CRM systems are listed, but Zendesk isn’t named.</li>
      <li>Workforce scheduling is not demonstrated: the resume doesn’t show it yet, which is not a verdict on the person.</li>
      <li>An example of the decision that follows, which belongs to the person: here they choose to tailor a separate version for this job; they might instead check a requirement first or keep looking.</li>
@@ -146,13 +141,12 @@ export function PatinaHero({ sample, onBuild, onUpload, onJobs }: Props) {
    </figcaption>
    <div className="pt-stack" ref={stack} aria-hidden="true">
     <div className="pt-layer pt-layer-openings" ref={node => { layers.current.openings = node; }}>
-     <span className="pt-tag"><i>01</i>Four openings</span>
+     <span className="pt-tag"><i>01</i>One role</span>
      <ul className="pt-openings">{openings.map((job, i) => <li key={job.title} className={i === 0 ? 'is-sel' : undefined}>
       <span className="pt-openings-org">{job.org}</span>
       <strong>{job.title}</strong>
       <span className="pt-cells">{job.cells.map((cell, n) => <i key={n} data-state={cell}/>)}</span>
      </li>)}</ul>
-     <p className="pt-openings-more">+3 more saved</p>
     </div>
     <div className="pt-layer pt-layer-source" ref={node => { layers.current.source = node; }}>
      <span className="pt-tag">Source · your resume</span>

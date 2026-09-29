@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test('meaningful workspace navigation uses stable URLs and browser history', async ({ page }) => {
  await page.goto('/');
  await page.locator('.site-header-actions').getByRole('button', { name: 'Build my resume' }).click();
- await expect(page).toHaveURL(/\/workspace\/resume$/);
+ await expect(page).toHaveURL(/\/start\/build$/);
  await expect(page.getByRole('heading', { level: 1, name: 'Let’s start with you.' })).toBeVisible();
 
  await page.locator('.site-header').getByRole('button', { name: 'Find jobs', exact: true }).click();
@@ -11,10 +11,10 @@ test('meaningful workspace navigation uses stable URLs and browser history', asy
  await expect(page.getByRole('heading', { level: 1, name: /Find jobs/i })).toBeVisible();
 
  await page.goBack();
- await expect(page).toHaveURL(/\/workspace\/resume$/);
+ await expect(page).toHaveURL(/\/start\/build$/);
  await expect(page.getByRole('heading', { level: 1, name: 'Let’s start with you.' })).toBeVisible();
  await page.reload();
- await expect(page).toHaveURL(/\/workspace\/resume$/);
+ await expect(page).toHaveURL(/\/start\/build$/);
  await expect(page.getByRole('heading', { level: 1, name: 'Let’s start with you.' })).toBeVisible();
 });
 
