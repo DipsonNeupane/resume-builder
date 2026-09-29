@@ -9,6 +9,7 @@ export type BillingConfig = {
 }
 export function billingConfig(env: NodeJS.ProcessEnv): BillingConfig {
   if (env.BILLING_ENABLED !== 'true') throw new HttpError(503, 'Purchases are not available yet', 'configuration')
+  if (env.SUBSCRIPTION_OFFERS_ENABLED === 'true') throw new HttpError(503, 'Legacy Pro passes are no longer available', 'configuration')
   return billingServiceConfig(env)
 }
 
@@ -79,6 +80,7 @@ export type RecurringBillingConfig = BillingConfig & { recurringPriceId: string 
 
 export function recurringConfig(env: NodeJS.ProcessEnv): RecurringBillingConfig {
   const config = recurringServiceConfig(env)
+  if (env.SUBSCRIPTION_OFFERS_ENABLED === 'true') throw new HttpError(503, 'Legacy recurring purchases are no longer available', 'configuration')
   if (env.BILLING_RECURRING_ENABLED !== 'true') throw new HttpError(503, 'Recurring purchases are not available yet', 'configuration')
   return config
 }
@@ -102,7 +104,7 @@ export function recurringServiceConfig(env: NodeJS.ProcessEnv): RecurringBilling
 
 /** Validate the actual connected account and recurring price before offering
  * a subscription checkout. `price.recurring.interval`/`interval_count` are
- * checked against the exact "every 30 days" cadence this product bills —
+ * checked against the exact monthly cadence this product bills —
  * a differently-configured recurring price (monthly, annual, a trial) must
  * never be silently accepted just because its type is 'recurring'. */
 export async function validateRecurringCatalog(stripe: Stripe, config: RecurringBillingConfig): Promise<void> {
@@ -111,7 +113,7 @@ export async function validateRecurringCatalog(stripe: Stripe, config: Recurring
     account.id !== config.accountId || !account.charges_enabled ||
     !price.active || price.livemode !== config.live ||
     price.currency !== RECURRING_CURRENCY || price.unit_amount !== RECURRING_AMOUNT ||
-    price.type !== 'recurring' || price.recurring?.interval !== 'day' || price.recurring?.interval_count !== 30
+    price.type !== 'recurring' || price.recurring?.interval !== 'month' || price.recurring?.interval_count !== 1
   ) {
     throw new HttpError(503, 'Recurring purchases are not available yet', 'configuration')
   }

@@ -1,0 +1,77 @@
+/* Template Lab chrome — deliberately neutral; not Patina, not production. */
+body{background:#e9eaec;color:#1d1f22;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;overflow-x:auto}
+.lab{min-height:100vh;display:flex;flex-direction:column}
+.lab button,.lab select,.lab textarea{font:inherit;font-size:12px}
+.lab-bar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;padding:10px 18px;background:#fff;border-bottom:1px solid #d6d8db}
+.lab-title{display:flex;flex-direction:column;margin-right:auto;line-height:1.2}
+.lab-title strong{font-size:15px}
+.lab-title span{font-size:11px;color:#6a6f75}
+.lab-bar label,.lab-compare label{display:flex;gap:6px;align-items:center;font-size:12px;color:#4a4f55}
+.lab-bar select,.lab-compare select{padding:5px 6px;border:1px solid #c9ccd0;border-radius:6px;background:#fff}
+.lab-seg{display:inline-flex;border:1px solid #c9ccd0;border-radius:7px;overflow:hidden}
+.lab-seg button{border:0;background:#fff;padding:6px 10px;border-right:1px solid #e1e3e5}
+.lab-seg button:last-child{border-right:0}
+.lab-seg button[aria-pressed=true],.lab-toggle[aria-pressed=true]{background:#1d1f22;color:#fff}
+.lab-toggle{border:1px solid #c9ccd0;border-radius:7px;background:#fff;padding:6px 10px}
+.lab-body{display:grid;grid-template-columns:230px minmax(0,1fr);flex:1}
+.lab-nav{background:#f6f6f7;border-right:1px solid #d6d8db;padding:14px 10px;font-size:12px;overflow:auto;max-height:calc(100vh - 58px);position:sticky;top:58px}
+.lab-nav h3{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#6a6f75;margin:14px 6px 6px;display:flex;justify-content:space-between}
+.lab-nav ul{list-style:none;margin:0;padding:0}
+.lab-nav li button{width:100%;display:flex;justify-content:space-between;gap:8px;border:0;background:none;padding:6px 8px;border-radius:6px;text-align:left}
+.lab-nav li button:hover{background:#e8e9eb}
+.lab-nav li button[aria-current]{background:#1d1f22;color:#fff}
+.lab-nav li button small{color:inherit;opacity:.6}
+.lab-nav li button.is-planned{color:#80858b}
+.lab-nav li button.is-planned[aria-current]{color:#fff}
+.lab-import{margin:18px 6px}
+.lab-import summary{cursor:pointer;font-weight:600}
+.lab-import p{color:#6a6f75;margin:6px 0}
+.lab-import textarea{width:100%;font-family:ui-monospace,monospace;font-size:11px}
+.lab-import button{margin-top:6px;border:1px solid #1d1f22;background:#1d1f22;color:#fff;border-radius:6px;padding:5px 10px}
+.lab-error{color:#9b2c2c!important}
+.lab-main{padding:16px 24px 60px;min-width:0}
+.lab-note{font-size:12px;color:#5b6066;margin-bottom:12px}
+.lab-stage{display:flex;gap:28px;align-items:flex-start}
+.lab-stage-compare{align-items:flex-start}
+.lab-compare{display:flex;flex-direction:column;gap:8px}
+.lab-frame{margin:0}
+.lab-frame figcaption{display:flex;align-items:center;gap:10px;font-size:12px;margin-bottom:8px}
+.lab-frame figcaption em{color:#6a6f75}
+.lab-pagecount{margin-left:auto;color:#5b6066;font-variant-numeric:tabular-nums}
+.lab-badge{font-size:9px;letter-spacing:.09em;font-weight:700;padding:3px 6px;border-radius:4px;white-space:nowrap}
+.lab-badge-free{background:#e3efe7;color:#1f5130}
+.lab-badge-premium{background:#1d1f22;color:#f3e7c6}
+.lab-badge-premium.is-planned{background:#e4e5e7;color:#555a60}
+.lab-sheet{container-type:inline-size}
+.lab-frame-desktop .lab-sheet{width:min(760px,calc(100vw - 320px))}
+.lab-stage-compare .lab-frame-desktop .lab-sheet{width:min(600px,calc((100vw - 340px) / 2))}
+.lab-frame-mobile .lab-sheet{width:360px}
+.lab-planned{padding:60px 24px;background:#fff;color:#6a6f75;text-align:center;border:1px dashed #c9ccd0}
+.lab-spec{max-width:360px;background:#fff;border:1px solid #d6d8db;border-radius:10px;padding:16px 18px;font-size:12px;line-height:1.5;position:sticky;top:76px}
+.lab-spec header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lab-spec h2{font-size:18px;margin:0}
+.lab-spec-family{color:#6a6f75;margin:4px 0 10px}
+.lab-spec dt{font-weight:650;margin-top:10px;font-size:11px;color:#3a3e43}
+.lab-spec dd{margin:2px 0 0}
+.lab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:26px}
+.lab-grid-item{display:flex;flex-direction:column;gap:6px}
+.lab-grid-item>button{align-self:flex-start;border:1px solid #c9ccd0;background:#fff;border-radius:6px;padding:4px 10px}
+.lab-grid .lab-pages{max-height:530px;overflow:hidden}
+.lab-grid .paginated-preview{max-height:530px;overflow:hidden}
+
+/* Premium pagination: pages laid out at true print size, scaled for display. */
+.lab-pages{position:relative;display:grid;gap:18px}
+.lab-page-frame{position:relative;overflow:hidden;background:#fff;box-shadow:0 1px 2px #0000001a,0 10px 30px -12px #00000040}
+.lab-paper-A4 .lab-page-frame{aspect-ratio:210/297}
+.lab-paper-Letter .lab-page-frame{aspect-ratio:8.5/11}
+.lab-pages:not(.is-measured) .lab-page-frame{visibility:hidden}
+.lab-page{position:absolute;top:0;left:0;width:var(--page-w);height:var(--page-h);transform:scale(var(--scale));transform-origin:0 0}
+.lab-page-content{position:absolute;top:var(--page-margin);left:var(--page-margin);width:var(--inner-w);height:var(--inner-h);overflow:hidden}
+.lab-flow{width:var(--inner-w);height:var(--inner-h)}
+.lab-flow>.pt-paper{width:var(--inner-w);height:var(--inner-h);column-width:var(--inner-w);column-gap:var(--column-gap);column-fill:auto;overflow:visible;font-size:10pt}
+.lab-page-number{position:absolute;bottom:4px;right:8px;font-size:9px;color:#9aa0a6}
+.lab-guides .lab-page::after{content:'';position:absolute;top:var(--page-margin);left:var(--page-margin);width:var(--inner-w);height:var(--inner-h);outline:2px dashed #e05270aa;pointer-events:none}
+.lab-guides .resume-page::after{content:'';position:absolute;inset:var(--preview-margin);outline:1px dashed #e05270aa;pointer-events:none}
+.lab-free .resume-page{box-shadow:0 1px 2px #0000001a,0 10px 30px -12px #00000040}
+.lab-print{background:#fff}
+@media (max-width:900px){.lab-body{grid-template-columns:1fr}.lab-nav{position:static;max-height:none}.lab-stage{flex-direction:column}.lab-frame-desktop .lab-sheet,.lab-stage-compare .lab-frame-desktop .lab-sheet{width:calc(100vw - 48px)}}

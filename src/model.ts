@@ -1,21 +1,42 @@
 export type Entry = { id: string; title: string; organization: string; location: string; dates: string; description: string };
 export type Section = { kind?: 'experience' | 'optional'; id: string; title: string; entries: Entry[] };
-export type TemplateId = 'modern' | 'classic' | 'minimal' | 'compact' | 'bold' | 'executive' | 'ledger';
+export type FreeTemplateId = 'modern' | 'classic' | 'minimal' | 'compact' | 'bold' | 'executive' | 'ledger';
+export type PremiumTemplateId =
+ | 'boardroom' | 'mandate' | 'stackline' | 'kernel' | 'casebook' | 'atelier' | 'scholar' | 'bench'
+ | 'charter' | 'rounds' | 'meridian' | 'crossover' | 'almanac' | 'roster' | 'primer' | 'pyramid'
+ | 'quartile' | 'waypoint' | 'cadence' | 'plainsong';
+export type TemplateId = FreeTemplateId | PremiumTemplateId;
 export type Resume = { version: 1; name: string; headline: string; email: string; phone: string; location: string; website: string; summary: string; skills: string; profileHeading: string; skillsHeading: string; sections: Section[]; template: TemplateId; paper: 'A4' | 'Letter'; accent: string; direction: 'ltr' | 'rtl'; language: string; noExperience: boolean };
 // Single source of truth for template selection: shared by the landing template
 // showcase and the in-builder Design & format picker, so the two never drift apart.
-// All seven templates are available to every account; entitlement differences
-// (Pro vs Free) are about generated-PDF download volume, not template access.
-export const templates: { id: TemplateId; label: string; tagline: string }[] = [
- { id: 'modern', label: 'Modern', tagline: 'Clean lines with an accent-led header' },
- { id: 'classic', label: 'Classic', tagline: 'Traditional type with balanced spacing' },
- { id: 'minimal', label: 'Minimal', tagline: 'Open spacing with quiet section dividers' },
- { id: 'compact', label: 'Compact', tagline: 'Tighter spacing for information-rich resumes' },
- { id: 'bold', label: 'Bold', tagline: 'High-contrast header and strong section markers' },
- { id: 'executive', label: 'Executive', tagline: 'Refined headings with restrained rules' },
- { id: 'ledger', label: 'Ledger', tagline: 'Structured bands and detailed section labels' },
+// Seven Free and twenty Premium templates share this registry. Server-side
+// entitlements remain authoritative for Premium exports and paid download access.
+export type TemplateSummary = { id: TemplateId; label: string; tagline: string; tier: 'free' | 'premium'; releasedAt: string | null };
+export const freeTemplates: Array<TemplateSummary & { id: FreeTemplateId; tier: 'free' }> = [
+ { id: 'modern', label: 'Modern', tagline: 'Clean lines with an accent-led header', tier: 'free', releasedAt: null },
+ { id: 'classic', label: 'Classic', tagline: 'Traditional type with balanced spacing', tier: 'free', releasedAt: null },
+ { id: 'minimal', label: 'Minimal', tagline: 'Open spacing with quiet section dividers', tier: 'free', releasedAt: null },
+ { id: 'compact', label: 'Compact', tagline: 'Tighter spacing for information-rich resumes', tier: 'free', releasedAt: null },
+ { id: 'bold', label: 'Bold', tagline: 'High-contrast header and strong section markers', tier: 'free', releasedAt: null },
+ { id: 'executive', label: 'Executive', tagline: 'Refined headings with restrained rules', tier: 'free', releasedAt: null },
+ { id: 'ledger', label: 'Ledger', tagline: 'Structured bands and detailed section labels', tier: 'free', releasedAt: null },
 ];
+export const premiumTemplates: Array<TemplateSummary & { id: PremiumTemplateId; tier: 'premium' }> = [
+ ['boardroom','Boardroom','Employer-grouped progression for senior leadership'],['mandate','Mandate','Career overview for board and fractional leadership'],
+ ['stackline','Stackline','Projects and technical stack first'],['kernel','Kernel','Systems-heavy experience with precise structure'],
+ ['casebook','Casebook','Selected work presented as editorial case studies'],['atelier','Atelier','Recognition and client-led creative leadership'],
+ ['scholar','Scholar','Research-first CV with numbered publications'],['bench','Bench','Methods-forward scientific and research work'],
+ ['charter','Charter','Credentials-first traditional register'],['rounds','Rounds','Licensure and clinical setting first'],
+ ['meridian','Meridian','Modern hierarchy with hanging section rails'],['crossover','Crossover','Strengths and skills shown in context'],
+ ['almanac','Almanac','Dense date-rail layout for long histories'],['roster','Roster','Compact organization and outcome rows'],
+ ['primer','Primer','Education and projects first for early careers'],['pyramid','Pyramid','Answer-first consulting accomplishments'],
+ ['quartile','Quartile','Data results and tools given clear emphasis'],['waypoint','Waypoint','Continuous operations timeline'],
+ ['cadence','Cadence','Product work nested beneath the role that shipped it'],['plainsong','Plainsong','Black-only traditional hierarchy without decoration'],
+].map(([id,label,tagline])=>({id:id as PremiumTemplateId,label,tagline,tier:'premium' as const,releasedAt:null}));
+export const templates: TemplateSummary[] = [...freeTemplates, ...premiumTemplates];
 export const templateIds = templates.map(t => t.id);
+export const premiumTemplateIds = premiumTemplates.map(t=>t.id as PremiumTemplateId);
+export const isPremiumTemplate = (id: TemplateId): id is PremiumTemplateId => premiumTemplateIds.includes(id as PremiumTemplateId);
 export const entry = (): Entry => ({ id: crypto.randomUUID(), title: '', organization: '', location: '', dates: '', description: '' });
 export const blank = (): Resume => ({version:1,name:'',headline:'',email:'',phone:'',location:'',website:'',summary:'',skills:'',profileHeading:'Profile',skillsHeading:'Skills & languages',sections:[{id:crypto.randomUUID(),title:'Experience',kind:'experience',entries:[entry()]},{id:crypto.randomUUID(),title:'Education',entries:[entry()]}],template:'modern',paper:'A4',accent:'#20594a',direction:'ltr',language:'en',noExperience:false});
 export const example = (): Resume => ({ ...blank(), name:'Alex Morgan', headline:'Customer Experience Specialist',email:'alex.morgan@example.com',phone:'+44 7700 900123',location:'Manchester, United Kingdom',website:'linkedin.com/in/alex-example',summary:'People-first customer experience specialist with a thoughtful approach to solving problems. Experienced in supporting diverse customers, improving everyday processes, and helping teams deliver a consistently welcoming service.',skills:'Customer support, Team collaboration, Problem solving, CRM systems, English, Spanish',sections:[{id:'experience',title:'Experience',kind:'experience',entries:[{id:'role1',title:'Customer Experience Specialist',organization:'Example Company',location:'Manchester, UK',dates:'2022 — Present',description:'Support customers across email, phone, and live chat with clear, empathetic communication.\nPartner with the operations team to simplify common support processes.\nHelp new team members develop product knowledge and confidence.'},{id:'role2',title:'Customer Service Associate',organization:'Sample Retail',location:'Leeds, UK',dates:'2020 — 2022',description:'Helped customers find the right products and resolve order questions.\nMaintained accurate records and coordinated with colleagues during busy periods.'}]},{id:'education',title:'Education',entries:[{id:'degree1',title:'BA Business Management',organization:'Example University',location:'United Kingdom',dates:'2017 — 2020',description:''}]}] });

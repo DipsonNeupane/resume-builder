@@ -29,7 +29,7 @@ await mkdir(socket,{mode:0o700});
 const sql=async(text)=>{
  const client=new pg.Client({host:socket,port:55479,user:'resume_test',database:'postgres'});
  await client.connect();
- try{const result=await client.query(text);const last=Array.isArray(result)?result.at(-1):result;return last.rows.map(row=>Object.values(row).join('|')).join('\n');}
+ try{const result=await client.query(text);const last=Array.isArray(result)?result.at(-1):result;return last.rows.map(row=>Object.values(row).map(value=>typeof value==='boolean'?(value?'t':'f'):value).join('|')).join('\n');}
  finally{await client.end();}
 };
 const owner='11111111-1111-1111-1111-111111111111',other='22222222-2222-2222-2222-222222222222';

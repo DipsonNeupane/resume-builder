@@ -1,33 +1,27 @@
 import { Check, LayoutTemplate, X } from 'lucide-react';
-import { useState } from 'react';
-import { templates, type Resume, type TemplateId } from '../model';
+import { useEffect, useMemo, useState } from 'react';
+import { isPremiumTemplate, templates, type PremiumTemplateId, type Resume, type TemplateId } from '../model';
 import { Modal } from './Modal';
 import { ResumePreview } from './ResumePreview';
 import { trackProductEvent } from '../services/analytics';
+import { supabase } from '../services/supabase';
 
-export function TemplatePicker({ resume, onSelect }: { resume: Resume; onSelect: (template: TemplateId) => void }) {
- const [open, setOpen] = useState(false);
- const current = templates.find(template => template.id === resume.template)!;
+type Access = { isPro:boolean; activeTemplates:string[]; salesAvailable:boolean };
+
+export function TemplatePicker({ resume, onSelect }: { resume:Resume; onSelect:(template:TemplateId)=>void }) {
+ const [open,setOpen]=useState(false),[access,setAccess]=useState<Access|null>(null),[purchase,setPurchase]=useState<PremiumTemplateId|null>(null);
+ const [consent,setConsent]=useState(false),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
+ const current=templates.find(template=>template.id===resume.template)!;
+ useEffect(()=>{if(!open||!supabase)return;const controller=new AbortController();(async()=>{try{const {data}=await supabase.auth.getSession();if(!data.session){setAccess({isPro:false,activeTemplates:[],salesAvailable:false});return;}const response=await fetch('/api/subscription-status',{headers:{Authorization:`Bearer ${data.session.access_token}`},signal:controller.signal});if(!response.ok)throw new Error();const result=await response.json();if(typeof result.isPro!=='boolean'||!Array.isArray(result.activeTemplates)||typeof result.salesAvailable!=='boolean')throw new Error();setAccess(result);}catch{if(!controller.signal.aborted)setAccess({isPro:false,activeTemplates:[],salesAvailable:false});}})();return()=>controller.abort();},[open]);
+ const entitled=useMemo(()=>new Set(access?.activeTemplates??[]),[access]);
+ function choose(template:TemplateId){const allowed=!isPremiumTemplate(template)||access?.isPro||entitled.has(template);if(!allowed){setPurchase(template as PremiumTemplateId);setConsent(false);setMessage('');trackProductEvent('upgrade_prompt_viewed',{surface:'builder',user_state:'authenticated'});return;}if(template!==resume.template){trackProductEvent('template_selected',{surface:'builder',template});onSelect(template);}setOpen(false);}
+ async function checkout(){if(!purchase||!consent||busy||!supabase)return;setBusy(true);setMessage('');try{const {data}=await supabase.auth.getSession();if(!data.session)throw new Error('Sign in from Account before subscribing.');const response=await fetch('/api/subscription-checkout',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${data.session.access_token}`},body:JSON.stringify({requestId:crypto.randomUUID(),offerKey:`template:${purchase}`,renewalConsent:true})});const result=await response.json();if(!response.ok)throw new Error(typeof result.error==='string'?result.error:'Checkout could not open.');const url=new URL(result.url);if(url.origin!=='https://checkout.stripe.com')throw new Error('Checkout could not open.');trackProductEvent('checkout_started',{surface:'builder',user_state:'authenticated',plan:'Free'});window.location.assign(url.href);}catch(error){setMessage(error instanceof Error?error.message:'Checkout could not open.');}finally{setBusy(false);}}
  return <>
-  <button className="preview-template-trigger" type="button" aria-haspopup="dialog" onClick={() => setOpen(true)}>
-   <LayoutTemplate size={15} aria-hidden="true" />Templates <strong>{current.label}</strong>
-  </button>
-  {open && <Modal className="template-picker" labelledBy="template-picker-title" describedBy="template-picker-description" onClose={() => setOpen(false)}>
-   <header className="template-picker-heading">
-    <div><p className="section-label">Seven templates · Free</p><h2 id="template-picker-title">Choose your layout</h2><p id="template-picker-description">Every preview uses your current resume. Choosing a layout changes presentation only—your words and details stay unchanged.</p></div>
-    <button className="icon-button" type="button" aria-label="Close templates" onClick={() => setOpen(false)}><X size={20} aria-hidden="true" /></button>
-   </header>
-   <ul className="template-picker-grid" aria-label="Resume templates">
-    {templates.map(template => {
-     const selected = resume.template === template.id;
-     return <li key={template.id}>
-      <button className="template-picker-option" type="button" aria-pressed={selected} onClick={() => { if (!selected) { trackProductEvent('template_selected', { surface: 'builder', template: template.id }); onSelect(template.id); } setOpen(false); }}>
-       <span className="template-option-preview" aria-hidden="true"><ResumePreview resume={{ ...resume, template: template.id }} /></span>
-       <span className="template-option-copy"><span><strong>{template.label}</strong>{selected && <span className="template-current"><Check size={13} aria-hidden="true" />Current</span>}</span><small>{template.tagline}</small></span>
-      </button>
-     </li>;
-    })}
-   </ul>
+  <button className="preview-template-trigger" type="button" aria-haspopup="dialog" onClick={()=>setOpen(true)}><LayoutTemplate size={15} aria-hidden="true"/>Templates <strong>{current.label}</strong></button>
+  {open&&<Modal className="template-picker" labelledBy="template-picker-title" describedBy="template-picker-description" onClose={()=>setOpen(false)}>
+   <header className="template-picker-heading"><div><p className="section-label">27 templates · 7 Free · 20 Premium</p><h2 id="template-picker-title">Choose your layout</h2><p id="template-picker-description">Every full preview uses your current resume. PDF preserves the selected design; DOCX is a clean, editable content document.</p></div><button className="icon-button" type="button" aria-label="Close templates" onClick={()=>setOpen(false)}><X size={20} aria-hidden="true"/></button></header>
+   {purchase&&<section className="helper-box" aria-label="Premium template subscription"><div><span className="price-tag">PREMIUM</span><h3>{templates.find(item=>item.id===purchase)?.label}</h3><p>US$1.99/month. Includes generous reasonable-human-use PDF and editable DOCX exports with this template. Renews automatically until cancelled.</p>{access?.isPro?<p>Pro already includes this template.</p>:<><label className="checkbox-field"><input type="checkbox" checked={consent} onChange={event=>setConsent(event.target.checked)}/>I agree to a recurring US$1.99 monthly subscription. I can cancel anytime; access continues through the paid billing period.</label><button className="button" disabled={!consent||busy||!access?.salesAvailable} onClick={checkout}>{busy?'Opening…':'Continue to secure checkout'}</button></>}{message&&<p role="status">{message}</p>}<button className="text-button" onClick={()=>setPurchase(null)}>Back to templates</button></div></section>}
+   {!purchase&&<ul className="template-picker-grid" aria-label="Resume templates">{templates.map(template=>{const selected=resume.template===template.id;const locked=isPremiumTemplate(template.id)&&!access?.isPro&&!entitled.has(template.id);return <li key={template.id}><button className="template-picker-option" type="button" aria-pressed={selected} onClick={()=>choose(template.id)}><span className="template-option-preview" aria-hidden="true" inert><ResumePreview resume={{...resume,template:template.id}}/></span><span className="template-option-copy"><span><strong>{template.label}</strong><span className="template-tier">{template.tier==='free'?'FREE':'PREMIUM'}</span>{selected&&<span className="template-current"><Check size={13} aria-hidden="true"/>Current</span>}</span><small>{template.tagline}{locked?' · Preview available':''}</small></span></button></li>;})}</ul>}
   </Modal>}
  </>;
 }

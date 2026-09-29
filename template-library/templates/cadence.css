@@ -1,0 +1,28 @@
+/* Cadence — product: shipped work nested under roles */
+.pt-cadence{--pt-ink:#16181b;--pt-muted:#5d6369;font-family:'Instrument Sans',var(--pt-fallback);font-size:.97em;line-height:1.44}
+.pt-cadence .cd-header{padding-bottom:.9em}
+.pt-cadence h1{font-size:2.35em;font-weight:700;letter-spacing:-.03em;line-height:1.02}
+.pt-cadence .cd-sub{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2em 1.4em;margin-top:.4em}
+.pt-cadence .cd-headline{font-weight:600;color:var(--pt-accent)}
+.pt-cadence .cd-contacts{display:flex;flex-wrap:wrap;gap:0 1.1em;font-size:.86em;color:var(--pt-muted)}
+.pt-cadence .cd-section{margin-top:1.15em}
+.pt-cadence .cd-section>h2{font-size:1.08em;font-weight:700;letter-spacing:-.01em;margin-bottom:.45em;padding-bottom:.25em;border-bottom:.12em solid var(--pt-ink)}
+.pt-cadence .cd-role{margin-top:.9em}
+.pt-cadence .cd-section>h2+.cd-role,.pt-cadence .cd-section>h2+.cd-shipped{margin-top:0}
+.pt-cadence .cd-head{display:flex;justify-content:space-between;align-items:baseline;gap:1em;break-after:avoid}
+.pt-cadence .cd-head h3{font-weight:700;font-size:1.05em}
+.pt-cadence .cd-head h4{font-weight:600;font-size:1em}
+.pt-cadence .cd-dates{font-size:.86em;color:var(--pt-muted);flex-shrink:0;max-width:36%;text-align:end}
+.pt-cadence .cd-org{color:#3d4349;font-size:.95em;break-after:avoid}
+.pt-cadence .pt-bullets{margin-top:.25em}
+.pt-cadence .pt-bullets li{margin-top:.14em}
+.pt-cadence .pt-meta{font-size:.88em;color:var(--pt-muted)}
+.pt-cadence .cd-shipped{margin-top:.55em;padding:.45em .8em .5em;border-inline-start:.2em solid var(--pt-accent);background:color-mix(in srgb,var(--pt-accent) 5%,#fff)}
+.pt-cadence .cd-nested{margin-inline-start:.9em;margin-top:.5em}
+.pt-cadence .cd-nested-label{font-size:.72em;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--pt-accent);break-after:avoid}
+.pt-cadence .cd-nested>.cd-shipped{margin-top:.35em}
+.pt-cadence .cd-role-projects .cd-shipped+.cd-shipped{margin-top:.5em}
+.pt-cadence .cd-outcome{margin-top:.2em;font-weight:600}
+.pt-cadence .cd-outcome .cd-label{color:var(--pt-accent);font-size:.84em;letter-spacing:.06em;text-transform:uppercase}
+.pt-cadence .cd-outcome .cd-label::after{content:' —'}
+.pt-cadence .pt-skills-grouped{display:grid;gap:.2em}

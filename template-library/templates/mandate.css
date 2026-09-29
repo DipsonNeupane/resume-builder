@@ -1,0 +1,35 @@
+/* Mandate — executive portfolio careers (serif throughout, overview first) */
+.pt-mandate{--pt-ink:#1b1c1e;--pt-muted:#5a5c60;--serif:'Newsreader',Georgia,var(--pt-fallback);font-family:var(--serif);font-size:1.02em;line-height:1.42;font-optical-sizing:auto;font-variant-numeric:lining-nums tabular-nums}
+.pt-mandate h1{font-size:2.35em;font-weight:400;line-height:1.05;letter-spacing:-.012em}
+.pt-mandate .md-masthead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:.3em 2em;margin-top:.55em;padding:.4em 0;border-top:.12em solid var(--pt-ink);border-bottom:var(--pt-hair) solid var(--pt-ink)}
+.pt-mandate .md-headline{text-transform:uppercase;letter-spacing:.1em;font-size:.84em;font-weight:600;color:var(--pt-accent)}
+.pt-mandate .md-contacts{display:flex;flex-wrap:wrap;gap:0 1.2em;font-size:.86em;color:var(--pt-muted);justify-content:flex-end;min-width:0}
+.pt-mandate .md-section{margin-top:1.25em}
+.pt-mandate .md-section>h2{text-transform:uppercase;font-size:.78em;font-weight:600;letter-spacing:.13em;color:var(--pt-muted);margin-bottom:.45em}
+.pt-mandate .md-summary{margin-top:1.1em}
+.pt-mandate .md-summary p{font-size:1.06em;line-height:1.45}
+.pt-mandate .md-summary p+p{margin-top:.35em}
+.pt-mandate .md-overview{width:100%;border-collapse:collapse;margin-top:1.1em;font-size:.93em}
+.pt-mandate .md-overview td{padding:.28em .8em .28em 0;border-bottom:var(--pt-hair) solid var(--pt-rule);vertical-align:baseline}
+.pt-mandate .md-overview tr:first-child td{border-top:var(--pt-hair) solid var(--pt-ink)}
+.pt-mandate .md-overview tr{break-inside:avoid}
+.pt-mandate .md-ov-dates{width:22%;color:var(--pt-muted);white-space:normal}
+.pt-mandate .md-ov-role{font-weight:600;width:40%}
+.pt-mandate .md-ov-org{font-style:italic;padding-inline-end:0!important}
+.pt-mandate .md-appointments ul{display:grid;gap:.4em}
+.pt-mandate .md-appt{display:flex;flex-wrap:wrap;gap:0 .6em;align-items:baseline}
+.pt-mandate .md-appt-role{font-weight:600}
+.pt-mandate .md-appt-org{font-style:italic}
+.pt-mandate .md-appt-dates{margin-inline-start:auto;color:var(--pt-muted);font-size:.9em}
+.pt-mandate .md-entry{margin-top:.8em}
+.pt-mandate .md-section>h2+.md-entry{margin-top:0}
+.pt-mandate .md-head{display:flex;justify-content:space-between;align-items:baseline;gap:1em;break-after:avoid}
+.pt-mandate .md-head h3{font-weight:600;font-size:1.05em}
+.pt-mandate .md-org{font-weight:400;font-style:italic;color:#34363a}
+.pt-mandate .md-dates{font-size:.9em;color:var(--pt-muted);flex-shrink:0;max-width:36%;text-align:end}
+.pt-mandate .md-where{font-size:.9em;color:var(--pt-muted)}
+.pt-mandate .pt-bullets{margin-top:.25em}
+.pt-mandate .pt-bullets li{margin-top:.15em;padding-inline-start:1em}
+.pt-mandate .pt-bullets li::before{content:'—';background:none;width:auto;height:auto;top:0;inset-inline-start:0;border-radius:0;color:var(--pt-muted);font-size:.8em;line-height:1.8;opacity:1}
+.pt-mandate .pt-meta{font-size:.9em;color:var(--pt-muted);margin-top:.2em}
+.pt-mandate .pt-skills-grouped{display:grid;gap:.15em}

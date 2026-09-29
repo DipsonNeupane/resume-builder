@@ -20,8 +20,8 @@ function fixtures(options:{quotaError?:boolean;pdfRenderError?:boolean;docxRende
   renderDocx:async()=>{calls.push('render:docx');if(options.docxRenderError)throw new Error('private data');return new TextEncoder().encode('PK-docx-fixture')},
   serviceDatabase:()=>({rpc:async(name:string,args:Record<string,unknown>)=>{
    calls.push(name==='pdf_finish'?`finish:${args.p_success}`:name)
-   if(name==='pdf_begin')hashes.push(String(args.p_hash))
-   return name==='pdf_begin'?{data:[{lease:'fixture',already_complete:!!options.complete}],error:options.quotaError?{message:'Free PDF allowance reached'}:null}:{error:options.finishError?{}:null}
+   if(name==='document_begin')hashes.push(String(args.p_hash))
+   return name==='document_begin'?{data:[{lease:'fixture',already_complete:!!options.complete}],error:options.quotaError?{message:'Free PDF allowance reached'}:null}:{error:options.finishError?{}:null}
   }}) as unknown as ReturnType<typeof serviceDatabase>,
  }
  return {calls,hashes,deps}
@@ -33,7 +33,7 @@ test('exhausted shared allowance never renders PDF or DOCX',async()=>{
   const response=format==='pdf'?await exportPdf(req(format),env,{...deps,renderDocument:deps.renderPdf}):await exportDocx(req(format),env,{...deps,renderDocument:deps.renderDocx})
   assert.equal(response.status,403)
   assert.deepEqual(await response.json(),{error:'Your Free document download allowance is used for this period.'})
-  assert.deepEqual(calls,['pdf_begin'])
+  assert.deepEqual(calls,['document_begin'])
  }
 })
 
@@ -42,7 +42,7 @@ test('renderer failure releases a reservation and does not disclose internals',a
   const {calls,deps}=fixtures(format==='pdf'?{pdfRenderError:true}:{docxRenderError:true})
   const response=format==='pdf'?await exportPdf(req(format),env,{...deps,renderDocument:deps.renderPdf}):await exportDocx(req(format),env,{...deps,renderDocument:deps.renderDocx})
   assert.equal(response.status,503)
-  assert.deepEqual(calls,['pdf_begin',`render:${format}`,'finish:false'])
+  assert.deepEqual(calls,['document_begin',`render:${format}`,'finish:false'])
   assert.ok(!(await response.text()).includes('private data'))
  }
 })
@@ -54,7 +54,7 @@ test('successful documents are counted before bytes return; completed retries ar
   assert.equal(response.status,200)
   assert.equal(response.headers.get('content-type'),format==='pdf'?'application/pdf':docxMimeType)
   assert.equal(response.headers.get('content-disposition'),`attachment; filename="ResumeStride.${format}"`)
-  assert.deepEqual(calls,complete?['pdf_begin',`render:${format}`]:['pdf_begin',`render:${format}`,'finish:true'])
+  assert.deepEqual(calls,complete?['document_begin',`render:${format}`]:['document_begin',`render:${format}`,'finish:true'])
  }
 })
 
@@ -76,7 +76,7 @@ test('three mixed-format successes consume one shared Free allowance and the nex
   renderPdf:async()=>{renders++;return new TextEncoder().encode('%PDF-fixture')},
   renderDocx:async()=>{renders++;return new TextEncoder().encode('PK-docx-fixture')},
   serviceDatabase:()=>({rpc:async(name:string,args:Record<string,unknown>)=>{
-   if(name==='pdf_begin')return completed>=3?{data:null,error:{message:'Free PDF allowance reached'}}:{data:[{lease:`lease-${String(args.p_id)}`,already_complete:false}],error:null}
+   if(name==='document_begin')return completed>=3?{data:null,error:{message:'Free PDF allowance reached'}}:{data:[{lease:`lease-${String(args.p_id)}`,already_complete:false}],error:null}
    if(name==='pdf_finish'&&args.p_success===true)completed++
    return {error:null}
   }}) as unknown as ReturnType<typeof serviceDatabase>,
@@ -96,18 +96,18 @@ test('ambiguous accounting result leaks neither format and does not refund an un
   const {calls,deps}=fixtures({finishError:true})
   const response=format==='pdf'?await exportPdf(req(format),env,{...deps,renderDocument:deps.renderPdf}):await exportDocx(req(format),env,{...deps,renderDocument:deps.renderDocx})
   assert.equal(response.status,503)
-  assert.deepEqual(calls,['pdf_begin',`render:${format}`,'finish:true'])
+  assert.deepEqual(calls,['document_begin',`render:${format}`,'finish:true'])
  }
 })
 
-test('all seven templates remain available to Free and Pro document requests without a template entitlement check',async()=>{
+test('all seven Free templates remain available without a Premium template entitlement',async()=>{
  for(const template of ['modern','classic','minimal','compact','bold','executive','ledger'] as const){
   for(const format of ['pdf','docx'] as const){
    const {calls,deps}=fixtures()
    const request=req(format,{...example(),template})
    const response=format==='pdf'?await exportPdf(request,env,{...deps,renderDocument:deps.renderPdf}):await exportDocx(request,env,{...deps,renderDocument:deps.renderDocx})
    assert.equal(response.status,200,`${template} ${format} should render`)
-   assert.deepEqual(calls,['pdf_begin',`render:${format}`,'finish:true'])
+   assert.deepEqual(calls,['document_begin',`render:${format}`,'finish:true'])
   }
  }
 })
@@ -118,7 +118,7 @@ test('export render failures are correlated and categorized while reservation cl
  const records:Diagnostic[]=[]
  const response=await runObservedRequest('export-pdf','export',()=>exportPdf(req(),env,{...deps,renderDocument:deps.renderPdf}),env,record=>records.push(record))
  assert.equal(response.status,503)
- assert.deepEqual(calls,['pdf_begin','render:pdf','finish:false'])
+ assert.deepEqual(calls,['document_begin','render:pdf','finish:false'])
  assert.ok(records.some(record=>record.category==='export_failure'&&record.operation==='export_render'))
  assert.ok(records.every(record=>record.requestId===response.headers.get('x-request-id')))
  assert.ok(!JSON.stringify(records).includes('private data'))

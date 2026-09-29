@@ -1,0 +1,30 @@
+/* Atelier — creative leadership (asymmetric header, credits, client-led) */
+.pt-atelier{--pt-ink:#171717;--pt-muted:#6a6864;--display:'Newsreader',Georgia,var(--pt-fallback);font-family:'Instrument Sans',var(--pt-fallback);font-size:.95em;line-height:1.46}
+.pt-atelier .at-header{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:1em 2.4em;align-items:end;padding-bottom:1.2em;border-bottom:var(--pt-hair) solid var(--pt-ink)}
+.pt-atelier h1{font-family:var(--display);font-size:3.5em;font-weight:300;line-height:.98;letter-spacing:-.025em;font-optical-sizing:auto}
+.pt-atelier .at-aside{padding-bottom:.35em}
+.pt-atelier .at-headline{font-size:.78em;font-weight:600;letter-spacing:.22em;text-transform:uppercase;line-height:1.5}
+.pt-atelier .at-contacts{margin-top:.6em;font-size:.82em;color:var(--pt-muted);line-height:1.6}
+.pt-atelier .at-contacts li{display:block}
+.pt-atelier .at-section{margin-top:1.4em;display:grid;grid-template-columns:minmax(0,1fr);}
+.pt-atelier .at-section>h2{font-size:.7em;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--pt-muted);margin-bottom:.7em}
+.pt-atelier .at-profile p{font-family:var(--display);font-size:1.3em;line-height:1.35;max-width:78%;font-weight:350}
+.pt-atelier .at-profile p+p{margin-top:.3em}
+.pt-atelier .at-credits{display:grid;gap:.35em}
+.pt-atelier .at-credit{display:grid;grid-template-columns:6.5em minmax(0,1fr);column-gap:1em;break-inside:avoid}
+.pt-atelier .at-credit-year{font-size:.86em;color:var(--pt-muted);font-variant-numeric:tabular-nums;padding-top:.08em}
+.pt-atelier .at-credit-body strong{font-weight:600}
+.pt-atelier .at-credit-note{display:block;font-size:.92em;color:#3d3c39}
+.pt-atelier .at-entry{padding:.75em 0;border-top:var(--pt-hair) solid var(--pt-rule)}
+.pt-atelier .at-section>h2+.at-entry{border-top-color:var(--pt-ink)}
+.pt-atelier .at-head{display:flex;justify-content:space-between;align-items:baseline;gap:1em;break-after:avoid}
+.pt-atelier .at-head h3{font-size:.95em;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
+.pt-atelier .at-dates{font-size:.84em;color:var(--pt-muted);flex-shrink:0;max-width:36%;text-align:end;font-variant-numeric:tabular-nums}
+.pt-atelier .at-role{font-family:var(--display);font-style:italic;font-size:1.12em;margin-top:.05em;break-after:avoid}
+.pt-atelier .at-loc{font-style:normal;font-family:'Instrument Sans',var(--pt-fallback);font-size:.8em;color:var(--pt-muted)}
+.pt-atelier .pt-bullets{margin-top:.35em}
+.pt-atelier .pt-bullets li{margin-top:.15em;padding-inline-start:0}
+.pt-atelier .pt-bullets li::before{display:none}
+.pt-atelier .pt-meta{margin-top:.3em;font-size:.86em;color:var(--pt-muted)}
+.pt-atelier .at-skills p{line-height:1.6}
+.pt-atelier .at-divider{color:var(--pt-rule)}

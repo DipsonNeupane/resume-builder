@@ -6,6 +6,7 @@ import { assertManualPayment } from './policy.js'
 import { assertFailedSubscriptionInvoice, assertVerifiedSubscriptionInvoice, isInvoiceStatus, isSubscriptionStatus, parseOwnerSubscriptionRow } from './recurring.js'
 import { PRO_PASS_AMOUNT_CENTS, PRO_PASS_CURRENCY } from './constants.js'
 import { acquireOwnerCheckoutLock, releaseOwnerCheckoutBySession, tryRecoverStuckLock, type OwnerCheckoutLock } from './reservation.js'
+import { applyOfferCheckoutSession, applyOfferInvoice, applyOfferSubscriptionStatus } from './offer-handlers.js'
 
 export const dependencies = { authenticate, serviceDatabase, stripeClient, validateCatalog, recurringConfig, recurringServiceConfig, validateRecurringCatalog, createSubscriptionCheckout }
 type Dependencies = typeof dependencies
@@ -309,6 +310,8 @@ async function applyCheckoutExpiredEvent(event: Stripe.Event, stripe: Stripe, db
  * (already-expanded, but still event-triggered) session object, matching
  * applyCheckoutEvent's own re-retrieval discipline above. */
 async function applySubscriptionCheckoutEvent(session: Stripe.Checkout.Session, stripe: Stripe, db: ReturnType<Dependencies['serviceDatabase']>, deps: Dependencies, env: NodeJS.ProcessEnv): Promise<Response> {
+  const offerResult=await applyOfferCheckoutSession(session,stripe,db,env)
+  if(offerResult)return offerResult
   // Sales-flag-INDEPENDENT: this only ever fires for a session that already
   // started (created while sales were open, or via cancel/recover flows) —
   // recording its completion is not "starting a new sale" and must not be
@@ -351,7 +354,6 @@ async function applyInvoiceEvent(event: Stripe.Event, stripe: Stripe, db: Return
   // Sales-flag-INDEPENDENT: an existing subscriber's invoice lifecycle
   // (paid/failed/uncollectible/voided) must keep reconciling during a sales
   // pause, same as applySubscriptionCheckoutEvent above.
-  const config=deps.recurringServiceConfig(env)
   const eventInvoice=event.data.object as Stripe.Invoice
   // Expanded so a 'paid' invoice's own settled InvoicePayment (and the
   // PaymentIntent it names) can be read below — the ONLY durable fact that
@@ -365,6 +367,10 @@ async function applyInvoiceEvent(event: Stripe.Event, stripe: Stripe, db: Return
   const {data:trustedRow,error:lookupError}=await db.rpc('billing_lookup_subscription',{p_subscription_id:subscriptionId})
   if(lookupError || !trustedRow?.owner_id) throw new Error('Trusted subscription unavailable')
   const trusted={subscriptionId,ownerId:trustedRow.owner_id,priceId:trustedRow.price_id,live:trustedRow.live}
+
+  if(trustedRow.offer_key) return applyOfferInvoice(invoice,event.created,event.type,stripe,db,trustedRow,env)
+
+  const config=deps.recurringServiceConfig(env)
 
   if(!isInvoiceStatus(invoice.status)) throw new Error('Unrecognized invoice status')
   if(invoice.status==='open' || invoice.status==='draft') return json(200,{received:true})
@@ -424,6 +430,7 @@ async function applySubscriptionStatusEvent(event: Stripe.Event, stripe: Stripe,
   if(lookupError || !trustedRow?.owner_id) throw new Error('Trusted subscription unavailable')
   if(subscription.id!==eventSubscription.id || subscription.livemode!==event.livemode || subscription.livemode!==trustedRow.live) throw new Error('Subscription identity mismatch')
   if(!isSubscriptionStatus(subscription.status)) throw new Error('Unrecognized subscription status')
+  if(trustedRow.offer_key) return applyOfferSubscriptionStatus(subscription,db,trustedRow)
   const result=await db.rpc('billing_update_subscription_status',{p_subscription_id:subscription.id,p_owner_id:trustedRow.owner_id,p_status:subscription.status,p_cancel_at_period_end:subscription.cancel_at_period_end})
   if(result.error) throw new Error('Subscription status persistence unavailable')
   return json(200,{received:true})

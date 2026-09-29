@@ -1,0 +1,33 @@
+/* Boardroom — executive */
+.pt-boardroom{--pt-ink:#1b1e22;--pt-muted:#5a5f66;font-family:'Source Sans 3',var(--pt-fallback);font-size:1em;line-height:1.42}
+.pt-boardroom .br-header{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,max-content);gap:.6em 2.4em;align-items:end;padding-bottom:1.1em;border-bottom:var(--pt-hair) solid var(--pt-ink);margin-bottom:1.6em}
+.pt-boardroom h1{font-family:'Newsreader',Georgia,var(--pt-fallback);font-size:2.55em;line-height:1.05;font-weight:500;letter-spacing:-.012em;font-optical-sizing:auto}
+.pt-boardroom .br-headline{margin-top:.45em;font-size:1em;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pt-accent)}
+.pt-boardroom .br-contacts{font-size:.86em;color:var(--pt-muted);text-align:end;line-height:1.55;max-width:22em}
+.pt-boardroom .br-contacts li{display:block}
+.pt-boardroom .br-section{margin-top:1.55em}
+.pt-boardroom .br-summary{margin-top:0}
+.pt-boardroom .br-label{display:flex;align-items:center;gap:.8em;font-size:.78em;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--pt-muted);margin-bottom:.8em}
+.pt-boardroom .br-label::after{content:'';flex:1;border-top:var(--pt-hair) solid var(--pt-rule)}
+.pt-boardroom .br-lede{font-family:'Newsreader',Georgia,var(--pt-fallback);font-size:1.2em;line-height:1.48;max-width:92%}
+.pt-boardroom .br-lede+.br-lede{margin-top:.5em}
+.pt-boardroom .br-highlights{display:grid;grid-template-columns:1fr 1fr;gap:.75em 2em;counter-reset:hl}
+.pt-boardroom .br-highlights li{counter-increment:hl;display:grid;grid-template-columns:1.9em 1fr;font-family:'Newsreader',Georgia,var(--pt-fallback);font-size:1.03em;line-height:1.4;break-inside:avoid}
+.pt-boardroom .br-highlights li::before{content:counter(hl,decimal-leading-zero);font-family:'Source Sans 3',var(--pt-fallback);font-size:.78em;font-weight:700;color:var(--pt-accent);padding-top:.2em;letter-spacing:.05em}
+.pt-boardroom .br-expertise-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.3em 1.6em}
+.pt-boardroom .br-expertise-grid li{padding:.28em 0;border-bottom:var(--pt-hair) solid #e2e4e6;break-inside:avoid}
+.pt-boardroom .br-employer{margin-top:1.2em}
+.pt-boardroom .br-section>.br-employer:first-of-type{margin-top:0}
+.pt-boardroom .br-employer-head{display:flex;justify-content:space-between;align-items:baseline;gap:1em;break-after:avoid}
+.pt-boardroom .br-employer-head h3{font-family:'Newsreader',Georgia,var(--pt-fallback);font-size:1.3em;font-weight:600;line-height:1.2}
+.pt-boardroom .br-employer-head span{font-size:.86em;color:var(--pt-muted);flex-shrink:0;max-width:40%;text-align:end}
+.pt-boardroom .br-role{margin-top:.5em;padding-inline-start:.95em;border-inline-start:.14em solid color-mix(in srgb,var(--pt-accent) 55%,#fff)}
+.pt-boardroom .br-role+.br-role{margin-top:.8em}
+.pt-boardroom .br-role-head{display:flex;justify-content:space-between;align-items:baseline;gap:1em;break-after:avoid}
+.pt-boardroom .br-role-head h4,.pt-boardroom .br-entry h3{font-weight:700;font-size:1.02em}
+.pt-boardroom .br-dates{font-size:.86em;color:var(--pt-muted);flex-shrink:0;max-width:38%;text-align:end;font-variant-numeric:tabular-nums}
+.pt-boardroom .br-where{font-size:.9em;color:var(--pt-muted);margin-top:.05em}
+.pt-boardroom .pt-bullets{margin-top:.35em}
+.pt-boardroom .pt-bullets li{margin-top:.22em}
+.pt-boardroom .pt-meta{margin-top:.3em;font-size:.9em;color:var(--pt-muted)}
+.pt-boardroom .br-entry+.br-entry{margin-top:.7em}

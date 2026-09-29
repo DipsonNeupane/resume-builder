@@ -1,0 +1,40 @@
+/* Casebook — portfolio-forward */
+.pt-casebook{--pt-ink:#1a1a1a;--pt-muted:#5f5f5c;--display:'Instrument Serif','Newsreader',Georgia,var(--pt-fallback);font-family:'Instrument Sans',var(--pt-fallback);font-size:.96em;line-height:1.45}
+.pt-casebook .cb-header{padding-bottom:1em}
+.pt-casebook h1{font-family:var(--display);font-weight:400;font-size:3.3em;line-height:1;letter-spacing:-.015em}
+.pt-casebook .cb-headline{margin-top:.5em;font-size:.8em;font-weight:600;letter-spacing:.2em;text-transform:uppercase}
+.pt-casebook .cb-contacts{display:flex;flex-wrap:wrap;gap:.2em 1.5em;margin-top:.8em;font-size:.86em;color:var(--pt-muted)}
+.pt-casebook .cb-contact-website{color:var(--pt-ink);font-weight:600}
+.pt-casebook .cb-contact-website a{text-decoration-color:var(--pt-accent);text-decoration-thickness:.12em}
+.pt-casebook .cb-section{margin-top:1.3em}
+.pt-casebook .cb-section>h2{font-size:.74em;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--pt-muted);margin-bottom:.8em}
+.pt-casebook .cb-statement{margin-top:.6em}
+.pt-casebook .cb-statement>h2{margin-bottom:.45em}
+.pt-casebook .cb-statement p{font-family:var(--display);font-size:1.5em;line-height:1.28;max-width:88%}
+.pt-casebook .cb-statement p+p{margin-top:.35em}
+.pt-casebook .cb-statement .pt-bullets{font-family:var(--display);font-size:1.3em}
+.pt-casebook .cb-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.1em 1.8em}
+.pt-casebook .cb-cards-single{grid-template-columns:minmax(0,1fr)}
+.pt-casebook .cb-card{border-top:.16em solid var(--pt-accent);padding-top:.55em;break-inside:avoid}
+.pt-casebook .cb-index{display:block;font-size:.72em;font-weight:600;letter-spacing:.1em;color:var(--pt-accent);font-variant-numeric:tabular-nums}
+.pt-casebook .cb-card h3{font-family:var(--display);font-weight:400;font-size:1.55em;line-height:1.12;margin-top:.12em}
+.pt-casebook .cb-for{font-size:.82em;color:var(--pt-muted);margin-top:.25em}
+.pt-casebook .cb-notes{margin-top:.4em}
+.pt-casebook .cb-notes li{padding-inline-start:0;margin-top:.2em;font-size:.95em}
+.pt-casebook .cb-notes li::before{display:none}
+.pt-casebook .cb-link{margin-top:.4em;font-size:.84em;font-weight:600}
+.pt-casebook .cb-card .pt-meta{margin-top:.35em;font-size:.84em;color:var(--pt-muted)}
+.pt-casebook .cb-row{padding:.5em 0;border-top:var(--pt-hair) solid var(--pt-rule)}
+.pt-casebook .cb-section>h2+.cb-row{border-top-color:var(--pt-ink)}
+.pt-casebook .cb-row-head{display:flex;justify-content:space-between;align-items:baseline;gap:1em;break-after:avoid}
+.pt-casebook .cb-row-head h3{font-weight:600;font-size:1.02em}
+.pt-casebook .cb-dates{font-size:.84em;color:var(--pt-muted);font-variant-numeric:tabular-nums;flex-shrink:0;max-width:38%;text-align:end}
+.pt-casebook .cb-org{font-size:.9em;color:var(--pt-muted)}
+.pt-casebook .cb-row .pt-bullets{margin-top:.3em}
+.pt-casebook .cb-row .pt-bullets li{margin-top:.15em;font-size:.96em}
+.pt-casebook .cb-capability-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:1.8em}
+.pt-casebook .cb-capability-list li{break-inside:avoid;padding:.15em 0}
+.pt-casebook .cb-capabilities .pt-skills-grouped{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.8em 1.8em}
+.pt-casebook .cb-capabilities .pt-skills-grouped>div{display:block}
+.pt-casebook .cb-capabilities dt{font-size:.8em;letter-spacing:.08em;text-transform:uppercase;color:var(--pt-accent)}
+.pt-casebook .pt-meta dt{font-weight:600}

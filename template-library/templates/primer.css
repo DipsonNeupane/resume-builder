@@ -1,0 +1,22 @@
+/* Primer — early career, education first, generous rhythm */
+.pt-primer{--pt-ink:#1e2124;--pt-muted:#5e656b;font-family:'Source Sans 3',var(--pt-fallback);font-size:1.04em;line-height:1.5}
+.pt-primer .pr-header{padding-bottom:1em;border-bottom:.22em solid var(--pt-accent)}
+.pt-primer h1{font-family:'Newsreader',Georgia,var(--pt-fallback);font-size:2.5em;font-weight:500;line-height:1.05;font-optical-sizing:auto}
+.pt-primer .pr-headline{font-size:1.1em;margin-top:.25em;color:#394046}
+.pt-primer .pr-contacts{display:flex;flex-wrap:wrap;gap:0 1.3em;margin-top:.45em;font-size:.9em;color:var(--pt-muted)}
+.pt-primer .pr-section{margin-top:1.35em}
+.pt-primer .pr-section>h2{font-size:1.02em;font-weight:700;color:var(--pt-accent);margin-bottom:.45em;display:flex;align-items:center;gap:.7em}
+.pt-primer .pr-section>h2::after{content:'';flex:1;border-top:var(--pt-hair) solid var(--pt-rule)}
+.pt-primer .pr-summary p{font-size:1.04em}
+.pt-primer .pr-entry{margin-top:.8em}
+.pt-primer .pr-section>h2+.pr-entry{margin-top:0}
+.pt-primer .pr-head{display:flex;justify-content:space-between;align-items:baseline;gap:1em;break-after:avoid}
+.pt-primer .pr-head h3{font-weight:700;font-size:1.04em}
+.pt-primer .pr-role-education .pr-head h3{font-size:1.1em}
+.pt-primer .pr-dates{font-size:.9em;color:var(--pt-muted);flex-shrink:0;max-width:36%;text-align:end}
+.pt-primer .pr-org{color:#3e454b;break-after:avoid}
+.pt-primer .pt-bullets{margin-top:.25em}
+.pt-primer .pt-bullets li{margin-top:.15em}
+.pt-primer .pt-meta{font-size:.9em;color:var(--pt-muted)}
+.pt-primer .pr-skill-list{display:flex;flex-wrap:wrap;gap:.3em .5em}
+.pt-primer .pr-skill-list li{padding:.08em .55em;border:var(--pt-hair) solid color-mix(in srgb,var(--pt-accent) 45%,#fff);border-radius:.3em;font-size:.92em;break-inside:avoid}

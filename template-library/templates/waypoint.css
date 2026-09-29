@@ -1,0 +1,27 @@
+/* Waypoint — operations timeline */
+.pt-waypoint{--pt-ink:#1a1d20;--pt-muted:#5c6369;--track:1.6em;font-family:'Source Sans 3',var(--pt-fallback);font-size:1em;line-height:1.4}
+.pt-waypoint .wp-header{padding-bottom:.8em;border-bottom:var(--pt-hair) solid var(--pt-rule)}
+.pt-waypoint h1{font-size:2.2em;font-weight:600;letter-spacing:-.01em;line-height:1.06}
+.pt-waypoint .wp-headline{font-size:1.1em;font-weight:600;color:var(--pt-accent);margin-top:.15em}
+.pt-waypoint .wp-contacts{display:flex;flex-wrap:wrap;gap:0 1.3em;margin-top:.4em;font-size:.9em;color:var(--pt-muted)}
+.pt-waypoint .wp-section{margin-top:1.05em}
+.pt-waypoint .wp-section>h2{font-size:.82em;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.5em}
+.pt-waypoint .wp-stop{position:relative;padding-inline-start:var(--track);padding-bottom:.85em;border-inline-start:.14em solid color-mix(in srgb,var(--pt-accent) 40%,#fff);margin-inline-start:.4em}
+.pt-waypoint .wp-stop:last-child{border-inline-start-color:transparent;padding-bottom:0}
+.pt-waypoint .wp-stop::before{content:'';position:absolute;inset-inline-start:-.5em;top:.2em;width:.72em;height:.72em;border-radius:50%;background:#fff;border:.18em solid var(--pt-accent);box-sizing:border-box;margin-inline-start:-.07em}
+.pt-waypoint .wp-when{font-size:.82em;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--pt-accent);break-after:avoid}
+.pt-waypoint .wp-sep{color:var(--pt-muted)}
+.pt-waypoint .wp-stop h3{font-weight:700;font-size:1.06em;break-after:avoid}
+.pt-waypoint .wp-org{font-weight:400}
+.pt-waypoint .wp-scope{margin-top:.2em;font-size:.94em;font-weight:600}
+.pt-waypoint .wp-scope .wp-label{color:var(--pt-muted);font-weight:700;font-size:.9em;letter-spacing:.06em;text-transform:uppercase}
+.pt-waypoint .pt-bullets{margin-top:.2em}
+.pt-waypoint .pt-bullets li{margin-top:.12em}
+.pt-waypoint .pt-meta{font-size:.9em;color:var(--pt-muted)}
+.pt-waypoint .wp-entry{margin-top:.6em}
+.pt-waypoint .wp-section>h2+.wp-entry{margin-top:0}
+.pt-waypoint .wp-head{display:flex;justify-content:space-between;align-items:baseline;gap:1em;break-after:avoid}
+.pt-waypoint .wp-head h3{font-weight:700}
+.pt-waypoint .wp-dates{font-size:.9em;color:var(--pt-muted);flex-shrink:0;max-width:36%;text-align:end}
+.pt-waypoint .wp-org-line{color:#3c434a}
+.pt-waypoint .pt-skills-grouped{display:grid;gap:.15em}

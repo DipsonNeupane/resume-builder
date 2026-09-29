@@ -1,0 +1,32 @@
+/* Bench — industry research (methods matrix, serif citations) */
+.pt-bench{--pt-ink:#191c1f;--pt-muted:#586068;--serif:'Newsreader',Georgia,var(--pt-fallback);font-family:'Source Sans 3',var(--pt-fallback);font-size:.98em;line-height:1.38}
+.pt-bench .bn-header{padding-bottom:.75em;border-bottom:var(--pt-hair) solid var(--pt-ink)}
+.pt-bench h1{font-size:2.1em;font-weight:600;letter-spacing:-.01em;line-height:1.08}
+.pt-bench .bn-headline{font-size:1.06em;color:var(--pt-accent);font-weight:600;margin-top:.15em}
+.pt-bench .bn-contacts{display:flex;flex-wrap:wrap;gap:0 1.2em;margin-top:.4em;font-size:.88em;color:var(--pt-muted)}
+.pt-bench .bn-section{margin-top:1em}
+.pt-bench .bn-section>h2{font-size:.8em;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--pt-ink);margin-bottom:.45em}
+.pt-bench .bn-matrix{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5em 1.6em}
+.pt-bench .bn-cell{border-top:.14em solid color-mix(in srgb,var(--pt-accent) 70%,#fff);padding-top:.3em;break-inside:avoid}
+.pt-bench .bn-cell h3{font-size:.8em;font-weight:700;color:var(--pt-accent);letter-spacing:.04em}
+.pt-bench .bn-cell p{font-size:.95em}
+.pt-bench .bn-matrix:has(.bn-cell:only-child){grid-template-columns:minmax(0,1fr)}
+.pt-bench .bn-entry{margin-top:.7em}
+.pt-bench .bn-section>h2+.bn-entry{margin-top:0}
+.pt-bench .bn-head{display:flex;justify-content:space-between;align-items:baseline;gap:1em;break-after:avoid}
+.pt-bench .bn-head h3{font-weight:700;font-size:1.02em}
+.pt-bench .bn-dates{font-size:.88em;color:var(--pt-muted);flex-shrink:0;max-width:36%;text-align:end}
+.pt-bench .bn-org{font-size:.94em;color:#3e454c;break-after:avoid}
+.pt-bench .pt-bullets{margin-top:.2em}
+.pt-bench .pt-bullets li{margin-top:.12em}
+.pt-bench .bn-methods{margin-top:.25em;font-size:.9em;padding-inline-start:.7em;border-inline-start:.14em solid var(--pt-rule)}
+.pt-bench .bn-methods .bn-label{font-weight:700;color:var(--pt-accent)}
+.pt-bench .bn-methods .bn-label::after{content:':'}
+.pt-bench .pt-meta{font-size:.9em;color:var(--pt-muted)}
+.pt-bench .bn-cites{counter-reset:bn}
+.pt-bench .bn-cite{counter-increment:bn;display:grid;grid-template-columns:2em minmax(0,1fr);margin-top:.4em;font-family:var(--serif);font-size:1.02em;break-inside:avoid}
+.pt-bench .bn-cite::before{content:counter(bn) '.';font-family:'Source Sans 3',var(--pt-fallback);font-size:.88em;font-weight:700;color:var(--pt-accent);padding-top:.1em}
+.pt-bench .bn-cite>*{grid-column:2}
+.pt-bench .bn-cite-title{font-weight:600}
+.pt-bench .bn-cite-note{font-size:.92em;color:#3d4247}
+.pt-bench .bn-cite .pt-meta{font-family:'Source Sans 3',var(--pt-fallback);font-size:.84em}

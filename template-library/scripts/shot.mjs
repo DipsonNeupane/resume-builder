@@ -1,0 +1,10 @@
+import { chromium } from '@playwright/test';
+const [,, url, out, w='1500', h='1000'] = process.argv;
+const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: +w, height: +h } });
+p.on('console', m => { if (m.type()==='error'||m.type()==='warning') console.log('console', m.type(), m.text().slice(0,300)); });
+p.on('pageerror', e => console.log('pageerror', e.message));
+await p.goto(url, { waitUntil: 'load', timeout: 20000 }).catch(e=>console.log('goto', e.message));
+await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(1200);
+console.log(await p.evaluate(() => [...document.querySelectorAll('[data-page-count]')].map(e => e.getAttribute('data-page-count')).join(',')));
+if (process.env.SEL) await p.locator(process.env.SEL).first().screenshot({ path: out }); else await p.screenshot({ path: out, fullPage: process.env.FULL==='1' });
+await b.close();

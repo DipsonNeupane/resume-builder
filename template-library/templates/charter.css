@@ -1,0 +1,28 @@
+/* Charter — finance / legal register (monochrome serif) */
+.pt-charter{--pt-ink:#141414;--pt-muted:#4f4f4f;font-family:'Newsreader',Georgia,var(--pt-fallback);font-size:1.02em;line-height:1.4;font-optical-sizing:auto;font-variant-numeric:lining-nums tabular-nums}
+.pt-charter .ch-header{text-align:center;padding-bottom:.8em}
+.pt-charter h1{font-size:1.5em;font-weight:500;text-transform:uppercase;letter-spacing:.14em;line-height:1.1}
+.pt-charter .ch-headline{font-style:italic;margin-top:.15em}
+.pt-charter .ch-contacts{display:flex;flex-wrap:wrap;justify-content:center;gap:0 1.4em;margin-top:.35em;font-size:.9em;color:var(--pt-muted)}
+.pt-charter .ch-section{margin-top:1em}
+.pt-charter .ch-section>h2{text-transform:uppercase;font-size:.8em;font-weight:600;letter-spacing:.16em;padding:.12em 0;border-top:.1em solid var(--pt-ink);border-bottom:var(--pt-hair) solid var(--pt-ink);margin-bottom:.5em}
+.pt-charter .ch-summary{text-align:start}
+.pt-charter .ch-summary+.ch-summary{margin-top:.3em}
+.pt-charter .ch-register{width:100%;border-collapse:collapse}
+.pt-charter .ch-register tr{break-inside:avoid}
+.pt-charter .ch-register th{text-align:start;font-weight:600;padding:.18em 1em .18em 0;width:42%;vertical-align:baseline}
+.pt-charter .ch-register td{padding:.18em 0;vertical-align:baseline}
+.pt-charter .ch-register td.ch-dates{text-align:end;white-space:nowrap;padding-inline-start:1em;color:var(--pt-muted);width:1%}
+.pt-charter .ch-register-note{display:block;font-size:.92em;color:var(--pt-muted)}
+.pt-charter .ch-entry{margin-top:.6em}
+.pt-charter .ch-section>h2+.ch-entry{margin-top:0}
+.pt-charter .ch-row{display:flex;justify-content:space-between;align-items:baseline;gap:1em;break-after:avoid}
+.pt-charter .ch-row h3{text-transform:uppercase;font-weight:600;letter-spacing:.06em;font-size:.86em}
+.pt-charter .ch-loc{font-size:.92em;flex-shrink:0;max-width:40%;text-align:end}
+.pt-charter .ch-title{font-style:italic}
+.pt-charter .ch-dates{font-size:.92em;color:var(--pt-muted);flex-shrink:0;max-width:40%;text-align:end}
+.pt-charter .pt-bullets{margin-top:.15em}
+.pt-charter .pt-bullets li{margin-top:.1em}
+.pt-charter .pt-bullets li::before{width:.26em;height:.26em;top:.64em;opacity:1}
+.pt-charter .pt-meta{font-size:.92em;color:var(--pt-muted)}
+.pt-charter .pt-skills-grouped{display:grid;gap:.1em}

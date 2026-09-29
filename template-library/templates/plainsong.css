@@ -1,0 +1,17 @@
+/* Plainsong — black text only; weight, size and space */
+.pt-plainsong{--pt-ink:#000;font-family:'Newsreader',Georgia,var(--pt-fallback);font-size:1.04em;line-height:1.48;color:#000;font-optical-sizing:auto}
+.pt-plainsong a{text-decoration-color:#0007}
+.pt-plainsong h1{font-size:1.65em;font-weight:600;line-height:1.15}
+.pt-plainsong .ps-headline{font-size:1.06em}
+.pt-plainsong .ps-contacts{display:flex;flex-wrap:wrap;gap:0 1.4em;margin-top:.25em}
+.pt-plainsong .ps-section{margin-top:1.35em}
+.pt-plainsong .ps-section>h2{font-size:1.08em;font-weight:700;margin-bottom:.3em}
+.pt-plainsong .ps-section>p+p{margin-top:.25em}
+.pt-plainsong .ps-entry{margin-top:.65em}
+.pt-plainsong .ps-section>h2+.ps-entry{margin-top:0}
+.pt-plainsong .ps-line{break-after:avoid}
+.pt-plainsong .ps-dates::before{content:'\2003'}
+.pt-plainsong .ps-list{margin-top:.1em}
+.pt-plainsong .ps-list li{position:relative;padding-inline-start:1.1em;break-inside:avoid}
+.pt-plainsong .ps-list li::before{content:'–';position:absolute;inset-inline-start:.15em}
+.pt-plainsong .pt-meta{margin-top:.1em}

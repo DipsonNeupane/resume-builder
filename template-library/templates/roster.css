@@ -1,0 +1,20 @@
+/* Roster — many short engagements as table-like rows */
+.pt-roster{--pt-ink:#17191b;--pt-muted:#5b6166;font-family:'IBM Plex Sans',var(--pt-fallback);font-size:.9em;line-height:1.32;font-variant-numeric:tabular-nums}
+.pt-roster .ro-header{display:flex;flex-wrap:wrap;align-items:baseline;gap:.1em 1em;padding-bottom:.45em;border-bottom:var(--pt-hair) solid var(--pt-ink)}
+.pt-roster h1{font-size:1.75em;font-weight:600;letter-spacing:-.015em;line-height:1.1}
+.pt-roster .ro-headline{font-size:1.02em;color:var(--pt-accent);font-weight:500}
+.pt-roster .ro-contacts{flex-basis:100%;display:flex;flex-wrap:wrap;gap:0 1.2em;font-size:.88em;color:var(--pt-muted)}
+.pt-roster .ro-section{margin-top:.8em}
+.pt-roster .ro-section>h2{font-size:.78em;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--pt-muted);margin-bottom:.25em}
+.pt-roster .ro-skills p{font-size:.96em}
+.pt-roster .ro-table{border-top:.12em solid var(--pt-ink)}
+.pt-roster .ro-row{display:grid;grid-template-columns:minmax(0,33%) minmax(0,1fr) minmax(0,max-content);column-gap:1em;padding:.32em 0;border-bottom:var(--pt-hair) solid var(--pt-rule)}
+.pt-roster .ro-row-short{break-inside:avoid}
+.pt-roster .ro-org{font-weight:600}
+.pt-roster .ro-role{min-width:0}
+.pt-roster .ro-loc{color:var(--pt-muted)}
+.pt-roster .ro-dates{color:var(--pt-muted);text-align:end;font-size:.94em;max-width:11em}
+.pt-roster .ro-outcome,.pt-roster .ro-detail{grid-column:2/-1;font-size:.95em;color:#353a3f}
+.pt-roster .ro-detail .pt-bullets li{margin-top:.08em;padding-inline-start:.9em}
+.pt-roster .ro-detail .pt-bullets li::before{content:'–';background:none;width:auto;height:auto;top:0;inset-inline-start:0;border-radius:0;opacity:1;color:var(--pt-muted)}
+.pt-roster .pt-meta{font-size:.94em;color:var(--pt-muted)}

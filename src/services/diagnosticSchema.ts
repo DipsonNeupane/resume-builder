@@ -3,7 +3,7 @@
 export const features = ['auth', 'cloud', 'billing', 'entitlement', 'ai', 'ai_accounting', 'jobs', 'match', 'export', 'extension', 'database', 'server'] as const;
 export const categories = ['ok', 'invalid_request', 'authentication', 'authorization', 'not_found', 'conflict', 'rate_limit', 'unavailable', 'configuration', 'unexpected', 'database_error', 'database_conflict', 'provider_failure', 'provider_rate_limit', 'provider_timeout', 'provider_invalid', 'ai_budget', 'ai_limit', 'ai_accounting', 'ai_uncertain', 'export_failure', 'bridge_rejected'] as const;
 export const operations = ['request', 'auth_verify', 'auth_session', 'database', 'cloud_load', 'cloud_create', 'cloud_save', 'provider_search', 'provider_tailor', 'billing_provider', 'ai_reserve', 'ai_start', 'ai_finish', 'match_analyze', 'export_render', 'bridge_receive', 'cache_hit', 'cache_miss', 'cache_join'] as const;
-export const routes = ['billing-status', 'cancel-subscription', 'checkout', 'export-docx', 'export-pdf', 'export-status', 'jobs-account', 'jobs-search', 'stripe-webhook', 'subscribe', 'tailor'] as const;
+export const routes = ['billing-status', 'cancel-offer', 'cancel-subscription', 'checkout', 'customer-portal', 'dispatch-billing-notices', 'export-docx', 'export-pdf', 'export-status', 'jobs-account', 'jobs-search', 'stripe-webhook', 'subscribe', 'subscription-checkout', 'subscription-status', 'tailor'] as const;
 export type Feature = typeof features[number];
 export type Category = typeof categories[number];
 export type Operation = typeof operations[number];

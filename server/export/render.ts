@@ -6,7 +6,8 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import puppeteer from 'puppeteer-core'
 import chromium from '@sparticuz/chromium'
 import { ResumePreview } from '../../src/components/resumeMarkup.js'
-import { type Resume } from '../../src/model.js'
+import { isPremiumTemplate, type Resume } from '../../src/model.js'
+import { premiumHtml, renderPremiumPdf } from '../../template-library/export/premium-pdf.ts'
 import {validateExport} from './validate.ts'
 import {HttpError} from '../http/security.js'
 
@@ -39,10 +40,17 @@ async function styles(){
 }
 export async function resumeHtml(resume:Resume):Promise<string>{
  validateExport(resume)
+ if(isPremiumTemplate(resume.template))return premiumHtml(resume,resume.template)
  const markup=renderToStaticMarkup(React.createElement('div',{className:'print-only'},React.createElement(ResumePreview,{resume})))
  return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:"><style>${await styles()}\n@page{size:${resume.paper};margin:16mm}</style></head><body>${markup}</body></html>`
 }
 export async function renderPdf(resume:Resume, executablePath?:string):Promise<Uint8Array>{
+ if(isPremiumTemplate(resume.template)){
+  validateExport(resume)
+  const bytes=await renderPremiumPdf(resume,resume.template,{executablePath:executablePath??await chromium.executablePath()})
+  if(bytes.length>4_000_000)throw new HttpError(413,'This PDF is too large. Shorten the resume and retry.')
+  return bytes
+ }
  const html=await resumeHtml(resume)
  const browser=await puppeteer.launch({executablePath:executablePath??await chromium.executablePath(),args:executablePath?[]:chromium.args,headless:true,timeout:20000})
  try{

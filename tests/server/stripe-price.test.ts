@@ -21,10 +21,10 @@ test('one-time catalog accepts exactly 1999 USD cents and rejects the former amo
   await assert.rejects(validateCatalog(stripeWithPrice({ ...price, unit_amount: 999 }), baseConfig))
 })
 
-test('recurring catalog accepts exactly 1999 USD cents every 30 days', async () => {
+test('recurring catalog accepts exactly 1999 USD cents per month', async () => {
   const config: RecurringBillingConfig = { ...baseConfig, recurringPriceId: 'price_recurring' }
-  const price = { active: true, livemode: false, currency: 'usd', unit_amount: 1999, type: 'recurring', recurring: { interval: 'day', interval_count: 30 } }
+  const price = { active: true, livemode: false, currency: 'usd', unit_amount: 1999, type: 'recurring', recurring: { interval: 'month', interval_count: 1 } }
   await assert.doesNotReject(validateRecurringCatalog(stripeWithPrice(price), config))
   await assert.rejects(validateRecurringCatalog(stripeWithPrice({ ...price, unit_amount: 999 }), config))
-  await assert.rejects(validateRecurringCatalog(stripeWithPrice({ ...price, recurring: { interval: 'month', interval_count: 1 } }), config))
+  await assert.rejects(validateRecurringCatalog(stripeWithPrice({ ...price, recurring: { interval: 'day', interval_count: 30 } }), config))
 })

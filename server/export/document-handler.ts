@@ -3,7 +3,7 @@ import {createHash} from 'node:crypto'
 import {authenticate,HttpError,jsonBody,requirePost,safeError} from '../http/security.js'
 import {databaseConfig,serviceDatabase} from '../database.js'
 import {validateExport} from './validate.ts'
-import type {Resume} from '../../src/model.js'
+import {isPremiumTemplate,type Resume} from '../../src/model.js'
 
 export type DocumentExportConfig={format:'pdf'|'docx';contentType:string;filename:string}
 export type DocumentExportDependencies={
@@ -26,7 +26,8 @@ export async function exportDocument(config:DocumentExportConfig,request:Request
   // Bind idempotency to both content and format: a UUID safely retries the same
   // document, but can never be reused to turn a counted PDF into a free DOCX.
   const hash=createHash('sha256').update(`${config.format}\0${JSON.stringify(body.resume)}`).digest('hex')
-  const {data,error}=await db.rpc('pdf_begin',{p_id:body.requestId,p_owner:owner,p_hash:hash})
+  const {data,error}=await db.rpc('document_begin',{p_id:body.requestId,p_owner:owner,p_hash:hash,p_template:body.resume.template,p_premium_template:isPremiumTemplate(body.resume.template)})
+  if(error?.message==='Premium template access required')throw new HttpError(403,'An active subscription for this Premium template or Pro is required.')
   if(error?.message==='Free PDF allowance reached')throw new HttpError(403,'Your Free document download allowance is used for this period.')
   if(error||!data?.[0])throw new HttpError(409,'Download unavailable: check your allowance or retry after the current download finishes.')
   const reservation=data[0]

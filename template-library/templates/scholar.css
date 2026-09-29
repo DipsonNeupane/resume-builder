@@ -1,0 +1,28 @@
+/* Scholar — academic CV */
+.pt-scholar{--pt-ink:#1c1b1a;--pt-muted:#5b5853;--serif:'Newsreader',Georgia,'Noto Serif',var(--pt-fallback);--rail:6.6em;font-family:var(--serif);font-size:1em;line-height:1.45;font-optical-sizing:auto}
+.pt-scholar .sc-header{text-align:start;padding-bottom:.8em;border-bottom:var(--pt-hair) solid var(--pt-ink)}
+.pt-scholar h1{font-size:1.95em;font-weight:600;line-height:1.1;letter-spacing:-.005em}
+.pt-scholar .sc-headline{font-style:italic;font-size:1.08em;margin-top:.2em;color:#393734}
+.pt-scholar .sc-contacts{display:flex;flex-wrap:wrap;gap:0 1.3em;margin-top:.45em;font-size:.9em;color:var(--pt-muted)}
+.pt-scholar .sc-section{margin-top:1.25em}
+.pt-scholar .sc-section>h2{text-transform:uppercase;font-size:.84em;font-weight:600;letter-spacing:.1em;color:var(--pt-accent);padding-bottom:.18em;margin-bottom:.5em;border-bottom:var(--pt-hair) solid color-mix(in srgb,var(--pt-accent) 40%,#fff)}
+.pt-scholar .sc-summary{max-width:95%}
+.pt-scholar .sc-summary+.sc-summary{margin-top:.4em}
+.pt-scholar .sc-entry{display:grid;grid-template-columns:var(--rail) minmax(0,1fr);column-gap:1em;margin-top:.55em}
+.pt-scholar .sc-section>h2+.sc-entry{margin-top:0}
+.pt-scholar .sc-when{font-size:.92em;color:var(--pt-muted);font-variant-numeric:tabular-nums lining-nums;padding-top:.05em}
+.pt-scholar .sc-line strong{font-weight:600}
+.pt-scholar .sc-loc{color:var(--pt-muted)}
+.pt-scholar .sc-notes{margin-top:.15em}
+.pt-scholar .sc-notes li{position:relative;padding-inline-start:1em;margin-top:.1em;font-size:.96em;break-inside:avoid}
+.pt-scholar .sc-notes li::before{content:'–';position:absolute;inset-inline-start:0;color:var(--pt-muted)}
+.pt-scholar .sc-cites{counter-reset:cite;padding-inline-start:0}
+.pt-scholar .sc-cite{counter-increment:cite;display:grid;grid-template-columns:2.4em minmax(0,1fr);margin-top:.45em;break-inside:avoid}
+.pt-scholar .sc-cite::before{content:'[' counter(cite) ']';color:var(--pt-muted);font-size:.92em;font-variant-numeric:tabular-nums;padding-top:.05em}
+.pt-scholar .sc-cite>*{grid-column:2}
+.pt-scholar .sc-cite-title{font-weight:600}
+.pt-scholar .sc-cite-note{font-size:.93em;color:#3f3c38}
+.pt-scholar .sc-cite-meta,.pt-scholar .pt-meta{font-size:.9em;color:var(--pt-muted)}
+.pt-scholar .pt-skills-grouped{display:grid;gap:.15em}
+.pt-scholar .pt-skills-grouped>div{grid-template-columns:var(--rail) 1fr;column-gap:1em}
+.pt-scholar .pt-skills-grouped dt{font-weight:600;font-size:.94em}

@@ -1,5 +1,5 @@
-/** Server-only, LOCAL policy foundation for the OPTIONAL recurring USD 19.99 /
- * 30-day subscription. The one-time manual pass (server/billing/policy.ts,
+/** Server-only policy foundation for the recurring USD 19.99/month
+ * subscription. The legacy one-time manual pass (server/billing/policy.ts,
  * `20260919210000_billing_ledger.sql`) remains the default purchase; this
  * module never changes that path and is not imported by it.
  *
@@ -24,8 +24,8 @@
 import { PRO_PASS_AMOUNT_CENTS, PRO_PASS_CURRENCY } from './constants.js'
 
 const MAX_TIMESTAMP = 8_640_000_000_000_000
-/** Defense in depth: this product bills a fixed 30-day price, so a genuine
- * invoice period is always close to 30 days. This is a generous outer bound
+/** Defense in depth: this product bills monthly, so a genuine
+ * invoice period remains well below this generous outer bound
  * (not an exact-30-day check, since Stripe may still report a slightly
  * different span for reasons outside this module's control) that only
  * exists to reject corrupt/absurd data before it reaches interval math. */

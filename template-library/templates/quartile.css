@@ -1,0 +1,27 @@
+/* Quartile — data & analytics (figures emphasised, tools matrix) */
+.pt-quartile{--pt-ink:#15181c;--pt-muted:#5a6168;--mono:'IBM Plex Mono',ui-monospace,monospace;font-family:'IBM Plex Sans',var(--pt-fallback);font-size:.95em;line-height:1.4;font-variant-numeric:tabular-nums lining-nums}
+.pt-quartile .qt-header{display:grid;grid-template-columns:minmax(0,1fr);padding-bottom:.7em}
+.pt-quartile h1{font-size:2.1em;font-weight:600;letter-spacing:-.02em;line-height:1.08}
+.pt-quartile .qt-headline{font-size:1.02em;color:var(--pt-muted);margin-top:.15em}
+.pt-quartile .qt-contacts{display:flex;flex-wrap:wrap;gap:0 1.2em;margin-top:.4em;font-size:.86em;color:var(--pt-muted)}
+.pt-quartile .qt-section{margin-top:1em}
+.pt-quartile .qt-section>h2{display:flex;align-items:center;gap:.5em;font-size:.95em;font-weight:600;margin-bottom:.4em}
+.pt-quartile .qt-section>h2::before{content:'';width:.55em;height:.55em;background:var(--pt-accent);flex-shrink:0}
+.pt-quartile .pt-figure{font-weight:600;color:var(--pt-accent)}
+.pt-quartile .qt-tools{width:100%;border-collapse:collapse}
+.pt-quartile .qt-tools tr{break-inside:avoid}
+.pt-quartile .qt-tools th,.pt-quartile .qt-tools td{padding:.24em .9em .24em 0;border-bottom:var(--pt-hair) solid var(--pt-rule);vertical-align:baseline;text-align:start}
+.pt-quartile .qt-tools tr:first-child th,.pt-quartile .qt-tools tr:first-child td{border-top:var(--pt-hair) solid var(--pt-ink)}
+.pt-quartile .qt-tools th{font-weight:600;width:22%;font-size:.92em}
+.pt-quartile .qt-nolabel{width:0;padding:0!important}
+.pt-quartile .qt-tool{font-family:var(--mono);font-size:.86em}
+.pt-quartile .qt-entry{margin-top:.75em}
+.pt-quartile .qt-section>h2+.qt-entry{margin-top:0}
+.pt-quartile .qt-head{display:flex;justify-content:space-between;align-items:baseline;gap:1em;break-after:avoid}
+.pt-quartile .qt-head h3{font-weight:600;font-size:1.04em}
+.pt-quartile .qt-dates{font-size:.86em;color:var(--pt-muted);flex-shrink:0;max-width:36%;text-align:end}
+.pt-quartile .qt-org{font-size:.93em;color:#3b4249;break-after:avoid}
+.pt-quartile .pt-bullets{margin-top:.2em}
+.pt-quartile .pt-bullets li{margin-top:.14em}
+.pt-quartile .qt-meta{display:flex;flex-wrap:wrap;gap:0 1.2em;margin-top:.2em;font-size:.84em}
+.pt-quartile .qt-meta-label{font-family:var(--mono);color:var(--pt-muted);text-transform:lowercase}

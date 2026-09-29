@@ -42,7 +42,7 @@
   "functions": {
     "api/export-pdf.ts": {
       "maxDuration": 60,
-      "includeFiles": "{src/styles.css,server/export/fonts/**,node_modules/@fontsource/noto-sans{,-sc}/{400.css,files/*-400-normal.woff*},node_modules/@sparticuz/chromium/bin/**}"
+      "includeFiles": "{src/styles.css,server/export/fonts/**,template-library/fonts/**,template-library/templates/*.css,node_modules/@fontsource/noto-sans{,-sc}/{400.css,files/*-400-normal.woff*},node_modules/@sparticuz/chromium/bin/**}"
     },
     "api/tailor.ts": {
       "maxDuration": 60

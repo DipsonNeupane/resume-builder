@@ -67,15 +67,15 @@ export function GeneratedDocumentControls({ resume, ownerId, onSignIn, onViewPro
    try {
     const session = (await client.auth.getSession()).data.session;
     if (session?.user.id !== ownerId) throw new Error('Account changed');
-    const response = await fetch('/api/export-status', { headers: { Authorization: `Bearer ${session.access_token}` }, signal: controller.signal });
+    const response = await fetch(`/api/export-status?template=${encodeURIComponent(resume.template)}`, { headers: { Authorization: `Bearer ${session.access_token}` }, signal: controller.signal });
     if (!response.ok) throw new Error('Unavailable');
     const data = await response.json();
-    if (typeof data.isPro !== 'boolean' || !Number.isInteger(data.remaining) || data.remaining < 0 || data.remaining > 3 || typeof data.resetsAt !== 'string' || !Number.isFinite(Date.parse(data.resetsAt))) throw new Error('Invalid allowance');
+    if (typeof data.isPro !== 'boolean' || typeof data.hasPaidAccess !== 'boolean' || !Number.isInteger(data.remaining) || data.remaining < 0 || data.remaining > 3 || typeof data.resetsAt !== 'string' || !Number.isFinite(Date.parse(data.resetsAt))) throw new Error('Invalid allowance');
     const current = (await client.auth.getSession()).data.session;
     if (disposed || request !== generation || current?.user.id !== ownerId) return;
     const resets = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(data.resetsAt));
-    setAllowance(data.isPro ? 'Pro document downloads are included.' : data.remaining > 0 ? `${data.remaining} of 3 Free downloads left for this 30-day period.` : `Your Free document download allowance is used for this period. It resets ${resets}.`);
-    setExhausted(!data.isPro && data.remaining === 0);
+    setAllowance(data.hasPaidAccess ? 'Generous document downloads are included with your active subscription. Fair-use protection applies.' : data.remaining > 0 ? `${data.remaining} of 3 Free downloads left for this 30-day period.` : `Your Free document download allowance is used for this period. It resets ${resets}.`);
+    setExhausted(!data.hasPaidAccess && data.remaining === 0);
     setAvailabilityUnknown(false);
    } catch {
     if (!disposed && request === generation) { setAllowance(''); setExhausted(false); setAvailabilityUnknown(true); }
@@ -85,7 +85,7 @@ export function GeneratedDocumentControls({ resume, ownerId, onSignIn, onViewPro
   void refresh();
   window.addEventListener('resumestride:document-allowance', refresh);
   return () => { disposed = true; controller.abort(); window.removeEventListener('resumestride:document-allowance', refresh); };
- }, [ownerId]);
+ }, [ownerId,resume.template]);
 
  async function download(format: ExportFormat) {
   if (inFlight.current || !supabase || !ownerId || !consent) return;
@@ -165,5 +165,5 @@ export function GeneratedDocumentControls({ resume, ownerId, onSignIn, onViewPro
   </div>
   {exhausted && <p className="field-hint">Need it sooner? <button className="text-button" onClick={onViewPro}>View Pro options</button> to download now.</p>}
   {message && <p role="status" className="field-hint">{message}</p>}
- </div>{upgradeOpen&&<Modal fallbackFocus={downloadGroup} className="upgrade-modal" labelledBy="upgrade-title" describedBy="upgrade-description" onClose={()=>setUpgradeOpen(false)}><span className="price-tag">PRO PASS</span><h2 id="upgrade-title">Keep downloading with Pro</h2><p id="upgrade-description">{upgradeConfirmed?'Your Free download allowance has been used for this period. ':"If you’ve used your Free downloads for this period, "}A 30-day Pro pass (US$19.99) includes PDF and Word downloads, plus full Match Analysis and tailoring for saved jobs.</p><div className="upgrade-modal-actions"><button className="button" onClick={onViewPro}>View Pro options</button><button className="button outline" onClick={()=>setUpgradeOpen(false)}>Not now</button></div></Modal>}</>;
+ </div>{upgradeOpen&&<Modal fallbackFocus={downloadGroup} className="upgrade-modal" labelledBy="upgrade-title" describedBy="upgrade-description" onClose={()=>setUpgradeOpen(false)}><span className="price-tag">PRO</span><h2 id="upgrade-title">Keep downloading with Pro</h2><p id="upgrade-description">{upgradeConfirmed?'Your Free download allowance has been used for this period. ':"If you’ve used your Free downloads for this period, "}Pro (US$19.99/month) includes PDF and editable Word downloads across every template, plus full Match Analysis and tailoring for saved jobs. It renews until cancelled.</p><div className="upgrade-modal-actions"><button className="button" onClick={onViewPro}>View Pro options</button><button className="button outline" onClick={()=>setUpgradeOpen(false)}>Not now</button></div></Modal>}</>;
 }

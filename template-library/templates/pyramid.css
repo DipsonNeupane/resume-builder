@@ -1,0 +1,20 @@
+/* Pyramid — consulting, answer-first */
+.pt-pyramid{--pt-ink:#121417;--pt-muted:#51565c;--label:'IBM Plex Sans',var(--pt-fallback);font-family:'Newsreader',Georgia,var(--pt-fallback);font-size:1.02em;line-height:1.36;font-optical-sizing:auto;font-variant-numeric:lining-nums}
+.pt-pyramid .py-header{text-align:center;padding-bottom:.55em;border-bottom:var(--pt-hair) solid var(--pt-ink)}
+.pt-pyramid h1{font-size:1.85em;font-weight:600;line-height:1.1}
+.pt-pyramid .py-headline{font-size:1em;margin-top:.1em}
+.pt-pyramid .py-contacts{display:flex;flex-wrap:wrap;justify-content:center;gap:0 1.2em;margin-top:.25em;font-family:var(--label);font-size:.8em;color:var(--pt-muted)}
+.pt-pyramid .py-section{margin-top:.85em}
+.pt-pyramid .py-section>h2{font-family:var(--label);font-size:.76em;font-weight:600;letter-spacing:.14em;text-transform:uppercase;padding-bottom:.18em;border-bottom:var(--pt-hair) solid var(--pt-ink);margin-bottom:.4em}
+.pt-pyramid .py-entry{margin-top:.55em}
+.pt-pyramid .py-section>h2+.py-entry{margin-top:0}
+.pt-pyramid .py-row{display:flex;justify-content:space-between;align-items:baseline;gap:1em;break-after:avoid}
+.pt-pyramid .py-row h3{font-weight:700;font-size:1.02em}
+.pt-pyramid .py-loc,.pt-pyramid .py-dates{font-size:.94em;flex-shrink:0;max-width:40%;text-align:end}
+.pt-pyramid .py-title{font-style:italic}
+.pt-pyramid .pt-bullets{margin-top:.12em}
+.pt-pyramid .pt-bullets li{margin-top:.1em}
+.pt-pyramid .pt-bullets li::before{width:.26em;height:.26em;top:.6em;opacity:1}
+.pt-pyramid .pt-lead{font-weight:700}
+.pt-pyramid .pt-meta{font-size:.92em;color:var(--pt-muted)}
+.pt-pyramid .py-additional p{margin-top:.1em}

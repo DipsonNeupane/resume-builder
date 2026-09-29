@@ -5,75 +5,35 @@ const owner='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 async function seed(page:Page){
  const session={access_token:'fake-test-token',refresh_token:'fake-refresh',token_type:'bearer',expires_in:3600,expires_at:Math.floor(Date.now()/1000)+3600,user:{id:owner,aud:'authenticated',role:'authenticated',email:'fixture@example.com',app_metadata:{},user_metadata:{},created_at:new Date().toISOString()}};
  await page.addInitScript(([s,r])=>{localStorage.setItem('sb-auth-test-auth-token',JSON.stringify(s));sessionStorage.setItem('resumestride.resume.v1',JSON.stringify(r));},[session,example()]);
- await page.route('**/api/export-status',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:false,remaining:3,resetsAt:'2026-10-19T12:00:00Z'})}));
+ await page.route('**/api/export-status*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:false,hasPaidAccess:false,remaining:3,resetsAt:'2026-10-19T12:00:00Z'})}));
+ await page.route('**/api/subscription-status',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:false,activeTemplates:[],subscriptions:[],salesAvailable:true})}));
  await page.route('https://auth-test.supabase.co/rest/v1/**',route=>route.fulfill({status:200,contentType:'application/json',body:'[]'}));
  await page.route('https://auth-test.supabase.co/auth/v1/user',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(session.user)}));
 }
 // Desktop uses the signed-in header CTA; narrow viewports use the visible Patina hero CTA.
 // Keep this aligned with both entry points so responsive tests exercise the same builder flow.
 async function builder(page:Page){await page.goto('/');await page.getByRole('button',{name:/^(Continue my resume|Build my resume|Build my master resume)$/,exact:true}).first().click();await page.getByRole('button',{name:'Design & format',exact:true}).click();await page.getByRole('button',{name:'Confirm',exact:true}).click();}
-test('paid checkout is one-time and sends only idempotency request ID',async({page})=>{
- await seed(page);await page.route('**/api/billing-status',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:false,paidThrough:null,manualPassAvailable:true,recurringAvailable:false,subscription:null})}));
- let body:Record<string,unknown>|undefined;
- await page.route('**/api/checkout',async route=>{body=route.request().postDataJSON();await route.fulfill({status:503,contentType:'application/json',body:'{}'});});
+test('monthly Pro requires explicit consent and retries with the same server-owned offer and request ID',async({page})=>{
+ await seed(page);const bodies:Record<string,unknown>[]=[];
+ await page.route('**/api/subscription-checkout',async route=>{bodies.push(route.request().postDataJSON());await route.fulfill({status:503,json:{error:'Checkout could not open.'}});});
  await page.goto('/');await page.getByRole('button',{name:'View Pro options',exact:true}).click();
- await expect(page.getByRole('heading',{name:'A promising role. A considered application.'})).toBeVisible();
- await expect(page.getByText('One-time payment.',{exact:false})).toBeVisible();
- await page.getByRole('button',{name:'Buy 30-day Pro pass — US$19.99',exact:true}).click();
- await expect(page.getByText('Checkout could not open.',{exact:false})).toBeVisible();
- expect(Object.keys(body!)).toEqual(['requestId']);
+ const checkbox=page.getByRole('checkbox',{name:/recurring US\$19\.99 monthly subscription/});const button=page.getByRole('button',{name:'Start Pro — US$19.99/month'});
+ await expect(checkbox).not.toBeChecked();await expect(button).toBeDisabled();await checkbox.check();await button.click();await button.click();await expect.poll(()=>bodies.length).toBe(2);
+ expect(bodies[0]).toEqual({requestId:bodies[0].requestId,offerKey:'pro:monthly',renewalConsent:true,overlapConsent:false});expect(bodies[1].requestId).toBe(bodies[0].requestId);
 });
-test('recurring opt-in is unchecked by default, disabled until checked, and a failed request reuses the same UUID',async({page})=>{
- await seed(page);
- await page.route('**/api/billing-status',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:false,paidThrough:null,manualPassAvailable:true,recurringAvailable:true,subscription:null})}));
- const ids:string[]=[];const optIns:unknown[]=[];
- await page.route('**/api/subscribe',async route=>{const body=route.request().postDataJSON();ids.push(body.requestId);optIns.push(body.renewalOptIn);await route.fulfill({status:503,contentType:'application/json',body:'{}'});});
- await page.goto('/?account=1');
- const checkbox=page.getByRole('checkbox',{name:'Instead, charge me US$19.99 automatically every 30 days until I cancel.',exact:false});
- const subscribeButton=page.getByRole('button',{name:'Start automatic renewal — US$19.99 / 30 days',exact:true});
- await expect(checkbox).not.toBeChecked();
- await expect(subscribeButton).toBeDisabled();
- await checkbox.check();
- await expect(subscribeButton).toBeEnabled();
- await subscribeButton.click();
- await expect(page.getByText('Checkout could not open.',{exact:false})).toBeVisible();
- await subscribeButton.click();
- await expect.poll(()=>ids.length).toBe(2);
- expect(ids[0]).toBe(ids[1]);
- expect(optIns).toEqual([true,true]);
+test('Pro discloses and confirms the individual-template overlap transition before checkout',async({page})=>{
+ await seed(page);await page.route('**/api/subscription-status',route=>route.fulfill({json:{isPro:false,activeTemplates:['boardroom'],subscriptions:[],salesAvailable:true}}));let body:Record<string,unknown>|undefined;
+ await page.route('**/api/subscription-checkout',async route=>{body=route.request().postDataJSON();await route.fulfill({status:503,json:{error:'Retry later.'}});});
+ await page.goto('/?account=1');await expect(page.getByText('After Pro’s first payment succeeds',{exact:false})).toBeVisible();await page.getByRole('checkbox',{name:/recurring US\$19\.99 monthly subscription/}).check();await page.getByRole('button',{name:'Start Pro — US$19.99/month'}).click();expect(body?.overlapConsent).toBe(true);
 });
-test('an active subscription shows a cancel control instead of the one-time purchase button, and a server error message is shown verbatim',async({page})=>{
- await seed(page);
- await page.route('**/api/billing-status',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:true,paidThrough:'2026-11-01T00:00:00Z',manualPassAvailable:true,recurringAvailable:true,subscription:{subscriptionId:'sub_123',status:'active',cancelAtPeriodEnd:false}})}));
- await page.route('**/api/cancel-subscription',async route=>route.fulfill({status:429,contentType:'application/json',body:JSON.stringify({error:'Too many requests. Try again later.'})}));
- await page.goto('/?account=1');
- await expect(page.getByText('renews automatically every 30 days',{exact:false})).toBeVisible();
- await expect(page.getByRole('button',{name:'Buy 30-day Pro pass',exact:false})).toHaveCount(0);
- await expect(page.getByRole('button',{name:'Add 30 days',exact:false})).toHaveCount(0);
- await page.getByRole('button',{name:'Turn off automatic renewal',exact:true}).click();
- await expect(page.getByText('Too many requests. Try again later.',{exact:true})).toBeVisible();
- await expect(page.getByRole('button',{name:'Turn off automatic renewal',exact:true})).toBeVisible();
+test('an active Pro subscription shows monthly renewal state and opens customer billing management',async({page})=>{
+ await seed(page);await page.route('**/api/subscription-status',route=>route.fulfill({json:{isPro:true,activeTemplates:[],salesAvailable:false,subscriptions:[{subscriptionId:'sub_pro',offerKey:'pro:monthly',kind:'pro',templateId:null,status:'active',cancelAtPeriodEnd:false,currentPeriodEnd:'2026-11-01T00:00:00Z'}]}}));
+ await page.route('**/api/customer-portal',route=>route.fulfill({status:429,json:{error:'Too many requests. Try again later.'}}));await page.goto('/?account=1');await expect(page.getByText('Renews monthly at US$19.99',{exact:false})).toBeVisible();await page.getByRole('button',{name:'Manage billing and cancellation'}).click();await expect(page.getByText('Too many requests. Try again later.')).toBeVisible();
 });
-test('cancellation succeeds, updates the shown state, and stays offered when new sales are disabled',async({page})=>{
- await seed(page);
- await page.route('**/api/billing-status',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:true,paidThrough:'2026-11-01T00:00:00Z',manualPassAvailable:false,recurringAvailable:false,subscription:{subscriptionId:'sub_456',status:'past_due',cancelAtPeriodEnd:false}})}));
- let body:Record<string,unknown>|undefined;
- await page.route('**/api/cancel-subscription',async route=>{body=route.request().postDataJSON();await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({renewalStopped:true})});});
- await page.goto('/?account=1');
- await expect(page.getByText('past due',{exact:false})).toBeVisible();
- const cancelButton=page.getByRole('button',{name:'Turn off automatic renewal',exact:true});
- await expect(cancelButton).toBeVisible();
- await cancelButton.click();
- expect(body).toEqual({subscriptionId:'sub_456'});
- await expect(page.getByText('turned off',{exact:false})).toBeVisible();
- await expect(cancelButton).toHaveCount(0);
-});
-test('an active one-time pass shows a truthful notice instead of a subscribe control, with no renewal date guessed',async({page})=>{
- await seed(page);
- await page.route('**/api/billing-status',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:true,paidThrough:'2026-11-01T00:00:00Z',manualPassAvailable:true,recurringAvailable:true,subscription:null})}));
- await page.goto('/?account=1');
- await expect(page.getByText('while your one-time pass is active',{exact:false})).toBeVisible();
- await expect(page.getByRole('checkbox',{name:'Instead, charge me',exact:false})).toHaveCount(0);
+test('an individual Premium template requires explicit monthly consent and sends the allowlisted offer key',async({page})=>{
+ await seed(page);let body:Record<string,unknown>|undefined;await page.route('**/api/subscription-checkout',async route=>{body=route.request().postDataJSON();await route.fulfill({status:503,json:{error:'Retry later.'}});});
+ await page.goto('/');await page.getByRole('button',{name:'Continue my resume',exact:true}).first().click();await page.getByRole('button',{name:'Preview resume'}).click();await page.getByRole('button',{name:'Templates Modern'}).click();await page.getByRole('dialog',{name:'Choose your layout'}).getByRole('button',{name:/^Boardroom/}).click();
+ await expect(page.getByText('US$1.99/month',{exact:false})).toBeVisible();const consent=page.getByRole('checkbox',{name:/recurring US\$1\.99 monthly subscription/});const checkout=page.getByRole('button',{name:'Continue to secure checkout'});await expect(checkout).toBeDisabled();await consent.check();await checkout.click();expect(body).toEqual({requestId:body?.requestId,offerKey:'template:boardroom',renewalConsent:true});
 });
 test('PDF requires consent and a failed request reuses the same UUID',async({page})=>{
  await seed(page);const ids:string[]=[];
@@ -110,7 +70,7 @@ test('a browser-captured local draft cannot bypass the saved-job tailoring bound
 });
 test('PDF and Word use shared server availability, format-specific endpoints, and safe request IDs',async({page})=>{
  await seed(page);let remaining=2,statusRequests=0;
- await page.route('**/api/export-status',route=>{statusRequests++;return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:false,remaining,resetsAt:'2026-10-19T12:00:00Z'})});});
+ await page.route('**/api/export-status*',route=>{statusRequests++;return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:false,hasPaidAccess:false,remaining,resetsAt:'2026-10-19T12:00:00Z'})});});
  const requests:{format:'pdf'|'docx';requestId:string}[]=[];
  for(const format of ['pdf','docx'] as const)await page.route(`**/api/export-${format}`,async route=>{const body=route.request().postDataJSON();requests.push({format,requestId:body.requestId});remaining=1;await route.fulfill({status:503,contentType:'application/json',body:'{}'});});
  await builder(page);await expect(page.getByText('2 of 3 Free downloads left for this 30-day period.',{exact:true})).toBeVisible();
@@ -144,7 +104,7 @@ test('the selected preview template is sent unchanged to both PDF and Word expor
 });
 test('an exhausted free allowance shows a clear upgrade path to Pro',async({page})=>{
  await seed(page);
- await page.route('**/api/export-status',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:false,remaining:0,resetsAt:'2026-10-19T12:00:00Z'})}));
+ await page.route('**/api/export-status*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:false,hasPaidAccess:false,remaining:0,resetsAt:'2026-10-19T12:00:00Z'})}));
  await builder(page);
  await expect(page.getByText(/^Your Free document download allowance is used for this period\. It resets .+\.$/)).toBeVisible();
  await expect(page.getByRole('button',{name:'Download PDF',exact:true})).toBeDisabled();
@@ -154,7 +114,7 @@ test('an exhausted free allowance shows a clear upgrade path to Pro',async({page
 });
 test('a download-time allowance rejection opens the Pro upgrade prompt',async({page})=>{
  await seed(page);
- await page.route('**/api/export-status',route=>route.fulfill({status:503,contentType:'application/json',body:'{}'}));
+ await page.route('**/api/export-status*',route=>route.fulfill({status:503,contentType:'application/json',body:'{}'}));
  await page.route('**/api/export-pdf',route=>route.fulfill({status:403,contentType:'application/json',body:JSON.stringify({error:'Your Free document download allowance is used for this period.'})}));
  await builder(page);
  await page.getByRole('checkbox',{name:'I consent to uploading my resume content',exact:false}).check();
@@ -166,7 +126,7 @@ test('a download-time allowance rejection opens the Pro upgrade prompt',async({p
  await expect(page.getByRole('heading',{name:'A promising role. A considered application.'})).toBeVisible();
 });
 test('invalid allowance never invents remaining downloads',async({page})=>{
- await seed(page);await page.route('**/api/export-status',route=>route.fulfill({status:200,contentType:'application/json',body:'{"isPro":false,"remaining":99,"resetsAt":"bad"}'}));
+ await seed(page);await page.route('**/api/export-status*',route=>route.fulfill({status:200,contentType:'application/json',body:'{"isPro":false,"hasPaidAccess":false,"remaining":99,"resetsAt":"bad"}'}));
  await builder(page);const fallback=page.getByText('Free downloads exhausted?',{exact:false});await expect(fallback).toBeVisible();
  await expect(page.getByText('99 of 3',{exact:false})).toHaveCount(0);
  await fallback.getByRole('button',{name:'View Pro options',exact:true}).click();
@@ -221,7 +181,7 @@ for (const nextId of ['bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',null]) test(`accoun
 for (const width of [320, 390, 768, 1920]) test(`upgrade dialog keyboard containment and dismissal at ${width}px`,async({page})=>{
  await page.setViewportSize({width,height:700});
  await seed(page);
- await page.route('**/api/export-status',route=>route.fulfill({status:503,json:{}}));
+ await page.route('**/api/export-status*',route=>route.fulfill({status:503,json:{}}));
  await builder(page);
  const opener=page.getByText('Free downloads exhausted?',{exact:false}).getByRole('button',{name:'View Pro options',exact:true});
  await opener.focus();await page.keyboard.press('Enter');
@@ -244,7 +204,7 @@ test('async allowance dialog returns focus to downloads when its original action
  await builder(page);
  await page.getByRole('checkbox',{name:'I consent to uploading my resume content',exact:false}).check();
  // The refreshed allowance agrees with the download-time rejection.
- await page.route('**/api/export-status',route=>route.fulfill({json:{isPro:false,remaining:0,resetsAt:'2026-10-19T12:00:00Z'}}));
+ await page.route('**/api/export-status*',route=>route.fulfill({json:{isPro:false,hasPaidAccess:false,remaining:0,resetsAt:'2026-10-19T12:00:00Z'}}));
  const download=page.getByRole('button',{name:'Download PDF',exact:true});
  await download.focus();await page.keyboard.press('Enter');
  const dialog=page.getByRole('dialog',{name:'Keep downloading with Pro'});

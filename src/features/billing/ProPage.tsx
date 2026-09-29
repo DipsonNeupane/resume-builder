@@ -10,7 +10,7 @@ export function ProPage({ ownerId, onBack, onSignIn }: Props) {
    <div className="pro-page-intro">
     <span className="price-tag">PRO PASS</span>
     <h1>A promising role. A considered application.</h1>
-    <p>Get 30 days of ResumeStride Pro for US$19.99. Choose a one-time pass by default, or deliberately opt in to automatic renewal.</p>
+    <p>Get ResumeStride Pro for US$19.99/month. It renews automatically until you cancel.</p>
     <ul>
      <li><Check size={18}/>Full Match Analysis, requirement by requirement</li>
      <li><Check size={18}/>Up to 20 job results per search, with no once-a-day limit</li>
@@ -21,7 +21,7 @@ export function ProPage({ ownerId, onBack, onSignIn }: Props) {
     <div className="pro-page-trust"><ShieldCheck size={20}/><span>Checkout is handled securely by Stripe. Fair-use limits apply.</span></div>
    </div>
    <aside className="pro-checkout-card" aria-label="Pro purchase options">
-    <div className="pro-checkout-price"><strong>US$19.99</strong><span>/ 30 days</span></div>
+    <div className="pro-checkout-price"><strong>US$19.99</strong><span>/month</span></div>
     {ownerId?<BillingPanel key={ownerId} ownerId={ownerId} surface="purchase"/>:<><h2>Sign in to continue</h2><p>Your Pro pass will be connected to your ResumeStride account.</p><button className="button" onClick={onSignIn}>Sign in or create account</button></>}
    </aside>
   </div>

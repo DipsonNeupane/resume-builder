@@ -209,7 +209,7 @@ test('template gallery previews current data, persists selection, and stays keyb
  let dialog=page.getByRole('dialog',{name:'Choose your layout'});
  await expect(dialog.getByRole('button',{name:'Close templates',exact:true})).toBeFocused();
  const options=dialog.locator('.template-picker-option');
- await expect(options).toHaveCount(7);
+ await expect(options).toHaveCount(27);
  const ids=['modern','classic','minimal','compact','bold','executive','ledger'];
  for(const [index,id] of ids.entries()){
   const preview=options.nth(index).locator('.template-option-preview .resume-paper');
@@ -290,10 +290,10 @@ test('Pricing always shows a distinct Free card and a discoverable Pro card, eve
  await expect(free.locator('li')).toHaveCount(4);
  await expect(free.getByRole('button',{name:'Build my master resume',exact:true})).toBeVisible();
  const pro=cards.last();
- await expect(pro).toContainText('Pro · 30-day pass');
+ await expect(pro).toContainText('Pro');
  await expect(pro).toContainText('US$19.99');
- await expect(pro).toContainText('/ 30 days');
- await expect(pro).toContainText('Optional automatic renewal is never preselected.');
+ await expect(pro).toContainText('/month');
+ await expect(pro).toContainText('Renews automatically until cancelled.');
  await expect(pro.locator('li')).toHaveCount(4);
  await expect(pro).not.toContainText('Free accounts get 3');
  await expect(pro.getByRole('button',{name:'View Pro options',exact:false})).toBeVisible();

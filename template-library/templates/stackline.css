@@ -1,0 +1,29 @@
+/* Stackline — technical / projects */
+.pt-stackline{--pt-ink:#16191d;--pt-muted:#5b626a;--mono:'IBM Plex Mono',ui-monospace,'Noto Sans Mono',monospace;font-family:'IBM Plex Sans',var(--pt-fallback);font-size:.96em;line-height:1.42}
+.pt-stackline .sl-header{padding-bottom:.9em;margin-bottom:.2em}
+.pt-stackline h1{font-size:2.25em;font-weight:600;letter-spacing:-.02em;line-height:1.1}
+.pt-stackline .sl-headline{font-family:var(--mono);font-size:.95em;color:var(--pt-accent);margin-top:.3em}
+.pt-stackline .sl-contacts{display:flex;flex-wrap:wrap;gap:.15em 0;margin-top:.6em;font-family:var(--mono);font-size:.8em;color:var(--pt-muted)}
+.pt-stackline .sl-contacts li:not(:last-child)::after{content:'/';margin:0 .7em;color:var(--pt-rule)}
+.pt-stackline .sl-section{margin-top:1.05em;padding-top:.55em;border-top:var(--pt-hair) solid var(--pt-ink)}
+.pt-stackline .sl-section>h2{font-family:var(--mono);font-size:.76em;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--pt-muted);margin-bottom:.55em}
+.pt-stackline .sl-summary{max-width:94%}
+.pt-stackline .sl-stack .pt-skills-grouped{display:grid;gap:.18em}
+.pt-stackline .sl-stack .pt-skills-grouped>div{grid-template-columns:minmax(7em,19%) 1fr}
+.pt-stackline .sl-stack dt{font-family:var(--mono);font-size:.84em;font-weight:500;color:var(--pt-accent);padding-top:.12em}
+.pt-stackline .sl-stack .pt-skills-inline{font-family:var(--mono);font-size:.86em}
+.pt-stackline .sl-entry{margin-top:.8em}
+.pt-stackline .sl-section>h2+.sl-entry{margin-top:0}
+.pt-stackline .sl-head{display:flex;justify-content:space-between;align-items:baseline;gap:1em;break-after:avoid}
+.pt-stackline .sl-head h3{font-weight:600;font-size:1.04em}
+.pt-stackline .sl-at,.pt-stackline .sl-org{font-weight:400;color:var(--pt-muted)}
+.pt-stackline .sl-dates{font-family:var(--mono);font-size:.78em;color:var(--pt-muted);flex-shrink:0;max-width:36%;text-align:end}
+.pt-stackline .sl-location{font-size:.84em;color:var(--pt-muted)}
+.pt-stackline .sl-meta{display:flex;flex-wrap:wrap;gap:.1em 1.4em;margin-top:.25em;font-family:var(--mono);font-size:.78em;line-height:1.5}
+.pt-stackline .sl-meta-label{color:var(--pt-accent);text-transform:lowercase}
+.pt-stackline .sl-meta-label::after{content:' ›'}
+.pt-stackline .sl-role-projects .sl-head h3{font-size:1.06em}
+.pt-stackline .pt-bullets{margin-top:.3em}
+.pt-stackline .pt-bullets li{margin-top:.16em;padding-inline-start:1em}
+.pt-stackline .pt-bullets li::before{border-radius:0;width:.42em;height:.08em;top:.72em;opacity:1;background:var(--pt-accent)}
+.pt-stackline .sl-role-education .sl-entry,.pt-stackline .sl-role-certifications .sl-entry{margin-top:.35em}

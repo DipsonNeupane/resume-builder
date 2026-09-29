@@ -1,0 +1,24 @@
+/* Meridian — modern professional, hanging headings */
+.pt-meridian{--pt-ink:#15181b;--pt-muted:#5c6269;--rail:24%;--gap:1.6em;font-family:'Instrument Sans',var(--pt-fallback);font-size:.97em;line-height:1.46}
+.pt-meridian .me-header{display:grid;grid-template-columns:var(--rail) minmax(0,1fr);column-gap:var(--gap);align-items:end;padding-bottom:1.3em}
+.pt-meridian .me-identity{grid-column:2;grid-row:1}
+.pt-meridian .me-contacts{grid-column:1;grid-row:1;font-size:.8em;line-height:1.55;color:var(--pt-muted)}
+.pt-meridian .me-contacts li{display:block}
+.pt-meridian h1{font-size:2.6em;font-weight:600;line-height:1.02;letter-spacing:-.03em;font-stretch:95%}
+.pt-meridian .me-headline{font-size:1.1em;margin-top:.35em;color:var(--pt-accent);font-weight:500}
+.pt-meridian .me-section{position:relative;padding-inline-start:calc(var(--rail) + var(--gap));padding-top:.75em;margin-top:.75em;border-top:var(--pt-hair) solid var(--pt-rule);display:flow-root}
+.pt-meridian .me-section>h2{float:inline-start;width:calc(var(--rail) + var(--gap));margin-inline-start:calc(-1 * (var(--rail) + var(--gap)));padding-inline-end:var(--gap);font-size:.74em;font-weight:600;letter-spacing:.11em;text-transform:uppercase;color:var(--pt-ink);line-height:1.4;padding-top:.25em}
+.pt-meridian .me-summary p{font-size:1.06em;line-height:1.5}
+.pt-meridian .me-summary p+p{margin-top:.4em}
+.pt-meridian .me-entry+.me-entry{margin-top:.9em}
+.pt-meridian .me-head{display:flex;justify-content:space-between;align-items:baseline;gap:1em;break-after:avoid}
+.pt-meridian .me-head h3{font-weight:600;font-size:1.03em}
+.pt-meridian .me-dates{font-size:.84em;color:var(--pt-muted);font-variant-numeric:tabular-nums;flex-shrink:0;max-width:38%;text-align:end}
+.pt-meridian .me-org{font-size:.92em;color:var(--pt-accent);font-weight:500;break-after:avoid}
+.pt-meridian .pt-bullets{margin-top:.3em}
+.pt-meridian .pt-bullets li{margin-top:.18em}
+.pt-meridian .pt-bullets li::before{width:.26em;height:.26em;top:.64em}
+.pt-meridian .pt-meta{margin-top:.25em;font-size:.88em;color:var(--pt-muted)}
+.pt-meridian .pt-skills-grouped{display:grid;gap:.25em}
+.pt-meridian .pt-skills-grouped>div{grid-template-columns:minmax(6.5em,26%) 1fr}
+.pt-meridian .pt-skills-inline .pt-sep{color:var(--pt-rule)}

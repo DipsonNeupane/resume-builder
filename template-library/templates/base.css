@@ -1,0 +1,30 @@
+/* Shared Premium baseline. Every rule is scoped under .pt-paper so nothing leaks
+   into the app or the seven Free templates. Sizes are em-relative to a 10pt root
+   (print) or its on-screen equivalent (lab/preview). */
+.pt-paper{
+ --pt-ink:#1d2226;--pt-muted:#555d63;--pt-rule:#c9cdd0;--pt-hair:.06em;
+ --pt-fallback:'Noto Sans','Noto Sans Arabic','Noto Sans Devanagari','Noto Sans SC',sans-serif;
+ color:var(--pt-ink);background:#fff;line-height:1.45;text-align:start;overflow-wrap:anywhere;
+ font-kerning:normal;font-synthesis:none;font-variant-numeric:lining-nums;-webkit-print-color-adjust:exact;print-color-adjust:exact;
+}
+.pt-paper *{box-sizing:border-box}
+.pt-paper :where(h1,h2,h3,h4,p,ul,ol,dl,dd,figure){margin:0;padding:0}
+.pt-paper :where(h1,h2,h3,h4){font-weight:inherit;font-size:inherit}
+.pt-paper :where(ul,ol){list-style:none}
+.pt-paper a{color:inherit;text-decoration:underline;text-decoration-thickness:.06em;text-underline-offset:.16em;text-decoration-color:color-mix(in srgb,currentColor 45%,transparent)}
+.pt-paper cite{font-style:italic}
+.pt-paper :where(h2,h3,h4){break-after:avoid}
+/* A last child's break-after propagates to its ancestors (CSS Fragmentation §3.1), so a
+   heading-like row that ends a short entry would glue the whole section to the next one.
+   "Keep with what follows" only ever means siblings here. */
+.pt-paper :where(*):last-child{break-after:auto!important}
+.pt-paper li,.pt-paper p{orphans:2;widows:2}
+.pt-paper .pt-bullets>li{position:relative;padding-inline-start:1.05em;break-inside:avoid}
+.pt-paper .pt-bullets>li::before{content:'';position:absolute;inset-inline-start:.2em;top:.66em;width:.3em;height:.3em;border-radius:50%;background:currentColor;opacity:.7}
+.pt-paper .pt-meta{break-inside:avoid;break-before:avoid}
+.pt-paper .pt-meta>div{display:flex;gap:.45em;flex-wrap:wrap}
+.pt-paper .pt-meta dt{font-weight:600}
+.pt-paper .pt-meta dt::after{content:':'}
+.pt-paper .pt-skills-grouped>div{display:grid;grid-template-columns:minmax(6em,22%) 1fr;gap:.2em 1em;break-inside:avoid}
+.pt-paper .pt-skills-grouped>.pt-unlabelled{grid-template-columns:1fr}
+.pt-paper .pt-skills-grouped dt{font-weight:600}
