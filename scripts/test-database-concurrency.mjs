@@ -24,6 +24,12 @@ function findPgBin() {
 const bin=findPgBin();
 const root=await mkdtemp(path.join(os.tmpdir(),'resumestride-pg-race-'));
 const data=path.join(root,'data'),socket=path.join(root,'socket');
+// A caller may point PGBIN at a relocatable PostgreSQL bundle (for example an
+// extracted Homebrew bottle in CI). In that case initdb cannot rely on the
+// compile-time share path, so pass the adjacent catalog directory explicitly.
+const adjacentShare=path.resolve(bin,'../share/postgresql');
+const initdbArgs=['-D',data,'-U','resume_test','-A','trust','--no-locale','--encoding=UTF8'];
+if(existsSync(path.join(adjacentShare,'postgres.bki')))initdbArgs.push('-L',adjacentShare);
 let started=false;
 await mkdir(socket,{mode:0o700});
 const sql=async(text)=>{
@@ -36,7 +42,7 @@ const owner='11111111-1111-1111-1111-111111111111',other='22222222-2222-2222-222
 const mixedOwner='33333333-3333-3333-3333-333333333333',raceOwnerA='44444444-4444-4444-4444-444444444444',raceOwnerB='55555555-5555-5555-5555-555555555555';
 const payment=(n)=>`select * from public.billing_apply_verified_payment('${owner}','cs_${n}','evt_${n}','pi_${n}','price_fixture',false,1999,'usd','2026-01-01T00:00:00Z')`;
 try{
- await execFile(path.join(bin,'initdb'),['-D',data,'-U','resume_test','-A','trust','--no-locale','--encoding=UTF8']);
+ await execFile(path.join(bin,'initdb'),initdbArgs);
  await execFile(path.join(bin,'pg_ctl'),['-D',data,'-l',path.join(root,'postgres.log'),'-o',`-k ${socket} -c listen_addresses='' -p 55479`,'-w','start']);started=true;
  await sql(`create role anon nologin;create role authenticated nologin;create role service_role nologin bypassrls;
  create schema auth;create table auth.users(id uuid primary key,created_at timestamptz default now());
