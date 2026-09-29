@@ -11,7 +11,10 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import puppeteer, { type Browser } from 'puppeteer-core';
 import type { Resume } from '../../src/model';
 import type { PremiumId } from '../registry';
-import { PremiumResume } from '../templates';
+// This build-generated bundle keeps the Premium renderer graph self-contained.
+// Vercel's Node function tracer otherwise preserves the directory import while
+// omitting its TSX dependencies, which fails only in the deployed ESM runtime.
+import { PremiumResume } from './premium-templates.generated.mjs';
 
 const require = createRequire(import.meta.url);
 const here = (p: string) => fileURLToPath(new URL(p, import.meta.url));

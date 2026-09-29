@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "npm run seo:generate && tsc --noEmit && vite build",
+    "build": "npm run premium-runtime:generate && npm run seo:generate && tsc --noEmit && vite build",
     "test": "playwright test",
     "test:auth": "playwright test --config playwright.auth.config.ts",
     "test:db": "node scripts/test-database.mjs",
@@ -25,7 +25,8 @@
     "seo:generate": "npm run resources:generate && npm run tools:generate && node --import tsx scripts/generate-seo.ts",
     "test:tools": "node --import tsx --test tests/tools-analysis.test.ts && playwright test tests/tools.spec.ts",
     "test:seo": "node --import tsx scripts/render-resources.ts --check && node --import tsx scripts/render-tools.ts --check && node --import tsx scripts/generate-seo.ts --check && node --import tsx --test tests/server/seo.test.ts",
-    "stripe:catalog": "node --import tsx scripts/provision-stripe-catalog.ts"
+    "stripe:catalog": "node --import tsx scripts/provision-stripe-catalog.ts",
+    "premium-runtime:generate": "esbuild template-library/templates/index.tsx --bundle --platform=node --format=esm --jsx=automatic --external:react --external:react/* --outfile=template-library/export/premium-templates.generated.mjs"
   },
   "dependencies": {
     "@fontsource/noto-sans": "^5.3.0",
@@ -51,6 +52,7 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^5.1.0",
+    "esbuild": "^0.28.2",
     "pdf-parse": "^2.4.5",
     "pg": "^8.23.0",
     "tsx": "^4.23.13",

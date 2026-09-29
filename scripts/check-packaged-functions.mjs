@@ -72,3 +72,12 @@ const html = await resumeHtml(example());
 assert.ok(html.includes('data:font/'));
 assert.ok(html.includes('Resume preview'));
 console.log('Packaged renderer resolves embedded fonts and builds resume HTML.');
+
+// Exercise the Premium module graph directly. Local TS/bundler tests resolve
+// extensionless and directory imports, but the deployed Node ESM function does
+// not; this catches that production-only packaging failure before deployment.
+const {premiumHtml} = await import(pathToFileURL(path.join(pdfRoot,'template-library/export/premium-pdf.js')));
+const premium = await premiumHtml({...example(), template:'mandate'}, 'mandate');
+assert.ok(premium.includes('data:font/'));
+assert.ok(premium.includes('pt-mandate'));
+console.log('Packaged Premium renderer loads its complete Node ESM graph and builds Mandate HTML.');
