@@ -3926,3 +3926,26 @@ Task 7 and Task 9 therefore remain partial, as do full static discovery navigati
 hero performance measurement. No template browsing, broad content, pricing, commerce,
 provider, entitlement, database or production behavior was changed. See
 `docs/redesign/BLUEPRINT_STATUS.md` for exact G2 task status.
+
+## September 29 — redesign technical quality gate foundation
+
+Added a single fail-fast local/PR gate for Group 6 task 46 without creating new public
+content or changing production. `npm run quality:gate` composes the production build,
+client/server TypeScript, generated SEO/canonical/robots/sitemap/JSON-LD checks, a static
+public-link crawl, typed route/request boundaries, public-page console and same-origin
+request failures, 320/1440 overflow, axe, keyboard/focus, reduced-motion, mocked PDF/Word
+delivery, DOCX round trip and real local generated-PDF text extraction. Static-only and
+browser-only profiles are available for focused reruns. A pull-request workflow runs the
+complete gate with read-only repository permissions and no production credentials.
+
+Task 46 remains partial rather than complete: local/CI checks cannot establish field Core
+Web Vitals, physical-device/screen-reader behavior or hosted PDF runtime fidelity. Those
+remain later owner-approved release checks. Task 38 also remains partial: the current
+public/private route policy is protected, but no capability URL is exposed before it has
+meaningful static HTML. See `docs/redesign/TECHNICAL_QUALITY_GATE.md`.
+
+The initial exact SEO run reached all three generators and then stalled while loading the
+TypeScript/Vite test graph in the macOS Documents worktree; it was interrupted after no
+test result, consistent with the known filesystem environment issue. Verification should
+be completed against the exact commit in a disposable `/tmp` checkout. No merge, push,
+deployment, hosted setting, provider call or production action occurred.

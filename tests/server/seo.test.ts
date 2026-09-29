@@ -12,7 +12,7 @@ import type { Connect } from 'vite';
 import middleware from '../../middleware';
 import { devSourceModules, seoPolicy } from '../../vite.config';
 import browserConfig from '../../playwright.config';
-import { initialPage, isPublicAttributionLocation, isPublicLocation, noindex, productionOrigin, publicPages, requestSeo, websiteSchema } from '../../src/seo/policy';
+import { initialPage, isPublicAttributionLocation, isPublicLocation, isPublicPath, noindex, productionOrigin, publicPages, requestSeo, websiteSchema } from '../../src/seo/policy';
 import { guides } from '../../src/content/guides';
 import { publicTools } from '../../src/content/tools';
 const read = (file: string) => readFileSync(file, 'utf8');
@@ -279,6 +279,27 @@ test('public pages have crawlable links connecting all three surfaces', () => {
  }
  for (const slug of ['tailor-resume-to-job-description', 'compare-resume-to-job-description', 'resume-keywords', 'tailor-resume-without-lying']) {
   assert.match(read(`public/resources/${slug}/index.html`), /href="\/tools\/(?:job-requirement-extractor|resume-job-match|resume-bullet-checker)\//);
+ }
+});
+
+test('every internal link, script, stylesheet and image in public HTML resolves', () => {
+ const runtimePaths = new Set(['/src/main.tsx', '/_vercel/insights/script.js']);
+ for (const publicPath of Object.keys(publicPages)) {
+  const html = read(publicHtmlFile(publicPath));
+  const references = [...html.matchAll(/\b(?:href|src)="([^"]+)"/g)].map(match => match[1]);
+  assert.ok(references.length > 0, `${publicPath} has no public references to verify`);
+  for (const reference of references) {
+   if (/^(?:mailto:|tel:|data:)/.test(reference)) continue;
+   const resolved = new URL(reference, `${productionOrigin}${publicPath}`);
+   if (resolved.origin !== productionOrigin) continue;
+   if (reference.startsWith('#')) {
+    assert.match(html, new RegExp(`\\bid=["']${resolved.hash.slice(1)}["']`), `${publicPath} has a broken same-page link ${reference}`);
+    continue;
+   }
+   if (isPublicPath(resolved.pathname) || runtimePaths.has(resolved.pathname)) continue;
+   const candidate = path.join('public', resolved.pathname.replace(/^\//, ''));
+   assert.ok(existsSync(candidate) && statSync(candidate).isFile(), `${publicPath} references missing ${reference}`);
+  }
  }
 });
 

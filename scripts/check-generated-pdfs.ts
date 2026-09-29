@@ -5,7 +5,10 @@ import {example} from '../src/model.ts'
 import {renderPdf} from '../server/export/render.ts'
 const dir='/tmp/resumestride-pdf-qa'
 await mkdir(dir,{recursive:true})
-for(const template of ['modern','classic','minimal'] as const)for(const paper of ['A4','Letter'] as const){
+const smoke=process.argv.includes('--smoke')
+const templates=smoke?(['modern'] as const):(['modern','classic','minimal'] as const)
+const papers=smoke?(['A4'] as const):(['A4','Letter'] as const)
+for(const template of templates)for(const paper of papers){
  const resume={...example(),template,paper}
  resume.summary+=' Languages sample: العربية — हिंदी — 中文.'
  resume.skills+='; FINAL EXPORT MARKER'

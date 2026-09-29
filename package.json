@@ -25,6 +25,9 @@
     "seo:generate": "npm run resources:generate && npm run tools:generate && node --import tsx scripts/generate-seo.ts",
     "test:tools": "node --import tsx --test tests/tools-analysis.test.ts && playwright test tests/tools.spec.ts",
     "test:seo": "node --import tsx scripts/render-resources.ts --check && node --import tsx scripts/render-tools.ts --check && node --import tsx scripts/generate-seo.ts --check && node --import tsx --test tests/server/seo.test.ts",
+    "quality:gate": "node scripts/run-quality-gate.mjs all",
+    "quality:gate:static": "node scripts/run-quality-gate.mjs static",
+    "quality:gate:browser": "node scripts/run-quality-gate.mjs browser",
     "stripe:catalog": "node --import tsx scripts/provision-stripe-catalog.ts",
     "premium-runtime:generate": "esbuild template-library/templates/index.tsx --bundle --platform=node --format=esm --jsx=automatic --external:react --external:react/* --outfile=template-library/export/premium-templates.generated.mjs"
   },

@@ -9,7 +9,7 @@ Status date: 2026-09-29. This ledger reports verified redesign-branch evidence w
 | 3. Onboarding and workspace | [~] | The four entry routes now explain their distinct journey and converge on the shared workspace; document/storage scope is persistent. Anonymous evidence, complete sample teaching, saved-object restoration and end-to-end workflow validation remain. |
 | 4. Trust, pricing and monetization | [ ] | Not started in the redesign. Existing production capabilities remain the truth boundary. |
 | 5. Jobs, Match and application workflow | [~] | Existing saved jobs, deterministic Match, clarifications and job-specific versions are reusable foundations; the broader blueprint workflow is not complete. |
-| 6. Technical SEO, accessibility and performance | [~] | Static public routes and strict private-route noindex/no-store policy are tested; capability pages, font/bundle work and the recurring gate remain. |
+| 6. Technical SEO, accessibility and performance | [~] | Static public routes, strict private-route noindex/no-store policy and a consolidated local/PR technical gate are implemented; capability pages, field Core Web Vitals evidence and later performance work remain. |
 | 7. Content and search acquisition | [ ] | Broad production is intentionally not started. Architecture may begin only after product vocabulary/routes stabilize. |
 | 8. Growth, research and global expansion | [ ] | Not started; it depends on validated outcomes from earlier groups. |
 
@@ -35,7 +35,7 @@ The governing task definitions remain in `RESUMESTRIDE_PRODUCT_BLUEPRINT.md` out
 | 19. Browser navigation | [~] | Meaningful screen navigation and `popstate` are implemented; complete workflow matrix remains. |
 | 20. Sign-in/recovery context | [~] | Content-free owner-scoped continuation exists; all journey payload recovery remains. |
 | 38. Public capability URLs | [~] | Public/private publishing rule is locked; new public capability HTML is not yet produced. |
-| 46. Technical quality gate | [~] | Route/SEO/type/build checks exist; consolidated recurring release gate remains. |
+| 46. Technical quality gate | [~] | One local/PR command now composes build/type, links, SEO/schema, accessibility, responsive, motion, console, route and PDF/Word checks. Owner-approved field Core Web Vitals monitoring and final release-environment enforcement remain. |
 
 ## Group 2 task-level status
 
