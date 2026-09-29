@@ -80,4 +80,8 @@ const {premiumHtml} = await import(pathToFileURL(path.join(pdfRoot,'template-lib
 const premium = await premiumHtml({...example(), template:'mandate'}, 'mandate');
 assert.ok(premium.includes('data:font/'));
 assert.ok(premium.includes('pt-mandate'));
+const premiumRuntime = await readFile(path.join(pdfRoot,'template-library/export/premium-pdf.js'),'utf8');
+const renderRuntime = await readFile(path.join(pdfRoot,'server/export/render.js'),'utf8');
+assert.match(premiumRuntime,/args:\s*target\.args\s*\?\?\s*\[\]/,'Premium Chromium launch args missing');
+assert.match(renderRuntime,/args:\s*executablePath\s*\?\s*\[\]\s*:\s*chromium\.args/,'Lambda Chromium args not forwarded');
 console.log('Packaged Premium renderer loads its complete Node ESM graph and builds Mandate HTML.');

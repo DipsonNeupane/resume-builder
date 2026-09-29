@@ -47,7 +47,7 @@ export async function resumeHtml(resume:Resume):Promise<string>{
 export async function renderPdf(resume:Resume, executablePath?:string):Promise<Uint8Array>{
  if(isPremiumTemplate(resume.template)){
   validateExport(resume)
-  const bytes=await renderPremiumPdf(resume,resume.template,{executablePath:executablePath??await chromium.executablePath()})
+  const bytes=await renderPremiumPdf(resume,resume.template,{executablePath:executablePath??await chromium.executablePath(),args:executablePath?[]:chromium.args})
   if(bytes.length>4_000_000)throw new HttpError(413,'This PDF is too large. Shorten the resume and retry.')
   return bytes
  }

@@ -56,8 +56,8 @@ export async function premiumHtml(resume: Resume, id: PremiumId): Promise<string
  return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:"><style>${await embeddedFonts()}\n${await premiumCss(id)}\n@page{size:${resume.paper};margin:16mm}html,body{margin:0;background:#fff}.pt-paper{font-size:10pt}</style></head><body>${markup}</body></html>`;
 }
 
-export async function renderPremiumPdf(resume: Resume, id: PremiumId, target: { executablePath: string } | { browser: Browser }): Promise<Uint8Array> {
- const browser = 'browser' in target ? target.browser : await puppeteer.launch({ executablePath: target.executablePath, headless: true, timeout: 20000 });
+export async function renderPremiumPdf(resume: Resume, id: PremiumId, target: { executablePath: string; args?: string[] } | { browser: Browser }): Promise<Uint8Array> {
+ const browser = 'browser' in target ? target.browser : await puppeteer.launch({ executablePath: target.executablePath, args: target.args ?? [], headless: true, timeout: 20000 });
  const page = await browser.newPage();
  try {
   await page.setJavaScriptEnabled(false);
