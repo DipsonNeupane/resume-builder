@@ -192,7 +192,7 @@ test('all seven templates are available and selectable for a signed-out/free vis
  const select=page.getByLabel('Template');
  for(const label of ['Modern','Classic','Minimal','Compact','Bold','Executive','Ledger']){
   await expect(select.locator('option',{hasText:label})).toHaveJSProperty('disabled',false);
-  await select.selectOption({label});
+  await select.selectOption(label.toLowerCase());
   await expect(select).toHaveValue(label.toLowerCase());
  }
 });

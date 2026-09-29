@@ -4,7 +4,7 @@ import {example} from '../../src/model';
 const owner='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 async function seed(page:Page){
  const session={access_token:'fake-test-token',refresh_token:'fake-refresh',token_type:'bearer',expires_in:3600,expires_at:Math.floor(Date.now()/1000)+3600,user:{id:owner,aud:'authenticated',role:'authenticated',email:'fixture@example.com',app_metadata:{},user_metadata:{},created_at:new Date().toISOString()}};
- await page.addInitScript(([s,r])=>{localStorage.setItem('sb-auth-test-auth-token',JSON.stringify(s));sessionStorage.setItem('resumestride.resume.v1',JSON.stringify(r));},[session,example()]);
+ await page.addInitScript(([s,r])=>{localStorage.setItem('sb-auth-test-auth-token',JSON.stringify(s));if(!sessionStorage.getItem('resumestride.resume.v1'))sessionStorage.setItem('resumestride.resume.v1',JSON.stringify(r));},[session,example()]);
  await page.route('**/api/export-status*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:false,hasPaidAccess:false,remaining:3,resetsAt:'2026-10-19T12:00:00Z'})}));
  await page.route('**/api/subscription-status',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:false,activeTemplates:[],subscriptions:[],salesAvailable:true})}));
  await page.route('https://auth-test.supabase.co/rest/v1/**',route=>route.fulfill({status:200,contentType:'application/json',body:'[]'}));
@@ -33,7 +33,49 @@ test('an active Pro subscription shows monthly renewal state and opens customer 
 test('an individual Premium template requires explicit monthly consent and sends the allowlisted offer key',async({page})=>{
  await seed(page);let body:Record<string,unknown>|undefined;await page.route('**/api/subscription-checkout',async route=>{body=route.request().postDataJSON();await route.fulfill({status:503,json:{error:'Retry later.'}});});
  await page.goto('/');await page.getByRole('button',{name:'Continue my resume',exact:true}).first().click();await page.getByRole('button',{name:'Preview resume'}).click();await page.getByRole('button',{name:'Templates Modern'}).click();await page.getByRole('dialog',{name:'Choose your layout'}).getByRole('button',{name:/^Boardroom/}).click();
+ await expect(page.getByText('Previewing Boardroom — Premium',{exact:true})).toBeVisible();await page.getByRole('button',{name:'Unlock for $1.99/month',exact:true}).click();
  await expect(page.getByText('US$1.99/month',{exact:false})).toBeVisible();const consent=page.getByRole('checkbox',{name:/recurring US\$1\.99 monthly subscription/});const checkout=page.getByRole('button',{name:'Continue to secure checkout'});await expect(checkout).toBeDisabled();await consent.check();await checkout.click();expect(body).toEqual({requestId:body?.requestId,offerKey:'template:boardroom',renewalConsent:true});
+});
+test('locked Premium is a persistent preview-only state and never calls PDF or DOCX',async({page})=>{
+ await seed(page);let exports=0;
+ await page.route('**/api/export-pdf',route=>{exports++;return route.abort();});
+ await page.route('**/api/export-docx',route=>{exports++;return route.abort();});
+ await page.goto('/');await page.getByRole('button',{name:'Continue my resume',exact:true}).first().click();await page.getByRole('button',{name:'Preview resume'}).click();
+ await page.getByRole('button',{name:'Templates Modern',exact:true}).click();const dialog=page.getByRole('dialog',{name:'Choose your layout'});
+ await expect(dialog.getByText('7 Free · 20 Premium · Preview any design before unlocking',{exact:true})).toBeVisible();
+ const free=dialog.getByRole('button',{name:/^Modern/});await expect(free).toContainText('Free / Included');
+ await expect(dialog.getByText(/Popular|Recommended/i)).toHaveCount(0);
+ const locked=dialog.getByRole('button',{name:/^Boardroom/});await expect(locked).toContainText('Premium · $1.99/month');await locked.click();
+ await expect(page.getByText('Previewing Boardroom — Premium',{exact:true})).toBeVisible();await expect(page.getByText('Unlock this design to download it. Previewing does not grant download or use entitlement.',{exact:true})).toBeVisible();
+ await expect(page.locator('.site-header').getByRole('button',{name:'Unlock to download',exact:true})).toBeVisible();
+ await expect.poll(()=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('resumestride.resume.v1')!).template)).toBe('boardroom');
+ await page.reload();await page.getByRole('button',{name:'Continue my resume',exact:true}).first().click();await page.getByRole('button',{name:'Preview resume'}).click();
+ await expect(page.getByText('Previewing Boardroom — Premium',{exact:true})).toBeVisible();await page.locator('.site-header').getByRole('button',{name:'Unlock to download',exact:true}).click();
+ await expect(page.getByRole('dialog',{name:'Unlock Boardroom'})).toContainText('Get Pro — all Premium templates');expect(exports).toBe(0);
+ expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
+});
+test('an individually subscribed Premium template is active through its paid date and remains downloadable',async({page})=>{
+ await seed(page);await page.route('**/api/subscription-status',route=>route.fulfill({json:{isPro:false,activeTemplates:['boardroom'],salesAvailable:true,subscriptions:[{subscriptionId:'sub_boardroom',offerKey:'template:boardroom',kind:'template',templateId:'boardroom',status:'active',cancelAtPeriodEnd:true,currentPeriodEnd:'2026-10-29T03:45:15Z'}]}}));
+ await page.route('**/api/export-status*',route=>route.fulfill({json:{isPro:false,hasPaidAccess:true,remaining:3,resetsAt:'2026-10-19T12:00:00Z'}}));const exported:string[]=[];
+ await page.route('**/api/export-pdf',route=>{exported.push('pdf');return route.fulfill({status:200,contentType:'application/pdf',body:'pdf'});});await page.route('**/api/export-docx',route=>{exported.push('docx');return route.fulfill({status:200,contentType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',body:'docx'});});
+ await page.goto('/');await page.getByRole('button',{name:'Continue my resume',exact:true}).first().click();await page.getByRole('button',{name:'Preview resume'}).click();await page.getByRole('button',{name:'Templates Modern',exact:true}).click();const dialog=page.getByRole('dialog',{name:'Choose your layout'});const active=dialog.getByRole('button',{name:/^Boardroom/});
+ await expect(active).toContainText('Premium · Active');await expect(active).toContainText(/Access through Oct 2[89], 2026/);await active.click();
+ await expect(page.getByText('Previewing Boardroom — Premium',{exact:true})).toHaveCount(0);await expect(page.locator('.site-header').getByRole('button',{name:'Download',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Back to editing',exact:true}).click();await page.getByRole('button',{name:'Design & format',exact:true}).click();await page.getByRole('button',{name:'Confirm',exact:true}).click();
+ await expect(page.getByText('Generous document downloads are included with your active subscription.',{exact:false})).toBeVisible();await page.getByRole('checkbox',{name:'I consent to uploading my resume content',exact:false}).check();await page.getByRole('button',{name:'Download PDF',exact:true}).click();await page.getByRole('button',{name:'Download Word (.docx)',exact:true}).click();await expect.poll(()=>exported).toEqual(['pdf','docx']);
+});
+test('Pro marks every Premium template included and removes individual upsells',async({page})=>{
+ await seed(page);await page.route('**/api/subscription-status',route=>route.fulfill({json:{isPro:true,activeTemplates:[],salesAvailable:false,subscriptions:[{subscriptionId:'sub_pro',offerKey:'pro:monthly',kind:'pro',templateId:null,status:'active',cancelAtPeriodEnd:false,currentPeriodEnd:'2026-11-01T00:00:00Z'}]}}));
+ await page.route('**/api/export-status*',route=>route.fulfill({json:{isPro:true,hasPaidAccess:true,remaining:3,resetsAt:'2026-10-19T12:00:00Z'}}));
+ await page.goto('/');await page.getByRole('button',{name:'Continue my resume',exact:true}).first().click();await page.getByRole('button',{name:'Preview resume'}).click();await page.getByRole('button',{name:'Templates Modern',exact:true}).click();const dialog=page.getByRole('dialog',{name:'Choose your layout'});const included=dialog.getByRole('button',{name:/^Boardroom/});
+ await expect(included).toContainText('Included with Pro');await expect(dialog.getByRole('button',{name:/Unlock for/})).toHaveCount(0);await expect(dialog.getByRole('button',{name:/Get Pro/})).toHaveCount(0);await included.click();
+ await expect(page.getByText('Previewing Boardroom — Premium',{exact:true})).toHaveCount(0);await expect(page.locator('.site-header').getByRole('button',{name:'Download',exact:true})).toBeVisible();await page.getByRole('button',{name:'Back to editing',exact:true}).click();await page.getByRole('button',{name:'Design & format',exact:true}).click();await page.getByRole('button',{name:'Confirm',exact:true}).click();await expect(page.getByText('Generous document downloads are included with your active subscription.',{exact:false})).toBeVisible();await expect(page.getByRole('button',{name:'Download PDF',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Download Word (.docx)',exact:true})).toBeVisible();
+});
+test('locked Premium preview and unlock actions remain clear on mobile',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await seed(page);await page.goto('/');await page.getByRole('button',{name:/^(Continue my resume|Build my resume|Build my master resume)$/,exact:true}).first().click();await page.getByRole('button',{name:'Preview resume'}).click();await page.getByRole('button',{name:'Templates Modern'}).click();
+ const dialog=page.getByRole('dialog',{name:'Choose your layout'});await dialog.getByRole('button',{name:/^Boardroom/}).click();await expect(page.getByText('Previewing Boardroom — Premium',{exact:true})).toBeVisible();
+ await expect(page.getByRole('button',{name:'Unlock for $1.99/month',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Get Pro — all Premium templates',exact:true})).toBeVisible();
+ expect(await page.locator('.preview-panel').evaluate(node=>node.scrollWidth<=node.clientWidth)).toBe(true);expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
 });
 test('PDF requires consent and a failed request reuses the same UUID',async({page})=>{
  await seed(page);const ids:string[]=[];
