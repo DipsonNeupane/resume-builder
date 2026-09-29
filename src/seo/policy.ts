@@ -5,6 +5,7 @@ export {
  isPublicAttributionLocation,
  isPublicLocation,
  isPublicPath,
+ isPrivateAppPath,
  noindex,
  notFoundHtml,
  privateMetadata,

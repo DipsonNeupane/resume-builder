@@ -67,6 +67,18 @@ test('Vite dev and preview register HTTP policy before the SPA fallback', () => 
  }
 });
 
+test('hosting rewrites only the private application namespaces after middleware validation', () => {
+ const config = JSON.parse(read('vercel.json')) as { rewrites?: Array<{ source: string; destination: string }> };
+ assert.deepEqual(config.rewrites, [
+  { source: '/start/:path*', destination: '/index.html' },
+  { source: '/workspace/:path*', destination: '/index.html' },
+ ]);
+ for (const path of ['/start/import', '/start/build', '/start/job', '/start/sample', '/workspace/resume', '/workspace/jobs', '/workspace/jobs/saved', '/workspace/account', '/workspace/pro']) {
+  assert.equal(policy(path).status, 0, `${path} must reach the hosting rewrite`);
+ }
+ assert.equal(policy('/workspace/unknown').status, 404, 'middleware must reject invalid routes before the broad namespace rewrite');
+});
+
 test('every module the browser app imports from outside src/ is served by the dev server', () => {
  // A browser import that escapes src/ is requested by path during `npm run dev`. If the dev SEO
  // filter does not allow that exact path it 404s and the whole app renders blank (regression
@@ -172,6 +184,17 @@ test('query states and private paths never enter the index, canonical or sitemap
   const result = policy(path); assert.equal(result.status, 404); assert.equal(result.headers['X-Robots-Tag'], noindex);
   assert.match(result.body, /Page not found/); assert.doesNotMatch(result.body, /rel="canonical"|application\/ld\+json/);
  }
+ const privateEntries = ['/start/import', '/start/build', '/start/job', '/start/sample', '/workspace/resume', '/workspace/jobs', '/workspace/jobs/saved', '/workspace/account', '/workspace/pro', '/workspace/jobs/11111111-1111-4111-8111-111111111111/match', '/workspace/resumes/11111111-1111-4111-8111-111111111111'];
+ for (const path of privateEntries) {
+  const result = policy(path);
+  assert.equal(result.status, 0); assert.equal(result.headers['X-Robots-Tag'], noindex);
+  assert.equal(result.headers['Cache-Control'], 'private, no-store');
+  assert.equal(result.body, '');
+  assert.equal(read('public/sitemap.xml').includes(path), false);
+ }
+ for (const path of ['/workspace/jobs/not-an-id/match', '/workspace/resumes/not-an-id', '/workspace/unknown']) {
+  assert.equal(policy(path).status, 404);
+ }
  for (const path of ['/api/tailor', '/api/export-pdf', '/api/jobs-account', '/extension-fixture/job-posting.html']) {
   assert.equal(policy(path).status, 0); assert.equal(policy(path).headers['X-Robots-Tag'], noindex);
  }
@@ -268,6 +291,8 @@ test('early head guard protects token fragments even before the auth client cons
   ['https://resumestride.com/?utm_source=google&utm_campaign=launch', false, false],
   ['https://resumestride.com/resources/resume-keywords/#placement', false, false],
   ['https://resumestride.com/resources/resume-keywords/#access_token-secret', true, true],
+  ['https://resumestride.com/workspace/resume', true, true],
+  ['https://resumestride.com/start/job', true, true],
   ['https://preview.vercel.app/', false, true],
  ] as const) {
   const robots = { content: 'index, follow' }; const dataset: Record<string, string> = {}; let removed = 0;

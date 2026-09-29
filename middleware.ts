@@ -22,6 +22,7 @@ export const publicPages = {
 } as const;
 export const publicAnchors = new Set(['', '#how-it-works', '#templates', '#pricing', '#main-content']);
 export type AppPage = 'home' | 'builder' | 'account' | 'pro' | 'jobs';
+const privateAppPath = /^\/(?:start\/(?:import|build|job|sample)|workspace\/(?:resume|jobs(?:\/saved|\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/match)?|resumes\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|account|pro))\/?$/i;
 export const privateMetadata = {
  builder: { title: 'Resume editor | ResumeStride', description: 'Edit and review your resume in your private workspace.' },
  account: { title: 'Account access | ResumeStride', description: 'Sign in, manage your account or recover access to ResumeStride.' },
@@ -30,6 +31,9 @@ export const privateMetadata = {
 };
 export function isPublicPath(path: string): path is keyof typeof publicPages {
  return Object.hasOwn(publicPages, path);
+}
+export function isPrivateAppPath(path: string): boolean {
+ return privateAppPath.test(path);
 }
 export function isPublicLocation(url: URL): boolean {
  return isPublicPath(url.pathname) && !url.search && isPublicAnchor(url.pathname, url.hash);
@@ -50,6 +54,9 @@ export function isPublicAttributionLocation(url: URL): boolean {
 }
 export function initialPage(url: URL): AppPage {
  if (['account', 'reset', 'code', 'token', 'token_hash', 'error'].some(key => url.searchParams.has(key)) || /(?:access_token|refresh_token|type=recovery|error)=?/.test(url.hash)) return 'account';
+ if (/^\/workspace\/(?:account|pro)\/?$/i.test(url.pathname)) return url.pathname.toLowerCase().includes('/account') ? 'account' : 'pro';
+ if (/^\/workspace\/(?:jobs(?:\/|$))|^\/start\/(?:job|sample)\/?$/i.test(url.pathname)) return 'jobs';
+ if (/^\/workspace\/(?:resume|resumes\/)|^\/start\/(?:import|build)\/?$/i.test(url.pathname)) return 'builder';
  if (url.searchParams.has('jobs')) return 'jobs';
  if (url.searchParams.has('builder')) return 'builder';
  return url.searchParams.has('pro') ? 'pro' : 'home';
@@ -80,6 +87,7 @@ export function requestSeo(url: URL, production: boolean) {
  // The extension fixture remains reachable for local installed-extension tests,
  // but must never be an indexable job page.
  const fixture = url.pathname.startsWith('/extension-fixture/');
+ if (isPrivateAppPath(url.pathname)) return { status: 0, headers: { ...headers, 'X-Robots-Tag': noindex, 'Cache-Control': 'private, no-store' }, body: '' };
  if (isPublicPath(url.pathname) || asset || infrastructure || fixture) return { status: 0, headers, body: '' };
  return { status: 404, headers: { ...headers, 'X-Robots-Tag': noindex, 'Content-Type': 'text/html; charset=utf-8' }, body: notFoundHtml };
 }
