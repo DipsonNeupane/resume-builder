@@ -1,3 +1,24 @@
+## September 29 — Group 3 onboarding and workspace foundation (isolated redesign only)
+
+Implemented the first shared G3 batch on `redesign/g3-onboarding-workspace`, based on the
+typed route/state contract. No production checkout, deployment, hosted data, provider call,
+push or merge was touched.
+
+- `/start/import`, `/start/build`, `/start/job` and `/start/sample` now present distinct,
+  truthful onboarding guidance while converging on the existing Builder/Jobs workspaces.
+  Import discloses local best-effort parsing and mandatory review; build starts with content;
+  job-first explains explicit save/account retention and master safety; the fictional sample
+  is isolated and never mutates the live draft.
+- Active document identity and storage scope now remain visible in both Builder and Jobs:
+  master versus job-specific draft/version, local browsing-session versus account-saved,
+  and the existing save status are separate concepts. Job-specific work continues to preserve
+  the master and retains the explicit return path.
+- Typed journey helpers and focused server/browser tests cover route convergence, Back/reload
+  draft preservation, direct journey entries, sample isolation and automated accessibility.
+- Blueprint status is intentionally partial: pasted job-description onboarding, anonymous
+  evidence results, complete interactive sample, saved-object URL restoration and the full
+  responsive/screen-reader workflow still remain.
+
 ## September 27 — task #77: public favicon identity
 
 Replaced the weak 32px-only fallback setup with a complete public favicon asset suite using

@@ -1,4 +1,5 @@
 export type LegacyAppPage = 'home' | 'builder' | 'account' | 'pro' | 'jobs';
+export type EntryJourney = 'import_first' | 'build_first' | 'job_first' | 'sample';
 
 export type AppRoute =
  | { kind: 'home'; path: '/' }
@@ -82,6 +83,25 @@ export function routeForPage(page: LegacyAppPage): NavigableRoute {
   case 'jobs': return { kind: 'workspace_jobs', path: '/workspace/jobs' };
   case 'account': return { kind: 'workspace_account', path: '/workspace/account' };
   case 'pro': return { kind: 'workspace_pro', path: '/workspace/pro' };
+ }
+}
+
+export function routeForJourney(journey: EntryJourney): NavigableRoute {
+ switch (journey) {
+  case 'import_first': return { kind: 'start_import', path: '/start/import' };
+  case 'build_first': return { kind: 'start_build', path: '/start/build' };
+  case 'job_first': return { kind: 'start_job', path: '/start/job' };
+  case 'sample': return { kind: 'start_sample', path: '/start/sample' };
+ }
+}
+
+export function journeyForRoute(route: AppRoute): EntryJourney | null {
+ switch (route.kind) {
+  case 'start_import': return 'import_first';
+  case 'start_build': return 'build_first';
+  case 'start_job': return 'job_first';
+  case 'start_sample': return 'sample';
+  default: return null;
  }
 }
 

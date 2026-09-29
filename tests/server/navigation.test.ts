@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { consumeContinuation, continuationStorageKey, saveContinuation } from '../../src/routing/continuation.ts';
-import { jobResumeRoute, matchRoute, parseAppRoute, routeForPage, routePage } from '../../src/routing/routes.ts';
+import { jobResumeRoute, journeyForRoute, matchRoute, parseAppRoute, routeForJourney, routeForPage, routePage } from '../../src/routing/routes.ts';
 
 const origin = 'https://resumestride.com';
 const id = '11111111-1111-4111-8111-111111111111';
@@ -24,6 +24,23 @@ test('legacy query entries and auth callbacks remain compatible without putting 
  assert.equal(parseAppRoute(new URL('/?code=secret', origin)).kind, 'workspace_account');
  assert.equal(parseAppRoute(new URL('/#access_token=secret&type=recovery', origin)).kind, 'workspace_account');
  assert.equal(parseAppRoute(new URL('/workspace/resume?code=secret', origin)).kind, 'workspace_account');
+});
+
+test('entry journeys have one typed, content-free route and converge on the shared workspaces', () => {
+ const expectations = [
+  ['import_first', '/start/import', 'builder'],
+  ['build_first', '/start/build', 'builder'],
+  ['job_first', '/start/job', 'jobs'],
+  ['sample', '/start/sample', 'jobs'],
+ ] as const;
+ for (const [journey, path, page] of expectations) {
+  const route = routeForJourney(journey);
+  assert.equal(route.path, path);
+  assert.equal(journeyForRoute(route), journey);
+  assert.equal(routePage(parseAppRoute(new URL(path, origin))), page);
+  assert.doesNotMatch(path, /resume|description|jobText|url|@/i);
+ }
+ assert.equal(journeyForRoute(routeForPage('builder')), null);
 });
 
 function memoryStorage() {

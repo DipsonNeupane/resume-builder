@@ -1,4 +1,6 @@
 import { expect, test } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+import { example } from '../src/model';
 
 test('meaningful workspace navigation uses stable URLs and browser history', async ({ page }) => {
  await page.goto('/');
@@ -37,4 +39,44 @@ test('unrestored object routes never fall through to a master resume or generic 
  await expect(page.getByText('Your master resume has not been changed.')).toBeVisible();
  await page.goto(`/workspace/jobs/${id}/match`);
  await expect(page.getByRole('heading', { name: 'Open Match Analysis from your saved jobs' })).toBeVisible();
+});
+
+test('journey routes explain the right start while sharing one safe workspace model', async ({ page }) => {
+ await page.setViewportSize({ width: 320, height: 820 });
+ const draft = example();
+ await page.addInitScript(value => sessionStorage.setItem('resumestride.resume.v1', JSON.stringify(value)), draft);
+
+ await page.goto('/start/import');
+ await expect(page.getByRole('heading', { name: 'Bring in the resume you already have.' })).toBeVisible();
+ await expect(page.getByText(/Parsing happens in this browser/)).toBeVisible();
+ await expect(page.getByRole('region', { name: 'Active document' })).toContainText('Local draft · this browsing session');
+
+ await page.goto('/start/build');
+ await expect(page.getByRole('heading', { name: 'Start with your story, not a design.' })).toBeVisible();
+ await expect(page.getByText(/Templates and formatting wait/)).toBeVisible();
+ await expect(page.getByLabel('Full name')).toHaveValue(draft.name);
+
+ await page.goto('/start/job');
+ await expect(page.getByRole('heading', { name: 'Begin with the role you are considering.' })).toBeVisible();
+ await expect(page.getByText(/A search result is not retained/)).toBeVisible();
+
+ await page.goto('/start/sample');
+ await expect(page.getByRole('heading', { name: 'See how evidence informs a decision.' })).toBeVisible();
+ await expect(page.getByText(/fictional community-program coordinator/)).toBeVisible();
+ await expect(page.getByText(/Jordan—not ResumeStride—decides/)).toBeVisible();
+ expect(await page.evaluate(() => JSON.parse(sessionStorage.getItem('resumestride.resume.v1')!).name)).toBe(draft.name);
+ expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+});
+
+test('browser history changes journey context without discarding the local master draft', async ({ page }) => {
+ await page.goto('/start/build');
+ await page.getByLabel('Full name').fill('Amina Rahman');
+ await expect(page.locator('.save-status')).toContainText('Saved for this session');
+ await page.locator('.site-header').getByRole('button', { name: 'Find jobs', exact: true }).click();
+ await expect(page).toHaveURL(/\/workspace\/jobs$/);
+ await page.goBack();
+ await expect(page).toHaveURL(/\/start\/build$/);
+ await expect(page.getByLabel('Full name')).toHaveValue('Amina Rahman');
+ await page.reload();
+ await expect(page.getByLabel('Full name')).toHaveValue('Amina Rahman');
 });
