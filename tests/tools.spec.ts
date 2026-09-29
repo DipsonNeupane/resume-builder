@@ -62,6 +62,25 @@ test('evidence check separates supported, review and unknown evidence without a 
   await expect(page.locator('[data-tool-results]')).not.toContainText(/ATS score|hiring probability|interview likelihood/i);
 });
 
+test('evidence review qualifies only after a requirement result is genuinely viewed', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 500 });
+  await page.addInitScript(() => {
+    (window as unknown as { nativeScrollIntoView: typeof Element.prototype.scrollIntoView }).nativeScrollIntoView = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function () {};
+  });
+  await page.goto('/tools/resume-job-match/');
+  await page.locator('#resume-text').fill('Customer Operations Specialist\nCoordinated onboarding with sales and support.\nBuilt Salesforce reports for weekly service reviews.');
+  await page.locator('#job-description').fill('Responsibilities\nCoordinate onboarding across sales and support.\nRequired qualifications\nA bachelor degree is required.\nPreferred qualifications\nSQL experience preferred.');
+  await page.getByRole('button', { name: 'Check the evidence' }).click();
+  const results = page.locator('[data-tool-results]');
+  await expect(results).toBeVisible();
+  await expect(results).not.toHaveAttribute('data-review-scope', 'limited');
+  await page.locator('.evidence-result').first().evaluate(node => {
+    (window as unknown as { nativeScrollIntoView: typeof Element.prototype.scrollIntoView }).nativeScrollIntoView.call(node, { block: 'center' });
+  });
+  await expect(results).toHaveAttribute('data-review-scope', 'limited');
+});
+
 test('bullet checker keeps rewrites grounded and clears private state', async ({ page }) => {
   await page.goto('/tools/resume-bullet-checker/');
   const bullet = 'Responsible for coordinating onboarding with sales and support';

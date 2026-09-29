@@ -1,4 +1,4 @@
-type ToolEvent = 'tool_viewed' | 'tool_started' | 'tool_completed' | 'tool_cta_clicked';
+type ToolEvent = 'tool_viewed' | 'tool_started' | 'tool_completed' | 'tool_result_reviewed' | 'tool_cta_clicked';
 type SafeData = Record<string, string>;
 
 (() => {
@@ -6,7 +6,7 @@ type SafeData = Record<string, string>;
   const tool = root?.dataset.publicTool ?? '';
   const token = /^[A-Za-z0-9][A-Za-z0-9._~-]{0,79}$/;
   const attributionKeys = new Set(['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'referrer_host']);
-  const eventKeys = new Set(['outcome', 'cta_destination']);
+  const eventKeys = new Set(['outcome', 'cta_destination', 'review_scope', 'requirement_count']);
   const allowedTools = new Set(['job-requirement-extractor', 'resume-job-match', 'resume-bullet-checker']);
   if (!allowedTools.has(tool) || location.origin !== 'https://resumestride.com') return;
   const runtime = window as typeof window & { va?: (...args: unknown[]) => void; vaq?: unknown[][]; rsToolAnalytics?: { event: (name: ToolEvent, data?: SafeData) => void } };

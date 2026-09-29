@@ -6,7 +6,7 @@ test('homepage presents one evidence-led choice, three truthful starts and bound
  await page.goto('/');
 
  await expect(page.getByRole('heading', { level: 1, name: 'Find the roles worth your effort.' })).toBeVisible();
- const primary = page.getByRole('button', { name: 'Find jobs and see the match', exact: true }).first();
+ const primary = page.getByRole('link', { name: 'Compare my resume with a job', exact: true }).first();
  await expect(primary).toBeInViewport();
  await expect(page.getByRole('button', { name: 'Build a resume free', exact: true }).first()).toBeVisible();
 
@@ -14,7 +14,7 @@ test('homepage presents one evidence-led choice, three truthful starts and bound
  await expect(starts.getByRole('heading', { level: 3 })).toHaveText(['Upload my resume', 'Build from scratch', 'Start with a job']);
  await expect(starts.getByText('parsed locally and always requires your review')).toBeVisible();
  await expect(starts.getByText('seven Free templates and PDF or editable Word export')).toBeVisible();
- await expect(starts.getByText('Search from your resume and criteria')).toBeVisible();
+ await expect(starts.getByText('Paste a job description and compare its requirements')).toBeVisible();
 
  const proof = page.getByRole('list', { name: 'Product facts' });
  await expect(proof.getByRole('listitem')).toHaveCount(5);
@@ -35,9 +35,9 @@ test('homepage and public navigation use stable destinations without misleading 
  await expect(nav.getByRole('link', { name: 'Resources' })).toHaveAttribute('href', '/resources/');
  await expect(nav.getByRole('link', { name: 'Pricing' })).toHaveAttribute('href', '/#pricing');
 
- await page.getByRole('button', { name: 'Find jobs and see the match', exact: true }).first().click();
- await expect(page).toHaveURL(/\/start\/job$/);
- await expect(page.getByRole('heading', { level: 1, name: 'Begin with the role you are considering.' })).toBeVisible();
+ await page.getByRole('link', { name: 'Compare my resume with a job', exact: true }).first().click();
+ await expect(page).toHaveURL(/\/tools\/resume-job-match\/$/);
+ await expect(page.getByRole('heading', { level: 1, name: 'Resume vs. job evidence check' })).toBeVisible();
  await page.goBack();
  await page.getByRole('button', { name: 'Build a resume free', exact: true }).first().click();
  await expect(page).toHaveURL(/\/start\/build$/);

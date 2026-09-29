@@ -235,7 +235,7 @@ test('free tools are complete, private-by-design and distinct from paid Match', 
  assert.doesNotMatch(controller, /\bfetch\s*\(|XMLHttpRequest|sendBeacon|localStorage|sessionStorage|console\./);
  assert.match(controller, /textContent/); assert.doesNotMatch(controller, /innerHTML|insertAdjacentHTML/);
  const analytics = read('public/tools/tool-analytics.js');
- assert.match(analytics, /tool_viewed/); assert.match(controller, /tool_started/); assert.match(controller, /tool_completed/); assert.match(analytics, /tool_cta_clicked/);
+ assert.match(analytics, /tool_viewed/); assert.match(controller, /tool_started/); assert.match(controller, /tool_completed/); assert.match(controller, /tool_result_reviewed/); assert.match(analytics, /tool_cta_clicked/);
  assert.match(analytics, /attributionKeys/); assert.match(analytics, /eventKeys/);
  assert.doesNotMatch(analytics, /textarea|resume-text|job-description|FormData|innerText|textContent/);
  const contentAnalytics = read('public/content-analytics.js');
@@ -283,7 +283,7 @@ test('public pages have crawlable links connecting all three surfaces', () => {
 });
 
 test('every internal link, script, stylesheet and image in public HTML resolves', () => {
- const runtimePaths = new Set(['/src/main.tsx', '/_vercel/insights/script.js']);
+ const runtimePaths = new Set(['/src/main.tsx', '/_vercel/insights/script.js', '/start/sample']);
  for (const publicPath of Object.keys(publicPages)) {
   const html = read(publicHtmlFile(publicPath));
   const references = [...html.matchAll(/\b(?:href|src)="([^"]+)"/g)].map(match => match[1]);

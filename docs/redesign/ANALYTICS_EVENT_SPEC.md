@@ -75,6 +75,10 @@ Device class comes from the analytics platform; do not fingerprint it in applica
 - North star: rows in the server-only durable conversion ledger; also show per qualifying review and per job-specific version.
 - Every report must show the date range, environment, visitor/event basis, and known owner/test contamination.
 
+## Anonymous public-tool boundary
+
+The browser-only matcher uses separate content-free events: `tool_started`, `tool_completed`, `tool_result_reviewed`, and `tool_cta_clicked`. A successful calculation is not a review. `tool_result_reviewed` fires only after a requirement-level result is at least half visible in a visible tab, with only `tool_id`, `review_scope=limited`, and a bounded `requirement_count`. It never creates a north-star conversion because an anonymous public-tool session has no verified owner, saved job, job-specific version, or committed package export.
+
 ## Durable measurement boundary
 
 Outbound analytics remains identifier-free. The server-only evidence and conversion ledgers may contain the authenticated owner UUID, internal export/version/review UUIDs, one-way 64-character job and analysis keys, `limited|full`, `pdf|docx`, and timestamps. These values are not sent to Vercel Analytics and are not exposed to browser roles. Resume text, job text, job URLs, titles, employers, names, emails, filenames, prompts, model output and free-form errors are prohibited.

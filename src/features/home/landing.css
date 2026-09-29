@@ -9,7 +9,7 @@
 .pt-hero-silk { position:absolute; inset:0; width:100%; height:100%; z-index:-1; display:block; }
 .pt-hero::after { content:''; position:absolute; inset:auto 0 0; height:140px; z-index:1; pointer-events:none; background:linear-gradient(transparent,#0b0a09b3); }
 .pt-hero-copy { position:absolute; z-index:3; left:var(--gut); top:clamp(40px,7vh,84px); width:min(38vw,720px); pointer-events:none; }
-.pt-hero-copy button { pointer-events:auto; }
+.pt-hero-copy button,.pt-hero-copy a { pointer-events:auto; }
 .pt-hero-kicker { display:flex; align-items:center; gap:10px; margin:0 0 22px; font:500 12px/1.3 var(--pt-mono); letter-spacing:.14em; text-transform:uppercase; color:var(--pt-bone); text-shadow:0 1px 10px #0b0a09b3; }
 .pt-dot { width:7px; height:7px; border-radius:50%; background:var(--pt-copper); box-shadow:0 0 0 4px #de804440; flex:none; }
 .pt-hero-title { margin:0; font:800 clamp(48px,4.7vw,90px)/.9 var(--pt-display); font-variation-settings:'wdth' 76,'opsz' 96; letter-spacing:-.022em; color:var(--pt-bone); text-shadow:0 2px 30px #00000059; }

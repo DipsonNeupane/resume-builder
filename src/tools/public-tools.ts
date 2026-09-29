@@ -1,7 +1,7 @@
 import { TOOL_LIMITS, analyzeResumeBullet, compareResumeToJob, extractJobRequirements, type EvidenceResult, type ExtractedRequirement } from './analysis.js';
 
 type ToolId = 'job-requirement-extractor' | 'resume-job-match' | 'resume-bullet-checker';
-type ToolAnalytics = { event: (name: 'tool_started' | 'tool_completed', data?: Record<string, string>) => void };
+type ToolAnalytics = { event: (name: 'tool_started' | 'tool_completed' | 'tool_result_reviewed', data?: Record<string, string>) => void };
 
 const root = document.querySelector<HTMLElement>('[data-public-tool]');
 const analytics = () => (window as typeof window & { rsToolAnalytics?: ToolAnalytics }).rsToolAnalytics;
@@ -111,7 +111,25 @@ function setError(message: string): void {
 function clearResult(): void {
   const output = element<HTMLElement>('[data-tool-output]');
   output.replaceChildren();
-  element<HTMLElement>('[data-tool-results]').hidden = true;
+  const results = element<HTMLElement>('[data-tool-results]');
+  results.hidden = true;
+  delete results.dataset.reviewScope;
+}
+
+let reviewObserver: IntersectionObserver | null = null;
+function observeEvidenceReview(requirementCount: number): void {
+  reviewObserver?.disconnect();
+  const results = element<HTMLElement>('[data-tool-results]');
+  const firstRequirement = results.querySelector<HTMLElement>('.evidence-result');
+  if (!firstRequirement) return;
+  reviewObserver = new IntersectionObserver(entries => {
+    const viewed = entries.some(entry => entry.target === firstRequirement && entry.isIntersecting && entry.intersectionRatio >= 0.5);
+    if (!viewed || document.visibilityState !== 'visible' || results.dataset.reviewScope) return;
+    results.dataset.reviewScope = 'limited';
+    analytics()?.event('tool_result_reviewed', { review_scope: 'limited', requirement_count: String(Math.min(requirementCount, 12)) });
+    reviewObserver?.disconnect();
+  }, { threshold: 0.5 });
+  reviewObserver.observe(firstRequirement);
 }
 
 function updateCounts(): void {
@@ -145,18 +163,20 @@ function initialize(): void {
       results.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
       results.focus({ preventScroll: true });
       analytics()?.event('tool_completed', { outcome: 'success' });
+      if (tool === 'resume-job-match') observeEvidenceReview(output.querySelectorAll('.evidence-result').length);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'This check could not be completed. Review the input and try again.');
       analytics()?.event('tool_completed', { outcome: 'failure' });
     }
   });
   element<HTMLButtonElement>('[data-clear-tool]').addEventListener('click', () => {
+    reviewObserver?.disconnect();
     form.reset(); clearResult(); setError(''); updateCounts();
     form.querySelector<HTMLTextAreaElement>('textarea')?.focus();
   });
   updateCounts();
   window.addEventListener('pageshow', event => { if (event.persisted) { form.reset(); clearResult(); setError(''); updateCounts(); } });
-  window.addEventListener('pagehide', () => { form.querySelectorAll<HTMLTextAreaElement>('textarea').forEach(textarea => { textarea.value = ''; }); });
+  window.addEventListener('pagehide', () => { reviewObserver?.disconnect(); form.querySelectorAll<HTMLTextAreaElement>('textarea').forEach(textarea => { textarea.value = ''; }); });
 }
 
 initialize();

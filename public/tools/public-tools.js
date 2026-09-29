@@ -106,7 +106,26 @@ function setError(message) {
 function clearResult() {
     const output = element('[data-tool-output]');
     output.replaceChildren();
-    element('[data-tool-results]').hidden = true;
+    const results = element('[data-tool-results]');
+    results.hidden = true;
+    delete results.dataset.reviewScope;
+}
+let reviewObserver = null;
+function observeEvidenceReview(requirementCount) {
+    reviewObserver?.disconnect();
+    const results = element('[data-tool-results]');
+    const firstRequirement = results.querySelector('.evidence-result');
+    if (!firstRequirement)
+        return;
+    reviewObserver = new IntersectionObserver(entries => {
+        const viewed = entries.some(entry => entry.target === firstRequirement && entry.isIntersecting && entry.intersectionRatio >= 0.5);
+        if (!viewed || document.visibilityState !== 'visible' || results.dataset.reviewScope)
+            return;
+        results.dataset.reviewScope = 'limited';
+        analytics()?.event('tool_result_reviewed', { review_scope: 'limited', requirement_count: String(Math.min(requirementCount, 12)) });
+        reviewObserver?.disconnect();
+    }, { threshold: 0.5 });
+    reviewObserver.observe(firstRequirement);
 }
 function updateCounts() {
     document.querySelectorAll('textarea[data-maximum]').forEach(textarea => {
@@ -147,6 +166,8 @@ function initialize() {
             results.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
             results.focus({ preventScroll: true });
             analytics()?.event('tool_completed', { outcome: 'success' });
+            if (tool === 'resume-job-match')
+                observeEvidenceReview(output.querySelectorAll('.evidence-result').length);
         }
         catch (error) {
             setError(error instanceof Error ? error.message : 'This check could not be completed. Review the input and try again.');
@@ -154,6 +175,7 @@ function initialize() {
         }
     });
     element('[data-clear-tool]').addEventListener('click', () => {
+        reviewObserver?.disconnect();
         form.reset();
         clearResult();
         setError('');
@@ -167,7 +189,7 @@ function initialize() {
         setError('');
         updateCounts();
     } });
-    window.addEventListener('pagehide', () => { form.querySelectorAll('textarea').forEach(textarea => { textarea.value = ''; }); });
+    window.addEventListener('pagehide', () => { reviewObserver?.disconnect(); form.querySelectorAll('textarea').forEach(textarea => { textarea.value = ''; }); });
 }
 initialize();
 // Compile-time guard: the DOM limits and analysis limits must stay aligned.
