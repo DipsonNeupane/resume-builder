@@ -28,7 +28,7 @@ test('homepage presents one evidence-led choice, three truthful starts and bound
 test('homepage and public navigation use stable destinations without misleading labels', async ({ page }) => {
  await page.goto('/');
  const nav = page.getByRole('navigation', { name: 'Main navigation' });
- await expect(nav.getByRole('link', { name: 'Resume Builder' })).toHaveAttribute('href', '/start/build');
+ await expect(nav.getByRole('link', { name: 'Resume Builder' })).toHaveAttribute('href', '/workspace/resume');
  await expect(nav.getByRole('link', { name: 'Jobs & Match' })).toHaveAttribute('href', '/start/job');
  await expect(nav.getByRole('link', { name: 'Free Tools' })).toHaveAttribute('href', '/tools/');
  await expect(nav.getByRole('link', { name: 'Templates', exact: true })).toHaveAttribute('href', '/#templates');
@@ -37,9 +37,9 @@ test('homepage and public navigation use stable destinations without misleading 
 
  await page.getByRole('button', { name: 'Find jobs and see the match', exact: true }).first().click();
  await expect(page).toHaveURL(/\/start\/job$/);
- await expect(page.getByRole('heading', { level: 1, name: /Find jobs/i })).toBeVisible();
+ await expect(page.getByRole('heading', { level: 1, name: 'Begin with the role you are considering.' })).toBeVisible();
  await page.goBack();
  await page.getByRole('button', { name: 'Build a resume free', exact: true }).first().click();
  await expect(page).toHaveURL(/\/start\/build$/);
- await expect(page.getByRole('heading', { level: 1, name: 'Let’s start with you.' })).toBeVisible();
+ await expect(page.getByRole('heading', { level: 1, name: 'Start with your story, not a design.' })).toBeVisible();
 });

@@ -29,7 +29,7 @@ The governing task definitions remain in `RESUMESTRIDE_PRODUCT_BLUEPRINT.md` out
 
 | Blueprint task | Status | Verified boundary |
 | --- | --- | --- |
-| 12. Primary navigation | [~] | Typed destinations and history contract exist; public navigation redesign remains. |
+| 12. Primary navigation | [~] | Typed destinations, history behavior and reusable public discovery navigation exist; dedicated static Templates/Pricing destinations and the complete route set remain. |
 | 15. Journey-specific onboarding | [~] | Import-, build-, job- and sample-first routes now have truthful journey-specific progress, limits and preservation guidance and converge on the same workspaces. Pasted-job capture and extracted-field review UI remain. |
 | 18. Permanent workspace URLs | [~] | Major route shapes and reload entries exist; saved-object restoration/fallbacks remain. |
 | 19. Browser navigation | [~] | Meaningful screen navigation and `popstate` are implemented; complete workflow matrix remains. |

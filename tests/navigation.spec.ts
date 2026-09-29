@@ -49,11 +49,12 @@ test('journey routes explain the right start while sharing one safe workspace mo
  await page.goto('/start/import');
  await expect(page.getByRole('heading', { name: 'Bring in the resume you already have.' })).toBeVisible();
  await expect(page.getByText(/Parsing happens in this browser/)).toBeVisible();
- await expect(page.getByRole('region', { name: 'Active document' })).toContainText('Local draft · this browsing session');
+ await expect(page.getByRole('region', { name: 'Active document' })).toHaveCount(0);
 
  await page.goto('/start/build');
  await expect(page.getByRole('heading', { name: 'Start with your story, not a design.' })).toBeVisible();
  await expect(page.getByText(/Templates and formatting wait/)).toBeVisible();
+ await page.getByRole('button', { name: 'Start building' }).click();
  await expect(page.getByLabel('Full name')).toHaveValue(draft.name);
 
  await page.goto('/start/job');
@@ -64,18 +65,21 @@ test('journey routes explain the right start while sharing one safe workspace mo
  await expect(page.getByRole('heading', { name: 'See how evidence informs a decision.' })).toBeVisible();
  await expect(page.getByText(/fictional community-program coordinator/)).toBeVisible();
  await expect(page.getByText(/Jordan—not ResumeStride—decides/)).toBeVisible();
+ await expect(page.getByRole('region', { name: 'Active document' })).toHaveCount(0);
+ await expect(page.getByRole('heading', { name: /Find jobs/i })).toHaveCount(0);
  expect(await page.evaluate(() => JSON.parse(sessionStorage.getItem('resumestride.resume.v1')!).name)).toBe(draft.name);
  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
 test('browser history changes journey context without discarding the local master draft', async ({ page }) => {
  await page.goto('/start/build');
+ await page.getByRole('button', { name: 'Start building' }).click();
  await page.getByLabel('Full name').fill('Amina Rahman');
  await expect(page.locator('.save-status')).toContainText('Saved for this session');
  await page.locator('.site-header').getByRole('button', { name: 'Find jobs', exact: true }).click();
  await expect(page).toHaveURL(/\/workspace\/jobs$/);
  await page.goBack();
- await expect(page).toHaveURL(/\/start\/build$/);
+ await expect(page).toHaveURL(/\/workspace\/resume$/);
  await expect(page.getByLabel('Full name')).toHaveValue('Amina Rahman');
  await page.reload();
  await expect(page.getByLabel('Full name')).toHaveValue('Amina Rahman');

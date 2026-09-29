@@ -17,7 +17,7 @@ const steps = {
     ['PDF/Word request and Word round-trip smoke tests', node, ['--import', 'tsx', '--test', 'tests/server/export.test.ts', 'tests/server/docx.test.ts']],
   ],
   browser: [
-    ['Public console, accessibility, overflow, keyboard, motion and route checks', npm, ['exec', '--', 'playwright', 'test', 'tests/public-quality.spec.ts', 'tests/accessibility.spec.ts', 'tests/navigation.spec.ts', 'tests/seo.spec.ts']],
+    ['Public console, homepage, accessibility, overflow, keyboard, motion and route checks', npm, ['exec', '--', 'playwright', 'test', 'tests/public-quality.spec.ts', 'tests/homepage.spec.ts', 'tests/accessibility.spec.ts', 'tests/navigation.spec.ts', 'tests/seo.spec.ts']],
     ['Mocked PDF/Word browser workflow', npm, ['exec', '--', 'playwright', 'test', '--config', 'playwright.paid.config.ts', 'tests/paid/flows.spec.ts', '--grep', 'PDF and Word use shared server availability|selected preview template is sent unchanged']],
     ['Generated PDF text smoke test', node, ['--import', 'tsx', 'scripts/check-generated-pdfs.ts', '--smoke']],
   ],
