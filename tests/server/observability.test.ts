@@ -177,6 +177,8 @@ test('analytics permits only sanitized public pageviews, closed product events a
  assert.deepEqual(safeAnalyticsEvent({ type: 'pageview', url: origin + '/?utm_source=google&utm_campaign=launch' }), { type: 'pageview', url: origin + '/' })
  assert.deepEqual(safeAnalyticsEvent(Object.assign({ type: 'pageview' as const, url: origin + '/#pricing' }, { resume: secret, properties: { password: secret } })), { type: 'pageview', url: origin + '/' })
  assert.deepEqual(sanitizeProductProperties({ user_state: 'authenticated', plan: 'Pro', export_type: 'PDF', utm_source: 'google', utm_term: secret, referrer_host: 'Search.Google.com' }), { user_state: 'authenticated', plan: 'Pro', export_type: 'PDF', utm_source: 'google', referrer_host: 'search.google.com' })
+ assert.deepEqual(sanitizeProductProperties({ journey: 'job_first', document_scope: 'job_specific', storage_scope: 'account', job_source: 'pasted', review_depth: 'full', decision: 'tailor', application_status: 'applied', failure_category: 'parse_failure' }), { journey: 'job_first', document_scope: 'job_specific', storage_scope: 'account', job_source: 'pasted', review_depth: 'full', decision: 'tailor', application_status: 'applied', failure_category: 'parse_failure' })
+ assert.deepEqual(sanitizeProductProperties({ journey: secret, document_scope: 'private-resume', failure_category: secret }), {})
  assert.deepEqual(sanitizeProductProperties({ surface: 'resources', article_slug: 'resume-keywords', cta_destination: 'match' }), { surface: 'resources', article_slug: 'resume-keywords', cta_destination: 'match' })
  const memory = new Map<string, string>()
  const storage = { getItem: (key: string) => memory.get(key) ?? null, setItem: (key: string, value: string) => { memory.set(key, value) } }

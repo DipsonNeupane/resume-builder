@@ -213,7 +213,10 @@ test('free tools are complete, private-by-design and distinct from paid Match', 
  assert.match(controller, /textContent/); assert.doesNotMatch(controller, /innerHTML|insertAdjacentHTML/);
  const analytics = read('public/tools/tool-analytics.js');
  assert.match(analytics, /tool_viewed/); assert.match(controller, /tool_started/); assert.match(controller, /tool_completed/); assert.match(analytics, /tool_cta_clicked/);
+ assert.match(analytics, /attributionKeys/); assert.match(analytics, /eventKeys/);
  assert.doesNotMatch(analytics, /textarea|resume-text|job-description|FormData|innerText|textContent/);
+ const contentAnalytics = read('public/content-analytics.js');
+ assert.match(contentAnalytics, /attributionKeys/); assert.match(contentAnalytics, /Object\.entries\(parsed\)/);
 });
 
 test('resource content is complete, deliberate and free of disallowed claims', () => {

@@ -223,6 +223,7 @@ function MatchAnalysisPanel({ analysis, isPro, onViewPro, onClarify, jobTitle }:
   const full = analysis.fullAnalysis;
   const panel = useRef<HTMLElement>(null);
   const viewed = useRef(false);
+  const fullViewed = useRef(false);
   useEffect(() => {
     const node = panel.current;
     if (!node || viewed.current) return;
@@ -251,7 +252,7 @@ function MatchAnalysisPanel({ analysis, isPro, onViewPro, onClarify, jobTitle }:
       {analysis.additionalAreasAnalyzed > 0 && <span>{analysis.additionalAreasAnalyzed} additional {analysis.additionalAreasAnalyzed === 1 ? 'area' : 'areas'} analyzed</span>}
       <button className="text-button" onClick={onViewPro}>View the full evidence analysis with Pro</button>
     </div>}
-    {isPro && full && <details className="match-details"><summary>Full evidence analysis</summary>
+    {isPro && full && <details className="match-details" onToggle={event=>{if(event.currentTarget.open&&!fullViewed.current){fullViewed.current=true;trackProductEvent('evidence_reviewed',{surface:'match',user_state:'authenticated',plan:'Pro',review_depth:'full'});}}}><summary>Full evidence analysis</summary>
       <p>{full.deeperExplanation}</p>
       <div className="match-requirements">{full.requirements.map(req => <article key={req.id}>
         <div><span className={`requirement-category requirement-${req.category}`}>{CATEGORY_LABELS[req.category]}</span><span className={`requirement-status status-${req.status}`}>{STATUS_LABELS[req.status]}</span></div>
@@ -437,7 +438,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
       setResults(parsed);
       setAccountIsPro(parsed.isPro);
       trackProductEvent('jobs_search_performed', { surface: 'jobs', user_state: 'authenticated', plan: parsed.isPro ? 'Pro' : 'Free', outcome: 'success', result_bucket: parsed.jobs.length ? 'some' : 'none' });
-      trackProductEvent('match_completed', { surface: 'match', user_state: 'authenticated', plan: parsed.isPro ? 'Pro' : 'Free', outcome: 'success', result_bucket: parsed.jobs.length ? 'some' : 'none' });
+      if (parsed.jobs.some(job=>Boolean(job.matchAnalysis))) trackProductEvent('requirements_extracted', { surface: 'match', user_state: 'authenticated', plan: parsed.isPro ? 'Pro' : 'Free', outcome: 'success', result_bucket: 'some', job_source: 'search' });
       lastCriteriaRef.current = criteria;
       const now = Date.now();
       lastProviderRefreshRef.current = now;
@@ -488,7 +489,8 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
       if (currentOwnerRef.current !== requestedOwner) return;
       setSavedJobs(parseSavedJobs(body.savedJobs));
       setMessage('Job saved. Its Match Analysis is in Saved jobs.');
-      trackProductEvent('job_saved', { surface: 'jobs', user_state: 'authenticated', plan: accountIsPro ? 'Pro' : 'Free', outcome: 'success' });
+      trackProductEvent('job_saved', { surface: 'jobs', user_state: 'authenticated', plan: accountIsPro ? 'Pro' : 'Free', outcome: 'success', job_source: 'search' });
+      trackProductEvent('decision_recorded', { surface: 'match', user_state: 'authenticated', plan: accountIsPro ? 'Pro' : 'Free', decision: 'save_later' });
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to save this job.'); }
   }
 
@@ -502,6 +504,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
       setSavedJobs(current => current.map(saved => saved.id === savedJobId
         ? { ...saved, matchAnalysis: analysis, analysisCurrent: true, analysisInvalidationReason: null }
         : saved));
+      trackProductEvent('requirements_extracted', { surface: 'match', user_state: 'authenticated', plan: accountIsPro ? 'Pro' : 'Free', outcome: 'success', result_bucket: 'some' });
       setMessage('Match Analysis updated for your current resume. This didn’t use a job search.');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to refresh this saved analysis.'); }
   }
@@ -525,6 +528,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
           ? { ...job, matchLabel: analysis.label, matchAnalysis: analysis }
           : job) } : current);
       }
+      trackProductEvent('decision_recorded', { surface: 'match', user_state: 'authenticated', plan: accountIsPro ? 'Pro' : 'Free', decision: 'clarify' });
       setMessage('Thanks. Match Analysis updated with your answer. This didn’t use a job search.');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to save this clarification.'); }
   }
@@ -563,6 +567,8 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
       const version = parseJobResumeVersion(body.version);
       if (currentOwnerRef.current !== requestedOwner) return;
       setJobResumeVersions(current => current.some(item => item.id === version.id) ? current : [{ ...version, savedJobExists: true }, ...current]);
+      trackProductEvent('decision_recorded', { surface: 'match', user_state: 'authenticated', plan: 'Pro', decision: 'tailor' });
+      trackProductEvent('job_specific_version_created', { surface: 'tailoring', user_state: 'authenticated', plan: 'Pro', document_scope: 'job_specific' });
       onEditJobResume(version, false);
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to start tailoring.'); }
   }

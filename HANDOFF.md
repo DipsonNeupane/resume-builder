@@ -3832,3 +3832,35 @@ rows, so it has no present material data effect. All eight later migrations (16â
 absent. Production's validator permits only modern/classic/minimal, so compact/bold/executive/ledger
 cloud writes fail. It is safe to take the pre-migration backup next, but not to apply migrations
 until history reconciliation and the historical migration-5 source discrepancy are resolved.
+## September 29 â€” redesign Group 1 foundation isolated and started
+
+Production remains live and unchanged at commit `16e03e3` / Vercel deployment
+`dpl_9FFi7Wzw99Tm5BFisx7abZbSuJhH`. The redesign is isolated from the heavily dirty
+owner checkout: `redesign/integration` points at the exact production commit and the
+active clean worktree uses `redesign/g1-strategy-measurement`. No push, preview,
+production deployment, database change, billing change, or extension change occurred.
+
+Added `docs/redesign/` with the production isolation record, all-eight-group dependency
+and parallel-work map, Group 1 positioning/vocabulary/claims/journey decisions, a
+privacy-safe event contract, and a dated pre-redesign production baseline. The live
+seven-day dashboard snapshot was 41 visitors, 76 page views and 63% bounce; the top
+visible custom events and device/page/referrer breakdowns are recorded in the baseline.
+Desktop Speed Insights showed a Real Experience Score of 71 from 83 displayed events;
+mobile had no collected events. The sample includes owner/test/launch traffic and is
+not treated as a demand or outcome claim.
+
+Initial redesign-only instrumentation now distinguishes the three selected entry
+journeys, first useful manual/import input, import start/success/bounded failure,
+usable-master confirmation, requirement extraction, deliberate full evidence review,
+clarify/tailor decisions, committed job-specific version creation, reviewed changes,
+and master versus job-specific export start/success/failure. The analytics property
+schema remains a closed set of bounded categories; hostile/free-form values are
+rejected. The north-star `application_package_exported` event is deliberately defined
+but not emitted: Vercel aggregate events cannot reliably prove same-job evidence review
+across sessions/devices. Owner policy is needed for session-only measurement versus a
+durable owner-scoped content-free conversion record before implementing that claim.
+
+Verification after the current code state: client TypeScript PASS, server TypeScript
+PASS, focused observability/analytics tests 12/12 PASS, production build PASS, and
+`git diff --check` PASS. Nothing in this entry authorizes a merge
+to `master` or a production deployment.

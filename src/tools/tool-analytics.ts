@@ -5,6 +5,8 @@ type SafeData = Record<string, string>;
   const root = document.querySelector<HTMLElement>('[data-public-tool]');
   const tool = root?.dataset.publicTool ?? '';
   const token = /^[A-Za-z0-9][A-Za-z0-9._~-]{0,79}$/;
+  const attributionKeys = new Set(['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'referrer_host']);
+  const eventKeys = new Set(['outcome', 'cta_destination']);
   const allowedTools = new Set(['job-requirement-extractor', 'resume-job-match', 'resume-bullet-checker']);
   if (!allowedTools.has(tool) || location.origin !== 'https://resumestride.com') return;
   const runtime = window as typeof window & { va?: (...args: unknown[]) => void; vaq?: unknown[][]; rsToolAnalytics?: { event: (name: ToolEvent, data?: SafeData) => void } };
@@ -13,7 +15,12 @@ type SafeData = Record<string, string>;
   try {
     const storageKey = 'resumestride.analytics.firstTouch';
     const stored = sessionStorage.getItem(storageKey);
-    if (stored) attribution = JSON.parse(stored) as SafeData;
+    if (stored) {
+      const parsed = JSON.parse(stored) as unknown;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        for (const [key, value] of Object.entries(parsed)) if (attributionKeys.has(key) && typeof value === 'string' && token.test(value)) attribution[key] = value;
+      }
+    }
     else {
       for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term']) {
         const value = new URL(location.href).searchParams.get(key);
@@ -28,7 +35,8 @@ type SafeData = Record<string, string>;
   } catch { attribution = {}; }
   const event = (name: ToolEvent, data: SafeData = {}) => {
     const safe: SafeData = { tool_id: tool };
-    for (const [key, value] of Object.entries({ ...attribution, ...data })) if (token.test(key) && token.test(value)) safe[key] = value;
+    for (const [key, value] of Object.entries(attribution)) if (attributionKeys.has(key) && token.test(value)) safe[key] = value;
+    for (const [key, value] of Object.entries(data)) if (eventKeys.has(key) && token.test(value)) safe[key] = value;
     runtime.va?.('event', { name, data: safe });
   };
   runtime.rsToolAnalytics = { event };

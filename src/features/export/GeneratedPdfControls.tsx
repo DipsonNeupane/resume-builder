@@ -12,14 +12,14 @@ import { trackProductEvent } from '../../services/analytics';
 
 const MAX_DOCUMENT_BYTES = 4_200_000;
 type ExportFormat = 'pdf' | 'docx';
-type Props = { resume: Resume; ownerId: string | null; onSignIn: () => void; onViewPro: () => void };
+type Props = { resume: Resume; ownerId: string | null; documentScope: 'master' | 'job_draft' | 'job_specific'; onSignIn: () => void; onViewPro: () => void };
 
 const formats: Record<ExportFormat, { label: string; endpoint: string; mime: string; filename: string }> = {
  pdf: { label: 'PDF', endpoint: '/api/export-pdf', mime: 'application/pdf', filename: 'ResumeStride.pdf' },
  docx: { label: 'Word', endpoint: '/api/export-docx', mime: docxMimeType, filename: 'ResumeStride.docx' },
 };
 
-export function GeneratedDocumentControls({ resume, ownerId, onSignIn, onViewPro }: Props) {
+export function GeneratedDocumentControls({ resume, ownerId, documentScope, onSignIn, onViewPro }: Props) {
  const [consent, setConsent] = useState(false);
  const [busyFormat, setBusyFormat] = useState<ExportFormat | null>(null);
  const [message, setMessage] = useState('');
@@ -95,7 +95,7 @@ export function GeneratedDocumentControls({ resume, ownerId, onSignIn, onViewPro
   inFlight.current = true;
   setBusyFormat(format);
   setMessage('');
-  trackProductEvent('export_started', { surface: 'export', user_state: 'authenticated', export_type: format === 'pdf' ? 'PDF' : 'DOCX' });
+  trackProductEvent('export_started', { surface: 'export', user_state: 'authenticated', export_type: format === 'pdf' ? 'PDF' : 'DOCX', document_scope: documentScope });
   const controller = new AbortController();
   controllerRef.current = controller;
   const selected = formats[format];
@@ -117,6 +117,7 @@ export function GeneratedDocumentControls({ resume, ownerId, onSignIn, onViewPro
     let text = `Could not download this ${selected.label} document. Retrying the same request will not use another download.`;
     try { const body: unknown = await response.json(); if (body && typeof body === 'object' && typeof (body as { error?: unknown }).error === 'string') text = (body as { error: string }).error; } catch { /* keep safe default */ }
     if (response.status === 403 && text === 'Your Free document download allowance is used for this period.') {
+     trackProductEvent('export_completed', { surface: 'export', user_state: 'authenticated', export_type: format === 'pdf' ? 'PDF' : 'DOCX', document_scope: documentScope, outcome: 'blocked' });
      setAllowance(text);
      setExhausted(true);
      setAvailabilityUnknown(false);
@@ -139,9 +140,10 @@ export function GeneratedDocumentControls({ resume, ownerId, onSignIn, onViewPro
    try { const a = document.createElement('a'); a.href = url; a.download = selected.filename; a.click(); }
    finally { setTimeout(() => URL.revokeObjectURL(url), 1000); }
    setMessage(`${selected.label} document generated. Your browser should offer the download.`);
-   trackProductEvent('export_completed', { surface: 'export', user_state: 'authenticated', export_type: format === 'pdf' ? 'PDF' : 'DOCX', outcome: 'success' });
+   trackProductEvent('export_completed', { surface: 'export', user_state: 'authenticated', export_type: format === 'pdf' ? 'PDF' : 'DOCX', document_scope: documentScope, outcome: 'success' });
   } catch (error) {
    if (controller.signal.aborted || !active.current) return;
+   trackProductEvent('export_completed', { surface: 'export', user_state: 'authenticated', export_type: format === 'pdf' ? 'PDF' : 'DOCX', document_scope: documentScope, outcome: 'failure' });
    setMessage(error instanceof Error && error.message !== 'mismatch' ? error.message : 'Could not download this document. Please sign in again and retry.');
   } finally {
    window.dispatchEvent(new Event('resumestride:document-allowance'));
