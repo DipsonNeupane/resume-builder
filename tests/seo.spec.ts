@@ -28,13 +28,17 @@ test('public source documents, robots and sitemap are served with correct metada
 test('editor, jobs, pro and callback states remove public canonical and structured data', async ({ page }) => {
  await page.goto('/');
  await expect(page.locator('script[data-seo-schema]')).toHaveCount(1);
- await page.getByRole('button', { name: 'Build my master resume', exact: true }).first().click();
+ await page.goto('/workspace/resume');
  await expect(page).toHaveTitle('Resume editor | ResumeStride');
  await expect(page.locator('link[rel="canonical"], script[data-seo-schema], meta[property="og:url"]')).toHaveCount(0);
  await page.getByRole('button', { name: 'Find jobs', exact: true }).first().click();
  await expect(page).toHaveTitle('Jobs and Match Analysis | ResumeStride');
  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
  await page.getByRole('button', { name: 'ResumeStride home', exact: true }).click();
+ // A tab that entered through a private route remains privacy-tainted until a
+ // fresh public navigation, so private metadata cannot leak into attribution.
+ await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);
+ await page.goto('/');
  await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
  await page.getByRole('button', { name: 'View Pro options', exact: true }).click();
  await expect(page).toHaveTitle('Pro options | ResumeStride');

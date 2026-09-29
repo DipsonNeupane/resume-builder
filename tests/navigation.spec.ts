@@ -6,18 +6,18 @@ test('meaningful workspace navigation uses stable URLs and browser history', asy
  await page.goto('/');
  await page.locator('.site-header-actions').getByRole('button', { name: 'Build my resume' }).click();
  await expect(page).toHaveURL(/\/start\/build$/);
- await expect(page.getByRole('heading', { level: 1, name: 'Let’s start with you.' })).toBeVisible();
+ await expect(page.getByRole('heading', { level: 1, name: 'Start with your story, not a design.' })).toBeVisible();
 
- await page.locator('.site-header').getByRole('button', { name: 'Find jobs', exact: true }).click();
- await expect(page).toHaveURL(/\/workspace\/jobs$/);
- await expect(page.getByRole('heading', { level: 1, name: /Find jobs/i })).toBeVisible();
+ await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Jobs & Match' }).click();
+ await expect(page).toHaveURL(/\/start\/job$/);
+ await expect(page.getByRole('heading', { level: 1, name: 'Begin with the role you are considering.' })).toBeVisible();
 
  await page.goBack();
  await expect(page).toHaveURL(/\/start\/build$/);
- await expect(page.getByRole('heading', { level: 1, name: 'Let’s start with you.' })).toBeVisible();
+ await expect(page.getByRole('heading', { level: 1, name: 'Start with your story, not a design.' })).toBeVisible();
  await page.reload();
  await expect(page).toHaveURL(/\/start\/build$/);
- await expect(page.getByRole('heading', { level: 1, name: 'Let’s start with you.' })).toBeVisible();
+ await expect(page.getByRole('heading', { level: 1, name: 'Start with your story, not a design.' })).toBeVisible();
 });
 
 test('private entries are served as noindex/no-store application states', async ({ request }) => {

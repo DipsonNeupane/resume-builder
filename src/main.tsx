@@ -143,10 +143,10 @@ function App(){
  useEffect(()=>{if(languagePattern.test(resume.language))setLanguageInput(resume.language);},[resume.language]);
  useEffect(()=>{if(!message)return;const timer=window.setTimeout(()=>setMessage(''),5000);return()=>window.clearTimeout(timer);},[message]);
  useEffect(()=>{if(confirmed){setPreviewMode(true);window.setTimeout(()=>downloads.current?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'center'}),0);}},[confirmed]);
- const previousPage = useRef(page);
+ const previousRoutePath = useRef(route.path);
  useEffect(()=>{
-  if(previousPage.current===page)return;
-  previousPage.current=page;
+  if(previousRoutePath.current===route.path)return;
+  previousRoutePath.current=route.path;
   // Lazy routes may still show their accessible loading landmark. Focus the
   // destination heading once it exists, without moving focus on initial load.
   const focusHeading=()=>{
@@ -161,7 +161,7 @@ function App(){
   const observer=new MutationObserver(()=>{if(focusHeading())observer.disconnect();});
   observer.observe(document.getElementById('root')!,{childList:true,subtree:true,attributes:true,attributeFilter:['style','hidden','class']});
   return()=>observer.disconnect();
- },[page]);
+ },[route.path]);
  // Job-specific drafts (from the browser extension foundation, apps/extension): a job capture
  // arrives here only via an explicit, validated postMessage (src/services/extensionImport.ts) —
  // never automatically, never from a remote origin. Starting a draft snapshots the current
@@ -430,7 +430,7 @@ function App(){
  const routeJourney=journeyForRoute(route);
  return <><input ref={file} type="file" accept={`.docx,${docxMimeType},.pdf,application/pdf`} hidden onChange={uploadResume}/>
  <a className="skip-link" href="#main-content">Skip to main content</a>
- {routeJourney||page!=='builder'&&page!=='jobs'?<PublicNavigation authAvailable={authConfigured} signedIn={Boolean(session.user)} profileName={profileName} resumeReady={Boolean(resume.name)} onHome={returnHome} onContinue={openBuilder} onJobs={selectJobJourney} onAccount={openAccount} onHomeSection={showHomeSection}/>:<header className="site-header"><button className="brand" onClick={returnHome} aria-label="ResumeStride home"><span className="brand-icon"><span className="stride-mark" aria-hidden="true"><i/><i/><i/></span></span>Resume<span className="brand-light">Stride</span></button><div className="header-actions">{<span className="save-status" role="status"><CheckCircle2 size={15}/>{documentSaveLabel}</span>}{page==='builder'&&<button className="button outline header-jobs" aria-label="Find jobs" onClick={()=>setPage('jobs')}><Search size={16} aria-hidden="true"/><span>Find jobs</span></button>}{session.user&&<button className="header-profile" onClick={openAccount} aria-label={`Open profile for ${profileName}`}><UserRound size={16}/>Hello, {profileName}</button>}<button className="button outline header-download" aria-label={selectedTemplateLocked?'Unlock to download':'Download'} onClick={requestDownload}>{selectedTemplateLocked?<Lock size={16} aria-hidden="true"/>:<Download size={16} aria-hidden="true"/>}<span>{selectedTemplateLocked?'Unlock to download':'Download'}</span></button></div></header>}
+ {routeJourney||page!=='builder'&&page!=='jobs'?<PublicNavigation authAvailable={authConfigured} signedIn={Boolean(session.user)} profileName={profileName} resumeReady={Boolean(resume.name)} onHome={returnHome} onContinue={resume.name?openBuilder:()=>begin('build_first')} onJobs={selectJobJourney} onAccount={openAccount} onHomeSection={showHomeSection}/>:<header className="site-header"><button className="brand" onClick={returnHome} aria-label="ResumeStride home"><span className="brand-icon"><span className="stride-mark" aria-hidden="true"><i/><i/><i/></span></span>Resume<span className="brand-light">Stride</span></button><div className="header-actions">{<span className="save-status" role="status"><CheckCircle2 size={15}/>{documentSaveLabel}</span>}{page==='builder'&&<button className="button outline header-jobs" aria-label="Find jobs" onClick={()=>setPage('jobs')}><Search size={16} aria-hidden="true"/><span>Find jobs</span></button>}{session.user&&<button className="header-profile" onClick={openAccount} aria-label={`Open profile for ${profileName}`}><UserRound size={16}/>Hello, {profileName}</button>}<button className="button outline header-download" aria-label={selectedTemplateLocked?'Unlock to download':'Download'} onClick={requestDownload}>{selectedTemplateLocked?<Lock size={16} aria-hidden="true"/>:<Download size={16} aria-hidden="true"/>}<span>{selectedTemplateLocked?'Unlock to download':'Download'}</span></button></div></header>}
  {message&&<div className="notice" role="status">{message}<button aria-label="Dismiss notification" onClick={()=>setMessage('')}><X size={16}/></button></div>}
  {rescue&&<div className="notice" role="status">An earlier draft on this device could not be loaded and has been kept separately so it isn’t lost.<button className="text-button" onClick={downloadRescue}><Download size={14}/>Download it</button><button aria-label="Discard the unreadable draft" onClick={discardRescue}><X size={16}/></button></div>}
  {conflict&&<div className="notice" role="status">A second unreadable draft was found while an earlier recovered draft above is still waiting. Autosave is paused to keep both recovery drafts safe. Download the unreadable recovery data, then explicitly discard this recovery draft to resume autosave.<button className="text-button" onClick={downloadConflict}><Download size={14}/>Download it</button><button aria-label="Discard this additional unreadable draft" onClick={()=>{if(window.confirm('Discard this recovery draft and allow your current edits to replace it?'))setConflict(null);}}><X size={16}/></button></div>}

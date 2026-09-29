@@ -33,8 +33,7 @@ test('mobile navigation has sequential keyboard access, Escape, and destination 
 });
 
 test('sample dialog isolates focus, cycles both directions, and restores its opener', async ({ page }) => {
- await page.goto('/');
- await page.getByRole('button', { name: 'Build my master resume', exact: true }).first().click();
+ await page.goto('/workspace/resume');
  const opener = page.getByRole('button', { name: 'View sample resume', exact: true });
  await opener.focus();
  await page.keyboard.press('Enter');
@@ -58,8 +57,7 @@ test('sample dialog isolates focus, cycles both directions, and restores its ope
 });
 
 test('builder fields expose input purpose and a visible keyboard focus ring', async ({ page }) => {
- await page.goto('/');
- await page.getByRole('button', { name: 'Build my master resume', exact: true }).first().click();
+ await page.goto('/workspace/resume');
  const name = page.getByRole('textbox', { name: 'Full name', exact: true });
  await expect(name).toHaveAttribute('autocomplete', 'name');
  for (const [key, type, autocomplete] of [['email', 'email', 'email'], ['phone', 'tel', 'tel'], ['website', 'url', 'url']]) {
@@ -112,6 +110,8 @@ test('delayed lazy route focuses only its loaded heading and cached routes still
   await page.getByRole('button', { name: 'Back to home', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Find the roles worth your effort.', exact: true })).toBeFocused();
   await page.getByRole('button', { name: 'Find opportunities', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Begin with the role you are considering.' })).toBeFocused();
+  await page.getByRole('button', { name: 'Find jobs', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Find jobs' })).toBeFocused();
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Find the roles worth your effort.', exact: true })).toBeFocused();
@@ -135,8 +135,7 @@ test('reduced motion applies to scripted download scrolling as well as CSS', asy
    original.call(this, options);
   };
  }, example());
- await page.goto('/');
- await page.getByRole('button', { name: 'Build my master resume', exact: true }).first().click();
+ await page.goto('/workspace/resume');
  await page.getByRole('button', { name: 'Design & format', exact: true }).click();
  await page.getByRole('button', { name: 'Confirm', exact: true }).click();
  await expect.poll(() => page.evaluate(() => (window as unknown as { scrollBehaviors: unknown[] }).scrollBehaviors)).toContain('instant');
@@ -154,8 +153,7 @@ for (const width of [320, 390, 768, 1920]) test(`long international content fits
  draft.website = `https://example.com/${'portfolio'.repeat(25)}`;
  await page.setViewportSize({ width, height: 900 });
  await page.addInitScript(value => sessionStorage.setItem('resumestride.resume.v1', JSON.stringify(value)), draft);
- await page.goto('/');
- await page.getByRole('button', { name: 'Build my master resume', exact: true }).first().click();
+ await page.goto('/workspace/resume');
  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
  await page.getByRole('button', { name: 'Preview resume', exact: true }).click();
  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
