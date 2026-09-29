@@ -200,6 +200,8 @@ test('Free depth is bounded while Pro receives full analysis and the truthful ta
   const pro = analysisView(result.analysis, true)
   assert.equal(free.observations.length <= 3, true)
   assert.equal(free.fullAnalysis, undefined)
+  assert.equal(free.limitedAnalysis?.requirements.length, 1)
+  assert.equal(free.limitedAnalysis?.requirements[0].category, 'required')
   assert.ok(free.additionalAreasAnalyzed >= 0)
   assert.equal(pro.fullAnalysis?.requirements.length, 3)
   assert.equal(pro.fullAnalysis?.tailoringAction, 'Tailor my resume for this job')

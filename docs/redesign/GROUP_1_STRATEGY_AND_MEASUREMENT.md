@@ -1,6 +1,6 @@
 # Group 1 — product strategy and measurement
 
-Status on 2026-09-29: in progress. Strategy deliverables are finalized for redesign implementation; measurement implementation and owner policy choices remain.
+Status on 2026-09-29: implementation complete for the locked measurement foundation. The full blueprint group remains partially complete because Tasks 1, 2, 4 and 5 include later public-surface, journey and reporting work.
 
 ## 1. Primary product position — completed for redesign
 
@@ -75,7 +75,7 @@ All starts converge on one master-resume model and one job model. Switching path
 4. Show requirement-to-evidence results before tailoring.
 5. Record the person's decision; tailoring creates a separate version and never overwrites the master.
 
-## 3. North-star outcome — semantics completed, calculation blocked
+## 3. North-star outcome — completed and verified on the redesign branch
 
 **Metric**
 
@@ -85,13 +85,15 @@ Count of successful job-specific PDF or Word application-package exports after r
 
 - Server-confirmed, non-empty PDF or DOCX response.
 - Document scope is `job_specific`, not master.
-- A requirement-level evidence view for the same saved job was deliberately opened before export.
+- A requirement-level evidence row for the same job was genuinely visible before export.
+- The review is behavior-based: merely loading a job, submitting a search, receiving an entitlement, or opening a summary panel does not qualify.
+- Free and other bounded previews record `limited`; the full requirement ledger records `full`.
 - Retries with the same committed export request do not inflate the count.
-- The metric contains no resume/job content, URL, email, account ID, job ID, request ID, or provider payload.
+- Outbound analytics contains no identifiers or content. The server-only record contains only the owner and internal relational IDs, one-way bounded job/analysis keys, closed scope/format values, and timestamps needed to establish the conversion.
 
-**Current blocker**
+**Authoritative calculation**
 
-Vercel aggregate events cannot reliably join evidence review to a later owner-scoped export across sessions/devices. `match_opened` currently means a panel became visible. Export events now distinguish master, local job draft, and account-saved job-specific scope on the redesign branch, but a durable content-free conversion record—or a deliberately session-only metric—still requires owner policy approval before implementation.
+The source of truth is the server-only `application_package_conversions` ledger, not client analytics. A conversion is inserted only after the existing export reservation is committed, the account-owned job-specific version resolves to the same bounded job identity as an earlier requirement-row review, and the request ID has not already converted. Master exports, local job drafts, failed exports and unreviewed jobs do not qualify.
 
 ## 4. Complete funnel — contract defined, implementation incomplete
 
@@ -107,9 +109,18 @@ The dated production snapshot, capability inventory, current event counts, test 
 
 The baseline is intentionally incomplete where the current product has no event or product state. Zero must not be substituted for “not instrumented.”
 
-## Owner decisions that genuinely remain
+## Deliberately deferred, not Group 1 blockers
 
-1. **North-star persistence:** session-only anonymous measurement, or owner-scoped durable content-free conversion records. Durable records are recommended for a reliable cross-session metric.
-2. **Return-use window:** define “same active search.” Recommended starting definition: a return on a different local calendar day within 30 days of the first job interaction, reported only in aggregate.
-3. **Application outcomes in Group 1:** approve whether basic user-controlled application status is introduced now as measurement foundation or remains Group 5 work. Recommended: define the event contract now; build the product state in Group 5.
-4. **Repository protection:** approve adding branch protection and required CI before any release proposal.
+1. **Return-use window:** the event contract remains defined, while the reporting window is deferred until a durable active-search model exists. The working reporting proposal is a return on a different local calendar day within 30 days, aggregate only.
+2. **Application outcomes:** the event contract is defined; the manual product state remains Group 5 work so Group 1 does not invent an unconnected tracker.
+3. **Repository protection:** branch protection and required CI affect the production repository and require a later owner-approved release-control action. No production setting was changed.
+
+## Blueprint task status
+
+| Task | Status | Evidence |
+| --- | --- | --- |
+| 1. Finalize the primary product position | [~] | Strategy, vocabulary and avoided-claims registry are complete; public-surface rollout remains in G2/G4/G7. |
+| 2. Define the three primary entry journeys | [~] | Journey contracts are complete; shared route/onboarding implementation remains in G2/G3. |
+| 3. Define the north-star outcome | [x] | Durable owner-scoped review/conversion records, behavior-based limited/full qualification, committed-export deduplication and privacy tests exist. |
+| 4. Define the complete product funnel | [~] | Canonical schema and core corrected signals exist; application status, return use and some later feature events remain intentionally deferred. |
+| 5. Establish baseline product measurements | [~] | Dated production snapshot is complete; unavailable denominators remain labeled “not instrumented” rather than zero. |

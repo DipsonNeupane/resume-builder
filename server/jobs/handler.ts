@@ -22,6 +22,7 @@ import { matchesEmploymentType, matchesLocation, matchesSalaryPreference } from 
 import { cacheKey, getOrFetchJobs } from './cache.ts'
 import type { EmploymentType, MatchLabel, NormalizedJob, SalaryNormalized, Workplace } from './types.ts'
 import { savedJobSnapshot } from './account.ts'
+import { emitDiagnostic } from '../observability.ts'
 
 function defaultDelay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -177,6 +178,16 @@ export async function searchJobs(request: Request, env: NodeJS.ProcessEnv = proc
 
     const limit = isPro ? PRO_JOB_LIMIT : FREE_JOB_LIMIT
     const cards = diverseRanked.slice(0, limit).map(entry => toCardView(entry.job, entry.match, isPro))
+    // Register only bounded, content-free identities for results the server
+    // actually issued. A later browser visibility signal must match one of these
+    // rows (or a current owner-saved analysis) before it can become a review.
+    const registered = await db.rpc('product_register_match_results', {
+      p_owner: owner,
+      p_job_keys: cards.map(card => card.savedSnapshot.dedupeKey),
+      p_analysis_keys: cards.map(card => card.matchAnalysis.contextHash),
+      p_scope: isPro ? 'full' : 'limited',
+    })
+    if (registered.error) emitDiagnostic('match', 'database', 'database_error')
 
     // Availability is refreshed separately from the immutable saved snapshot, using
     // only positive observations from this provider response. A missing item in these

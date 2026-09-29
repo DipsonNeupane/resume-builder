@@ -153,6 +153,19 @@ test('forwards expiry provenance so inferred staleness cannot become provider un
   })
 })
 
+test('registers only bounded owner-scoped identities for issued Free Match results', async () => {
+  const { deps, rpcCalls } = fixture({ page1: [job({ dedupeKey: 'a'.repeat(64) })], owner: 'owner-review-proof' })
+  const response = await searchJobs(request({ criteria: { title: uniqueTitle() }, evidence }), env, deps)
+  assert.equal(response.status, 200)
+  const issued = rpcCalls.find(call => call.name === 'product_register_match_results')
+  assert.equal(issued?.args?.p_owner, 'owner-review-proof')
+  assert.equal(issued?.args?.p_scope, 'limited')
+  assert.match(String((issued?.args?.p_job_keys as string[])[0]), /^[0-9a-f]{64}$/)
+  assert.match(String((issued?.args?.p_analysis_keys as string[])[0]), /^[0-9a-f]{64}$/)
+  assert.equal(JSON.stringify(issued?.args).includes('Required:'), false)
+  assert.equal(JSON.stringify(issued?.args).includes('https://'), false)
+})
+
 test('waits at least 1100ms via the injectable delay before an optional second page, and never for a single-page search', async () => {
   const delays: number[] = []
   const { deps } = fixture({ page1: [job()], hasMore: true, page2: [job({ id: 'techmap:2' })] })

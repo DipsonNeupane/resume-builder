@@ -26,6 +26,7 @@ type MatchAnalysis = {
   version: 1; label: MatchLabel; resumeHash: string; jobHash: string; contextHash: string;
   whyPromising: string; observations: string[]; importantWarning: string | null; seniorityMessage: string | null;
   additionalAreasAnalyzed: number; clarification?: { requirementId: string; text: string };
+  limitedAnalysis?: { requirements: Requirement[] };
   fullAnalysis?: { requirements: Requirement[]; strengths: string[]; buriedEvidence: string[]; areasWorthStrengthening: string[]; constraints: string[]; deeperExplanation: string; tailoringAction: 'Tailor my resume for this job' };
 };
 
@@ -163,6 +164,15 @@ function parseMatchAnalysis(value: unknown): MatchAnalysis | null {
       || typeof full.deeperExplanation !== 'string' || full.deeperExplanation.length > 2000
       || full.tailoringAction !== 'Tailor my resume for this job') return null;
   }
+  if (value.limitedAnalysis !== undefined) {
+    const limited = value.limitedAnalysis;
+    if (!record(limited) || !Array.isArray(limited.requirements) || limited.requirements.length < 1 || limited.requirements.length > 3
+      || !limited.requirements.every(item => record(item) && typeof item.id === 'string' && /^[0-9a-f]{16}$/.test(item.id)
+        && typeof item.text === 'string' && item.text.length <= 400
+        && ['required', 'preferred', 'nice_to_have'].includes(String(item.category))
+        && ['demonstrated', 'partially_demonstrated', 'not_demonstrated', 'confirmed_incompatible'].includes(String(item.status))
+        && Array.isArray(item.evidence) && item.evidence.length <= 5 && item.evidence.every(text => typeof text === 'string' && text.length <= 1000))) return null;
+  }
   return value as unknown as MatchAnalysis;
 }
 
@@ -195,6 +205,7 @@ function parseSavedJobs(value: unknown): SavedJob[] {
   return value.flatMap(item => {
     if (!record(item) || typeof item.id !== 'string' || !record(item.snapshot)
       || typeof item.snapshot.id !== 'string' || typeof item.snapshot.title !== 'string'
+      || typeof item.snapshot.dedupeKey !== 'string' || !/^[0-9a-f]{64}$/.test(item.snapshot.dedupeKey)
       || typeof item.snapshot.company !== 'string' || !isSafeJobUrl(item.snapshot.sourceUrl)
       || typeof item.providerAvailable !== 'boolean' || typeof item.availabilityCheckedAt !== 'string'
       || (item.unavailableAt !== null && typeof item.unavailableAt !== 'string') || typeof item.savedAt !== 'string') return [];
@@ -219,11 +230,33 @@ function parseJobCards(body: unknown): { jobs: JobCard[]; isPro: boolean; availa
 const CATEGORY_LABELS = { required: 'Required', preferred: 'Preferred', nice_to_have: 'Nice to have' } as const;
 const STATUS_LABELS = { demonstrated: 'Clearly demonstrated', partially_demonstrated: 'Partially demonstrated', not_demonstrated: 'Not demonstrated', confirmed_incompatible: 'Confirmed incompatibility' } as const;
 
-function MatchAnalysisPanel({ analysis, isPro, onViewPro, onClarify, jobTitle }: { jobTitle: string; analysis: MatchAnalysis; isPro: boolean; onViewPro: () => void; onClarify: (id: string, value: 'demonstrated'|'not_have'|'unsure') => void }) {
+function RequirementLedger({ requirements, scope, onReviewed }: { requirements: Requirement[]; scope: 'limited'|'full'; onReviewed: (scope: 'limited'|'full') => Promise<boolean> }) {
+  const ledger = useRef<HTMLDivElement>(null);
+  const recorded = useRef(false);
+  const inFlight = useRef(false);
+  useEffect(() => {
+    const node = ledger.current;
+    if (!node || recorded.current) return;
+    const observer = new IntersectionObserver(entries => {
+      if (recorded.current || inFlight.current || !entries.some(entry => entry.isIntersecting && entry.intersectionRatio >= 0.35)) return;
+      inFlight.current = true;
+      void onReviewed(scope).then(success => {
+        if (success) { recorded.current = true; observer.disconnect(); }
+      }).finally(() => { inFlight.current = false; });
+    }, { threshold: 0.35 });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [onReviewed, scope]);
+  return <div ref={ledger} className="match-requirements" data-review-scope={scope}>{requirements.map(req => <article key={req.id}>
+    <div><span className={`requirement-category requirement-${req.category}`}>{CATEGORY_LABELS[req.category]}</span><span className={`requirement-status status-${req.status}`}>{STATUS_LABELS[req.status]}</span></div>
+    <p>{req.text}</p>{req.evidence.map((item, index) => <small key={index}>{item}</small>)}
+  </article>)}</div>;
+}
+
+function MatchAnalysisPanel({ analysis, isPro, onViewPro, onClarify, onEvidenceReviewed, jobTitle }: { jobTitle: string; analysis: MatchAnalysis; isPro: boolean; onViewPro: () => void; onClarify: (id: string, value: 'demonstrated'|'not_have'|'unsure') => void; onEvidenceReviewed: (scope: 'limited'|'full') => Promise<boolean> }) {
   const full = analysis.fullAnalysis;
   const panel = useRef<HTMLElement>(null);
   const viewed = useRef(false);
-  const fullViewed = useRef(false);
   useEffect(() => {
     const node = panel.current;
     if (!node || viewed.current) return;
@@ -248,16 +281,14 @@ function MatchAnalysisPanel({ analysis, isPro, onViewPro, onClarify, jobTitle }:
       <span>{analysis.clarification.text}</span>
       <div><button className="text-button" onClick={() => onClarify(analysis.clarification!.requirementId, 'demonstrated')}>I can demonstrate this</button><button className="text-button" onClick={() => onClarify(analysis.clarification!.requirementId, 'not_have')}>I don’t have this</button><button className="text-button" onClick={() => onClarify(analysis.clarification!.requirementId, 'unsure')}>Not sure</button></div>
     </fieldset>}
+    {!isPro && analysis.limitedAnalysis && <div className="match-limited-analysis"><h4>Requirement evidence preview</h4><p className="field-hint">A limited evidence view from this role. Review the requirement, source wording, and what your resume demonstrates.</p><RequirementLedger requirements={analysis.limitedAnalysis.requirements} scope="limited" onReviewed={onEvidenceReviewed}/></div>}
     {!isPro && <div className="match-upgrade">
       {analysis.additionalAreasAnalyzed > 0 && <span>{analysis.additionalAreasAnalyzed} additional {analysis.additionalAreasAnalyzed === 1 ? 'area' : 'areas'} analyzed</span>}
       <button className="text-button" onClick={onViewPro}>View the full evidence analysis with Pro</button>
     </div>}
-    {isPro && full && <details className="match-details" onToggle={event=>{if(event.currentTarget.open&&!fullViewed.current){fullViewed.current=true;trackProductEvent('evidence_reviewed',{surface:'match',user_state:'authenticated',plan:'Pro',review_depth:'full'});}}}><summary>Full evidence analysis</summary>
+    {isPro && full && <details className="match-details"><summary>Full evidence analysis</summary>
       <p>{full.deeperExplanation}</p>
-      <div className="match-requirements">{full.requirements.map(req => <article key={req.id}>
-        <div><span className={`requirement-category requirement-${req.category}`}>{CATEGORY_LABELS[req.category]}</span><span className={`requirement-status status-${req.status}`}>{STATUS_LABELS[req.status]}</span></div>
-        <p>{req.text}</p>{req.evidence.map((item, index) => <small key={index}>{item}</small>)}
-      </article>)}</div>
+      <RequirementLedger requirements={full.requirements} scope="full" onReviewed={onEvidenceReviewed}/>
       {full.strengths.length > 0 && <><h4>Strengths</h4><ul>{full.strengths.map((item,index)=><li key={index}>{item}</li>)}</ul></>}
       {full.buriedEvidence.length > 0 && <><h4>Relevant experience that may be buried</h4><ul>{full.buriedEvidence.map((item,index)=><li key={index}>{item}</li>)}</ul></>}
       {full.areasWorthStrengthening.length > 0 && <><h4>Areas worth strengthening</h4><ul>{full.areasWorthStrengthening.map((item,index)=><li key={index}>{item}</li>)}</ul></>}
@@ -281,6 +312,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
   const [salaryMax, setSalaryMax] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const recordedEvidence = useRef(new Set<string>());
   const [results, setResults] = useState<{ jobs: JobCard[]; isPro: boolean; availableCount: number; proLimit: number } | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
@@ -319,6 +351,21 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
     return body;
   }
 
+  async function recordEvidenceReview(jobKey: string, analysisKey: string, scope: 'limited'|'full'): Promise<boolean> {
+    const key = `${ownerId ?? 'anonymous'}:${jobKey}:${analysisKey}:${scope}`;
+    if (recordedEvidence.current.has(key)) return true;
+    recordedEvidence.current.add(key);
+    try {
+      const body = await accountRequest({ action: 'record_evidence_review', jobKey, analysisKey, reviewScope: scope });
+      if (body.recorded !== true || (body.reviewScope !== 'limited' && body.reviewScope !== 'full') || typeof body.newlyRecorded !== 'boolean') throw new Error('Evidence review was not recorded.');
+      if (body.newlyRecorded) trackProductEvent('evidence_reviewed', { surface: 'match', user_state: 'authenticated', plan: scope === 'full' ? 'Pro' : 'Free', review_depth: scope });
+      return true;
+    } catch {
+      recordedEvidence.current.delete(key);
+      return false;
+    }
+  }
+
   function applyCriteria(criteria: Criteria) {
     setTitle(criteria.title);
     setCountryCode(criteria.countryCode ?? '');
@@ -341,6 +388,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
     setAccountIsPro(false);
     setAccountLoaded(false);
     setNextFreeRefreshAt(0);
+    recordedEvidence.current.clear();
     lastProviderRefreshRef.current = 0;
     lastCriteriaRef.current = null;
     if (ownerId) void accountRequest({ action: 'load', evidence: buildResumeEvidence(resume) }, controller.signal).then(body => {
@@ -686,7 +734,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
             </>}
             {saved.analysisCurrent === false && <p className="match-stale" role="status">Saved match analysis needs refreshing because the resume, job, preferences, or clarifications changed.</p>}
             {saved.analysisCurrent === false && <button className="text-button" onClick={() => void refreshSavedAnalysis(saved.id)}>Refresh match analysis</button>}
-            {saved.analysisCurrent !== false && saved.matchAnalysis && <MatchAnalysisPanel jobTitle={`Saved: ${job.title} at ${job.company}`} analysis={saved.matchAnalysis} isPro={accountIsPro} onViewPro={onViewPro} onClarify={(id, value) => void clarify(id, value, { savedJobId: saved.id })} />}
+            {saved.analysisCurrent !== false && saved.matchAnalysis && <MatchAnalysisPanel jobTitle={`Saved: ${job.title} at ${job.company}`} analysis={saved.matchAnalysis} isPro={accountIsPro} onViewPro={onViewPro} onClarify={(id, value) => void clarify(id, value, { savedJobId: saved.id })} onEvidenceReviewed={scope=>recordEvidenceReview(job.dedupeKey as string,saved.matchAnalysis!.contextHash,scope)} />}
             <div className="job-card-actions">
               <button className="button" onClick={() => void startTailoring(saved)}>
                 {jobResumeVersions.some(version => version.savedJobId === saved.id) ? 'Open tailored resume' : accountIsPro ? 'Tailor my resume for this job' : 'Tailor my resume with Pro'}
@@ -731,7 +779,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
             <span>{formatSalary(job.salary)}</span>
           </div>
           {!job.matchAnalysis && <ul className="job-card-reasons">{job.matchReasons.map((reason, i) => <li key={i}>{reason}</li>)}</ul>}
-          {job.matchAnalysis && <MatchAnalysisPanel jobTitle={`${job.title} at ${job.company}`} analysis={job.matchAnalysis} isPro={results.isPro} onViewPro={onViewPro} onClarify={(id, value) => void clarify(id, value, { job })} />}
+          {job.matchAnalysis && <MatchAnalysisPanel jobTitle={`${job.title} at ${job.company}`} analysis={job.matchAnalysis} isPro={results.isPro} onViewPro={onViewPro} onClarify={(id, value) => void clarify(id, value, { job })} onEvidenceReviewed={scope=>recordEvidenceReview(job.savedSnapshot.dedupeKey as string,job.matchAnalysis!.contextHash,scope)} />}
           <div className="job-card-actions">
             <a className="button outline" href={job.sourceUrl} target="_blank" rel="noopener noreferrer">View job<ExternalLink size={14} /></a>
             <button className="button outline" disabled={savedJobs.some(saved => saved.snapshot.id === job.id)} onClick={() => void saveJob(job)}><Bookmark size={14} />{savedJobs.some(saved => saved.snapshot.id === job.id) ? 'Saved' : 'Save job'}</button>

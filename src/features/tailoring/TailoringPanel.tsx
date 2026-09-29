@@ -246,7 +246,7 @@ export function TailoringPanel({ resume, ownerId, onSignIn, onViewPro, versionId
   </article>)}
   {draft && <div className="review-document">
    <div>
-   <strong>{onAcceptedResume ? 'Your saved job-specific resume' : 'Your reviewed draft'}</strong><div className="paper-container"><PaginatedResumePreview resume={draft}/></div><GeneratedDocumentControls resume={draft} ownerId={ownerId} documentScope="job_specific" onSignIn={onSignIn} onViewPro={onViewPro}/>
+   <strong>{onAcceptedResume ? 'Your saved job-specific resume' : 'Your reviewed draft'}</strong><div className="paper-container"><PaginatedResumePreview resume={draft}/></div><GeneratedDocumentControls resume={draft} ownerId={ownerId} documentScope="job_specific" jobResumeVersionId={versionId} onSignIn={onSignIn} onViewPro={onViewPro}/>
     <p>{onAcceptedResume ? 'Accepted suggestions are saved to this job-specific version only. Rejected suggestions make no change.' : 'This is a separate copy — it never changes your saved resume. Download it as PDF or Word to keep any accepted changes.'}</p>
    </div>
   </div>}

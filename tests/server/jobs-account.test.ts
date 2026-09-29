@@ -65,9 +65,12 @@ test('account reload reconstructs Pro depth from persisted analysis while Free r
     const response = await jobsAccount(request({ action: 'load', evidence }), env, deps)
     assert.equal(response.status, 200)
     const body = await response.json()
-    assert.equal(body.savedJobs[0].matchAnalysis.additionalAreasAnalyzed, 2)
+    assert.equal(body.savedJobs[0].matchAnalysis.additionalAreasAnalyzed, isPro ? 2 : 1)
     if (isPro) assert.equal(body.savedJobs[0].matchAnalysis.fullAnalysis.requirements.length, 2)
-    else assert.equal(body.savedJobs[0].matchAnalysis.fullAnalysis, undefined)
+    else {
+      assert.equal(body.savedJobs[0].matchAnalysis.fullAnalysis, undefined)
+      assert.equal(body.savedJobs[0].matchAnalysis.limitedAnalysis.requirements.length, 1)
+    }
   }
 })
 
@@ -154,6 +157,20 @@ test('persists bounded preferences and explicit Auto Refresh opt-out', async () 
   const response = await jobsAccount(request({ action: 'preferences', criteria: { title: 'Nurse', countryCode: 'GB' }, autoRefresh: false }), env, deps)
   assert.equal(response.status, 200)
   assert.deepEqual(calls[0], { name: 'jobs_set_preferences', args: { p_owner: owner, p_criteria: { title: 'Nurse', countryCode: 'GB' }, p_auto_refresh: false } })
+})
+
+test('records only bounded owner-scoped evidence-review metadata', async () => {
+  const { deps, calls } = fixture(async name => name === 'product_record_evidence_review'
+    ? { data: { scope: 'limited', newlyRecorded: true }, error: null }
+    : { data: null, error: { message: `unexpected ${name}` } })
+  const jobKey = 'd'.repeat(64)
+  const analysisKey = 'e'.repeat(64)
+  const response = await jobsAccount(request({ action: 'record_evidence_review', jobKey, analysisKey, reviewScope: 'limited', owner: 'forged', jobText: 'must not persist' }), env, deps)
+  assert.equal(response.status, 200)
+  assert.deepEqual(await response.json(), { recorded: true, reviewScope: 'limited', newlyRecorded: true })
+  assert.deepEqual(calls, [{ name: 'product_record_evidence_review', args: { p_owner: owner, p_job_key: jobKey, p_analysis_key: analysisKey, p_scope: 'limited' } }])
+  assert.equal((await jobsAccount(request({ action: 'record_evidence_review', jobKey: 'not-a-key', analysisKey, reviewScope: 'full' }), env, deps)).status, 400)
+  assert.equal((await jobsAccount(request({ action: 'record_evidence_review', jobKey, analysisKey, reviewScope: 'preview' }), env, deps)).status, 400)
 })
 
 test('recomputes versioned saved analysis server-side and persists explicit clarification for the authenticated owner', async () => {

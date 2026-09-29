@@ -20,6 +20,7 @@ export type FullMatchAnalysis = {
 export type MatchAnalysisView = Omit<FullMatchAnalysis, 'requirements'|'strengths'|'buriedEvidence'|'areasWorthStrengthening'|'constraints'|'deeperExplanation'> & {
   additionalAreasAnalyzed: number
   clarification?: { requirementId: string; text: string }
+  limitedAnalysis?: { requirements: RequirementAnalysis[] }
   fullAnalysis?: Pick<FullMatchAnalysis, 'requirements'|'strengths'|'buriedEvidence'|'areasWorthStrengthening'|'constraints'|'deeperExplanation'> & { tailoringAction: 'Tailor my resume for this job' }
 }
 export type MatchResult = { label: MatchLabel; reasons: string[]; analysis: FullMatchAnalysis; rank: number; confirmedIncompatibility: boolean }
@@ -98,6 +99,6 @@ function analyzeJobInternal(evidence:ResumeEvidence,job:NormalizedJob,criteria:S
  return{label,reasons:analysis.observations,analysis,rank,confirmedIncompatibility:incompatible.length>0}
 }
 export function matchJob(evidence:ResumeEvidence,job:NormalizedJob):MatchResult{return analyzeJob(evidence,job)}
-export function analysisView(analysis:FullMatchAnalysis,isPro:boolean):MatchAnalysisView{const{requirements,strengths,buriedEvidence,areasWorthStrengthening,constraints,deeperExplanation,...preview}=analysis,unknown=requirements.find(r=>r.category==='required'&&(r.status==='not_demonstrated'||r.status==='confirmed_incompatible'));return{...preview,observations:preview.observations.slice(0,3),additionalAreasAnalyzed:requirements.length,...(unknown?{clarification:{requirementId:unknown.id,text:unknown.text}}:{}),...(isPro?{fullAnalysis:{requirements,strengths,buriedEvidence,areasWorthStrengthening,constraints,deeperExplanation,tailoringAction:'Tailor my resume for this job' as const}}:{})}}
+export function analysisView(analysis:FullMatchAnalysis,isPro:boolean):MatchAnalysisView{const{requirements,strengths,buriedEvidence,areasWorthStrengthening,constraints,deeperExplanation,...preview}=analysis,unknown=requirements.find(r=>r.category==='required'&&(r.status==='not_demonstrated'||r.status==='confirmed_incompatible')),limited=requirements.slice().sort((a,b)=>['required','preferred','nice_to_have'].indexOf(a.category)-['required','preferred','nice_to_have'].indexOf(b.category)).slice(0,1);return{...preview,observations:preview.observations.slice(0,3),additionalAreasAnalyzed:Math.max(0,requirements.length-(isPro?0:limited.length)),...(unknown?{clarification:{requirementId:unknown.id,text:unknown.text}}:{}),...(!isPro&&limited.length?{limitedAnalysis:{requirements:limited}}:{}),...(isPro?{fullAnalysis:{requirements,strengths,buriedEvidence,areasWorthStrengthening,constraints,deeperExplanation,tailoringAction:'Tailor my resume for this job' as const}}:{})}}
 
 export const analyzeJob: typeof analyzeJobInternal = (...args) => observeSync('match', 'match_analyze', () => analyzeJobInternal(...args))

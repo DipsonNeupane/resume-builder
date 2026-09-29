@@ -12,14 +12,14 @@ import { trackProductEvent } from '../../services/analytics';
 
 const MAX_DOCUMENT_BYTES = 4_200_000;
 type ExportFormat = 'pdf' | 'docx';
-type Props = { resume: Resume; ownerId: string | null; documentScope: 'master' | 'job_draft' | 'job_specific'; onSignIn: () => void; onViewPro: () => void };
+type Props = { resume: Resume; ownerId: string | null; documentScope: 'master' | 'job_draft' | 'job_specific'; jobResumeVersionId?: string; onSignIn: () => void; onViewPro: () => void };
 
 const formats: Record<ExportFormat, { label: string; endpoint: string; mime: string; filename: string }> = {
  pdf: { label: 'PDF', endpoint: '/api/export-pdf', mime: 'application/pdf', filename: 'ResumeStride.pdf' },
  docx: { label: 'Word', endpoint: '/api/export-docx', mime: docxMimeType, filename: 'ResumeStride.docx' },
 };
 
-export function GeneratedDocumentControls({ resume, ownerId, documentScope, onSignIn, onViewPro }: Props) {
+export function GeneratedDocumentControls({ resume, ownerId, documentScope, jobResumeVersionId, onSignIn, onViewPro }: Props) {
  const [consent, setConsent] = useState(false);
  const [busyFormat, setBusyFormat] = useState<ExportFormat | null>(null);
  const [message, setMessage] = useState('');
@@ -32,7 +32,7 @@ export function GeneratedDocumentControls({ resume, ownerId, documentScope, onSi
  const downloadGroup = useRef<HTMLDivElement>(null);
  const active = useRef(true);
  const controllerRef = useRef<AbortController | null>(null);
- const lastRequests = useRef<Partial<Record<ExportFormat, { key: string; id: string }>>>({});
+ const lastRequests = useRef<Partial<Record<ExportFormat, { key: string; id: string; conversionReported: boolean }>>>({});
 
  useEffect(() => {
   active.current = true;
@@ -106,11 +106,11 @@ export function GeneratedDocumentControls({ resume, ownerId, documentScope, onSi
    const key = JSON.stringify(snapshot);
    const previous = lastRequests.current[format];
    const id = previous?.key === key ? previous.id : crypto.randomUUID();
-   lastRequests.current[format] = { key, id };
+   if (previous?.id !== id) lastRequests.current[format] = { key, id, conversionReported: false };
    const response = await fetch(selected.endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${before.data.session.access_token}` },
-    body: JSON.stringify({ requestId: id, resume: snapshot }),
+    body: JSON.stringify({ requestId: id, resume: snapshot, ...(documentScope === 'job_specific' && jobResumeVersionId ? { jobResumeVersionId } : {}) }),
     signal: controller.signal,
    });
    if (!response.ok) {
@@ -141,6 +141,12 @@ export function GeneratedDocumentControls({ resume, ownerId, documentScope, onSi
    finally { setTimeout(() => URL.revokeObjectURL(url), 1000); }
    setMessage(`${selected.label} document generated. Your browser should offer the download.`);
    trackProductEvent('export_completed', { surface: 'export', user_state: 'authenticated', export_type: format === 'pdf' ? 'PDF' : 'DOCX', document_scope: documentScope, outcome: 'success' });
+   const qualifiedScope = response.headers.get('x-resumestride-qualified-conversion');
+   const requestState = lastRequests.current[format];
+   if ((qualifiedScope === 'limited' || qualifiedScope === 'full') && requestState?.id === id && !requestState.conversionReported) {
+    requestState.conversionReported = true;
+    trackProductEvent('application_package_exported', { surface: 'export', user_state: 'authenticated', export_type: format === 'pdf' ? 'PDF' : 'DOCX', document_scope: 'job_specific', review_depth: qualifiedScope });
+   }
   } catch (error) {
    if (controller.signal.aborted || !active.current) return;
    trackProductEvent('export_completed', { surface: 'export', user_state: 'authenticated', export_type: format === 'pdf' ? 'PDF' : 'DOCX', document_scope: documentScope, outcome: 'failure' });

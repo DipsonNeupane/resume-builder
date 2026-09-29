@@ -2,6 +2,8 @@
 
 Captured read-only on 2026-09-29 in America/Chicago. No production, analytics, account, billing, database, extension, domain, or deployment setting was changed.
 
+> Historical boundary: this snapshot describes production before the redesign. The isolated redesign branch now adds content-free, owner-scoped evidence-review and application-package conversion records, but those undeployed changes do not alter the figures or “not instrumented” labels below.
+
 ## Source and deployment control
 
 - Production commit/deployment: `16e03e3` / `dpl_9FFi7Wzw99Tm5BFisx7abZbSuJhH`.

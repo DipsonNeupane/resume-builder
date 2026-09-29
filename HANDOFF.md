@@ -3851,16 +3851,34 @@ not treated as a demand or outcome claim.
 
 Initial redesign-only instrumentation now distinguishes the three selected entry
 journeys, first useful manual/import input, import start/success/bounded failure,
-usable-master confirmation, requirement extraction, deliberate full evidence review,
+usable-master confirmation, requirement extraction, deliberate requirement-level evidence review,
 clarify/tailor decisions, committed job-specific version creation, reviewed changes,
 and master versus job-specific export start/success/failure. The analytics property
 schema remains a closed set of bounded categories; hostile/free-form values are
-rejected. The north-star `application_package_exported` event is deliberately defined
-but not emitted: Vercel aggregate events cannot reliably prove same-job evidence review
-across sessions/devices. Owner policy is needed for session-only measurement versus a
-durable owner-scoped content-free conversion record before implementing that claim.
+rejected. At that commit, the north-star `application_package_exported` event was
+defined but not emitted because Vercel aggregate events could not reliably prove a
+same-job review. The following Group 1 batch resolves that historical blocker with a
+server-only durable record.
 
 Verification after the current code state: client TypeScript PASS, server TypeScript
 PASS, focused observability/analytics tests 12/12 PASS, production build PASS, and
 `git diff --check` PASS. Nothing in this entry authorizes a merge
 to `master` or a production deployment.
+
+## September 29 — Group 1 locked decisions implemented
+
+The owner selected durable, owner-scoped, content-free north-star measurement and a
+behavior-based Free Match review boundary. The redesign branch now registers only
+bounded server-issued match identities, records `limited` or `full` review after an
+actual requirement ledger reaches the viewport, and creates one conversion row only
+when an account-owned job-specific PDF/DOCX export commits for that same job. The
+conversion completion and export accounting share one database transaction; retries
+cannot create another row. Browser analytics receives only closed categories.
+
+The measurement tables contain internal owner/export/version/review identifiers,
+one-way bounded job/analysis keys, closed scope/format values and timestamps. They do
+not contain resume text, job text, job URLs, titles, employer names, email addresses,
+prompts, model output or free-form errors. Browser roles cannot read or write them.
+
+See `docs/redesign/BLUEPRINT_STATUS.md` for the truthful task ledger. No merge, push,
+preview, deployment, migration application or production setting change occurred.

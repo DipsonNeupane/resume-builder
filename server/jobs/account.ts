@@ -212,10 +212,24 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
     const body = await jsonBody(request, MAX_BODY_BYTES)
     const action = body.action
     if (typeof action !== 'string') throw new HttpError(400, 'Saved-job action is required')
-    if (action === 'reanalyze' || action === 'clarification') setRequestFeature('match')
+    if (action === 'reanalyze' || action === 'clarification' || action === 'record_evidence_review') setRequestFeature('match')
     if (action === 'capture_save') setRequestFeature('extension')
     if (['create_job_resume', 'get_job_resume', 'update_job_resume', 'reset_job_resume'].includes(action)) setRequestFeature('cloud')
     const db = deps.serviceDatabase(env)
+
+    if (action === 'record_evidence_review') {
+      if (typeof body.jobKey !== 'string' || !/^[0-9a-f]{64}$/.test(body.jobKey)
+        || typeof body.analysisKey !== 'string' || !/^[0-9a-f]{64}$/.test(body.analysisKey)
+        || (body.reviewScope !== 'limited' && body.reviewScope !== 'full')) {
+        throw new HttpError(400, 'Evidence review is invalid')
+      }
+      const result = await db.rpc('product_record_evidence_review', {
+        p_owner: owner, p_job_key: body.jobKey, p_analysis_key: body.analysisKey, p_scope: body.reviewScope,
+      })
+      if (result.error || !record(result.data) || (result.data.scope !== 'limited' && result.data.scope !== 'full')
+        || typeof result.data.newlyRecorded !== 'boolean') throw new HttpError(503, 'Unable to record this evidence review')
+      return json(200, { recorded: true, reviewScope: result.data.scope, newlyRecorded: result.data.newlyRecorded })
+    }
 
     if (action === 'load') {
       const evidence = body.evidence === undefined ? null : parseResumeEvidence(body.evidence)

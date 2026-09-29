@@ -21,11 +21,11 @@ Every event must be tested for private-route stripping, account switches, duplic
 | `master_resume_usable` | master passes validation and person confirms it | once per material resume revision |
 | `job_added` | job snapshot/description is accepted | once per accepted source; `job_source` |
 | `requirements_extracted` | bounded requirement set is produced successfully | once per analysis revision |
-| `evidence_reviewed` | requirement-level evidence is deliberately opened | once per analysis revision; `review_depth=full` |
+| `evidence_reviewed` | at least one requirement-level evidence row is genuinely visible and the owner-scoped review is committed | once per analysis revision/scope; `review_depth=limited|full` |
 | `decision_recorded` | person chooses tailor, clarify, save for later, or keep looking | once per explicit action; `decision` |
 | `job_specific_version_created` | server commits a new separate version | once per committed version, without sending its ID |
 | `changes_reviewed` | person confirms the job-specific document after suggestions/manual edits | once per material version revision |
-| `application_package_exported` | qualified job-specific PDF/DOCX succeeds after evidence review | once per committed export request |
+| `application_package_exported` | the server confirms a durable same-job conversion after the PDF/DOCX export commits | once per committed export request |
 | `application_status_recorded` | person manually records preparing/applied/interviewing/offer/closed/withdrawn | once per explicit status transition |
 
 ## Required bounded dimensions
@@ -37,7 +37,7 @@ Every event must be tested for private-route stripping, account switches, duplic
 - `document_scope`: `master | job_draft | job_specific`
 - `storage_scope`: `local | account | unavailable`
 - `job_source`: `search | extension | pasted`
-- `review_depth`: `preview | full`
+- `review_depth`: `limited | full`
 - `decision`: `tailor | clarify | save_later | keep_looking`
 - `export_type`: `PDF | DOCX`
 - `outcome`: `success | failure | blocked`
@@ -70,7 +70,11 @@ Device class comes from the analytics platform; do not fingerprint it in applica
 - Import success: completed imports / import starts; failures split by category.
 - Builder activation: first useful inputs / build-first selections.
 - Master completion: usable master resumes / first useful inputs.
-- Evidence review: full evidence reviews / successful requirements extractions.
-- Decision rate: explicit decisions / full evidence reviews.
-- North star: qualified committed exports; also show per full evidence review and per job-specific version.
+- Evidence review: limited/full evidence reviews / successful requirements extractions.
+- Decision rate: explicit decisions / qualifying evidence reviews.
+- North star: rows in the server-only durable conversion ledger; also show per qualifying review and per job-specific version.
 - Every report must show the date range, environment, visitor/event basis, and known owner/test contamination.
+
+## Durable measurement boundary
+
+Outbound analytics remains identifier-free. The server-only evidence and conversion ledgers may contain the authenticated owner UUID, internal export/version/review UUIDs, one-way 64-character job and analysis keys, `limited|full`, `pdf|docx`, and timestamps. These values are not sent to Vercel Analytics and are not exposed to browser roles. Resume text, job text, job URLs, titles, employers, names, emails, filenames, prompts, model output and free-form errors are prohibited.

@@ -44,7 +44,7 @@ const enumValues: Record<string, ReadonlySet<string>> = {
  document_scope: new Set(['master', 'job_draft', 'job_specific']),
  storage_scope: new Set(['local', 'account', 'unavailable']),
  job_source: new Set(['search', 'extension', 'pasted']),
- review_depth: new Set(['preview', 'full']),
+ review_depth: new Set(['limited', 'full']),
  decision: new Set(['tailor', 'clarify', 'save_later', 'keep_looking']),
  application_status: new Set(['preparing', 'applied', 'interviewing', 'offer', 'closed', 'withdrawn']),
  failure_category: new Set(['validation', 'unsupported_file', 'file_too_large', 'parse_failure', 'cancelled', 'network', 'server', 'unknown']),
