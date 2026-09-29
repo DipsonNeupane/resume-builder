@@ -34,30 +34,39 @@ type Dependencies = typeof dependencies
 
 export async function dispatchNotices(request: Request, env: NodeJS.ProcessEnv = process.env, deps: Dependencies = dependencies): Promise<Response> {
   try {
-    if (request.method !== 'POST') throw new HttpError(405, 'Method not allowed')
-    if (!secretMatches(request.headers.get('authorization'), env.NOTICE_DISPATCH_SECRET)) throw new HttpError(401, 'Not authorized')
+    if (request.method !== 'POST' && request.method !== 'GET') throw new HttpError(405, 'Method not allowed')
+    const authorization = request.headers.get('authorization')
+    if (!secretMatches(authorization, env.NOTICE_DISPATCH_SECRET) && !secretMatches(authorization, env.CRON_SECRET)) throw new HttpError(401, 'Not authorized')
     if (!env.RESEND_API_KEY?.startsWith('re_') || !env.BILLING_EMAIL_FROM || !env.APP_ORIGIN) throw new HttpError(503, 'Transactional email is not configured', 'configuration')
     const db = deps.serviceDatabase(env)
     const scheduled = await db.rpc('billing_schedule_renewal_notices', { p_now: new Date().toISOString() })
     if (scheduled.error) throw new Error('Notice scheduling unavailable')
     const claimed = await db.rpc('billing_claim_due_notices', { p_limit: 25 })
     if (claimed.error || !Array.isArray(claimed.data)) throw new Error('Notice queue unavailable')
-    let sent = 0
-    for (const notice of claimed.data) {
+    const outcomes = await Promise.all(claimed.data.map(async notice => {
       const user = await db.auth.admin.getUserById(notice.owner_id)
       const email = user.data.user?.email
-      if (!email) { await db.rpc('billing_finish_notice', { p_id: notice.id, p_success: false, p_provider_id: null, p_error_code: 'email_unavailable' }); continue }
+      if (!email) { await db.rpc('billing_finish_notice', { p_id: notice.id, p_success: false, p_provider_id: null, p_error_code: 'email_unavailable' }); return false }
       const payload = notice.payload && typeof notice.payload === 'object' && !Array.isArray(notice.payload) ? notice.payload as Record<string, unknown> : {}
       const [subject, body] = emailCopy(notice.kind, payload)
       let response: Response
       try {
         response = await deps.fetch('https://api.resend.com/emails', { method:'POST', headers:{ Authorization:`Bearer ${env.RESEND_API_KEY}`, 'Content-Type':'application/json', 'Idempotency-Key':notice.dedupe_key }, body:JSON.stringify({ from:env.BILLING_EMAIL_FROM, to:[email], subject, text:`${body}\n\nManage billing: ${env.APP_ORIGIN}/?account=1`, html:`<p>${escape(body)}</p><p><a href="${escape(env.APP_ORIGIN)}/?account=1">Manage billing</a></p>` }), signal:AbortSignal.timeout(10_000) })
-      } catch { await db.rpc('billing_finish_notice', { p_id: notice.id, p_success: false, p_provider_id: null, p_error_code: 'provider_unavailable' }); continue }
+      } catch { await db.rpc('billing_finish_notice', { p_id: notice.id, p_success: false, p_provider_id: null, p_error_code: 'provider_unavailable' }); return false }
       let providerId = ''
       if (response.ok) { try { const parsed = await response.json() as {id?:unknown}; if (typeof parsed.id === 'string') providerId = parsed.id } catch { /* provider ID is optional */ } }
       await db.rpc('billing_finish_notice', { p_id: notice.id, p_success: response.ok, p_provider_id: providerId || null, p_error_code: response.ok ? null : `provider_${response.status}` })
-      if (response.ok) sent++
-    }
+      return response.ok
+    }))
+    const sent = outcomes.filter(Boolean).length
     return json(200, { scheduled: scheduled.data ?? 0, claimed: claimed.data.length, sent })
   } catch (error) { return safeError(error) }
+}
+
+export async function dispatchPendingNotices(env: NodeJS.ProcessEnv = process.env): Promise<void> {
+  const secret = env.NOTICE_DISPATCH_SECRET || env.CRON_SECRET
+  if (!secret || !env.RESEND_API_KEY || !env.BILLING_EMAIL_FROM) return
+  await dispatchNotices(new Request(`${env.APP_ORIGIN || 'https://resumestride.com'}/api/dispatch-billing-notices`, {
+    method: 'POST', headers: { authorization: `Bearer ${secret}` },
+  }), env)
 }

@@ -2,8 +2,13 @@ import Stripe from 'stripe'
 import { premiumTemplates } from '../src/model.js'
 
 const apply = process.argv.includes('--apply')
+const live = process.argv.includes('--live')
 const secret = process.env.STRIPE_SECRET_KEY
-if (!secret?.startsWith('sk_test_')) throw new Error('Catalog provisioning is test-mode only. Set a Stripe test secret key.')
+if (!secret || (!secret.startsWith('sk_test_') && !secret.startsWith('sk_live_'))) throw new Error('Set a valid Stripe secret key.')
+if (secret.startsWith('sk_live_') !== live) throw new Error(`Stripe key mode does not match ${live ? '--live' : 'test-mode'} catalog provisioning.`)
+if (live && (!apply || process.env.STRIPE_CATALOG_APPLY_LIVE !== 'true')) {
+ throw new Error('Live catalog provisioning requires --apply --live and STRIPE_CATALOG_APPLY_LIVE=true.')
+}
 const stripe = new Stripe(secret)
 const specs = [
  { key:'pro:monthly', name:'ResumeStride Pro', amount:1999 },
@@ -29,4 +34,4 @@ for (const spec of specs) {
  else mapping[spec.key.slice('template:'.length)]=price.id
 }
 if(apply)console.log(`STRIPE_TEMPLATE_PRICE_MAP=${JSON.stringify(mapping)}`)
-else console.log('Dry run only. Re-run with --apply to create missing TEST-mode catalog objects.')
+else console.log(`Dry run only. Re-run with --apply${live ? ' --live and STRIPE_CATALOG_APPLY_LIVE=true' : ''} to create missing ${live ? 'LIVE' : 'TEST'}-mode catalog objects.`)
