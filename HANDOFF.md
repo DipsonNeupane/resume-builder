@@ -3949,3 +3949,41 @@ TypeScript/Vite test graph in the macOS Documents worktree; it was interrupted a
 test result, consistent with the known filesystem environment issue. Verification should
 be completed against the exact commit in a disposable `/tmp` checkout. No merge, push,
 deployment, hosted setting, provider call or production action occurred.
+
+## September 29 — saved-object, fictional-sample and performance consolidation
+
+The isolated redesign now restores `/workspace/jobs/saved`, owner-scoped Match Analysis
+and owner-scoped job-specific resume URLs. UUIDs are selectors, never authorization.
+Missing, deleted and unauthorized references share one content-free fallback; transient
+account-load failures use a content-free retry state. Object restoration waits for the
+account master, consent/conflict/rescue state and identity to settle before loading a
+version, so a blank or guest draft cannot become the protected master snapshot. A local
+job draft no longer displaces or blocks an object URL: it is set aside intact with an
+explicit resume action. Clean version-to-version history transitions close the previous
+version before restoring the next; unsaved transitions return to the active version.
+Meaningful transitions use browser history; search fields, editor tabs, template choices
+and dialogs remain local state.
+
+`/start/sample` is a storage-free fictional sandbox with direct, adjacent and unknown
+evidence, an explicit user decision, grounded accept/reject suggestions, a visibly
+separate job-specific version, an unchanged fictional master, reset, and transitions to
+real resume/job input. It receives no real Resume, owner, storage or persistence object.
+
+The public quality contract now has hard built-artifact ceilings, separate lazy chunks
+for Jobs/sample/export/PDF/DOCX, a production-preview lab LCP/CLS/navigation check,
+idle-only WebGL, complete static/data-saver/low-core fallback and reduced-motion loop
+coverage. Production field data remains only the previously captured bounded snapshot;
+unavailable LCP/INP/CLS values were not invented.
+
+Verification at this batch boundary: TypeScript PASS; fixture-enabled production build
+PASS; typed route/request tests 6/6 PASS; static performance budgets PASS; built public
+sample and performance tests 5/5 PASS; mocked owner-scoped object tests 7/7 PASS;
+cloud-master restoration/failure-retry tests 2/2 PASS; `git diff --check` PASS; and
+`graphify update .` PASS (AST-only, 2,922 nodes / 6,288 edges / 189 communities). The
+focused private restoration suites are part of `quality:gate:browser`, not manual-only
+evidence. Claude CLI independently reviewed routing/ownership/history, sample
+isolation/a11y/privacy and performance enforcement; its material master-load race,
+endless-loader, transient-version retry, local-draft precedence, focus/live-region,
+modulepreload, version-to-version deadlock, active-local-draft blocker and missing-gate
+findings were resolved and reverified. No live provider, push, merge, deployment,
+production branch or production setting was touched.
