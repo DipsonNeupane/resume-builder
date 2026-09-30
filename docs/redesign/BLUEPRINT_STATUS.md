@@ -14,13 +14,13 @@ Status date: 2026-09-30. This ledger describes only the isolated redesign branch
 
 Every task is included exactly once:
 
-- **COMPLETE (41):** 2, 3, 6–18, 23–36, 38–44, 47–50, 54.
-- **VALIDATION PENDING (8):** 5, 19–22, 45, 46, 56.
-- **PARTIAL (6):** 1, 4, 51–53, 55.
+- **COMPLETE (42):** 2, 3, 6–18, 23–36, 38–44, 47–50, 54, 55.
+- **VALIDATION PENDING (11):** 5, 19–22, 45, 46, 51–53, 56.
+- **PARTIAL (2):** 1, 4.
 - **NOT STARTED (9):** 57–65.
 - **BLOCKED (1):** 37.
 
-Production analytics, human/device checks and post-release field evidence are represented as **VALIDATION PENDING**, not Partial or Blocked. Task 37 alone is blocked because repository truth says the extension is unpublished and contains no verified public install URL/version. Occupation selection, occupation-page breadth, regional breadth and named competitor pages remain Partial rather than being filled with unsupported demand or product claims. Group 8 has not started.
+Production analytics, human/device checks and post-release field evidence are represented as **VALIDATION PENDING**, not Partial or Blocked. Task 37 alone is blocked because repository truth says the extension is unpublished and contains no verified public install URL/version. The first occupation and regional sets are implementation-complete but await internal-demand and qualified local validation. Group 8 has not started.
 
 ## Group summary
 
@@ -32,7 +32,7 @@ Production analytics, human/device checks and post-release field evidence are re
 | 4. Trust, pricing and monetization | COMPLETE | Tasks 23–30 meet current automatable conditions with verified pricing/cancellation/export terms, factual trust, unpublished-by-default proof architecture and permanent commercial routes. |
 | 5. Jobs, Match and application workflow | Mixed | Tasks 31–36 are complete with server/database and public/private browser coverage. Task 37 is blocked on verified public extension publication facts. |
 | 6. Technical SEO, accessibility and performance | Validation pending | Tasks 38–44 are complete. Tasks 45–46 are implementation-complete and automatically checked; physical low-powered devices, assistive technology and post-release field data remain. |
-| 7. Content and search acquisition | Mixed | Tasks 47–50 and 54 are complete; task 56 is implementation-complete pending post-release search data. Tasks 51–53 and 55 remain evidence-bounded Partial. |
+| 7. Content and search acquisition | Validation pending | Tasks 47–50, 54 and 55 are complete. Tasks 51–53 and 56 are implementation-complete; internal-demand, qualified local and post-release search validation remain. |
 | 8. Growth, research and global expansion | NOT STARTED | Work remains intentionally dependent on validated earlier outcomes. |
 
 ## Current G2/G3/G6 task truth
@@ -59,9 +59,9 @@ Production analytics, human/device checks and post-release field evidence are re
 | 38–44. Public technical foundations | COMPLETE | Permanent capability/template URLs, narrow visible-content schema, explicit sitemap dates, per-route social cards, local fonts and cache/bundle contracts pass generation, source and route-policy checks. |
 | 45–46. Performance and recurring quality | VALIDATION PENDING | Lab budgets, low-power/data-saver/reduced-motion behavior and the recurring quality gate are implemented; physical-device, assistive-technology and production field validation remain. |
 | 47–50. Evidence-first content and product intent | COMPLETE | Twelve substantive guides, seven problem-led clusters, working high-intent tools and practical template resources lead into the evidence workflow without thin pages. |
-| 51–53. Occupation and regional evidence | PARTIAL | A provisional research queue, safe hub and sourced regional verification guide exist; production demand evidence, reviewed occupation pages and broader jurisdiction review remain. |
+| 51–53. Occupation and regional evidence | VALIDATION PENDING | Nine evidence-shape-diverse occupation pages and a bounded five-source regional matrix are implemented and automatically checked. Production/internal demand ranking and qualified local occupation/region review remain unavailable and are not fabricated. |
 | 54. Internal linking | COMPLETE | Cluster membership, related-guide edges, contextual CTAs and research-hub links are source-driven and automatically checked for orphans. |
-| 55. Factual comparisons | PARTIAL | The dated primary-source ledger, freshness policy and comparison hub exist; named comparisons remain withheld until full same-session evidence matrices are complete. |
+| 55. Factual comparisons | COMPLETE | Five named comparisons use dated official sources, visible locale/currency or explicit unknowns, balanced strengths/boundaries, symmetric ResumeStride facts and build/quality-gate expiry enforcement. |
 | 56. Search review process | VALIDATION PENDING | The privacy-safe review process and zero-data dry run are complete; meaningful Search Console, index, field-performance and conversion results require a future release. |
 
-Detailed evidence, architecture, commands and review findings are recorded in `G6_COMPLETION_2026-09-30.md`, `G7_CONTENT_SEARCH_2026-09-30.md`, `G6_G7_INTEGRATION_2026-09-30.md`, `SEARCH_PERFORMANCE_REVIEW.md` and the earlier batch records.
+Detailed evidence, architecture, commands and review findings are recorded in `G6_COMPLETION_2026-09-30.md`, `G7_CONTENT_SEARCH_2026-09-30.md`, `G7_EVIDENCE_CLOSURE_2026-09-30.md`, `G6_G7_INTEGRATION_2026-09-30.md`, `SEARCH_PERFORMANCE_REVIEW.md` and the earlier batch records.

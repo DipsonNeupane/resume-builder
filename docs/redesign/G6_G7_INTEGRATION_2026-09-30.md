@@ -4,12 +4,12 @@ Scope: isolated `redesign/shared-route-state` only. Production, hosted data, pro
 
 ## Integrated status
 
-- COMPLETE: 38–44, 47–50, 54.
-- VALIDATION PENDING: 45, 46, 56.
-- PARTIAL: 51–53, 55.
+- COMPLETE: 38–44, 47–50, 54, 55.
+- VALIDATION PENDING: 45, 46, 51–53, 56.
+- PARTIAL: none in G6/G7.
 - BLOCKED in this range: none. Repository-wide task 37 remains blocked on a real published extension URL/version.
 
-The complete 65-task ledger is `BLUEPRINT_STATUS.md`. G6 is implementation-ready; its remaining checks are human/device/production-field validation. G7 has a working evidence-first acquisition foundation, but it is not content-complete while demand-selected occupations, reviewed occupation/regional breadth and full current competitor evidence are absent.
+The complete 65-task ledger is `BLUEPRINT_STATUS.md`. G6 is implementation-ready; its remaining checks are human/device/production-field validation. G7 implementation is ready; internal-demand ranking, qualified local occupation/regional review and post-release search evidence remain validation pending.
 
 ## Integration decisions
 
@@ -33,7 +33,7 @@ The complete 65-task ledger is `BLUEPRINT_STATUS.md`. G6 is implementation-ready
 ## Evidence boundaries and next inputs
 
 - No production field-performance, Search Console, search-volume, conversion or occupation-demand number is claimed.
-- Task 51 needs real product/search demand evidence before a first occupation set can be called evidence-selected.
-- Tasks 52–53 need current jurisdiction-scoped sources plus qualified review before publishing occupation or regional page sets.
-- Task 55 needs a complete same-session official-source matrix for each named competitor before named comparison pages are allowed.
+- Task 51 now has an externally evidence-selected, nine-category initial portfolio. Internal product/Search Console demand ranking remains VALIDATION PENDING and is not represented as zero or inferred from private content.
+- Tasks 52–53 now have current jurisdiction-scoped initial pages; qualified local review remains VALIDATION PENDING.
+- Task 55 now publishes five same-session official-source matrices with enforced expiry and explicit unknowns.
 - Task 56 can be exercised with real search/index/conversion data only after an approved release; unavailable values remain `unavailable`, never zero.

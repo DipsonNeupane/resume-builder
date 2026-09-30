@@ -15,6 +15,12 @@ const templateNames = {
  boardroom:'Boardroom',mandate:'Mandate',stackline:'Stackline',kernel:'Kernel',casebook:'Casebook',atelier:'Atelier',scholar:'Scholar',bench:'Bench',charter:'Charter',rounds:'Rounds',meridian:'Meridian',crossover:'Crossover',almanac:'Almanac',roster:'Roster',primer:'Primer',pyramid:'Pyramid',quartile:'Quartile',waypoint:'Waypoint',cadence:'Cadence',plainsong:'Plainsong',
 } as const;
 const templatePages = Object.fromEntries(Object.entries(templateNames).map(([id,name])=>{const path=`/templates/${id}/`;return[path,page(path,`${name} resume template | ResumeStride`,`Review the verified structure, typography and intended use of the ${name} resume template, then preview it with your own content before choosing access.`,'2026-09-29')]}));
+const occupationNames = {
+ 'software-developer':'Software developer','registered-nurse':'Registered nurse','project-management-specialist':'Project management specialist','primary-school-teacher':'Primary school teacher','customer-service-representative':'Customer service representative','electrician':'Electrician','social-science-research-assistant':'Social science research assistant','graphic-designer':'Graphic designer','general-operations-manager':'General and operations manager',
+} as const;
+const occupationPages = Object.fromEntries(Object.entries(occupationNames).map(([id,name])=>{const path=`/occupations/${id}/`;return[path,page(path,`${name} resume evidence guide | ResumeStride`,`Use official occupation research to turn ${name.toLowerCase()} requirements into truthful, requirement-level resume evidence without copying generic claims.`,'2026-09-30')]}));
+const comparisonNames = { teal:'Teal',huntr:'Huntr',jobscan:'Jobscan','resume-io':'Resume.io',enhancv:'Enhancv' } as const;
+const comparisonPages = Object.fromEntries(Object.entries(comparisonNames).map(([id,name])=>{const path=`/compare/${id}/`;return[path,page(path,`${name} and ResumeStride: factual comparison`,`Compare ${name} and ResumeStride using dated official sources for free access, paid terms, workflow and evidence boundaries—without a winner claim.`,'2026-09-30')]}));
 export const publicPages = {
  '/': page('/','ResumeStride — Resume Builder, Job Match & Tailoring','Build a master resume, find relevant jobs, compare your evidence with each role, and create truthful job-specific versions without changing your original.','2026-09-29'),
  '/features/': page('/features/','How ResumeStride works: evidence before effort','See how ResumeStride connects job requirements, resume evidence, user decisions, safe job-specific versions and concrete export formats.','2026-09-30'),
@@ -36,7 +42,10 @@ export const publicPages = {
  '/resources/a4-vs-letter-resume/': page('/resources/a4-vs-letter-resume/','A4 vs. Letter resume page size | ResumeStride','Choose A4 or Letter for a resume by following the application context, then verify pagination and export instead of relying on a universal country rule.','2026-09-30'),
  '/resources/resume-or-cv-by-country/': page('/resources/resume-or-cv-by-country/','Resume or CV by country: verify local expectations | ResumeStride','Check regional resume and CV expectations through official current sources while keeping employer instructions and occupation rules in control.','2026-09-30'),
  '/occupations/': page('/occupations/','Occupation research for evidence-first resumes | ResumeStride','Use occupation research to understand work and identify evidence—not to copy generic duties or assume one country’s requirements apply worldwide.','2026-09-30'),
+ ...occupationPages,
+ '/regions/': page('/regions/','Resume and CV regional guidance | ResumeStride','Compare carefully sourced resume and CV terminology, personal-information guidance and format boundaries without guessing conventions from an IP address.','2026-09-30'),
  '/compare/': page('/compare/','Compare resume and job-search tools factually | ResumeStride','Compare resume and job-search tools using dated product facts: free output, billing, privacy, evidence method, version safety and user control.','2026-09-30'),
+ ...comparisonPages,
  '/tools/': page('/tools/','Free resume and job search tools | ResumeStride','Free, private resume and job-description tools: extract requirements, compare evidence and improve resume bullets without ATS scores or signup.','2026-09-29'),
  '/tools/job-requirement-extractor/': page('/tools/job-requirement-extractor/','Free job requirement extractor | ResumeStride','Extract required, preferred and other signals from a job description with source text you can verify. Free, private and no signup required.','2026-09-29'),
  '/tools/resume-job-match/': page('/tools/resume-job-match/','Compare your resume to a job description free | ResumeStride','Compare resume evidence with job requirements—clearly demonstrated, worth reviewing or not demonstrated. No ATS score, signup or upload.','2026-09-29'),
@@ -67,7 +76,7 @@ export function isPublicLocation(url: URL): boolean {
  return isPublicPath(url.pathname) && !url.search && isPublicAnchor(url.pathname, url.hash);
 }
 function isPublicAnchor(path: string, hash: string): boolean {
- return path.startsWith('/features/') || path.startsWith('/resources/') || path.startsWith('/tools/') || path.startsWith('/templates/') || path==='/occupations/' || path==='/compare/' || path==='/pricing/' || path==='/trust/' ? hash === '' || /^#[a-z0-9]+(?:-[a-z0-9]+)*$/.test(hash) : publicAnchors.has(hash);
+ return path.startsWith('/features/') || path.startsWith('/resources/') || path.startsWith('/tools/') || path.startsWith('/templates/') || path.startsWith('/occupations/') || path.startsWith('/regions/') || path.startsWith('/compare/') || path==='/pricing/' || path==='/trust/' ? hash === '' || /^#[a-z0-9]+(?:-[a-z0-9]+)*$/.test(hash) : publicAnchors.has(hash);
 }
 const campaignKeys = new Set(['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term']);
 const campaignToken = /^[A-Za-z0-9][A-Za-z0-9._~-]{0,79}$/;

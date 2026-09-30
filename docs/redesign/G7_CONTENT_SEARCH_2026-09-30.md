@@ -10,11 +10,11 @@ Scope: isolated `redesign/g7-content-search` worktree only. No production, provi
 | 48. Seven intentional content clusters | COMPLETE | `contentClusters` defines seven non-overlapping problem-led clusters; the generator and automated check reject missing/orphaned guides. |
 | 49. High-intent product landing pages | COMPLETE | The existing permanent working tools cover requirement extraction, resume/job evidence and bullet review. G7 links into the shared G6 `/features/*` capability architecture rather than creating competing routes. |
 | 50. Useful template resources | COMPLETE | Template choice, A4/Letter and local-expectation guides provide practical decisions; the template gallery links them beside the verified registry and preview-first path. |
-| 51. First occupation-set research | PARTIAL | A deliberately broad nine-occupation research queue is recorded against ILO/O*NET/BLS inputs. Production query and Search Console demand data are unavailable, so the set is explicitly not demand-ranked. |
-| 52. Occupation hub architecture/content | PARTIAL | `/occupations/` explains the source/evidence method and publication gate. Individual pages remain withheld pending demand evidence, current jurisdiction sources and qualified review. |
-| 53. Regional/international guidance | PARTIAL | A substantive guide links five official public services and teaches a jurisdiction-safe verification method. It is not worldwide coverage, translated UI or legal advice; wider reviewed coverage remains. |
+| 51. First occupation-set research | VALIDATION PENDING | Nine roles span nine evidence categories using current official external evidence. Private product/Search Console demand ranking remains unavailable and awaits validation. |
+| 52. Occupation hub architecture/content | VALIDATION PENDING | Nine substantive pages now carry dated jurisdiction sources, evidence examples, safe template links and direct product entry. Qualified local/occupation review remains. |
+| 53. Regional/international guidance | VALIDATION PENDING | The guide and maintained `/regions/` matrix cover five official services with explicit unknowns and omitted-region boundaries. Local human review remains. |
 | 54. Internal linking system | COMPLETE | Cluster membership, three related-guide edges per article, contextual tool CTAs, template-resource links and occupation/comparison paths are source-driven and link-checked. |
-| 55. Factual comparison architecture | PARTIAL | `/compare/`, typed evidence records, checked/review dates and 30/90-day freshness rules exist. No named comparison page is published until the full same-session evidence matrix is complete. |
+| 55. Factual comparison architecture | COMPLETE | Five named pages use official, dated evidence, balanced strengths/limits, symmetric ResumeStride boundaries and enforced 30/90-day expiry. |
 | 56. Search-performance review | VALIDATION PENDING | The repeatable privacy-safe review process, five-problem intent taxonomy, CSV schema and zero-data dry run are complete. Search Console/index/field results require a future released surface. |
 
 ## Audience and page hierarchy
@@ -43,16 +43,16 @@ Checked 2026-09-30. Facts remain jurisdiction-scoped and links point to primary/
 | Canada resume starting point | https://www.jobbank.gc.ca/findajob/resources/write-good-resume | Canadian guidance is not generalized to other countries. |
 | Australia application starting point | https://www.workforceaustralia.gov.au/individuals/coaching/job-applications/job-application-tips | Australian guidance is not generalized to other countries. |
 | New Zealand CV starting point | https://www.careers.govt.nz/how-to-get-a-job/cvs-and-cover-letters/ | The public guidance is linked with its own current page context. |
-| Comparison research sample | https://www.tealhq.com/pricing | US/English/USD pricing evidence; next pricing review 2026-10-30; not published as a named comparison. |
-| Comparison feature sample | https://help.tealhq.com/en/collections/9568976-resume-builder | English help collection; next feature review 2026-12-29; not published as a named comparison. |
+| Comparison pricing evidence | https://www.tealhq.com/pricing | US/English/USD source; next pricing review 2026-10-30; used with symmetric ResumeStride boundaries. |
+| Comparison feature evidence | https://help.tealhq.com/en/collections/9568976-resume-builder | English help source; next feature review 2026-12-29. |
 
-`src/content/comparisonEvidence.ts` is the machine-readable research ledger. Pricing evidence expires after 30 days; feature evidence after 90 days. Huntr, Jobscan, Resume.io and Enhancv remain research-queue entries only—there are no claims about them.
+`src/content/comparisons.ts` and `src/content/comparisonEvidence.ts` are the source and flattened research ledger. Pricing evidence expires after 30 days; feature evidence after 90 days. Teal, Huntr, Jobscan, Resume.io and Enhancv have named pages; Jobscan pricing remains explicitly not established.
 
 ## Architecture
 
 - `src/content/guides.ts`: editorial source, seven clusters and twelve guides.
 - `scripts/render-resources.ts`: statically renders the cluster hub/articles and related links.
-- `src/content/searchHubs.ts` + `scripts/render-search-hubs.ts`: substantive occupation/comparison hubs without thin child URLs.
+- `src/content/searchHubs.ts` + `scripts/render-search-hubs.ts`: substantive hubs plus nine occupation and five comparison detail routes.
 - `src/content/comparisonEvidence.ts`: typed primary-source research records with locale/currency/freshness fields.
 - `scripts/check-search-content.ts`: rejects cluster orphans, thin source records, missing output and accidental named comparison URLs.
 - `docs/redesign/SEARCH_PERFORMANCE_REVIEW.md`: recurring privacy-safe search review and dry-run boundary.
@@ -81,4 +81,4 @@ Two repository-browsing review attempts exhausted their configured turn limits w
 - Confirmed `search:check` and the focused server suite enforce cluster integrity, route presence, source boundaries, comparison suppression, private query handling and zero-data review truth.
 - Kept the recommendation to give the gallery guidance block a unique style class as non-blocking presentation cleanup: the reused class is semantic-neutral, has correct heading structure and passes narrow/wide axe and overflow checks.
 
-No actionable privacy, crawl/index, unsupported-claim or accessibility finding remains. Named comparison pages, demand-ranked occupation selection and worldwide regional coverage correctly remain Partial rather than being filled with unsupported content.
+No actionable privacy, crawl/index, unsupported-claim or accessibility finding remains from that batch. The later evidence-closure review and resolutions are recorded in `G7_EVIDENCE_CLOSURE_2026-09-30.md`; internal demand and qualified local review remain Validation Pending rather than being fabricated.

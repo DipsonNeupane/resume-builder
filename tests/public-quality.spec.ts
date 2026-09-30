@@ -10,6 +10,10 @@ const viewports = [
 ];
 
 test('every public page is quiet, accessible and free of horizontal overflow', async ({ page, baseURL }) => {
+  // The source-owned public registry intentionally grows as reviewed evergreen
+  // pages are added. Keep one serial browser so console/overflow failures retain
+  // route context, but give the complete 3-viewport + axe matrix a bounded budget.
+  test.setTimeout(240_000);
   const failures: string[] = [];
   const origin = new URL(baseURL!).origin;
   let activePath = '/';
