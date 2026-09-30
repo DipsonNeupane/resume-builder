@@ -48,20 +48,21 @@ test('builds and validates a bounded normalized snapshot with provenance', () =>
 
 test('loads only the authenticated owner account snapshot and ignores browser ownership fields', async () => {
   const expected = { isPro: false, saveLimit: 3, savedJobs: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }
-  const { deps, calls } = fixture(async name => ({ data: name === 'job_resume_versions_list' ? [] : expected, error: null }))
+  const { deps, calls } = fixture(async name => ({ data: ['job_resume_versions_list','jobs_workflow_list'].includes(name) ? [] : expected, error: null }))
   const response = await jobsAccount(request({ action: 'load', owner: 'attacker-controlled' }), env, deps)
   assert.equal(response.status, 200)
-  assert.deepEqual(await response.json(), { ...expected, jobResumeVersions: [] })
+  assert.deepEqual(await response.json(), { ...expected, jobResumeVersions: [], jobWorkflows: [] })
   assert.deepEqual(calls, [
     { name: 'jobs_account_snapshot', args: { p_owner: owner } },
     { name: 'job_resume_versions_list', args: { p_owner: owner } },
+    { name: 'jobs_workflow_list', args: { p_owner: owner } },
   ])
 })
 
 test('account reload reconstructs Pro depth from persisted analysis while Free reload omits it', async () => {
   for (const isPro of [true, false]) {
     const stored = { id: savedJobId, snapshot: analyzedSnapshot, providerAvailable: true, availabilityCheckedAt: '2026-09-24T00:00:00Z', unavailableAt: null, savedAt: '2026-09-24T00:00:00Z', matchAnalysis: persistedAnalysis, analysisCurrent: true, analysisInvalidationReason: null }
-    const { deps } = fixture(async name => ({ data: name === 'job_resume_versions_list' ? [] : { isPro, saveLimit: isPro ? 10000 : 3, savedJobs: [stored], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }, error: null }))
+    const { deps } = fixture(async name => ({ data: ['job_resume_versions_list','jobs_workflow_list'].includes(name) ? [] : { isPro, saveLimit: isPro ? 10000 : 3, savedJobs: [stored], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }, error: null }))
     const response = await jobsAccount(request({ action: 'load', evidence }), env, deps)
     assert.equal(response.status, 200)
     const body = await response.json()
@@ -95,6 +96,15 @@ test('creates one account-owned job resume only when tailoring begins and never 
   assert.equal(calls[1].args.p_saved_job, savedJobId)
   assert.deepEqual(calls[1].args.p_data, resume)
   assert.match(String(calls[1].args.p_fingerprint), /^[0-9a-f]{64}$/)
+})
+
+test('maps the server-side pursue-decision gate without creating a job-specific resume', async () => {
+  const blocked = fixture(async name => name === 'job_resume_master'
+    ? { data: null, error: null }
+    : { data: null, error: { message: 'Pursue decision required' } })
+  const response = await jobsAccount(request({ action: 'create_job_resume', savedJobId, resume: blank() }), env, blocked.deps)
+  assert.equal(response.status, 409)
+  assert.match((await response.json()).error, /Choose Pursue/i)
 })
 
 test('cloud-backed master is authoritative when a browser starts a job-specific version', async () => {
@@ -157,6 +167,43 @@ test('persists bounded preferences and explicit Auto Refresh opt-out', async () 
   const response = await jobsAccount(request({ action: 'preferences', criteria: { title: 'Nurse', countryCode: 'GB' }, autoRefresh: false }), env, deps)
   assert.equal(response.status, 200)
   assert.deepEqual(calls[0], { name: 'jobs_set_preferences', args: { p_owner: owner, p_criteria: { title: 'Nurse', countryCode: 'GB' }, p_auto_refresh: false } })
+})
+
+test('persists a manual owner-scoped application workflow with revision protection and no inferred submission', async () => {
+  const workflow = {
+    savedJobId, decision: 'pursue', applicationStatus: 'applied', notes: 'Follow up next week.',
+    contactName: 'Hiring team', contactDetails: 'Recruiting inbox', reminderEnabled: true,
+    reminderAt: '2026-10-02T15:00:00.000Z', revision: 2, updatedAt: '2026-09-30T15:00:00.000Z',
+    history: [{ decision: 'pursue', applicationStatus: 'applied', changedAt: '2026-09-30T15:00:00.000Z' }],
+  }
+  const { deps, calls } = fixture(async name => name === 'jobs_workflow_upsert'
+    ? { data: workflow, error: null }
+    : { data: null, error: { message: `unexpected ${name}` } })
+  const response = await jobsAccount(request({
+    action: 'update_workflow', savedJobId, expectedRevision: 1, owner: 'forged', submittedAutomatically: true,
+    workflow: { decision: 'pursue', applicationStatus: 'applied', notes: workflow.notes, contactName: workflow.contactName,
+      contactDetails: workflow.contactDetails, reminderEnabled: true, reminderAt: workflow.reminderAt },
+  }), env, deps)
+  assert.equal(response.status, 200)
+  assert.deepEqual((await response.json()).workflow, workflow)
+  assert.deepEqual(calls, [{ name: 'jobs_workflow_upsert', args: {
+    p_owner: owner, p_saved_job: savedJobId, p_decision: 'pursue', p_application_status: 'applied',
+    p_notes: workflow.notes, p_contact_name: workflow.contactName, p_contact_details: workflow.contactDetails,
+    p_reminder_enabled: true, p_reminder_at: workflow.reminderAt, p_expected_revision: 1,
+  } }])
+})
+
+test('rejects implicit reminders, oversized workflow content and stale revisions', async () => {
+  const noCalls = fixture(async () => ({ data: null, error: null }))
+  const base = { decision: 'review', applicationStatus: 'not_applied', notes: '', contactName: '', contactDetails: '', reminderEnabled: false, reminderAt: null }
+  assert.equal((await jobsAccount(request({ action: 'update_workflow', savedJobId, expectedRevision: 0, workflow: { ...base, reminderEnabled: true } }), env, noCalls.deps)).status, 400)
+  assert.equal((await jobsAccount(request({ action: 'update_workflow', savedJobId, expectedRevision: 0, workflow: { ...base, notes: 'x'.repeat(4001) } }), env, noCalls.deps)).status, 400)
+  assert.equal(noCalls.calls.length, 0)
+
+  const conflict = fixture(async () => ({ data: null, error: { message: 'Job workflow conflict' } }))
+  const response = await jobsAccount(request({ action: 'update_workflow', savedJobId, expectedRevision: 4, workflow: base }), env, conflict.deps)
+  assert.equal(response.status, 409)
+  assert.match((await response.json()).error, /another tab/i)
 })
 
 test('records only bounded owner-scoped evidence-review metadata', async () => {

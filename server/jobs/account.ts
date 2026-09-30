@@ -11,6 +11,7 @@ import { parseSearchCriteria, type SearchCriteria } from './criteria.ts'
 import { safeJobUrl } from './url.ts'
 import { analysisView, analyzeJob, matchHash, parseClarifications, parseFullMatchAnalysis, parseResumeEvidence, type MatchResult, type ResumeEvidence } from './match.ts'
 import type { Confidence, EmploymentType, FieldProvenance, JobLocation, NormalizedJob, SalaryNormalized, Workplace } from './types.ts'
+import { parseJobWorkflow, parseJobWorkflowInput } from './workflow.ts'
 
 export const FREE_SAVED_JOB_LIMIT = 3
 /** Effectively unlimited for normal use while retaining a hard abuse/storage bound. */
@@ -214,7 +215,7 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
     if (typeof action !== 'string') throw new HttpError(400, 'Saved-job action is required')
     if (action === 'reanalyze' || action === 'clarification' || action === 'record_evidence_review') setRequestFeature('match')
     if (action === 'capture_save') setRequestFeature('extension')
-    if (['create_job_resume', 'get_job_resume', 'update_job_resume', 'reset_job_resume'].includes(action)) setRequestFeature('cloud')
+    if (['create_job_resume', 'get_job_resume', 'update_job_resume', 'reset_job_resume', 'update_workflow'].includes(action)) setRequestFeature('cloud')
     const db = deps.serviceDatabase(env)
 
     if (action === 'record_evidence_review') {
@@ -240,7 +241,31 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
       if (result.error || !record(result.data)) throw new HttpError(503, 'Unable to load saved jobs')
       const versions = await db.rpc('job_resume_versions_list', { p_owner: owner })
       if (versions.error || !Array.isArray(versions.data)) throw new HttpError(503, 'Unable to load job-specific resumes')
-      return json(200, { ...shapeAccountSnapshot(result.data), jobResumeVersions: versions.data })
+      const workflows = await db.rpc('jobs_workflow_list', { p_owner: owner })
+      let jobWorkflows: ReturnType<typeof parseJobWorkflow>[] | null = null
+      if (!workflows.error && Array.isArray(workflows.data)) {
+        try { jobWorkflows = workflows.data.map(parseJobWorkflow) } catch { jobWorkflows = null }
+      }
+      return json(200, { ...shapeAccountSnapshot(result.data), jobResumeVersions: versions.data, jobWorkflows })
+    }
+    if (action === 'update_workflow') {
+      if (typeof body.savedJobId !== 'string' || !SAVED_JOB_ID.test(body.savedJobId)) throw new HttpError(400, 'Saved job is invalid')
+      if (!Number.isSafeInteger(body.expectedRevision) || Number(body.expectedRevision) < 0) throw new HttpError(400, 'Job workflow revision is invalid')
+      const workflow = parseJobWorkflowInput(body.workflow)
+      if (workflow.reminderEnabled && workflow.reminderAt && Date.parse(workflow.reminderAt) <= Date.now()) throw new HttpError(400, 'Choose a future follow-up time')
+      const result = await db.rpc('jobs_workflow_upsert', {
+        p_owner: owner, p_saved_job: body.savedJobId, p_decision: workflow.decision,
+        p_application_status: workflow.applicationStatus, p_notes: workflow.notes,
+        p_contact_name: workflow.contactName, p_contact_details: workflow.contactDetails,
+        p_reminder_enabled: workflow.reminderEnabled, p_reminder_at: workflow.reminderAt,
+        p_expected_revision: body.expectedRevision,
+      })
+      if (result.error) {
+        if (result.error.message.includes('Job workflow conflict')) throw new HttpError(409, 'This job update changed in another tab. Reload your saved jobs before trying again.', 'database_conflict')
+        if (result.error.message.includes('Saved job not found')) throw new HttpError(404, 'This saved job is no longer available.')
+        throw new HttpError(503, 'Unable to save this job update')
+      }
+      return json(200, { workflow: parseJobWorkflow(result.data) })
     }
     if (action === 'create_job_resume') {
       if (typeof body.savedJobId !== 'string' || !SAVED_JOB_ID.test(body.savedJobId)) throw new HttpError(400, 'Saved job is invalid')
@@ -251,6 +276,7 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
       if (result.error) {
         if (result.error.message.includes('Active Pro required')) throw new HttpError(403, 'An active Pro pass is required to start new AI tailoring. Existing job-specific resumes remain available.')
         if (result.error.message.includes('Saved job not found')) throw new HttpError(404, 'Save this job before starting tailoring.')
+        if (result.error.message.includes('Pursue decision required')) throw new HttpError(409, 'Choose Pursue and save your decision before creating a job-specific resume.')
         throw new HttpError(503, 'Unable to start this job-specific resume')
       }
       if (!record(result.data) || typeof result.data.created !== 'boolean') throw new HttpError(503, 'Unable to start this job-specific resume')
