@@ -2,6 +2,7 @@ import { TOOL_LIMITS, analyzeResumeBullet, compareResumeToJob, extractJobRequire
 
 type ToolId = 'job-requirement-extractor' | 'resume-job-match' | 'resume-bullet-checker';
 type ToolAnalytics = { event: (name: 'tool_started' | 'tool_completed' | 'tool_result_reviewed', data?: Record<string, string>) => void };
+const pendingJobKey = 'resumestride.pendingJobFirst.v1';
 
 const root = document.querySelector<HTMLElement>('[data-public-tool]');
 const analytics = () => (window as typeof window & { rsToolAnalytics?: ToolAnalytics }).rsToolAnalytics;
@@ -117,6 +118,7 @@ function clearResult(): void {
 }
 
 let reviewObserver: IntersectionObserver | null = null;
+let analyzedJobText = '';
 function observeEvidenceReview(requirementCount: number): void {
   reviewObserver?.disconnect();
   const results = element<HTMLElement>('[data-tool-results]');
@@ -154,8 +156,10 @@ function initialize(): void {
         if (!results.length) throw new Error('No explicit requirements or responsibility signals were found. Try including the qualifications and responsibilities sections.');
         renderRequirements(results, output);
       } else if (tool === 'resume-job-match') {
-        const results = compareResumeToJob(element<HTMLTextAreaElement>('#resume-text').value, element<HTMLTextAreaElement>('#job-description').value);
+        const jobText = element<HTMLTextAreaElement>('#job-description').value;
+        const results = compareResumeToJob(element<HTMLTextAreaElement>('#resume-text').value, jobText);
         if (!results.length) throw new Error('No traceable requirements were found in the job description. Try including its qualifications or responsibilities sections.');
+        analyzedJobText = jobText.trim();
         renderEvidence(results, output);
       } else renderBullet(element<HTMLTextAreaElement>('#resume-bullet').value, output);
       const results = element<HTMLElement>('[data-tool-results]');
@@ -169,8 +173,29 @@ function initialize(): void {
       analytics()?.event('tool_completed', { outcome: 'failure' });
     }
   });
+  if (tool === 'resume-job-match') {
+    const continuation = document.querySelector<HTMLAnchorElement>('[data-tool-cta="full_match"]');
+    continuation?.addEventListener('click', event => {
+      const visibleResult = !element<HTMLElement>('[data-tool-results]').hidden;
+      if (!visibleResult || analyzedJobText.length < 40) {
+        event.preventDefault();
+        setError('Complete and review the evidence check before continuing.');
+        return;
+      }
+      try {
+        sessionStorage.setItem(pendingJobKey, JSON.stringify({ version: 1, ownerId: null, createdAt: Date.now(), capture: {
+          title: '', company: '', description: analyzedJobText, sourceUrl: '', capturedAt: new Date().toISOString(), site: 'manual',
+        } }));
+      } catch {
+        event.preventDefault();
+        setError('This browser could not preserve the job description for the next step. Keep this tab open and try again.');
+      }
+    });
+  }
   element<HTMLButtonElement>('[data-clear-tool]').addEventListener('click', () => {
     reviewObserver?.disconnect();
+    analyzedJobText = '';
+    if (tool === 'resume-job-match') sessionStorage.removeItem(pendingJobKey);
     form.reset(); clearResult(); setError(''); updateCounts();
     form.querySelector<HTMLTextAreaElement>('textarea')?.focus();
   });

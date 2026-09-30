@@ -22,7 +22,7 @@ Every event must be tested for private-route stripping, account switches, duplic
 | `job_added` | job snapshot/description is accepted | once per accepted source; `job_source` |
 | `requirements_extracted` | bounded requirement set is produced successfully | once per analysis revision |
 | `evidence_reviewed` | at least one requirement-level evidence row is genuinely visible and the owner-scoped review is committed | once per analysis revision/scope; `review_depth=limited|full` |
-| `decision_recorded` | person chooses tailor, clarify, save for later, or keep looking | once per explicit action; `decision` |
+| `decision_recorded` | person explicitly chooses review, pursue, pass, tailor, clarify, save for later, or keep looking | once per explicit action or saved workflow transition; `decision` |
 | `job_specific_version_created` | server commits a new separate version | once per committed version, without sending its ID |
 | `changes_reviewed` | person confirms the job-specific document after suggestions/manual edits | once per material version revision |
 | `application_package_exported` | the server confirms a durable same-job conversion after the PDF/DOCX export commits | once per committed export request |
@@ -38,7 +38,7 @@ Every event must be tested for private-route stripping, account switches, duplic
 - `storage_scope`: `local | account | unavailable`
 - `job_source`: `search | extension | pasted`
 - `review_depth`: `limited | full`
-- `decision`: `tailor | clarify | save_later | keep_looking`
+- `decision`: `review | pursue | pass | tailor | clarify | save_later | keep_looking`
 - `export_type`: `PDF | DOCX`
 - `outcome`: `success | failure | blocked`
 - `result_bucket`: `none | some`

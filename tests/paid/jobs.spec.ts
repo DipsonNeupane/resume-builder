@@ -120,6 +120,42 @@ const sampleFullAnalysis = {
   deeperExplanation: 'Missing resume evidence remains unknown rather than proof you lack it.', tailoringAction: 'Tailor my resume for this job' as const,
 };
 
+test('saved Match keeps job wording and resume evidence connected while the owner manually controls pursuit and application status', async ({ page }) => {
+  test.slow();
+  await seed(page);
+  const savedJobId = '99999999-9999-4999-8999-999999999999';
+  const saved = { id: savedJobId, snapshot: sampleResponse.jobs[0].savedSnapshot, providerAvailable: true,
+    availabilityCheckedAt: '2026-09-29T00:00:00Z', unavailableAt: null, savedAt: '2026-09-29T00:00:00Z',
+    analysisCurrent: true, matchAnalysis: { ...sampleMatchAnalysis, limitedAnalysis: { requirements: sampleFullAnalysis.requirements.slice(0, 1) } } };
+  const updates: unknown[] = [];
+  await page.route('**/api/jobs-account', route => {
+    const body = route.request().postDataJSON();
+    if (body.action === 'update_workflow') {
+      updates.push(body);
+      return route.fulfill({ json: { workflow: { savedJobId, ...body.workflow, revision: 1, updatedAt: '2026-09-30T12:00:00.000Z', history: [{ decision: body.workflow.decision, applicationStatus: body.workflow.applicationStatus, changedAt: '2026-09-30T12:00:00.000Z' }] } } });
+    }
+    return route.fulfill({ json: { isPro: false, saveLimit: 3, savedJobs: [saved], jobResumeVersions: [], jobWorkflows: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } } });
+  });
+  await page.goto(`/workspace/jobs/${savedJobId}/match`, { waitUntil: 'domcontentloaded' });
+  await expect(page.getByText('Job wording', { exact: true })).toBeVisible();
+  await expect(page.getByText('Must hold an active support certification.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Resume evidence', { exact: true })).toBeVisible();
+  await expect(page.getByText(/unknown, not proof/i)).toBeVisible();
+
+  await page.getByText('My decision and application').click();
+  await page.getByLabel('My decision').selectOption('pursue');
+  await page.getByLabel('Application status').selectOption('applied');
+  await page.getByLabel('Private notes (optional)').fill('Follow up after the stated deadline.');
+  await page.getByLabel('Add a follow-up date for this role').check();
+  await page.getByLabel('Follow-up date and time').fill('2026-10-02T15:00');
+  await page.getByRole('button', { name: 'Save my update' }).click();
+  await expect(page.getByText('Your decision and application update were saved.')).toBeVisible();
+  expect(updates).toHaveLength(1);
+  expect(JSON.stringify(updates[0])).not.toContain('submittedAutomatically');
+  expect(JSON.stringify(updates[0])).not.toContain('support certification');
+  await expect(page.getByText(/does not submit an application or infer a status/i)).toBeVisible();
+});
+
 test('signed-out users see a sign-in prompt instead of the search form', async ({ page }) => {
   await openJobs(page);
   await expect(page.getByText('Sign in to search for jobs based on your resume.')).toBeVisible();

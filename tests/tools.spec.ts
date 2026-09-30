@@ -81,6 +81,22 @@ test('evidence review qualifies only after a requirement result is genuinely vie
   await expect(results).toHaveAttribute('data-review-scope', 'limited');
 });
 
+test('public evidence can continue with bounded job context without carrying resume text in URL or analytics', async ({ page }) => {
+  test.slow();
+  await page.goto('/tools/resume-job-match/');
+  const privateResume = 'Private Resume Phrase\nCustomer support and Salesforce administration across distributed teams.';
+  const job = 'Required qualifications\nSalesforce administration is required.\nPreferred qualifications\nSQL experience preferred.';
+  await page.locator('#resume-text').fill(privateResume);
+  await page.locator('#job-description').fill(job);
+  await page.getByRole('button', { name: 'Check the evidence' }).click();
+  await page.getByRole('link', { name: /Continue with full ResumeStride Match/ }).click();
+  await expect(page).toHaveURL('/start/job');
+  expect(page.url()).not.toContain('Salesforce');
+  const continuation = await page.evaluate(() => sessionStorage.getItem('resumestride.pendingJobFirst.v1'));
+  expect(JSON.parse(continuation!).capture.description).toBe(job);
+  expect(continuation).not.toContain('Private Resume Phrase');
+});
+
 test('bullet checker keeps rewrites grounded and clears private state', async ({ page }) => {
   await page.goto('/tools/resume-bullet-checker/');
   const bullet = 'Responsible for coordinating onboarding with sales and support';

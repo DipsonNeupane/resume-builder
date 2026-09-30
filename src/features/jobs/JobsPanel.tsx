@@ -16,6 +16,7 @@ import { buildResumeEvidence, proposeSearchesFromResume } from './evidence';
 import { startAutoRefreshLoop } from './autoRefreshScheduler';
 import { fingerprintResume, parseJobResumeSummaries, parseJobResumeVersion, type JobResumeVersion, type JobResumeVersionSummary } from '../../services/jobResumeVersions';
 import { trackProductEvent } from '../../services/analytics';
+import { emptyJobWorkflow, JobWorkflowPanel, type JobWorkflow } from './JobWorkflowPanel';
 
 type Workplace = 'remote' | 'hybrid' | 'onsite' | 'field';
 type EmploymentType = 'full_time' | 'part_time' | 'contract' | 'temporary' | 'internship';
@@ -92,6 +93,8 @@ const WORKPLACE_VALUES: Workplace[] = ['remote', 'hybrid', 'onsite', 'field'];
 const EMPLOYMENT_VALUES: EmploymentType[] = ['full_time', 'part_time', 'contract', 'temporary', 'internship'];
 const MATCH_VALUES: MatchLabel[] = ['strong', 'good', 'stretch'];
 const PERIOD_VALUES: SalaryPeriod[] = ['hour', 'year'];
+const DECISION_VALUES = ['review', 'pursue', 'pass'] as const;
+const APPLICATION_STATUS_VALUES = ['not_applied', 'preparing', 'applied', 'interviewing', 'offer', 'closed', 'withdrawn'] as const;
 
 const WORKPLACE_LABELS: Record<Workplace | 'unknown', string> = { remote: 'Remote', hybrid: 'Hybrid', onsite: 'Onsite', field: 'Field-based', unknown: 'Workplace not listed' };
 const EMPLOYMENT_LABELS: Record<EmploymentType | 'unknown', string> = { full_time: 'Full-time', part_time: 'Part-time', contract: 'Contract', temporary: 'Temporary', internship: 'Internship', unknown: 'Employment type not listed' };
@@ -239,6 +242,29 @@ function parseSavedJobs(value: unknown): SavedJob[] {
   });
 }
 
+function parseJobWorkflows(value: unknown): JobWorkflow[] | null {
+  if (value === undefined) return [];
+  if (value === null) return null;
+  if (!Array.isArray(value)) throw new Error('Job workflow returned an unusable response.');
+  return value.flatMap(item => {
+    if (!record(item) || typeof item.savedJobId !== 'string'
+      || typeof item.decision !== 'string' || !(DECISION_VALUES as readonly string[]).includes(item.decision)
+      || typeof item.applicationStatus !== 'string' || !(APPLICATION_STATUS_VALUES as readonly string[]).includes(item.applicationStatus)
+      || typeof item.notes !== 'string' || item.notes.length > 4000
+      || typeof item.contactName !== 'string' || item.contactName.length > 200
+      || typeof item.contactDetails !== 'string' || item.contactDetails.length > 500
+      || typeof item.reminderEnabled !== 'boolean'
+      || (item.reminderAt !== null && (typeof item.reminderAt !== 'string' || Number.isNaN(Date.parse(item.reminderAt))))
+      || !Number.isSafeInteger(item.revision) || Number(item.revision) < 1
+      || typeof item.updatedAt !== 'string' || Number.isNaN(Date.parse(item.updatedAt))
+      || !Array.isArray(item.history) || item.history.length > 100
+      || !item.history.every(entry => record(entry) && typeof entry.decision === 'string' && (DECISION_VALUES as readonly string[]).includes(entry.decision)
+        && typeof entry.applicationStatus === 'string' && (APPLICATION_STATUS_VALUES as readonly string[]).includes(entry.applicationStatus)
+        && typeof entry.changedAt === 'string' && !Number.isNaN(Date.parse(entry.changedAt)))) return [];
+    return [item as unknown as JobWorkflow];
+  });
+}
+
 function parseJobCards(body: unknown): { jobs: JobCard[]; isPro: boolean; availableCount: number; proLimit: number } {
   if (!record(body) || !Array.isArray(body.jobs) || typeof body.isPro !== 'boolean' || !isSafeCount(body.availableCount) || !isSafeCount(body.proLimit)) {
     throw new Error('Job search returned an unusable response.');
@@ -273,7 +299,8 @@ function RequirementLedger({ requirements, scope, onReviewed }: { requirements: 
   }, [onReviewed, scope]);
   return <div ref={ledger} className="match-requirements" data-review-scope={scope}>{requirements.map(req => <article key={req.id}>
     <div><span className={`requirement-category requirement-${req.category}`}>{CATEGORY_LABELS[req.category]}</span><span className={`requirement-status status-${req.status}`}>{STATUS_LABELS[req.status]}</span></div>
-    <p>{req.text}</p>{req.evidence.map((item, index) => <small key={index}>{item}</small>)}
+    <strong className="requirement-source-label">Job wording</strong><p>{req.text}</p>
+    <strong className="requirement-source-label">Resume evidence</strong>{req.evidence.length ? req.evidence.map((item, index) => <small key={index}>{item}</small>) : <small>{req.status === 'confirmed_incompatible' ? 'You explicitly marked this requirement as incompatible.' : 'No supporting wording found in this review. That is unknown, not proof that you lack the qualification.'}</small>}
   </article>)}</div>;
 }
 
@@ -310,7 +337,7 @@ function MatchAnalysisPanel({ analysis, isPro, onViewPro, onClarify, onEvidenceR
       {analysis.additionalAreasAnalyzed > 0 && <span>{analysis.additionalAreasAnalyzed} additional {analysis.additionalAreasAnalyzed === 1 ? 'area' : 'areas'} analyzed</span>}
       <button className="text-button" onClick={onViewPro}>View the full evidence analysis with Pro</button>
     </div>}
-    {isPro && full && <details className="match-details"><summary>Full evidence analysis</summary>
+    {isPro && full && <details className="match-details" open><summary>Full evidence analysis</summary>
       <p>{full.deeperExplanation}</p>
       <RequirementLedger requirements={full.requirements} scope="full" onReviewed={onEvidenceReviewed}/>
       {full.strengths.length > 0 && <><h4>Strengths</h4><ul>{full.strengths.map((item,index)=><li key={index}>{item}</li>)}</ul></>}
@@ -347,6 +374,10 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
   const [accountLoadRevision, setAccountLoadRevision] = useState(0);
   const [nextFreeRefreshAt, setNextFreeRefreshAt] = useState(0);
   const [jobResumeVersions, setJobResumeVersions] = useState<JobResumeVersionSummary[]>([]);
+  const [jobWorkflows, setJobWorkflows] = useState<JobWorkflow[]>([]);
+  const [jobWorkflowsAvailable, setJobWorkflowsAvailable] = useState(true);
+  const [workflowBusyId, setWorkflowBusyId] = useState<string | null>(null);
+  const [workflowConflictId, setWorkflowConflictId] = useState<string | null>(null);
   const [restoreFailure, setRestoreFailure] = useState<'unavailable' | 'transient' | null>(null);
   const [versionRestoreRevision, setVersionRestoreRevision] = useState(0);
   const inFlight = useRef(false);
@@ -413,6 +444,10 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
     setAutoRefresh(false);
     setSavedJobs([]);
     setJobResumeVersions([]);
+    setJobWorkflows([]);
+    setJobWorkflowsAvailable(true);
+    setWorkflowBusyId(null);
+    setWorkflowConflictId(null);
     setRestoreFailure(null);
     setSaveLimit(3);
     setAccountIsPro(false);
@@ -432,6 +467,9 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
       const criteria = preferences.criteria === null ? null : preferences.criteria as Criteria;
       setSavedJobs(parseSavedJobs(body.savedJobs));
       setJobResumeVersions(parseJobResumeSummaries(body.jobResumeVersions ?? []));
+      const workflows = parseJobWorkflows(body.jobWorkflows);
+      setJobWorkflows(workflows ?? []);
+      setJobWorkflowsAvailable(workflows !== null);
       setSaveLimit(body.saveLimit);
       setAccountIsPro(body.isPro);
       setAccountLoaded(true);
@@ -620,9 +658,39 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
       await accountRequest({ action: 'remove', savedJobId });
       if (currentOwnerRef.current !== requestedOwner) return;
       setSavedJobs(current => current.filter(job => job.id !== savedJobId));
+      setJobWorkflows(current => current.filter(workflow => workflow.savedJobId !== savedJobId));
       setJobResumeVersions(current => current.map(version => version.savedJobId === savedJobId ? { ...version, savedJobExists: false } : version));
       setMessage('Saved job removed. Any job-specific resume for it is kept.');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to remove this saved job.'); }
+  }
+
+  async function saveWorkflow(savedJobId: string, workflow: JobWorkflow) {
+    if (!jobWorkflowsAvailable) return;
+    const requestedOwner = ownerId;
+    const previous = jobWorkflows.find(item => item.savedJobId === savedJobId) ?? emptyJobWorkflow(savedJobId);
+    setWorkflowBusyId(savedJobId);
+    try {
+      const body = await accountRequest({ action: 'update_workflow', savedJobId, expectedRevision: workflow.revision, workflow: {
+        decision: workflow.decision, applicationStatus: workflow.applicationStatus,
+        notes: workflow.notes, contactName: workflow.contactName, contactDetails: workflow.contactDetails,
+        reminderEnabled: workflow.reminderEnabled, reminderAt: workflow.reminderEnabled ? workflow.reminderAt : null,
+      } });
+      const parsed = parseJobWorkflows([body.workflow])?.[0];
+      if (!parsed) throw new Error('Job workflow returned an unusable response.');
+      if (currentOwnerRef.current !== requestedOwner) return;
+      setJobWorkflows(current => [parsed, ...current.filter(item => item.savedJobId !== savedJobId)]);
+      setWorkflowConflictId(null);
+      if (previous.decision !== parsed.decision) trackProductEvent('decision_recorded', { surface: 'jobs', user_state: 'authenticated', plan: accountIsPro ? 'Pro' : 'Free', decision: parsed.decision });
+      if (previous.applicationStatus !== parsed.applicationStatus && parsed.applicationStatus !== 'not_applied') trackProductEvent('application_status_recorded', { surface: 'jobs', user_state: 'authenticated', plan: accountIsPro ? 'Pro' : 'Free', application_status: parsed.applicationStatus });
+      setMessage('Your decision and application update were saved.');
+    } catch (error) {
+      if (currentOwnerRef.current === requestedOwner) {
+        if (error instanceof AccountRequestError && error.status === 409) setWorkflowConflictId(savedJobId);
+        setMessage(error instanceof Error ? error.message : 'Unable to save this job update.');
+      }
+    } finally {
+      if (currentOwnerRef.current === requestedOwner) setWorkflowBusyId(null);
+    }
   }
 
   async function openJobResume(summary: JobResumeVersionSummary) {
@@ -656,6 +724,11 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
     if (!ownerId) return;
     const existing = jobResumeVersions.find(version => version.savedJobId === saved.id);
     if (existing) { await openJobResume(existing); return; }
+    const workflow = jobWorkflows.find(item => item.savedJobId === saved.id) ?? emptyJobWorkflow(saved.id);
+    if (workflow.decision !== 'pursue') {
+      setMessage('Choose “Pursue — I want to continue” and save your decision before creating its job-specific resume.');
+      return;
+    }
     if (!accountIsPro) { onViewPro(); return; }
     const requestedOwner = ownerId;
     try {
@@ -748,13 +821,17 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
       <div className="empty-state" role="status"><strong>This workspace item is unavailable.</strong><p>It may have been removed, belong to another account, or no longer be accessible. No job or resume content was loaded.</p><button className="button" onClick={onOpenSavedJobs}>Go to saved jobs</button></div>
     </section>;
     const job = saved.snapshot;
+    const workflow = jobWorkflows.find(item => item.savedJobId === saved.id) ?? emptyJobWorkflow(saved.id);
     return <section className="field jobs-panel" aria-label="Match Analysis">
       <div className="jobs-panel-heading"><div><span className="section-label">Saved job · Private workspace</span><h1>Match Analysis</h1><p>{job.title} at {job.company}</p></div><button className="back-link" onClick={onOpenSavedJobs}>Back to saved jobs</button></div>
+      {message && <p role="status" className="field-hint">{message}</p>}
       {saved.analysisCurrent === false && <><p className="match-stale" role="status">This analysis needs refreshing because its saved context changed.</p><button className="button" onClick={() => void refreshSavedAnalysis(saved.id)}>Refresh Match Analysis</button></>}
       {saved.analysisCurrent !== false && saved.matchAnalysis
         ? <MatchAnalysisPanel jobTitle={`${job.title} at ${job.company}`} analysis={saved.matchAnalysis} isPro={accountIsPro} onViewPro={onViewPro} onClarify={(id, value) => void clarify(id, value, { savedJobId: saved.id })} onEvidenceReviewed={scope => recordEvidenceReview(job.dedupeKey as string, saved.matchAnalysis!.contextHash, scope)} />
         : <div className="empty-state"><strong>Evidence is not available yet.</strong><p>Return to saved jobs to refresh this role against your current master resume.</p></div>}
-      <div className="job-card-actions"><button className="button" onClick={() => void startTailoring(saved)}>{jobResumeVersions.some(version => version.savedJobId === saved.id) ? 'Open job-specific resume' : accountIsPro ? 'Create a separate job-specific resume' : 'Tailor my resume with Pro'}</button></div>
+      <JobWorkflowPanel value={workflow} busy={workflowBusyId === saved.id} available={jobWorkflowsAvailable} conflict={workflowConflictId === saved.id} onReload={()=>setAccountLoadRevision(value=>value+1)} onSave={next => saveWorkflow(saved.id, next)} />
+      {!jobResumeVersions.some(version => version.savedJobId === saved.id) && workflow.decision !== 'pursue' && <p className="field-hint">Choose Pursue and save your decision before creating a separate job-specific resume.</p>}
+      <div className="job-card-actions"><button className="button" disabled={!jobResumeVersions.some(version => version.savedJobId === saved.id) && workflow.decision !== 'pursue'} onClick={() => void startTailoring(saved)}>{jobResumeVersions.some(version => version.savedJobId === saved.id) ? 'Open job-specific resume' : accountIsPro ? 'Create a separate job-specific resume' : 'Tailor my resume with Pro'}</button></div>
     </section>;
   }
 
@@ -815,13 +892,15 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
     <section className="saved-jobs-section" aria-labelledby="saved-jobs-heading">
       <div className="saved-jobs-heading"><h2 id="saved-jobs-heading">Saved jobs</h2><span>{savedJobs.length}{accountIsPro ? '' : ` of ${saveLimit}`}</span></div>
       {savedJobs.length === 0 ? <div className="empty-state"><strong>Keep the roles worth a second look.</strong><p>Choose “Save job” on a result to keep it and its match evidence here, even if the listing closes{accountIsPro ? ' or your Pro access ends' : ''}.{accountIsPro ? '' : ` Free accounts can save up to ${saveLimit}.`}</p></div> :
-        <ul className="jobs-results" aria-label="Saved jobs">{savedJobs.map(saved => {
-          const job = saved.snapshot;
+	        <ul className="jobs-results" aria-label="Saved jobs">{savedJobs.map(saved => {
+	          const job = saved.snapshot;
+	          const workflow = jobWorkflows.find(item => item.savedJobId === saved.id) ?? emptyJobWorkflow(saved.id);
           return <li className="job-card saved-job-card" key={saved.id}>
             <div className="job-card-heading"><div><h3>{job.title}</h3><span>{job.company}</span></div>
               {!saved.providerAvailable && <span className="job-unavailable">No longer available</span>}
             </div>
-            <div className="saved-job-state"><span>{saved.matchAnalysis ? 'Match Analysis available' : 'Match evidence pending'}</span><span>{jobResumeVersions.some(version => version.savedJobId === saved.id) ? 'Tailored resume saved' : 'Master resume unchanged'}</span></div>
+	            <div className="saved-job-state"><span>{saved.matchAnalysis ? 'Match Analysis available' : 'Match evidence pending'}</span><span>{jobResumeVersions.some(version => version.savedJobId === saved.id) ? 'Tailored resume saved' : 'Master resume unchanged'}</span></div>
+	            {workflow.reminderEnabled && workflow.reminderAt && <p className="field-hint" role="status">{Date.parse(workflow.reminderAt) <= Date.now() ? 'Follow-up due' : 'Follow up'}: {new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(workflow.reminderAt))}</p>}
             {job.provider === 'extension' && <>
               <p className="field-hint">Captured job · Availability not verified</p>
               <details><summary>View captured job details</summary>
@@ -835,9 +914,11 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
             {saved.analysisCurrent === false && <p className="match-stale" role="status">Saved match analysis needs refreshing because the resume, job, preferences, or clarifications changed.</p>}
             {saved.analysisCurrent === false && <button className="text-button" onClick={() => void refreshSavedAnalysis(saved.id)}>Refresh match analysis</button>}
             {saved.analysisCurrent !== false && saved.matchAnalysis && <MatchAnalysisPanel jobTitle={`Saved: ${job.title} at ${job.company}`} analysis={saved.matchAnalysis} isPro={accountIsPro} onViewPro={onViewPro} onClarify={(id, value) => void clarify(id, value, { savedJobId: saved.id })} onEvidenceReviewed={scope=>recordEvidenceReview(job.dedupeKey as string,saved.matchAnalysis!.contextHash,scope)} />}
-            <div className="job-card-actions">
+	            <JobWorkflowPanel value={workflow} busy={workflowBusyId === saved.id} available={jobWorkflowsAvailable} conflict={workflowConflictId === saved.id} onReload={()=>setAccountLoadRevision(value=>value+1)} onSave={next => saveWorkflow(saved.id, next)} />
+	            {!jobResumeVersions.some(version => version.savedJobId === saved.id) && workflow.decision !== 'pursue' && <p className="field-hint">Choose Pursue and save your decision before creating a separate job-specific resume.</p>}
+	            <div className="job-card-actions">
               {saved.matchAnalysis && <button className="button outline" onClick={() => onOpenMatch(saved.id)}>Open Match Analysis</button>}
-              <button className="button" onClick={() => void startTailoring(saved)}>
+	              <button className="button" disabled={!jobResumeVersions.some(version => version.savedJobId === saved.id) && workflow.decision !== 'pursue'} onClick={() => void startTailoring(saved)}>
                 {jobResumeVersions.some(version => version.savedJobId === saved.id) ? 'Open tailored resume' : accountIsPro ? 'Tailor my resume for this job' : 'Tailor my resume with Pro'}
               </button>
               {saved.providerAvailable && <a className="button outline" href={job.sourceUrl} target="_blank" rel="noopener noreferrer">View job<ExternalLink size={14} /></a>}
