@@ -19,7 +19,7 @@ export function seoPolicy() {
    // Vite's SPA fallback does not resolve trailing-slash public directories to
    // their index files. Keep the browser's clean canonical URL while serving
    // the generated resource document in development and preview.
-   if ((url.pathname.startsWith('/resources/') || url.pathname.startsWith('/tools/') || url.pathname.startsWith('/templates/') || url.pathname==='/pricing/' || url.pathname==='/trust/') && url.pathname.endsWith('/')) req.url = `${url.pathname}index.html${url.search}`;
+   if ((url.pathname.startsWith('/resources/') || url.pathname.startsWith('/tools/') || url.pathname.startsWith('/templates/') || url.pathname.startsWith('/features/') || url.pathname==='/pricing/' || url.pathname==='/trust/') && url.pathname.endsWith('/')) req.url = `${url.pathname}index.html${url.search}`;
    next();
   }
  };

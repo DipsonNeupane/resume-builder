@@ -2,7 +2,7 @@
 // reach HTTP middleware. Keep this allowlist aligned with src/seo/policy.ts.
 (() => {
  const url = new URL(location.href);
- const contentPath = url.pathname.startsWith('/resources/') || url.pathname.startsWith('/tools/') || url.pathname.startsWith('/templates/') || url.pathname === '/pricing/' || url.pathname === '/trust/';
+ const contentPath = url.pathname.startsWith('/features/') || url.pathname.startsWith('/resources/') || url.pathname.startsWith('/tools/') || url.pathname.startsWith('/templates/') || url.pathname === '/pricing/' || url.pathname === '/trust/';
  const publicPath = url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/privacy.html' || url.pathname === '/terms.html' || contentPath;
  const contentFragment = contentPath && (url.hash === '' || /^#[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url.hash));
  const publicFragment = contentFragment || ['', '#how-it-works', '#templates', '#pricing', '#main-content'].includes(url.hash);

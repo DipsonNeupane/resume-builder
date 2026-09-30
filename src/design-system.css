@@ -12,7 +12,7 @@
  --rs-cobalt-hover:var(--rs-action-hover); --rs-blue:var(--rs-highlight); --rs-sky:var(--rs-selected);
  --rs-cream:var(--rs-canvas); --rs-slate-strong:var(--rs-text); --rs-surface-soft:var(--rs-surface);
  --rs-info-surface:var(--rs-selected); --rs-warning:var(--rs-attention-ink); --rs-warning-surface:var(--rs-attention-surface);
- --rs-font-body:'Geist',system-ui,sans-serif; --rs-font-heading:'Bricolage Grotesque','Geist',system-ui,sans-serif;
+ --rs-font-body:'ResumeStride Sans',system-ui,sans-serif; --rs-font-heading:'ResumeStride Sans',system-ui,sans-serif;
  --rs-radius-sm:8px; --rs-radius-md:12px; --rs-shadow-sm:0 1px 2px #1b1a190d,0 6px 18px #281e140f;
  --rs-shadow-md:0 30px 60px -24px #281e1440; --rs-focus:0 0 0 3px #ad521b33;
  font-family:var(--rs-font-body); color:var(--rs-text); background:var(--rs-canvas);

@@ -5,6 +5,7 @@ import { publicPages } from '../src/seo/policy';
 const paths = Object.keys(publicPages);
 const viewports = [
   { width: 320, height: 720 },
+  { width: 1024, height: 768 },
   { width: 1440, height: 900 },
 ];
 

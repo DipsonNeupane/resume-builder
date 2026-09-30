@@ -12,6 +12,7 @@ export {
  productionOrigin,
  publicAnchors,
  publicPages,
+ publicPageSchema,
  requestSeo,
  websiteSchema,
 } from '../../middleware';

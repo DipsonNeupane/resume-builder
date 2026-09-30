@@ -28,6 +28,17 @@ budget('Template gallery JavaScript', [join(root, 'public/templates-filter.js')]
 budget('Template gallery CSS', [join(root, 'public/templates.css')], 16 * 1024, 4 * 1024);
 budget('Commercial static HTML', [join(root, 'public/pricing/index.html'), join(root, 'public/trust/index.html')], 48 * 1024, 14 * 1024);
 budget('Commercial shared CSS', [join(root, 'public/resources.css'), join(root, 'public/templates.css')], 32 * 1024, 8 * 1024);
+budget('Capability shared CSS', [join(root, 'public/resources.css'), join(root, 'public/features.css')], 32 * 1024, 8 * 1024);
+budget('Critical self-hosted brand font', [join(root, 'public/fonts/brand-sans.woff2')], 64 * 1024, 64 * 1024);
+
+const socialFiles = readdirSync(join(root, 'public/social')).map(name => join(root, 'public/social', name));
+budget('Route-specific social images', socialFiles, 1024 * 1024, 1024 * 1024);
+for (const file of socialFiles) if (readFileSync(file).length > 32 * 1024) fail.push(`Social image exceeds 32 KiB: ${basename(file)}`);
+
+for (const file of [join(root, 'dist/index.html'), ...initialStyles]) {
+ const content = readFileSync(file, 'utf8');
+ if (/fonts\.(?:googleapis|gstatic)\.com/.test(content)) fail.push(`Remote font request remains in ${file}`);
+}
 
 const assets = readdirSync(join(root, 'dist/assets'));
 for (const feature of ['JobsPanel-', 'FictionalSample-', 'GeneratedPdfControls-', 'pdfImport-', 'docx-']) {

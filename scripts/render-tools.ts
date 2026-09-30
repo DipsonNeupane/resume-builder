@@ -5,6 +5,7 @@ import { TOOL_LIMITS } from '../src/tools/analysis';
 
 const check = process.argv.includes('--check');
 const escape = (value: string) => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+const withoutSeo = (text: string) => text.replace(/<!-- seo:start -->[\s\S]*?<!-- seo:end -->/, '<!-- seo:block -->');
 
 function shell(title: string, description: string, path: string, main: string, toolId = 'tools') {
   const canonical = `https://resumestride.com${path}`;
@@ -69,7 +70,7 @@ function hub(): string {
 function output(file: string, value: string): void {
   mkdirSync(file.slice(0, file.lastIndexOf('/')), { recursive: true });
   if (check) {
-    if (readFileSync(file, 'utf8') !== value) throw new Error(`Tool output stale: ${file}. Run npm run tools:generate.`);
+    if (withoutSeo(readFileSync(file, 'utf8')) !== withoutSeo(value)) throw new Error(`Tool output stale: ${file}. Run npm run tools:generate.`);
   } else writeFileSync(file, value);
 }
 

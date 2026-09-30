@@ -123,6 +123,7 @@ export function jobResumeRoute(versionId: string): NavigableRoute {
 
 export const publicDestinations = {
  home: '/',
+ features: '/features/',
  tools: '/tools/',
  resources: '/resources/',
  templates: '/templates/',

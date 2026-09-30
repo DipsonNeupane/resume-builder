@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
@@ -15,6 +16,7 @@ import browserConfig from '../../playwright.config';
 import { initialPage, isPublicAttributionLocation, isPublicLocation, isPublicPath, noindex, productionOrigin, publicPages, requestSeo, websiteSchema } from '../../src/seo/policy';
 import { guides } from '../../src/content/guides';
 import { publicTools } from '../../src/content/tools';
+import { capabilities } from '../../src/content/capabilities';
 import { library } from '../../template-library/registry';
 const read = (file: string) => readFileSync(file, 'utf8');
 const policy = (path: string, production = true) => requestSeo(new URL(path, productionOrigin), production);
@@ -101,15 +103,20 @@ test('every module the browser app imports from outside src/ is served by the de
  assert.deepEqual([...escaping].sort(), [...devSourceModules].sort());
 });
 
-test('robots allows public crawling and directs crawlers to the exact public-only sitemap', () => {
+test('robots allows public crawling and the sitemap uses explicit source-owned modification dates', () => {
  const robots = read('public/robots.txt');
  assert.match(robots, /^User-agent: \*$/m); assert.match(robots, /^Allow: \/$/m);
  assert.doesNotMatch(robots, /^Disallow:\s*\//m);
  assert.match(robots, /^Sitemap: https:\/\/resumestride.com\/sitemap.xml$/m);
  const xml = read('public/sitemap.xml');
  assert.match(xml, /<urlset xmlns="http:\/\/www.sitemaps.org\/schemas\/sitemap\/0.9">/);
- assert.deepEqual([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1]), Object.keys(publicPages).map(path => `${productionOrigin}${path}`));
- assert.doesNotMatch(xml.replace(/^<\?xml[^>]+>/, ''), /<lastmod>|\?|#|JobPosting/);
+ const entries = [...xml.matchAll(/<url><loc>([^<]+)<\/loc><lastmod>([^<]+)<\/lastmod><\/url>/g)].map(match => ({ loc: match[1], lastModified: match[2] }));
+ assert.deepEqual(entries, Object.entries(publicPages).map(([path, details]) => ({ loc: `${productionOrigin}${path}`, lastModified: details.lastModified })));
+ for (const entry of entries) {
+  assert.match(entry.lastModified, /^2026-\d{2}-\d{2}$/);
+  assert.ok(entry.lastModified <= '2026-09-30', `future or build-time date: ${entry.lastModified}`);
+ }
+ assert.doesNotMatch(xml.replace(/^<\?xml[^>]+>/, ''), /\?|#|JobPosting/);
 });
 
 test('all public source HTML has unique, consistent metadata before JavaScript', () => {
@@ -127,7 +134,11 @@ test('all public source HTML has unique, consistent metadata before JavaScript',
   assert.ok(html.includes(`property="og:description" content="${description}"`));
   assert.match(html, /name="robots" content="index, follow"/);
   assert.match(html, /name="twitter:card" content="summary_large_image"/);
-  assert.match(html, /property="og:image" content="https:\/\/resumestride.com\/social-card.png"/);
+  assert.ok(html.includes(`property="og:image" content="${productionOrigin}${publicPages[path as keyof typeof publicPages].socialImage}"`));
+  assert.ok(html.includes(`name="twitter:image" content="${productionOrigin}${publicPages[path as keyof typeof publicPages].socialImage}"`));
+  assert.match(html, /property="og:image:alt" content="Abstract ResumeStride route card in copper, mint and dark green"/);
+  assert.match(html, /rel="preload" href="\/fonts\/brand-sans\.woff2" as="font" type="font\/woff2" crossorigin/);
+  assert.match(html, /rel="stylesheet" href="\/fonts\.css"/);
   assert.match(html, /<script src="\/seo-guard.js"><\/script>/);
  }
  assert.equal(titles.size, Object.keys(publicPages).length); assert.equal(descriptions.size, Object.keys(publicPages).length);
@@ -135,16 +146,18 @@ test('all public source HTML has unique, consistent metadata before JavaScript',
  assert.equal(publicPages['/'].description, 'Build a master resume, find relevant jobs, compare your evidence with each role, and create truthful job-specific versions without changing your original.');
 });
 
-test('structured data describes only the real website, with no unsupported product claims', () => {
- const html = read('index.html');
- const schemas = [...html.matchAll(/<script type="application\/ld\+json" data-seo-schema>(.*?)<\/script>/g)];
- assert.equal(schemas.length, 1);
- const schema = JSON.parse(schemas[0][1]);
- assert.deepEqual(schema, websiteSchema);
- assert.equal(schema['@context'], 'https://schema.org'); assert.equal(schema['@type'], 'WebSite');
- assert.equal(schema.url, `${productionOrigin}/`); assert.equal(schema.name, 'ResumeStride');
- assert.doesNotMatch(JSON.stringify(schema), /JobPosting|Review|aggregateRating|offers|price|award|SearchAction/);
- for (const file of ['public/privacy.html', 'public/terms.html']) assert.doesNotMatch(read(file), /application\/ld\+json/);
+test('structured data describes visible public pages without unsupported commercial or outcome claims', () => {
+ for (const [path, details] of Object.entries(publicPages)) {
+  const html = read(publicHtmlFile(path));
+  const schemas = [...html.matchAll(/<script type="application\/ld\+json" data-seo-schema>(.*?)<\/script>/g)];
+  assert.equal(schemas.length, 1, path);
+  const schema = JSON.parse(schemas[0][1]);
+  const nodes = schema['@graph'] ?? [schema];
+  assert.ok(nodes.some((node: Record<string, unknown>) => node['@type'] === 'WebPage' && node.url === `${productionOrigin}${path}` && node.name === details.title && node.dateModified === details.lastModified), path);
+  if (path === '/') assert.ok(nodes.some((node: Record<string, unknown>) => node['@type'] === 'WebSite' && node.url === `${productionOrigin}/` && node.name === websiteSchema.name));
+  assert.deepEqual([...new Set(nodes.map((node: Record<string, unknown>) => node['@type']))].sort(), path === '/' ? ['WebPage', 'WebSite'] : ['WebPage']);
+  assert.doesNotMatch(JSON.stringify(schema), /"@type":"(?:JobPosting|Review|AggregateRating|Offer|SearchAction)"|"(?:aggregateRating|offers|price|award)":/);
+ }
 });
 
 test('canonical public production URLs are indexable and crawlable, previews never are', () => {
@@ -214,11 +227,53 @@ test('hostname and index aliases redirect once, preserving callback queries', ()
 test('favicon, app and social metadata refer to real assets without claiming an offline app', () => {
  const manifest = JSON.parse(read('public/site.webmanifest'));
  assert.equal(manifest.name, 'ResumeStride'); assert.equal(manifest.display, 'browser'); assert.equal(manifest.start_url, '/');
- for (const [file, width, height] of [['favicon.png', 32, 32], ['favicon-192.png', 192, 192], ['favicon-512.png', 512, 512], ['apple-touch-icon.png', 180, 180], ['social-card.png', 1200, 630]] as const) {
+ for (const [file, width, height] of [['favicon.png', 32, 32], ['favicon-192.png', 192, 192], ['favicon-512.png', 512, 512], ['apple-touch-icon.png', 180, 180]] as const) {
   const png = readFileSync(`public/${file}`); assert.equal(png.toString('ascii', 1, 4), 'PNG');
   assert.equal(png.readUInt32BE(16), width); assert.equal(png.readUInt32BE(20), height);
  }
- for (const asset of ['/favicon.ico', '/favicon.svg', '/favicon-192.png', '/favicon-512.png', '/seo-guard.js', '/content-analytics.js', '/resources.css', '/tools.css', '/tools/analysis.js', '/tools/public-tools.js', '/tools/tool-analytics.js', '/templates.css', '/templates-filter.js', '/social-card.png', '/robots.txt', '/sitemap.xml']) assert.equal(policy(asset).status, 0);
+ const hashes = new Set<string>();
+ for (const details of Object.values(publicPages)) {
+  const png = readFileSync(`public${details.socialImage}`);
+  assert.equal(png.toString('ascii', 1, 4), 'PNG'); assert.equal(png.readUInt32BE(16), 1200); assert.equal(png.readUInt32BE(20), 630);
+  hashes.add(createHash('sha256').update(png).digest('hex'));
+  assert.equal(policy(details.socialImage).status, 0);
+ }
+ assert.equal(hashes.size, Object.keys(publicPages).length, 'each route receives a genuinely distinct social image');
+ for (const asset of ['/favicon.ico', '/favicon.svg', '/favicon-192.png', '/favicon-512.png', '/seo-guard.js', '/content-analytics.js', '/resources.css', '/features.css', '/fonts.css', '/fonts/brand-sans.woff2', '/tools.css', '/tools/analysis.js', '/tools/public-tools.js', '/tools/tool-analytics.js', '/templates.css', '/templates-filter.js', '/robots.txt', '/sitemap.xml']) assert.equal(policy(asset).status, 0);
+});
+
+test('capability pages are permanent, useful and limited to implemented behavior', () => {
+ assert.equal(capabilities.length, 4);
+ const hub = read('public/features/index.html');
+ for (const capability of capabilities) {
+  const route = `/features/${capability.slug}/`;
+  assert.ok(Object.hasOwn(publicPages, route)); assert.ok(hub.includes(`href="${route}"`));
+  const html = read(publicHtmlFile(route));
+  assert.equal((html.match(/<h1>/g) || []).length, 1); assert.ok(html.includes(capability.promise));
+  assert.ok(capability.facts.length >= 3); assert.ok(capability.boundaries.length >= 3);
+  assert.doesNotMatch(html, /guarantee(?:d)? interview|ATS[- ]friendly|beat the ATS|hiring probability|we (?:apply|submit) for you/i);
+ }
+});
+
+test('font and cache delivery are local, bounded and safe for private state', () => {
+ assert.doesNotMatch(read('src/styles.css'), /fonts\.googleapis|fonts\.gstatic/);
+ assert.doesNotMatch(read('public/fonts.css'), /https?:\/\//);
+ assert.match(read('public/fonts.css'), /font-display:swap/);
+ assert.doesNotMatch(read('template-library/fonts/fonts.css'), /font-display:\s*block/);
+ assert.equal(policy('/assets/app-abc123.js').headers['Cache-Control'], 'public, max-age=31536000, immutable');
+ assert.equal(policy('/fonts/brand-sans.woff2').headers['Cache-Control'], 'public, max-age=604800, stale-while-revalidate=2592000');
+ assert.equal(policy('/social/home.png').headers['Cache-Control'], 'public, max-age=604800, stale-while-revalidate=2592000');
+ assert.equal(policy('/features/').headers['Cache-Control'], 'public, max-age=0, must-revalidate');
+ assert.equal(policy('/features/?code=secret').headers['Cache-Control'], 'private, no-store');
+ assert.equal(policy('/workspace/resume').headers['Cache-Control'], 'private, no-store');
+ const hosting = read('vercel.json');
+ assert.doesNotMatch(hosting, /fonts\.googleapis|fonts\.gstatic/); assert.match(hosting, /max-age=31536000, immutable/);
+});
+
+test('the technical quality gate runs on pull requests and a recurring schedule', () => {
+ const workflow = read('.github/workflows/quality-gate.yml');
+ assert.match(workflow, /pull_request:/); assert.match(workflow, /workflow_dispatch:/); assert.match(workflow, /schedule:/);
+ assert.match(workflow, /npm run quality:gate/); assert.match(workflow, /permissions:\n\s+contents: read/);
 });
 
 test('template routes mirror the verified registry and separate preview from purchase',()=>{
@@ -331,6 +386,8 @@ test('early head guard protects token fragments even before the auth client cons
   ['https://resumestride.com/?utm_source=google&utm_campaign=launch', false, false],
   ['https://resumestride.com/resources/resume-keywords/#placement', false, false],
   ['https://resumestride.com/resources/resume-keywords/#access_token-secret', true, true],
+  ['https://resumestride.com/features/', false, false],
+  ['https://resumestride.com/features/job-match/#boundaries-title', false, false],
   ['https://resumestride.com/templates/boardroom/', false, false],
   ['https://resumestride.com/pricing/#export-policy-title', false, false],
   ['https://resumestride.com/trust/#customer-proof-title', false, false],

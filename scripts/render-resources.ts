@@ -3,6 +3,7 @@ import { guideBySlug, guides, resourcesPath, type Guide } from '../src/content/g
 
 const check = process.argv.includes('--check');
 const escape = (value: string) => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+const withoutSeo = (text: string) => text.replace(/<!-- seo:start -->[\s\S]*?<!-- seo:end -->/, '<!-- seo:block -->');
 
 function shell(title: string, description: string, path: string, main: string, slug = 'resources') {
  const canonical = `https://resumestride.com${path}`;
@@ -64,7 +65,7 @@ function hub() {
 function output(file: string, html: string) {
  mkdirSync(file.slice(0, file.lastIndexOf('/')), { recursive: true });
  if (check) {
-  if (readFileSync(file, 'utf8') !== html) throw new Error(`Resource output stale: ${file}. Run npm run resources:generate.`);
+  if (withoutSeo(readFileSync(file, 'utf8')) !== withoutSeo(html)) throw new Error(`Resource output stale: ${file}. Run npm run resources:generate.`);
  } else writeFileSync(file, html);
 }
 

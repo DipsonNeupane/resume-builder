@@ -61,6 +61,29 @@ test('data-saver devices retain a complete homepage without initializing WebGL',
  await expect(page.getByRole('link', { name: 'Compare my resume with a job', exact: true }).first()).toBeVisible();
 });
 
+test('low-core devices retain complete content without decorative GPU work or remote fonts', async ({ page }) => {
+ const remoteFonts: string[] = [];
+ page.on('request', request => {
+  if (/fonts\.(?:googleapis|gstatic)\.com/.test(request.url())) remoteFonts.push(request.url());
+ });
+ await page.addInitScript(() => {
+  Object.defineProperty(navigator, 'hardwareConcurrency', { configurable: true, get: () => 2 });
+  const original = HTMLCanvasElement.prototype.getContext;
+  (window as typeof window & { __webglCalls?: number }).__webglCalls = 0;
+  HTMLCanvasElement.prototype.getContext = function (...args: Parameters<typeof original>) {
+   if (args[0] === 'webgl') (window as typeof window & { __webglCalls?: number }).__webglCalls! += 1;
+   return original.apply(this, args) as ReturnType<typeof original>;
+  } as typeof original;
+ });
+ await page.goto('/', { waitUntil: 'networkidle' });
+ await expect(page.locator('.pt-hero-title')).toBeVisible();
+ await expect(page.locator('canvas[data-silk-mode="static-low-power"]').first()).toBeAttached();
+ expect(await page.evaluate(() => (window as typeof window & { __webglCalls?: number }).__webglCalls)).toBe(0);
+ expect(remoteFonts).toEqual([]);
+ const preload = page.locator('link[rel="preload"][as="font"][href="/fonts/brand-sans.woff2"]');
+ await expect(preload).toHaveCount(1);
+});
+
 test('reduced motion renders decoration without leaving an animation loop running', async ({ page }) => {
  await page.emulateMedia({ reducedMotion: 'reduce' });
  await page.addInitScript(() => {

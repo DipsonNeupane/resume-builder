@@ -1,0 +1,22 @@
+.capability-hero,.capability-detail-hero{padding:clamp(58px,9vw,120px) max(22px,calc((100vw - 1180px)/2));color:var(--bone);background:var(--petrol);background-image:radial-gradient(60% 90% at 100% 0%,#de804438,transparent 70%),radial-gradient(50% 70% at 0% 100%,#03121599,transparent 75%)}
+.capability-hero{display:grid;grid-template-columns:1.1fr .9fr;align-items:end;gap:clamp(36px,7vw,100px)}
+.capability-hero h1,.capability-detail-hero h1{max-width:900px;margin:14px 0 0;font:800 clamp(48px,7vw,92px)/.92 var(--display);letter-spacing:-.045em}
+.capability-hero>p,.capability-detail-hero>p:last-child{max-width:760px;margin:0;color:var(--bone-2);font-size:clamp(18px,2vw,22px);line-height:1.55}
+.problem-path,.capability-index,.capability-facts,.capability-boundaries,.capability-action{padding:clamp(55px,8vw,95px) max(22px,calc((100vw - 1180px)/2))}
+.problem-path h2,.capability-index h2,.capability-boundaries h2,.capability-action h2{margin:9px 0 25px;color:var(--heading);font:800 clamp(32px,4vw,52px)/1.04 var(--display);letter-spacing:-.03em}
+.problem-path ol{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin:35px 0 0;padding:0;list-style:none;counter-reset:step;border:1px solid var(--line)}
+.problem-path li{counter-increment:step;min-height:170px;padding:22px;border-left:1px solid var(--line);background:var(--paper);color:var(--heading);font:750 18px/1.35 var(--display)}
+.problem-path li:first-child{border-left:0}.problem-path li:before{content:'0' counter(step);display:block;margin-bottom:30px;color:var(--action);font:600 11px/1 var(--mono)}
+.capability-index{display:grid;grid-template-columns:300px 1fr;gap:clamp(38px,8vw,105px);background:var(--surface)}
+.capability-index ol{margin:0;padding:0;list-style:none;border-top:1px solid var(--line-strong)}
+.capability-index li{border-bottom:1px solid var(--line)}.capability-index a{display:grid;grid-template-columns:45px 1fr auto;gap:20px;padding:25px 10px 25px 0;background:var(--surface)}
+.capability-index a:hover{background:var(--paper)}.capability-index a>span,.capability-index small,.capability-facts article>span{color:var(--action);font:600 10px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.capability-index strong{display:block;color:var(--heading);font:750 25px/1.2 var(--display)}.capability-index p{margin:7px 0 0;color:var(--slate);font-size:14px}.capability-index b{color:var(--action)}
+.capability-principles,.capability-action{display:grid;grid-template-columns:180px 1fr auto;gap:32px;align-items:center;padding:60px max(22px,calc((100vw - 1180px)/2));background:var(--carbon);color:var(--bone)}
+.capability-principles h2,.capability-action h2{margin:0;color:var(--bone);font:800 clamp(29px,3.4vw,43px)/1.05 var(--display)}.capability-principles p,.capability-action p{margin:12px 0 0;color:var(--bone-2)}
+.capability-detail-hero .breadcrumbs{margin-bottom:clamp(45px,7vw,85px)}.capability-detail-hero>p:last-child{margin-top:22px}
+.capability-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.capability-facts article{padding:28px;background:var(--paper);border-top:4px solid var(--petrol)}
+.capability-facts h2{margin:28px 0 12px;color:var(--heading);font:750 25px/1.15 var(--display)}.capability-facts p{margin:0;color:var(--slate)}
+.capability-boundaries{display:grid;grid-template-columns:1fr 1fr;gap:clamp(35px,8vw,100px);background:var(--mint-tint)}.capability-boundaries ul{margin:0;padding-left:22px}.capability-boundaries li{margin:0 0 18px}
+@media(max-width:900px){.capability-hero,.capability-index,.capability-boundaries{grid-template-columns:1fr}.problem-path ol{grid-template-columns:1fr 1fr}.problem-path li:nth-child(odd){border-left:0}.capability-principles,.capability-action{grid-template-columns:1fr}.capability-facts{grid-template-columns:1fr}}
+@media(max-width:560px){.problem-path ol{grid-template-columns:1fr}.problem-path li{min-height:0;border-left:0;border-top:1px solid var(--line)}.problem-path li:first-child{border-top:0}.capability-index a{grid-template-columns:34px 1fr auto;gap:10px}.capability-index p{display:none}.capability-detail-hero h1{font-size:clamp(42px,14vw,64px)}}

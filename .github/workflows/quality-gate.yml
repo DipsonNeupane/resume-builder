@@ -3,6 +3,9 @@ name: Technical quality gate
 on:
   pull_request:
   workflow_dispatch:
+  schedule:
+    # Recurring drift check only. It uses repository fixtures and never deploys.
+    - cron: '17 9 * * 1'
 
 permissions:
   contents: read
