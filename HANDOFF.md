@@ -1,3 +1,20 @@
+## September 30 — G6/G7 technical and evidence-first acquisition batch (isolated redesign only)
+
+Integrated G6 and G7 on `redesign/shared-route-state`; production, hosted data, push,
+merge, release and deployment were untouched. Tasks 38–44, 47–50 and 54 are complete;
+45, 46 and 56 are validation pending; 51–53 and 55 remain evidence-bounded partial.
+The exhaustive status is 41 complete / 8 validation pending / 6 partial / 9 not started /
+1 blocked. Permanent capability/search URLs, truthful sitemap/schema/social/font/cache
+delivery, seven audience-problem clusters, substantive resources, safe occupation/regional
+hubs, internal links and the search review process share one checked public architecture.
+
+Unified SEO/content checks pass 27/27, the production build and client types pass, static
+performance budgets pass, and serial all-public-route axe/responsive/index/privacy checks
+pass 4/4 after resolving two cross-branch guard/contrast findings. Exact evidence, Claude
+reviews, honest content limits and the preserved parallel-browser saturation result are in
+`docs/redesign/G6_COMPLETION_2026-09-30.md`, `G7_CONTENT_SEARCH_2026-09-30.md` and
+`G6_G7_INTEGRATION_2026-09-30.md`.
+
 ## September 30 — parallel G4/G5 product-core batch (isolated redesign only)
 
 Integrated the independently reviewed `redesign/g4-trust-pricing` and
