@@ -48,7 +48,7 @@ export const guides: Guide[] = [
    { id: 'mistakes', title: 'Mistakes that create work without adding value', html: `<ul class="checklist"><li>Rewriting every sentence when the role is nearly identical</li><li>Changing wording only to chase a keyword count</li><li>Letting tailored files replace the master resume</li><li>Editing before deciding whether the role fits</li><li>Sending an unreviewed AI rewrite that adds claims or changes your voice</li></ul>` },
   ],
   related: ['how-much-resume-should-change', 'master-resume-vs-tailored-resume', 'tailor-resume-to-job-description'],
-  cta: { label: 'See what your resume already demonstrates', href: '/?jobs=1', destination: 'match', note: 'Use Match Analysis as an evidence review—not an interview prediction.' },
+  cta: { label: 'See what your resume already demonstrates', href: '/start/job', destination: 'match', note: 'Use Match Analysis as an evidence review—not an interview prediction.' },
  },
  {
   slug: 'compare-resume-to-job-description',
@@ -84,7 +84,7 @@ export const guides: Guide[] = [
    { id: 'avoid', title: 'Avoid both extremes', html: `<aside class="callout"><strong>Do not reject yourself too quickly</strong><p>Different titles and tools can hide highly transferable work. Compare responsibilities and outcomes, not labels alone.</p></aside><aside class="callout warning"><strong>Do not apply by denial</strong><p>Interest is not evidence. If the role’s essential work is mostly unfamiliar, use it as a development map rather than changing your resume to appear qualified.</p></aside>` },
   ],
   related: ['compare-resume-to-job-description', 'resume-keywords', 'tailor-resume-without-lying'],
-  cta: { label: 'See what your resume demonstrates', href: '/?jobs=1', destination: 'match', note: 'Use evidence beside each requirement to make your own application decision.' },
+  cta: { label: 'See what your resume demonstrates', href: '/start/job', destination: 'match', note: 'Use evidence beside each requirement to make your own application decision.' },
  },
  {
   slug: 'master-resume-vs-tailored-resume',
@@ -102,7 +102,7 @@ export const guides: Guide[] = [
    { id: 'failure', title: 'When one document tries to do both jobs', html: `<p>A “universal” resume often becomes crowded because it tries to support every direction at once. The opposite failure is also common: a tailored resume gets overwritten repeatedly until earlier evidence disappears. Separating the two documents solves both problems—breadth stays in the master; focus belongs in the application version.</p>` },
   ],
   related: ['should-you-tailor-resume-for-every-job', 'how-much-resume-should-change', 'tailor-resume-to-job-description'],
-  cta: { label: 'Build your master resume', href: '/?builder=1', destination: 'builder', note: 'Create the foundation first, then keep job-specific versions separate.' },
+  cta: { label: 'Build your master resume', href: '/start/build', destination: 'builder', note: 'Create the foundation first, then keep job-specific versions separate.' },
  },
  {
   slug: 'how-much-resume-should-change',
@@ -120,7 +120,7 @@ export const guides: Guide[] = [
    { id: 'never', title: 'What should never change', html: `<aside class="callout warning"><strong>The truth boundary</strong><p>Never change a date, title, credential, client type, tool proficiency, team size or result to resemble the posting. If the only way to make a resume look aligned is to alter a fact, the role is revealing a gap—not an editing task.</p></aside>` },
   ],
   related: ['should-you-tailor-resume-for-every-job', 'master-resume-vs-tailored-resume', 'tailor-resume-without-lying'],
-  cta: { label: 'Create a separate job-specific version', href: '/?jobs=1', destination: 'tailoring', note: 'Start from your master and keep the original unchanged.' },
+  cta: { label: 'Create a separate job-specific version', href: '/start/job', destination: 'tailoring', note: 'Start from your master and keep the original unchanged.' },
  },
  {
   slug: 'resume-keywords',

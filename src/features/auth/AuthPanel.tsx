@@ -3,11 +3,12 @@ import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { useSession } from '../../hooks/useSession';
 import { BillingPanel } from '../billing/BillingPanel';
+import { accountUrl, authReturnRoute } from '../../routing/authReturn';
 
 const genericAuthFailure = 'Unable to connect. Check your connection and try again.';
 const rateLimited = 'Too many requests. Please wait a minute before trying again.';
 
-export function AuthPanel({ onBack }: { onBack: () => void }) {
+export function AuthPanel({ onBack, onRecoveryComplete }: { onBack: () => void; onRecoveryComplete: () => void }) {
  const [mode,setMode]=useState<'signup'|'signin'>('signup');
  const [email,setEmail]=useState('');
  const [password,setPassword]=useState('');
@@ -22,6 +23,7 @@ export function AuthPanel({ onBack }: { onBack: () => void }) {
  const [invalidPassword,setInvalidPassword]=useState<'password'|'confirm'|null>(null);
  const passwordInput=useRef<HTMLInputElement>(null);
  const confirmInput=useRef<HTMLInputElement>(null);
+ const emailReturnUrl=(recovery=false)=>{const route=authReturnRoute(new URLSearchParams(window.location.search).get('return_to'));return `${window.location.origin}${route?accountUrl(route,recovery):recovery?'/workspace/account?reset=1':'/workspace/account'}`;};
  function passwordError(field:'password'|'confirm',message:string){
   setInvalidPassword(field);setError(message);
   (field==='password'?passwordInput:confirmInput).current?.focus();
@@ -49,7 +51,7 @@ export function AuthPanel({ onBack }: { onBack: () => void }) {
   setBusy(true);resetFeedback();
   try{
    if(mode==='signup'){
-    const {data,error}=await supabase.auth.signUp({email:email.trim(),password,options:{emailRedirectTo:`${window.location.origin}/?account=1`}});
+    const {data,error}=await supabase.auth.signUp({email:email.trim(),password,options:{emailRedirectTo:emailReturnUrl()}});
     if(error){setError(error.status===429?rateLimited:/password/i.test(error.message)?'Choose a stronger password and try again.':'Unable to create your account. Check your details and try again.');return;}
     if(!data.session)setStatus('confirm-email');
    }else{
@@ -67,7 +69,7 @@ export function AuthPanel({ onBack }: { onBack: () => void }) {
   event.preventDefault();if(!supabase||busy)return;
   setBusy(true);resetFeedback();
   try{
-   const {error}=await supabase.auth.resetPasswordForEmail(email.trim(),{redirectTo:`${window.location.origin}/?account=1&reset=1`});
+   const {error}=await supabase.auth.resetPasswordForEmail(email.trim(),{redirectTo:emailReturnUrl(true)});
    if(error){setError(error.status===429?rateLimited:'Unable to send a password-reset link. Check the address and try again.');return;}
    setStatus('reset-sent');
   }catch{setError(genericAuthFailure);}finally{setBusy(false);}
@@ -82,7 +84,7 @@ export function AuthPanel({ onBack }: { onBack: () => void }) {
    const {error}=await supabase.auth.updateUser({password});
    if(error){setError('This password-reset link is invalid or has expired. Request a new one from the sign-in page.');return;}
    const url=new URL(window.location.href);url.searchParams.delete('reset');url.searchParams.delete('code');window.history.replaceState(null,'',`${url.pathname}${url.search}${url.hash}`);
-   setPassword('');setConfirmPassword('');setRecovery(false);setStatus('password-updated');
+   setPassword('');setConfirmPassword('');setRecovery(false);setStatus('password-updated');onRecoveryComplete();
   }catch{setError(genericAuthFailure);}finally{setBusy(false);}
  }
 

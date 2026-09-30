@@ -27,8 +27,8 @@ test('mobile navigation has sequential keyboard access, Escape, and destination 
  await page.keyboard.press(tab);
  await expect(page.getByRole('link', { name: 'Templates', exact: true })).toBeFocused();
  await page.keyboard.press('Enter');
- await expect(toggle).toHaveAttribute('aria-expanded', 'false');
- await expect(page.locator('#templates')).toBeFocused();
+ await expect(page).toHaveURL(/\/templates\/$/);
+ await expect(page.getByRole('heading', { level: 1, name: 'Choose the structure after your story.' })).toBeVisible();
  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
@@ -110,8 +110,8 @@ test('delayed lazy route focuses only its loaded heading and cached routes still
   await page.getByRole('button', { name: 'Back to home', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Find the roles worth your effort.', exact: true })).toBeFocused();
   await page.getByRole('button', { name: 'Find opportunities', exact: true }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Begin with the role you are considering.' })).toBeFocused();
-  await page.getByRole('button', { name: 'Find jobs', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Start with the role you are considering.' })).toBeFocused();
+  await page.getByRole('button', { name: 'Search live listings instead', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Find jobs' })).toBeFocused();
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Find the roles worth your effort.', exact: true })).toBeFocused();

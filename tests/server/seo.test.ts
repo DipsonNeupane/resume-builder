@@ -15,6 +15,7 @@ import browserConfig from '../../playwright.config';
 import { initialPage, isPublicAttributionLocation, isPublicLocation, isPublicPath, noindex, productionOrigin, publicPages, requestSeo, websiteSchema } from '../../src/seo/policy';
 import { guides } from '../../src/content/guides';
 import { publicTools } from '../../src/content/tools';
+import { library } from '../../template-library/registry';
 const read = (file: string) => readFileSync(file, 'utf8');
 const policy = (path: string, production = true) => requestSeo(new URL(path, productionOrigin), production);
 const publicHtmlFile = (publicPath: string) => publicPath === '/' ? 'index.html' : publicPath.endsWith('/') ? `public${publicPath}index.html` : `public${publicPath}`;
@@ -217,7 +218,20 @@ test('favicon, app and social metadata refer to real assets without claiming an 
   const png = readFileSync(`public/${file}`); assert.equal(png.toString('ascii', 1, 4), 'PNG');
   assert.equal(png.readUInt32BE(16), width); assert.equal(png.readUInt32BE(20), height);
  }
- for (const asset of ['/favicon.ico', '/favicon.svg', '/favicon-192.png', '/favicon-512.png', '/seo-guard.js', '/content-analytics.js', '/resources.css', '/tools.css', '/tools/analysis.js', '/tools/public-tools.js', '/tools/tool-analytics.js', '/social-card.png', '/robots.txt', '/sitemap.xml']) assert.equal(policy(asset).status, 0);
+ for (const asset of ['/favicon.ico', '/favicon.svg', '/favicon-192.png', '/favicon-512.png', '/seo-guard.js', '/content-analytics.js', '/resources.css', '/tools.css', '/tools/analysis.js', '/tools/public-tools.js', '/tools/tool-analytics.js', '/templates.css', '/templates-filter.js', '/social-card.png', '/robots.txt', '/sitemap.xml']) assert.equal(policy(asset).status, 0);
+});
+
+test('template routes mirror the verified registry and separate preview from purchase',()=>{
+ const detailPaths=Object.keys(publicPages).filter(path=>/^\/templates\/[^/]+\/$/.test(path));
+ assert.equal(detailPaths.length,library.length);
+ for(const item of library){
+  const path=`/templates/${item.id}/`;assert.ok(detailPaths.includes(path));
+  const html=read(publicHtmlFile(path));
+  assert.match(html,new RegExp(`>${item.tier==='free'?'Free':'Premium'}<`));
+  assert.ok(html.includes(`href="/start/build?template=${item.id}"`));
+  assert.match(html,/Preview first|Preview with my resume/);assert.doesNotMatch(html,/<button[^>]*>[^<]*(?:Buy|Purchase|Checkout)/i);
+ }
+ assert.equal(library.filter(item=>item.tier==='free').length,7);assert.equal(library.filter(item=>item.tier==='premium').length,20);
 });
 
 test('free tools are complete, private-by-design and distinct from paid Match', () => {
@@ -268,7 +282,7 @@ test('public pages have crawlable links connecting all three surfaces', () => {
  for (const path of Object.keys(publicPages).filter(path => path.startsWith('/resources/') && path !== '/resources/')) assert.ok(hub.includes(`href="${path}"`));
  for (const path of Object.keys(publicPages).filter(path => path.startsWith('/resources/'))) {
   const html = read(publicHtmlFile(path));
-  assert.match(html, /href="\/(?:\?builder=1|\?jobs=1|#templates|#pricing)/);
+  assert.match(html, /href="\/start\/(?:build|job)/);
   assert.ok(html.includes('href="/resources/"'));
  }
  const toolHub = read('public/tools/index.html');
@@ -283,7 +297,7 @@ test('public pages have crawlable links connecting all three surfaces', () => {
 });
 
 test('every internal link, script, stylesheet and image in public HTML resolves', () => {
- const runtimePaths = new Set(['/src/main.tsx', '/_vercel/insights/script.js', '/start/sample']);
+ const runtimePaths = new Set(['/src/main.tsx', '/_vercel/insights/script.js', '/start/sample', '/start/build', '/start/job', '/workspace/pro']);
  for (const publicPath of Object.keys(publicPages)) {
   const html = read(publicHtmlFile(publicPath));
   const references = [...html.matchAll(/\b(?:href|src)="([^"]+)"/g)].map(match => match[1]);

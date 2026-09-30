@@ -49,7 +49,7 @@ export const publicTools: PublicTool[] = [
     inputNote: 'Paste plain text. The free check reviews up to 12 extracted requirements and stays intentionally shallower than full ResumeStride Match.',
     submitLabel: 'Check the evidence',
     resultTitle: 'Requirement-to-evidence review',
-    cta: { label: 'Continue with full ResumeStride Match', href: '/?jobs=1', destination: 'full_match', note: 'Save the role, keep your master resume and review the fuller account-based Match workflow.' },
+    cta: { label: 'Continue with full ResumeStride Match', href: '/start/job', destination: 'full_match', note: 'Keep the job context while you import or build your master resume, then review the fuller account-based Match workflow.' },
     content: [
       { title: 'What this comparison does', html: '<p>It extracts a limited set of requirements from the posting and looks for supporting wording in the resume. Each result keeps the job source and, where found, a resume excerpt together so you can review the connection.</p>' },
       { title: 'How to read the labels', html: '<ul><li><strong>Clearly demonstrated:</strong> the resume contains direct, substantial wording related to the requirement.</li><li><strong>Worth reviewing:</strong> related wording exists, but the evidence may be incomplete or indirect.</li><li><strong>Not demonstrated:</strong> this limited check did not find support. That is an unknown—not proof you lack the qualification.</li></ul>' },
@@ -69,7 +69,7 @@ export const publicTools: PublicTool[] = [
     inputNote: 'Use the bullet as it appears now. Maximum 600 characters.',
     submitLabel: 'Review this bullet',
     resultTitle: 'Bullet quality review',
-    cta: { label: 'Build or edit my resume', href: '/?builder=1', destination: 'builder', note: 'Apply the stronger structure in your master resume and keep every claim grounded in your experience.' },
+    cta: { label: 'Build or edit my resume', href: '/start/build', destination: 'builder', note: 'Apply the stronger structure in your master resume and keep every claim grounded in your experience.' },
     content: [
       { title: 'What the checker reviews', html: '<p>The review looks for a clear action, a specific subject, useful scope or context, an evidence-based result, readable length and vague filler. Each dimension is explained separately instead of being hidden inside one arbitrary score.</p>' },
       { title: 'What a strong bullet needs', html: '<p>A useful bullet usually tells a reader what you did, what the work involved and why it mattered. Not every line needs a number. A verifiable qualitative result is better than manufactured precision.</p>' },

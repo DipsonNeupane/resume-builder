@@ -11,14 +11,13 @@ type Props = {
  onContinue: () => void;
  onJobs: () => void;
  onAccount: () => void;
- onHomeSection: (sectionId: 'templates' | 'pricing') => void;
 };
 
 function plainPrimaryClick(event: MouseEvent<HTMLAnchorElement>): boolean {
  return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
 }
 
-export function PublicNavigation({ authAvailable, signedIn, profileName, resumeReady, onHome, onContinue, onJobs, onAccount, onHomeSection }: Props) {
+export function PublicNavigation({ authAvailable, signedIn, profileName, resumeReady, onHome, onContinue, onJobs, onAccount }: Props) {
  const [open, setOpen] = useState(false);
  const toggle = useRef<HTMLButtonElement>(null);
 
@@ -39,12 +38,6 @@ export function PublicNavigation({ authAvailable, signedIn, profileName, resumeR
   event.preventDefault();
   action();
  };
- const sectionClick = (section: 'templates' | 'pricing') => (event: MouseEvent<HTMLAnchorElement>) => {
-  setOpen(false);
-  if (!plainPrimaryClick(event)) return;
-  event.preventDefault();
-  onHomeSection(section);
- };
  const continuing = signedIn && resumeReady;
 
  return <header className="site-header public-header">
@@ -54,9 +47,9 @@ export function PublicNavigation({ authAvailable, signedIn, profileName, resumeR
    <a href="/workspace/resume" onClick={event => routeClick(event, onContinue)}>Resume Builder</a>
    <a href="/start/job" onClick={event => routeClick(event, onJobs)}>Jobs &amp; Match</a>
    <a href={publicDestinations.tools}>Free Tools</a>
-   <a href={publicDestinations.templates} onClick={sectionClick('templates')}>Templates</a>
+   <a href={publicDestinations.templates} onClick={() => setOpen(false)}>Templates</a>
    <a href={publicDestinations.resources}>Resources</a>
-   <a href={publicDestinations.pricing} onClick={sectionClick('pricing')}>Pricing</a>
+   <a href={publicDestinations.pricing} onClick={() => setOpen(false)}>Pricing</a>
    {authAvailable && !signedIn && <button className="nav-account" onClick={() => { setOpen(false); onAccount(); }}>Sign in / Sign up</button>}
   </nav>
   <div className="site-header-actions">

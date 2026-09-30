@@ -1,6 +1,8 @@
 import { lazy, Suspense } from 'react';
-import { FileText, Search, Upload } from 'lucide-react';
+import { FileText, Upload } from 'lucide-react';
 import type { EntryJourney } from '../../routing/routes';
+import type { JobCapturePayload } from '../../services/extensionImport';
+import { JobFirstStart } from './JobFirstStart';
 
 const FictionalSample = lazy(() => import('./FictionalSample').then(module => ({ default: module.FictionalSample })));
 
@@ -10,9 +12,14 @@ type Props = {
  onStartBuilding: () => void;
  onUseRealJob: () => void;
  onUseSample: () => void;
+ resumeReady: boolean;
+ pendingJob: JobCapturePayload | null;
+ onPreserveJob: (capture: JobCapturePayload, next: 'import' | 'build') => void;
+ onContinueJob: (capture: JobCapturePayload) => void;
+ onRequirementsReviewed?: () => void;
 };
 
-export function JourneyStart({ journey, onChooseFile, onStartBuilding, onUseRealJob, onUseSample }: Props) {
+export function JourneyStart({ journey, onChooseFile, onStartBuilding, onUseRealJob, onUseSample, resumeReady, pendingJob, onPreserveJob, onContinueJob, onRequirementsReviewed }: Props) {
  if (journey === 'import_first') return <main id="main-content" className="journey-start" aria-labelledby="import-start-title">
   <div className="journey-start-icon"><Upload aria-hidden="true" /></div>
   <div><span className="section-label">Import / Step 1 of 2</span><h1 id="import-start-title">Bring in the resume you already have.</h1>
@@ -31,14 +38,7 @@ export function JourneyStart({ journey, onChooseFile, onStartBuilding, onUseReal
   </div>
  </main>;
 
- if (journey === 'job_first') return <main id="main-content" className="journey-start" aria-labelledby="job-start-title">
-  <div className="journey-start-icon"><Search aria-hidden="true" /></div>
-  <div><span className="section-label">Job first / Find and preserve the context</span><h1 id="job-start-title">Begin with the role you are considering.</h1>
-   <p>Search for a real role below, or review a job captured with the ResumeStride extension. Saving a job requires an account and keeps that snapshot separate from your resume while you import or build your master.</p>
-   <ul><li>A search result is not retained just because you viewed it—save it explicitly.</li><li>Match explains requirement-level evidence; it does not predict hiring.</li><li>A later job-specific resume is a separate version. Your master stays unchanged.</li></ul>
-   <div className="journey-start-actions"><button className="button" onClick={onUseRealJob}>Find jobs</button><button className="button outline" onClick={onUseSample}>See a fictional example</button></div>
-  </div>
- </main>;
+ if (journey === 'job_first') return <JobFirstStart initialJob={pendingJob} resumeReady={resumeReady} onPreserve={onPreserveJob} onContinue={onContinueJob} onFindJobs={onUseRealJob} onUseSample={onUseSample} onRequirementsReviewed={onRequirementsReviewed}/>;
 
  return <Suspense fallback={<main id="main-content" className="route-loading-page"><h1 className="visually-hidden">Fictional sample</h1><p role="status">Loading fictional sample…</p></main>}>
   <FictionalSample onUseResume={onChooseFile} onUseJobDescription={() => { window.location.assign('/tools/resume-job-match/'); }} />

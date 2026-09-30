@@ -20,6 +20,11 @@ test('every public page is quiet, accessible and free of horizontal overflow', a
     contentType: 'text/javascript',
     body: '',
   }));
+  await page.route('**/_vercel/speed-insights/script.js', route => route.fulfill({
+    status: 204,
+    contentType: 'text/javascript',
+    body: '',
+  }));
 
   page.on('console', message => {
     if (message.type() === 'error') failures.push(`${activePath}: console ${message.text()}`);

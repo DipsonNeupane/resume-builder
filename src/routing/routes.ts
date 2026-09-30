@@ -125,6 +125,6 @@ export const publicDestinations = {
  home: '/',
  tools: '/tools/',
  resources: '/resources/',
- templates: '/#templates',
- pricing: '/#pricing',
+ templates: '/templates/',
+ pricing: '/pricing/',
 } as const;

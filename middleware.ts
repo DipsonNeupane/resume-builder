@@ -2,6 +2,11 @@
 // its own runtime unit, so imports from the application source tree can be absent even
 // though they resolve during local TypeScript execution.
 export const productionOrigin = 'https://resumestride.com';
+const templateNames = {
+ modern:'Modern',classic:'Classic',minimal:'Minimal',compact:'Compact',bold:'Bold',executive:'Executive',ledger:'Ledger',
+ boardroom:'Boardroom',mandate:'Mandate',stackline:'Stackline',kernel:'Kernel',casebook:'Casebook',atelier:'Atelier',scholar:'Scholar',bench:'Bench',charter:'Charter',rounds:'Rounds',meridian:'Meridian',crossover:'Crossover',almanac:'Almanac',roster:'Roster',primer:'Primer',pyramid:'Pyramid',quartile:'Quartile',waypoint:'Waypoint',cadence:'Cadence',plainsong:'Plainsong',
+} as const;
+const templatePages = Object.fromEntries(Object.entries(templateNames).map(([id,name])=>[`/templates/${id}/`,{title:`${name} resume template | ResumeStride`,description:`Review the verified structure, typography and intended use of the ${name} resume template, then preview it with your own content before choosing access.`}]));
 export const publicPages = {
  '/': { title: 'ResumeStride — Resume Builder, Job Match & Tailoring', description: 'Build a master resume, find relevant jobs, compare your evidence with each role, and create truthful job-specific versions without changing your original.' },
  '/resources/': { title: 'Resume resources: evidence-first job search guides | ResumeStride', description: 'Practical, evidence-first resume guides for comparing roles, deciding whether to apply and tailoring your resume without making things up.' },
@@ -17,8 +22,11 @@ export const publicPages = {
  '/tools/job-requirement-extractor/': { title: 'Free job requirement extractor | ResumeStride', description: 'Extract required, preferred and other signals from a job description with source text you can verify. Free, private and no signup required.' },
  '/tools/resume-job-match/': { title: 'Compare your resume to a job description free | ResumeStride', description: 'Compare resume evidence with job requirements—clearly demonstrated, worth reviewing or not demonstrated. No ATS score, signup or upload.' },
  '/tools/resume-bullet-checker/': { title: 'Free resume bullet point checker | ResumeStride', description: 'Check one resume bullet for action, specificity, context, evidence, readability and filler—without an ATS score or invented metrics.' },
+ '/templates/': { title: 'Resume templates: preview before choosing | ResumeStride', description: 'Browse all ResumeStride resume templates by verified structure, density and access tier. Preview any design with your own content before choosing it.' },
+ '/pricing/': { title: 'ResumeStride pricing and template access', description: 'Compare ResumeStride Free, individual Premium template and Pro access with clear renewal, preview and download boundaries.' },
  '/privacy.html': { title: 'Privacy notice | ResumeStride', description: 'Read how ResumeStride handles resume drafts, account information, document uploads, payments and optional AI processing, and how to contact support.' },
  '/terms.html': { title: 'Terms and refunds | ResumeStride', description: 'Read the ResumeStride terms of service, Pro purchase and renewal conditions, refund information, usage limits and support details.' },
+ ...templatePages,
 } as const;
 export const publicAnchors = new Set(['', '#how-it-works', '#templates', '#pricing', '#main-content']);
 export type AppPage = 'home' | 'builder' | 'account' | 'pro' | 'jobs';
@@ -39,7 +47,7 @@ export function isPublicLocation(url: URL): boolean {
  return isPublicPath(url.pathname) && !url.search && isPublicAnchor(url.pathname, url.hash);
 }
 function isPublicAnchor(path: string, hash: string): boolean {
- return path.startsWith('/resources/') || path.startsWith('/tools/') ? hash === '' || /^#[a-z0-9]+(?:-[a-z0-9]+)*$/.test(hash) : publicAnchors.has(hash);
+ return path.startsWith('/resources/') || path.startsWith('/tools/') || path.startsWith('/templates/') || path==='/pricing/' ? hash === '' || /^#[a-z0-9]+(?:-[a-z0-9]+)*$/.test(hash) : publicAnchors.has(hash);
 }
 const campaignKeys = new Set(['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term']);
 const campaignToken = /^[A-Za-z0-9][A-Za-z0-9._~-]{0,79}$/;
@@ -82,7 +90,7 @@ export function requestSeo(url: URL, production: boolean) {
   return { status: 308, headers: { ...headers, Location: `${productionOrigin}${url.pathname === '/index.html' ? '/' : url.pathname}${url.search}` }, body: '' };
  }
  if (url.pathname === '/index.html') return { status: 308, headers: { ...headers, Location: `/${url.search}` }, body: '' };
- const asset = ['/robots.txt', '/sitemap.xml', '/favicon.ico', '/favicon.svg', '/favicon.png', '/favicon-192.png', '/favicon-512.png', '/apple-touch-icon.png', '/social-card.png', '/site.webmanifest', '/seo-guard.js', '/resources.css', '/content-analytics.js', '/tools.css', '/tools/analysis.js', '/tools/public-tools.js', '/tools/tool-analytics.js'].includes(url.pathname);
+ const asset = ['/robots.txt', '/sitemap.xml', '/favicon.ico', '/favicon.svg', '/favicon.png', '/favicon-192.png', '/favicon-512.png', '/apple-touch-icon.png', '/social-card.png', '/site.webmanifest', '/seo-guard.js', '/resources.css', '/content-analytics.js', '/tools.css', '/tools/analysis.js', '/tools/public-tools.js', '/tools/tool-analytics.js', '/templates.css', '/templates-filter.js'].includes(url.pathname);
  const infrastructure = /^\/(?:api(?:\/|$)|assets\/|_vercel\/|\.well-known\/)/.test(url.pathname);
  // The extension fixture remains reachable for local installed-extension tests,
  // but must never be an indexable job page.

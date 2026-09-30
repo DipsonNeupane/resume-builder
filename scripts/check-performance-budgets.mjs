@@ -24,6 +24,8 @@ budget('Homepage initial CSS', initialStyles, 210 * 1024, 38 * 1024);
 
 const toolFiles = ['analysis.js', 'public-tools.js', 'tool-analytics.js'].map(file => join(root, 'public/tools', file));
 budget('Public matcher JavaScript', toolFiles, 30 * 1024, 10 * 1024);
+budget('Template gallery JavaScript', [join(root, 'public/templates-filter.js')], 4 * 1024, 2 * 1024);
+budget('Template gallery CSS', [join(root, 'public/templates.css')], 16 * 1024, 4 * 1024);
 
 const assets = readdirSync(join(root, 'dist/assets'));
 for (const feature of ['JobsPanel-', 'FictionalSample-', 'GeneratedPdfControls-', 'pdfImport-', 'docx-']) {

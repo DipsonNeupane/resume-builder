@@ -58,7 +58,7 @@ export async function offerCheckout(request: Request, env: NodeJS.ProcessEnv = p
       mode: 'subscription', customer, line_items: [{ price: offer.priceId, quantity: 1 }],
       client_reference_id: body.requestId, metadata: { checkout_id: body.requestId, offer_key: offer.key },
       subscription_data: { metadata: { offer_key: offer.key } },
-      success_url: `${config.origin}/?account=1&checkout=success`, cancel_url: `${config.origin}/?account=1&checkout=cancelled`,
+      success_url: `${config.origin}/?account=1&checkout=success`, cancel_url: `${config.origin}${offer.kind === 'template' ? '/workspace/resume' : '/workspace/pro'}?checkout=cancelled`,
       allow_promotion_codes: false,
     }, { idempotencyKey: `offer:${owner}:${body.requestId}` })
     if (!session.url || session.livemode !== config.live || new URL(session.url).origin !== 'https://checkout.stripe.com') throw new Error('Unexpected checkout response')
