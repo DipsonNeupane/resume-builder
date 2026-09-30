@@ -72,8 +72,17 @@ async function saveCloudResumeInternal(ownerId: string, resume: Resume, expected
   return parsed;
 }
 
+async function deleteCloudResumeInternal(ownerId: string, expectedRevision: number): Promise<boolean> {
+  if (!supabase) throw new Error('Account storage is not available.');
+  const { data, error } = await supabase.from('resumes').delete().eq('owner_id', ownerId).eq('revision', expectedRevision).select('id');
+  if (error) throw error;
+  return Array.isArray(data) && data.length === 1;
+}
+
 export const loadCloudResume: typeof loadCloudResumeInternal = (...args) => observeBrowserOperation('cloud', 'cloud_load', () => loadCloudResumeInternal(...args));
 
 export const createCloudResume: typeof createCloudResumeInternal = (...args) => observeBrowserOperation('cloud', 'cloud_create', () => createCloudResumeInternal(...args));
 
 export const saveCloudResume: typeof saveCloudResumeInternal = (...args) => observeBrowserOperation('cloud', 'cloud_save', () => saveCloudResumeInternal(...args));
+
+export const deleteCloudResume: typeof deleteCloudResumeInternal = (...args) => observeBrowserOperation('cloud', 'cloud_delete', () => deleteCloudResumeInternal(...args));

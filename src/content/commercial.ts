@@ -41,6 +41,10 @@ export const commercialPlans: readonly CommercialPlan[] = [
 
 export const commercialPolicy = {
  territory: 'New paid subscriptions are currently available only in the United States.',
+ currency: 'All current subscription prices are presented and charged in United States dollars (USD). No local-currency price is promised.',
+ paymentMethods: 'Stripe Checkout shows only payment methods enabled for the configured account and compatible with the buyer, device, USD price and subscription. ResumeStride does not promise a particular method before checkout displays it.',
+ taxesAndInvoices: 'Tax calculation, tax-inclusive pricing and invoice availability are not promised. Any tax, conversion or receipt detail must be reviewed in Stripe Checkout before payment; provider configuration requires release validation.',
+ refunds: 'Purchases are generally non-refundable except where mandatory consumer, unauthorized-charge, duplicate-charge or non-supply rights apply. The terms and refund policy control.',
  renewal: 'Paid subscriptions renew monthly until cancelled.',
  cancellation: 'Cancellation stops future renewal. Paid access continues through the current billing period.',
  templateAfterCancellation: 'After an individual Premium-template subscription expires, the design remains available to preview, but new downloads in that Premium design require active access. Resume content is not deleted, and files already downloaded remain yours.',

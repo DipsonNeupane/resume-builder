@@ -12,6 +12,7 @@ import { safeJobUrl } from './url.ts'
 import { analysisView, analyzeJob, matchHash, parseClarifications, parseFullMatchAnalysis, parseResumeEvidence, type MatchResult, type ResumeEvidence } from './match.ts'
 import type { Confidence, EmploymentType, FieldProvenance, JobLocation, NormalizedJob, SalaryNormalized, Workplace } from './types.ts'
 import { parseJobWorkflow, parseJobWorkflowInput } from './workflow.ts'
+import { OUTCOME_CONSENT_VERSION, parseOutcomeReport, parseOutcomeReportInput } from './outcomes.ts'
 
 export const FREE_SAVED_JOB_LIMIT = 3
 /** Effectively unlimited for normal use while retaining a hard abuse/storage bound. */
@@ -215,7 +216,7 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
     if (typeof action !== 'string') throw new HttpError(400, 'Saved-job action is required')
     if (action === 'reanalyze' || action === 'clarification' || action === 'record_evidence_review') setRequestFeature('match')
     if (action === 'capture_save') setRequestFeature('extension')
-    if (['create_job_resume', 'get_job_resume', 'update_job_resume', 'reset_job_resume', 'update_workflow'].includes(action)) setRequestFeature('cloud')
+    if (['create_job_resume', 'get_job_resume', 'update_job_resume', 'reset_job_resume', 'update_workflow', 'report_outcome'].includes(action)) setRequestFeature('cloud')
     const db = deps.serviceDatabase(env)
 
     if (action === 'record_evidence_review') {
@@ -246,7 +247,32 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
       if (!workflows.error && Array.isArray(workflows.data)) {
         try { jobWorkflows = workflows.data.map(parseJobWorkflow) } catch { jobWorkflows = null }
       }
-      return json(200, { ...shapeAccountSnapshot(result.data), jobResumeVersions: versions.data, jobWorkflows })
+      const outcomes = await db.rpc('product_outcome_reports_list', { p_owner: owner })
+      let outcomeReports: ReturnType<typeof parseOutcomeReport>[] | null = null
+      if (!outcomes.error && Array.isArray(outcomes.data)) {
+        try { outcomeReports = outcomes.data.map(parseOutcomeReport) } catch { outcomeReports = null }
+      }
+      return json(200, { ...shapeAccountSnapshot(result.data), jobResumeVersions: versions.data, jobWorkflows, outcomeReports })
+    }
+    if (action === 'report_outcome') {
+      if (typeof body.savedJobId !== 'string' || !SAVED_JOB_ID.test(body.savedJobId)) throw new HttpError(400, 'Saved job is invalid')
+      const report = parseOutcomeReportInput(body.report)
+      const result = await db.rpc('product_outcome_report', {
+        p_owner: owner,
+        p_saved_job: body.savedJobId,
+        p_outcome: report.outcome,
+        p_occurred_on: report.occurredOn,
+        p_time_saved_bucket: report.timeSavedBucket,
+        p_clarity_rating: report.clarityRating,
+        p_confidence_rating: report.confidenceRating,
+        p_consent: true,
+        p_consent_version: OUTCOME_CONSENT_VERSION,
+      })
+      if (result.error) {
+        if (result.error.message.includes('Saved job not found')) throw new HttpError(404, 'This saved job is no longer available.')
+        throw new HttpError(503, 'Unable to save this voluntary outcome')
+      }
+      return json(200, { report: parseOutcomeReport(result.data) })
     }
     if (action === 'update_workflow') {
       if (typeof body.savedJobId !== 'string' || !SAVED_JOB_ID.test(body.savedJobId)) throw new HttpError(400, 'Saved job is invalid')

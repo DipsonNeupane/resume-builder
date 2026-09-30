@@ -4056,3 +4056,34 @@ endless-loader, transient-version retry, local-draft precedence, focus/live-regi
 modulepreload, version-to-version deadlock, active-local-draft blocker and missing-gate
 findings were resolved and reverified. No live provider, push, merge, deployment,
 production branch or production setting was touched.
+
+## September 30 — Group 8 pre-launch foundation
+
+The isolated redesign now has a permanent public Match methodology that agrees with the
+deterministic saved/public analyzers; a versioned, explicit-consent, owner-scoped and
+content-free voluntary outcome store plus workspace form; and a self-service deletion
+path for the account-saved master resume and retained revisions. Observed conversions
+remain separate from self-reports, report corrections do not inflate sample rows, and no
+interview/offer causality or statistics are claimed.
+
+Paid access remains accurately U.S.-only and USD-only. Pricing now states that compatible
+methods are whatever configured Stripe Checkout actually displays and does not promise
+automatic tax, tax-inclusive pricing or invoices before provider validation. Interface
+localization has an English-only explicit allowlist and formatting boundary with no IP,
+billing-country or browser-language inference; resume language, editable headings,
+Unicode and LTR/RTL remain independent document settings. No translation, APWICO
+identifier, advisory participant, partnership, distribution program or original research
+was invented.
+
+Tasks 57, 62 and 65 are COMPLETE. Tasks 63–64 are implementation-complete and
+VALIDATION PENDING on the later hosted/provider migration. Tasks 58–61 remain explicit
+post-launch work. Exact audits, verification and the completed read-only Claude review
+are in `docs/redesign/G8_PRELAUNCH_2026-09-30.md`. Production, provider configuration,
+push, merge, release and deployment remain untouched.
+
+Final G8 verification passed: database policies including 19/19 outcome assertions;
+SEO 30/30; focused G8/jobs/observability 36/36; server and client TypeScript;
+production bundle; static performance budgets; and focused Chromium accessibility,
+canonical/indexing and 320px overflow checks. The build identified and resolved one
+closed-vocabulary diagnostic omission for account-master deletion. The remaining Task
+63 and 64 work is hosted/provider validation, not incomplete implementation.

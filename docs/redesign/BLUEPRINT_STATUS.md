@@ -14,10 +14,10 @@ Status date: 2026-09-30. This ledger describes only the isolated redesign branch
 
 Every task is included exactly once:
 
-- **COMPLETE (42):** 2, 3, 6–18, 23–36, 38–44, 47–50, 54, 55.
-- **VALIDATION PENDING (11):** 5, 19–22, 45, 46, 51–53, 56.
+- **COMPLETE (45):** 2, 3, 6–18, 23–36, 38–44, 47–50, 54, 55, 57, 62, 65.
+- **VALIDATION PENDING (13):** 5, 19–22, 45, 46, 51–53, 56, 63, 64.
 - **PARTIAL (2):** 1, 4.
-- **NOT STARTED (9):** 57–65.
+- **NOT STARTED (4):** 58–61.
 - **BLOCKED (1):** 37.
 
 Production analytics, human/device checks and post-release field evidence are represented as **VALIDATION PENDING**, not Partial or Blocked. Task 37 alone is blocked because repository truth says the extension is unpublished and contains no verified public install URL/version. The first occupation and regional sets are implementation-complete but await internal-demand and qualified local validation. Group 8 has not started.
@@ -33,7 +33,7 @@ Production analytics, human/device checks and post-release field evidence are re
 | 5. Jobs, Match and application workflow | Mixed | Tasks 31–36 are complete with server/database and public/private browser coverage. Task 37 is blocked on verified public extension publication facts. |
 | 6. Technical SEO, accessibility and performance | Validation pending | Tasks 38–44 are complete. Tasks 45–46 are implementation-complete and automatically checked; physical low-powered devices, assistive technology and post-release field data remain. |
 | 7. Content and search acquisition | Validation pending | Tasks 47–50, 54 and 55 are complete. Tasks 51–53 and 56 are implementation-complete; internal-demand, qualified local and post-release search validation remain. |
-| 8. Growth, research and global expansion | NOT STARTED | Work remains intentionally dependent on validated earlier outcomes. |
+| 8. Growth, research and global expansion | Pre-launch ready; validation pending | Tasks 57, 62 and 65 are complete. Cloud and U.S.-only paid readiness (63–64) are implementation-complete and await hosted/provider release validation. Tasks 58–61 are explicitly post-launch and contain no fabricated validation. |
 
 ## Current G2/G3/G6 task truth
 
@@ -63,5 +63,11 @@ Production analytics, human/device checks and post-release field evidence are re
 | 54. Internal linking | COMPLETE | Cluster membership, related-guide edges, contextual CTAs and research-hub links are source-driven and automatically checked for orphans. |
 | 55. Factual comparisons | COMPLETE | Five named comparisons use dated official sources, visible locale/currency or explicit unknowns, balanced strengths/boundaries, symmetric ResumeStride facts and build/quality-gate expiry enforcement. |
 | 56. Search review process | VALIDATION PENDING | The privacy-safe review process and zero-data dry run are complete; meaningful Search Console, index, field-performance and conversion results require a future release. |
+| 57. Match methodology | COMPLETE | Permanent public methodology matches deterministic Match behavior, clarification semantics, limitations, AI boundaries and user decision authority. |
+| 58–61. Advisory, partnership, distribution and original research | NOT STARTED | Explicit post-launch growth/validation work; no participants, partners, distribution programs, samples or findings were invented. |
+| 62. Voluntary outcomes | COMPLETE | Explicit-consent, owner-scoped, content-free self-reports remain distinct from observed conversions and retain provenance/methodology/sample capability without causal claims. |
+| 63. Cloud-saving validation | VALIDATION PENDING | Consent, ownership, revision conflicts, account switching, interrupted saves, limits, local/cloud state, backup and self-service master deletion are implemented; hosted/provider recovery and isolation remain. |
+| 64. Paid availability | VALIDATION PENDING | New subscriptions are accurately limited to U.S./USD with renewal/refund/method/tax/invoice boundaries; live Stripe settings require G9/release validation. |
+| 65. Localization readiness | COMPLETE | English-only explicit locale architecture, locale formatting helpers, no IP inference, protected identifiers and existing Unicode/RTL/text-expansion foundations are in place; actual translated journeys remain post-launch. |
 
-Detailed evidence, architecture, commands and review findings are recorded in `G6_COMPLETION_2026-09-30.md`, `G7_CONTENT_SEARCH_2026-09-30.md`, `G7_EVIDENCE_CLOSURE_2026-09-30.md`, `G6_G7_INTEGRATION_2026-09-30.md`, `SEARCH_PERFORMANCE_REVIEW.md` and the earlier batch records.
+Detailed evidence, architecture, commands and review findings are recorded in `G8_PRELAUNCH_2026-09-30.md`, `G6_COMPLETION_2026-09-30.md`, `G7_CONTENT_SEARCH_2026-09-30.md`, `G7_EVIDENCE_CLOSURE_2026-09-30.md`, `G6_G7_INTEGRATION_2026-09-30.md`, `SEARCH_PERFORMANCE_REVIEW.md` and the earlier batch records.

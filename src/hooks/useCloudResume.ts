@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { contentLength, type Resume } from '../model';
-import { createCloudResume, loadCloudResume, saveCloudResume, ResumeConflictError, type CloudResume } from '../services/resumes';
+import { createCloudResume, deleteCloudResume, loadCloudResume, saveCloudResume, ResumeConflictError, type CloudResume } from '../services/resumes';
 
 // Wrapping the server row in an object (rather than using `CloudResume | null`
 // directly) makes a real "the server resume is gone" conflict distinguishable
@@ -23,6 +23,7 @@ export type CloudResumeApi = {
  declineConsent: () => void;
  useServerVersion: () => void;
  keepMyEdits: () => void;
+ removeFromAccount: () => void;
  // Mirrors VITE_CLOUD_STORAGE_ENABLED so callers (AuthPanel's copy, tests)
  // can tell "cloud save is off" apart from "cloud save is on but idle"
  // without re-reading import.meta.env themselves.
@@ -360,6 +361,29 @@ export function useCloudResume(
   }
  };
 
+ const removeFromAccount = () => {
+  if (paused || !user || !linked || revision === null || savingRef.current || dirty || conflict) {
+   notify(dirty ? 'Wait for your latest account save to finish before removing the account copy.' : 'Resolve the account resume state before removing it.');
+   return;
+  }
+  const epoch=sessionEpoch.current;
+  const deletingRevision=revision;
+  savingRef.current=true;setSavingCloud(true);
+  deleteCloudResume(user.id,deletingRevision).then(deleted=>{
+   if(sessionEpoch.current!==epoch)return;
+   savingRef.current=false;setSavingCloud(false);
+   if(!deleted){setConflict({server:null});notify('The account resume changed or was removed elsewhere. Review the account state before trying again.');return;}
+   const guest=restoreGuestDraft();
+   setLinked(false);setRevision(null);setConflict(null);setConsentDeclined(true);
+   setResume(guest);setDirty(false);
+   notify('The account-saved master resume and its retained revisions were deleted. Your earlier local draft on this device is open again.');
+  }).catch(()=>{
+   if(sessionEpoch.current!==epoch)return;
+   savingRef.current=false;setSavingCloud(false);
+   notify('Could not remove the account-saved resume. Nothing was deleted; try again.');
+  });
+ };
+
  const statusText = paused || !user ? null
   : loadingCloud ? 'Checking your account…'
   : saveBlocked ? 'Not saved — account storage limit reached'
@@ -368,5 +392,5 @@ export function useCloudResume(
   : null;
 
  const retryAfterStorageReview=()=>{saveFailureCount.current=0;setSaveBlocked(false);};
- return { saveBlocked, retryAfterStorageReview, linked, loading: loadingCloud, loadFailed, retryLoad, consentPending, conflict, statusText, acceptConsent, declineConsent, useServerVersion, keepMyEdits, cloudStorageEnabled };
+ return { saveBlocked, retryAfterStorageReview, linked, loading: loadingCloud, loadFailed, retryLoad, consentPending, conflict, statusText, acceptConsent, declineConsent, useServerVersion, keepMyEdits, removeFromAccount, cloudStorageEnabled };
 }

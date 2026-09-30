@@ -48,21 +48,22 @@ test('builds and validates a bounded normalized snapshot with provenance', () =>
 
 test('loads only the authenticated owner account snapshot and ignores browser ownership fields', async () => {
   const expected = { isPro: false, saveLimit: 3, savedJobs: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }
-  const { deps, calls } = fixture(async name => ({ data: ['job_resume_versions_list','jobs_workflow_list'].includes(name) ? [] : expected, error: null }))
+  const { deps, calls } = fixture(async name => ({ data: ['job_resume_versions_list','jobs_workflow_list','product_outcome_reports_list'].includes(name) ? [] : expected, error: null }))
   const response = await jobsAccount(request({ action: 'load', owner: 'attacker-controlled' }), env, deps)
   assert.equal(response.status, 200)
-  assert.deepEqual(await response.json(), { ...expected, jobResumeVersions: [], jobWorkflows: [] })
+  assert.deepEqual(await response.json(), { ...expected, jobResumeVersions: [], jobWorkflows: [], outcomeReports: [] })
   assert.deepEqual(calls, [
     { name: 'jobs_account_snapshot', args: { p_owner: owner } },
     { name: 'job_resume_versions_list', args: { p_owner: owner } },
     { name: 'jobs_workflow_list', args: { p_owner: owner } },
+    { name: 'product_outcome_reports_list', args: { p_owner: owner } },
   ])
 })
 
 test('account reload reconstructs Pro depth from persisted analysis while Free reload omits it', async () => {
   for (const isPro of [true, false]) {
     const stored = { id: savedJobId, snapshot: analyzedSnapshot, providerAvailable: true, availabilityCheckedAt: '2026-09-24T00:00:00Z', unavailableAt: null, savedAt: '2026-09-24T00:00:00Z', matchAnalysis: persistedAnalysis, analysisCurrent: true, analysisInvalidationReason: null }
-    const { deps } = fixture(async name => ({ data: ['job_resume_versions_list','jobs_workflow_list'].includes(name) ? [] : { isPro, saveLimit: isPro ? 10000 : 3, savedJobs: [stored], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }, error: null }))
+    const { deps } = fixture(async name => ({ data: ['job_resume_versions_list','jobs_workflow_list','product_outcome_reports_list'].includes(name) ? [] : { isPro, saveLimit: isPro ? 10000 : 3, savedJobs: [stored], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }, error: null }))
     const response = await jobsAccount(request({ action: 'load', evidence }), env, deps)
     assert.equal(response.status, 200)
     const body = await response.json()
@@ -218,6 +219,23 @@ test('records only bounded owner-scoped evidence-review metadata', async () => {
   assert.deepEqual(calls, [{ name: 'product_record_evidence_review', args: { p_owner: owner, p_job_key: jobKey, p_analysis_key: analysisKey, p_scope: 'limited' } }])
   assert.equal((await jobsAccount(request({ action: 'record_evidence_review', jobKey: 'not-a-key', analysisKey, reviewScope: 'full' }), env, deps)).status, 400)
   assert.equal((await jobsAccount(request({ action: 'record_evidence_review', jobKey, analysisKey, reviewScope: 'preview' }), env, deps)).status, 400)
+})
+
+test('records only an explicitly consented, content-free self-reported outcome for the authenticated owner', async () => {
+  const report = {
+    id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', savedJobId, outcome: 'interview_received', provenance: 'self_reported',
+    occurredOn: '2026-09-30', timeSavedBucket: '15_to_30_minutes', clarityRating: 4, confidenceRating: 3,
+    consentVersion: 'outcomes-v1', consentedAt: '2026-09-30T16:00:00Z', methodologyVersion: 'outcomes-v1',
+    reportedAt: '2026-09-30T16:00:00Z', updatedAt: '2026-09-30T16:00:00Z',
+  }
+  const { deps, calls } = fixture(async name => name === 'product_outcome_report'
+    ? { data: report, error: null }
+    : { data: null, error: { message: `unexpected ${name}` } })
+  const response = await jobsAccount(request({ action:'report_outcome', savedJobId, owner:'forged', resumeText:'must not persist', jobUrl:'https://private.example', report:{ outcome:'interview_received', occurredOn:'2026-09-30', timeSavedBucket:'15_to_30_minutes', clarityRating:4, confidenceRating:3, consent:true, consentVersion:'outcomes-v1' } }),env,deps)
+  assert.equal(response.status,200)
+  assert.deepEqual((await response.json()).report,report)
+  assert.deepEqual(calls,[{name:'product_outcome_report',args:{p_owner:owner,p_saved_job:savedJobId,p_outcome:'interview_received',p_occurred_on:'2026-09-30',p_time_saved_bucket:'15_to_30_minutes',p_clarity_rating:4,p_confidence_rating:3,p_consent:true,p_consent_version:'outcomes-v1'}}])
+  assert.equal((await jobsAccount(request({action:'report_outcome',savedJobId,report:{outcome:'offer_received',occurredOn:null,timeSavedBucket:null,clarityRating:null,confidenceRating:null,consent:false,consentVersion:'outcomes-v1'}}),env,deps)).status,400)
 })
 
 test('recomputes versioned saved analysis server-side and persists explicit clarification for the authenticated owner', async () => {

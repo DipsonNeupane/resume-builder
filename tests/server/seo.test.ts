@@ -243,7 +243,7 @@ test('favicon, app and social metadata refer to real assets without claiming an 
 });
 
 test('capability pages are permanent, useful and limited to implemented behavior', () => {
- assert.equal(capabilities.length, 4);
+ assert.equal(capabilities.length, 5);
  const hub = read('public/features/index.html');
  for (const capability of capabilities) {
   const route = `/features/${capability.slug}/`;
