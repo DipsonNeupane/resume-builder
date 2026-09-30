@@ -8,6 +8,6 @@
 .article-cta .section-label,.hub-next .section-label{color:var(--copper-hi)}
 .related-guides>.section-label,.related-guides .all-guides{color:#95450f}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-:root{--display:'ResumeStride Sans','Arial Narrow',system-ui,sans-serif;--serif:'ResumeStride Serif',Georgia,serif;--mono:'ResumeStride Mono',ui-monospace,monospace;--body:'ResumeStride Sans',system-ui,sans-serif}
+:root{--action:#a64c16;--display:'ResumeStride Sans','Arial Narrow',system-ui,sans-serif;--serif:'ResumeStride Serif',Georgia,serif;--mono:'ResumeStride Mono',ui-monospace,monospace;--body:'ResumeStride Sans',system-ui,sans-serif}
 .article-body a:not(.primary-action){color:var(--action);font-weight:700;text-decoration:underline;text-underline-offset:3px}
 @media(max-width:680px){.cluster-index{padding:65px 20px 80px}.cluster{gap:25px;padding:34px 0}.cluster li a{grid-template-columns:40px 1fr auto;gap:10px}}

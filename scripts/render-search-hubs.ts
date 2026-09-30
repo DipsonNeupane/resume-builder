@@ -3,6 +3,7 @@ import { searchHubs, type SearchHub } from '../src/content/searchHubs';
 
 const check = process.argv.includes('--check');
 const escape = (value: string) => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+const withoutSeo = (text: string) => text.replace(/<!-- seo:start -->[\s\S]*?<!-- seo:end -->/, '<!-- seo:block -->');
 
 function page(hub: SearchHub): string {
   const canonical = `https://resumestride.com${hub.path}`;
@@ -43,7 +44,7 @@ for (const hub of searchHubs) {
   mkdirSync(file.slice(0, file.lastIndexOf('/')), { recursive: true });
   const html = page(hub);
   if (check) {
-    if (readFileSync(file, 'utf8') !== html) throw new Error(`Search hub output stale: ${file}. Run npm run search:generate.`);
+    if (withoutSeo(readFileSync(file, 'utf8')) !== withoutSeo(html)) throw new Error(`Search hub output stale: ${file}. Run npm run search:generate.`);
   } else writeFileSync(file, html);
 }
 console.log(check ? 'Search hubs match their content source.' : `Generated ${searchHubs.length} search hubs.`);

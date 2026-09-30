@@ -2,11 +2,12 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { notFoundHtml, productionOrigin, publicPages, publicPageSchema, websiteSchema } from '../src/seo/policy';
 const check = process.argv.includes('--check');
 const escape = (text: string) => text.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
+const publicEntries = Object.entries(publicPages) as [keyof typeof publicPages, (typeof publicPages)[keyof typeof publicPages]][];
 function output(file: string, text: string) {
  if (check) { if (readFileSync(file, 'utf8') !== text) throw new Error(`SEO output stale: ${file}. Run npm run seo:generate.`); }
  else writeFileSync(file, text);
 }
-for (const [path, details] of Object.entries(publicPages)) {
+for (const [path, details] of publicEntries) {
  const file = path === '/' ? 'index.html' : path.endsWith('/') ? `public${path}index.html` : `public${path}`;
  let html = readFileSync(file, 'utf8');
  const canonical = `${productionOrigin}${path}`;
@@ -50,6 +51,6 @@ for (const [path, details] of Object.entries(publicPages)) {
  output(file, html);
 }
 output('public/robots.txt', `# Public documents may be crawled. Private URLs emit noindex; do not hide\n# that directive behind a robots.txt disallow. APIs still require authentication.\nUser-agent: *\nAllow: /\n\nSitemap: ${productionOrigin}/sitemap.xml\n`);
-output('public/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${Object.entries(publicPages).map(([path, details]) => `  <url><loc>${productionOrigin}${path}</loc><lastmod>${details.lastModified}</lastmod></url>`).join('\n')}\n</urlset>\n`);
+output('public/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${publicEntries.map(([path, details]) => `  <url><loc>${productionOrigin}${path}</loc><lastmod>${details.lastModified}</lastmod></url>`).join('\n')}\n</urlset>\n`);
 output('public/404.html', `${notFoundHtml}\n`);
 console.log(check ? 'SEO artifacts match the public allowlist.' : 'SEO artifacts generated.');
