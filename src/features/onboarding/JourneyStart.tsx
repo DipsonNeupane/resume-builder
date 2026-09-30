@@ -1,5 +1,8 @@
-import { FileSearch, FileText, Search, ShieldCheck, Upload } from 'lucide-react';
+import { lazy, Suspense } from 'react';
+import { FileText, Search, Upload } from 'lucide-react';
 import type { EntryJourney } from '../../routing/routes';
+
+const FictionalSample = lazy(() => import('./FictionalSample').then(module => ({ default: module.FictionalSample })));
 
 type Props = {
  journey: EntryJourney;
@@ -37,17 +40,7 @@ export function JourneyStart({ journey, onChooseFile, onStartBuilding, onUseReal
   </div>
  </main>;
 
- return <main id="main-content" className="journey-start sample-journey" aria-labelledby="sample-start-title">
-  <div className="journey-start-icon"><FileSearch aria-hidden="true" /></div>
-  <div><span className="section-label">Fictional sample / Nothing is saved</span><h1 id="sample-start-title">See how evidence informs a decision.</h1>
-   <p><strong>Jordan Lee</strong>, a fictional community-program coordinator, is considering a fictional Operations Coordinator role at <strong>Northstar Commons</strong>.</p>
-   <div className="sample-evidence" aria-label="Fictional evidence example">
-    <p><strong>Clearly demonstrated</strong><span>Coordinated weekly programs and volunteer schedules.</span></p>
-    <p><strong>Worth reviewing</strong><span>Tracked attendance in spreadsheets; the job asks for broader reporting.</span></p>
-    <p><strong>Not demonstrated</strong><span>No procurement evidence appears in the fictional resume. That is not proof Jordan lacks it.</span></p>
-   </div>
-   <p className="sample-decision"><ShieldCheck aria-hidden="true" />Jordan—not ResumeStride—decides whether the role is worth pursuing. Any tailoring would create a separate version grounded only in this fictional resume.</p>
-   <div className="journey-start-actions"><button className="button" onClick={onChooseFile}>Use my resume instead</button><button className="button outline" onClick={onUseRealJob}>Find a real job</button></div>
-  </div>
- </main>;
+ return <Suspense fallback={<main id="main-content" className="route-loading-page"><h1 className="visually-hidden">Fictional sample</h1><p role="status">Loading fictional sample…</p></main>}>
+  <FictionalSample onUseResume={onChooseFile} onUseJobDescription={() => { window.location.assign('/tools/resume-job-match/'); }} />
+ </Suspense>;
 }
