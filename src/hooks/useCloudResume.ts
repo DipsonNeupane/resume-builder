@@ -14,6 +14,8 @@ export type CloudResumeApi = {
  retryAfterStorageReview: () => void;
  linked: boolean;
  loading: boolean;
+ loadFailed: boolean;
+ retryLoad: () => void;
  consentPending: boolean;
  conflict: CloudConflict | null;
  statusText: string | null;
@@ -85,6 +87,7 @@ export function useCloudResume(
  const [consentPending, setConsentPending] = useState(false);
  const [consentDeclined, setConsentDeclined] = useState(false);
  const [loadFailed, setLoadFailed] = useState(false);
+ const [loadRevision, setLoadRevision] = useState(0);
  const [conflict, setConflict] = useState<CloudConflict | null>(null);
  // True once the most recent autosave attempt failed for a reason other than
  // a revision conflict (network error) — lets `statusText` say so truthfully
@@ -137,7 +140,7 @@ export function useCloudResume(
   // below and overwrite the separately restored job draft. Incrementing the
   // epoch above also makes any load/save started just before the pause inert.
   if (paused) return;
-  if (!identityChanged && !resumed) return;
+  if (!identityChanged && !resumed && loadRevision === 0) return;
   setLinked(false); setConflict(null); setRevision(null); setLoadFailed(false); setSaveError(false); setSaveBlocked(false);
   if (identityChanged) setConsentDeclined(false);
   // What `resume` will actually hold once this effect's own synchronous work
@@ -194,7 +197,13 @@ export function useCloudResume(
   // Deliberately keyed only on account identity and the explicit pause state:
   // restoreGuestDraft/setResume/setDirty/notify are stable callbacks, and
   // resumeRef.current supplies the live resume when needed.
- }, [user?.id, paused]);
+ }, [user?.id, paused, loadRevision]);
+
+ const retryLoad = () => {
+  if (!user || loadingCloud) return;
+  setLoadFailed(false);
+  setLoadRevision(value => value + 1);
+ };
 
  // Offer to save the local draft once signed in, whenever there's content
  // worth asking about and the account has no cloud resume yet. Re-evaluated
@@ -359,5 +368,5 @@ export function useCloudResume(
   : null;
 
  const retryAfterStorageReview=()=>{saveFailureCount.current=0;setSaveBlocked(false);};
- return { saveBlocked, retryAfterStorageReview, linked, loading: loadingCloud, consentPending, conflict, statusText, acceptConsent, declineConsent, useServerVersion, keepMyEdits, cloudStorageEnabled };
+ return { saveBlocked, retryAfterStorageReview, linked, loading: loadingCloud, loadFailed, retryLoad, consentPending, conflict, statusText, acceptConsent, declineConsent, useServerVersion, keepMyEdits, cloudStorageEnabled };
 }

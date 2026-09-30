@@ -10,9 +10,9 @@ const sample = example();
 // The suggestion reworks the sample's own summary using only experience it already lists.
 const suggested = 'Customer experience specialist who supports customers across email, phone and live chat, simplifies everyday support processes, and helps new team members build confidence.';
 const connected = ['Your resume', 'Find or save a role', 'See the evidence', 'You decide', 'A separate version', 'Review each change', 'PDF or Word', 'Apply on the employer’s site'];
-type Props = { onBuild: () => void; onUpload: () => void; onJobs: () => void; onPro: () => void; onTemplate: (template: Resume['template']) => void };
+type Props = { onBuild: () => void; onUpload: () => void; onJobs: () => void; onCompare: () => void; onPro: () => void; onTemplate: (template: Resume['template']) => void };
 
-export function HomePage({ onBuild, onUpload, onJobs, onPro, onTemplate }: Props) {
+export function HomePage({ onBuild, onUpload, onJobs, onCompare, onPro, onTemplate }: Props) {
  const [previewTemplate, setPreviewTemplate] = useState<Resume['template']>('modern');
  const sheet = useRef<HTMLDivElement>(null);
  // The light sheet rises over the petrol Match section and its fold settles as it
@@ -41,7 +41,7 @@ export function HomePage({ onBuild, onUpload, onJobs, onPro, onTemplate }: Props
    <div className="start-card-grid">
     <article><Upload aria-hidden="true"/><h3>Upload my resume</h3><p>Bring a Word or text-based PDF resume. It is parsed locally and always requires your review.</p><button className="text-button" onClick={onUpload}>Choose a resume file<ArrowRight size={16} aria-hidden="true"/></button><small>Next: review the recovered master resume.</small></article>
     <article><FileText aria-hidden="true"/><h3>Build from scratch</h3><p>Create a flexible master resume with seven Free templates and PDF or editable Word export.</p><button className="text-button" onClick={onBuild}>Build a resume free<ArrowRight size={16} aria-hidden="true"/></button><small>Next: add the essentials before choosing a design.</small></article>
-    <article><Search aria-hidden="true"/><h3>Start with a job</h3><p>Paste a job description and compare its requirements with evidence in your resume.</p><a className="text-button" href="/tools/resume-job-match/">Compare resume and job<ArrowRight size={16} aria-hidden="true"/></a><small>Next: a private, limited evidence check in this browser.</small></article>
+    <article><Search aria-hidden="true"/><h3>Start with a job</h3><p>Paste a job description and compare its requirements with evidence in your resume.</p><a className="text-button" href="/tools/resume-job-match/" onClick={onCompare}>Compare resume and job<ArrowRight size={16} aria-hidden="true"/></a><small>Next: a private, limited evidence check in this browser.</small></article>
    </div>
    <ul className="product-proof-strip" aria-label="Product facts">
     <li><Check aria-hidden="true"/>Evidence, not a fake score</li>
@@ -52,7 +52,7 @@ export function HomePage({ onBuild, onUpload, onJobs, onPro, onTemplate }: Props
    </ul>
   </section>
   <section className="evidence-story landing-match" id="how-it-works">
-   <div><p className="section-label">Match Analysis · requirement by requirement</p><h2>Evidence<br/>before effort.</h2><p>Pick a role. Each requirement sits beside the line of your resume that supports it, or an honest note that nothing does yet. Then you decide whether it deserves your evening. It reads evidence. It doesn’t predict hiring.</p><a className="button outline" href="/tools/resume-job-match/">Compare my resume with a job<ArrowRight size={16} aria-hidden="true"/></a></div>
+   <div><p className="section-label">Match Analysis · requirement by requirement</p><h2>Evidence<br/>before effort.</h2><p>Pick a role. Each requirement sits beside the line of your resume that supports it, or an honest note that nothing does yet. Then you decide whether it deserves your evening. It reads evidence. It doesn’t predict hiring.</p><a className="button outline" href="/tools/resume-job-match/" onClick={onCompare}>Compare my resume with a job<ArrowRight size={16} aria-hidden="true"/></a></div>
    <p className="landing-sources">Search from your resume or your own criteria. Opportunities are sourced across <strong>190+ job portals</strong> and employer career sites.</p>
    <MatchShowcase/>
    <dl className="evidence-key">

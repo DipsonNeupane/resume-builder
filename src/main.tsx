@@ -13,7 +13,7 @@ import './patina.css';
 import { noindex } from './seo/policy';
 import { updateAppHead } from './seo/head';
 import { clearContinuation, consumeContinuation, saveContinuation } from './routing/continuation';
-import { jobResumeRoute, journeyForRoute, parseAppRoute, routeForJourney, routeForPage, type EntryJourney, type NavigableRoute } from './routing/routes';
+import { jobResumeRoute, journeyForRoute, matchRoute, parseAppRoute, routeForJourney, routeForPage, savedJobsRoute, type EntryJourney, type NavigableRoute } from './routing/routes';
 import { useNavigation } from './routing/useNavigation';
 import { HomePage } from './features/home/HomePage';
 import { PublicNavigation } from './features/home/PublicNavigation';
@@ -87,6 +87,7 @@ function App(){
  const [activeJobVersion,setActiveJobVersion]=useState<JobResumeVersion|null>(null);
  const [jobVersionMasterChanged,setJobVersionMasterChanged]=useState(false);
  const [jobVersionConflict,setJobVersionConflict]=useState<JobResumeVersion|null>(null);
+ const [hasSuspendedJobDraft,setHasSuspendedJobDraft]=useState(false);
  const jobVersionRevision=useRef<number|null>(null);
  const jobVersionSaving=useRef(false);
  const liveResume=useRef(resume);liveResume.current=resume;
@@ -123,8 +124,9 @@ function App(){
  useEffect(()=>{if(session.user?.id)lastOwnerId.current=session.user.id;},[session.user?.id]);
  const accountDestination=():NavigableRoute=>{
   if(route.kind==='not_found'||route.kind==='workspace_account'||route.kind==='home')return routeForPage('home');
-  if(!lastOwnerId.current&&route.kind==='workspace_match')return routeForPage('jobs');
-  if(!lastOwnerId.current&&route.kind==='workspace_job_resume')return routeForPage('builder');
+  // An anonymous entry may retain only this bounded route. The destination still
+  // performs owner-scoped server restoration after sign-in; the UUID is never
+  // treated as authorization and no content is placed in continuation storage.
   return route;
  };
  const openAccount=()=>{try{clearContinuation(sessionStorage);if(!session.user){const destination=accountDestination();if(destination.kind!=='home')saveContinuation(sessionStorage,destination,lastOwnerId.current);}}catch{/* session storage is optional */}setPage('account');};
@@ -239,11 +241,12 @@ function App(){
   setErrors({});
   setPreviewMode(false);
   setPage('builder');
-  try{localStorage.removeItem(jobDraftStorageKey);}catch{/* best effort */}
+  if(!activeJobVersion)try{localStorage.removeItem(jobDraftStorageKey);setHasSuspendedJobDraft(false);}catch{/* best effort */}
  setMessage(activeJobVersion?'You are back on your master resume. The job-specific version remains saved to your account.':'Job-specific draft discarded. You are back on your master resume.');
  };
  useEffect(()=>{
-  if(!activeJobVersion||route.kind==='workspace_job_resume')return;
+  if(!activeJobVersion)return;
+  if(route.kind==='workspace_job_resume'&&route.versionId===activeJobVersion.id)return;
   if(dirty||jobVersionSaving.current){
    setPage(jobResumeRoute(activeJobVersion.id),{replace:true});
    setMessage('Wait for this job-specific resume to finish saving, then use “Return to master resume” before leaving it.');
@@ -255,6 +258,16 @@ function App(){
   setDirty(false);setErrors({});setPreviewMode(false);
   setMessage('Closed the saved job-specific resume. Your master resume remains unchanged.');
  },[route.path,activeJobVersion?.id,dirty]);
+ // A browser-local job draft must not block an owner-scoped Jobs/Match/version URL.
+ // Set it aside intact, restore the master in memory, and offer an explicit return.
+ useEffect(()=>{
+  if(page!=='jobs'||!jobContext||activeJobVersion||!baseSnapshot)return;
+  try{localStorage.setItem(jobDraftStorageKey,JSON.stringify({ownerId:jobDraftOwnerId,jobContext,baseSnapshot,resume}));}
+  catch{setMessage('The local job draft could not be set aside safely. Keep this tab open and return to the draft before continuing.');setPage('builder',{replace:true});return;}
+  setResume(baseSnapshot);setConfirmed(false);setJobContext(null);setBaseSnapshot(null);setJobDraftOwnerId(null);
+  setDirty(false);setErrors({});setPreviewMode(false);setHasSuspendedJobDraft(true);
+  setMessage('Your local job-specific draft was set aside without deleting it. Resume it whenever you are ready.');
+ },[page,jobContext,activeJobVersion?.id,baseSnapshot,jobDraftOwnerId,resume,setPage]);
  // Job-draft recovery across a reload: written to its OWN storage key (never `storageKey`, which
  // must keep holding only the preserved base resume while a job draft is active) together with
  // the identity (`ownerId`, null for a guest) this draft belonged to at the time. Restoring
@@ -264,8 +277,13 @@ function App(){
  // browser storage being cleared, or opening the app in a different browser/device; those
  // remain out of scope (see apps/extension/README.md) and the base resume itself is unaffected
  // either way, since it was already flushed to `storageKey` the moment the draft started.
+ const initialJobDraftRoute=useRef(route.kind);
  useEffect(()=>{
   if(jobContext||session.loading)return;
+  // Automatic browser-local job-draft recovery is an initial-entry behavior,
+  // never a reaction to Back/Forward or an in-app route transition. Preserve
+  // the stored draft without displacing sample, Jobs, Match or saved-version URLs.
+  if(initialJobDraftRoute.current!=='home'&&initialJobDraftRoute.current!=='workspace_resume')return;
   let raw:string|null;
   try{raw=localStorage.getItem(jobDraftStorageKey);}catch{return;}
   if(!raw)return;
@@ -280,6 +298,7 @@ function App(){
    setJobContext(parsed.jobContext);
    setJobDraftOwnerId(session.user?.id??null);
    setResume(parsed.resume);
+   setHasSuspendedJobDraft(false);
    setConfirmed(false);
    setDirty(false);
    setErrors({});
@@ -291,6 +310,31 @@ function App(){
   }
   // eslint-disable-next-line react-hooks/exhaustive-deps
  },[session.loading,session.user]);
+ const resumeSuspendedJobDraft=()=>{
+  let raw:string|null=null;
+  try{raw=localStorage.getItem(jobDraftStorageKey);}catch{/* handled below */}
+  if(!raw){setHasSuspendedJobDraft(false);setMessage('That local job-specific draft is no longer available in this browser.');return;}
+  try{
+   const parsed=JSON.parse(raw) as {ownerId:unknown;jobContext:unknown;baseSnapshot:unknown;resume:unknown};
+   if((parsed.ownerId??null)!==(session.user?.id??null)||!isJobCapturePayload(parsed.jobContext)||!isResume(parsed.baseSnapshot)||!isResume(parsed.resume))throw new Error('invalid');
+   setBaseSnapshot(parsed.baseSnapshot);setJobContext(parsed.jobContext);setJobDraftOwnerId(session.user?.id??null);setResume(parsed.resume);
+   setConfirmed(false);setDirty(false);setErrors({});setPreviewMode(false);setHasSuspendedJobDraft(false);setPage('builder');
+   setMessage('Your local job-specific draft is open again. Your master resume remains preserved separately.');
+  }catch{
+   try{localStorage.removeItem(jobDraftStorageKey);}catch{/* best effort */}
+   setHasSuspendedJobDraft(false);setMessage('That local job-specific draft could not be restored safely and was not opened.');
+  }
+ };
+ useEffect(()=>{
+  if(session.loading||jobContext)return;
+  try{
+   const raw=localStorage.getItem(jobDraftStorageKey);if(!raw){setHasSuspendedJobDraft(false);return;}
+   const parsed=JSON.parse(raw) as {ownerId:unknown;jobContext:unknown;baseSnapshot:unknown;resume:unknown};
+   const valid=(parsed.ownerId??null)===(session.user?.id??null)&&isJobCapturePayload(parsed.jobContext)&&isResume(parsed.baseSnapshot)&&isResume(parsed.resume);
+   if(!valid){localStorage.removeItem(jobDraftStorageKey);setHasSuspendedJobDraft(false);return;}
+   setHasSuspendedJobDraft(true);
+  }catch{setHasSuspendedJobDraft(false);}
+ },[session.loading,session.user?.id,jobContext]);
  useEffect(()=>{
   if(!jobContext||!baseSnapshot||activeJobVersion)return;
   const timer=setTimeout(()=>{
@@ -406,6 +450,7 @@ function App(){
  const openBuilder=()=>{trackProductEvent('builder_started',{surface:'builder',user_state:session.user?'authenticated':'anonymous',...(selectedJourney.current?{journey:selectedJourney.current}:{})});setPreviewMode(false);setPage('builder');};
  const selectImportJourney=()=>{selectedJourney.current='import_first';trackProductEvent('entry_journey_selected',{surface:'home',user_state:session.user?'authenticated':'anonymous',journey:'import_first'});setPage(routeForJourney('import_first'));};
  const selectJobJourney=()=>{selectedJourney.current='job_first';trackProductEvent('entry_journey_selected',{surface:'home',user_state:session.user?'authenticated':'anonymous',journey:'job_first'});setPage(routeForJourney('job_first'));};
+ const selectCompareJourney=()=>{selectedJourney.current='job_first';trackProductEvent('entry_journey_selected',{surface:'home',user_state:session.user?'authenticated':'anonymous',journey:'job_first'});};
  const viewPro=()=>{trackProductEvent('upgrade_prompt_viewed',{surface:page==='jobs'?'jobs':page==='builder'?'builder':'home',user_state:session.user?'authenticated':'anonymous'});setPage('pro');};
  const selectTemplate=(template:Resume['template'])=>{trackProductEvent('template_selected',{surface:page==='home'?'home':'builder',user_state:session.user?'authenticated':'anonymous',template});update({template});};
  const returnHome=()=>{setMessage('');setPage('home');window.scrollTo(0,0);};
@@ -435,8 +480,10 @@ function App(){
  {rescue&&<div className="notice" role="status">An earlier draft on this device could not be loaded and has been kept separately so it isn’t lost.<button className="text-button" onClick={downloadRescue}><Download size={14}/>Download it</button><button aria-label="Discard the unreadable draft" onClick={discardRescue}><X size={16}/></button></div>}
  {conflict&&<div className="notice" role="status">A second unreadable draft was found while an earlier recovered draft above is still waiting. Autosave is paused to keep both recovery drafts safe. Download the unreadable recovery data, then explicitly discard this recovery draft to resume autosave.<button className="text-button" onClick={downloadConflict}><Download size={14}/>Download it</button><button aria-label="Discard this additional unreadable draft" onClick={()=>{if(window.confirm('Discard this recovery draft and allow your current edits to replace it?'))setConflict(null);}}><X size={16}/></button></div>}
  {cloud.consentPending&&<div className="notice" role="status">Save your local resume to your ResumeStride account? It stays available across your signed-in devices.<button className="text-button" onClick={cloud.acceptConsent}>Save to my account</button><button className="text-button" onClick={cloud.declineConsent}>Not now</button></div>}
+ {cloud.loadFailed&&<div className="notice" role="alert">ResumeStride could not verify your account master resume. Job-specific restoration is paused so a local draft cannot be mistaken for your master.<button className="text-button" onClick={cloud.retryLoad}>Retry account resume check</button></div>}
  {cloud.conflict&&<div className="notice" role="status">{cloud.conflict.server?'Your account resume was saved elsewhere since you last loaded it (perhaps another tab or device). Choose which version to keep.':'Your account resume could not be found — it may have been deleted elsewhere. Save your current edits as a new account resume, or keep working locally.'}{cloud.conflict.server&&<button className="text-button" onClick={cloud.useServerVersion}>Use the other version</button>}<button className="text-button" onClick={cloud.keepMyEdits}>{cloud.conflict.server?'Keep my edits':'Save my edits as new'}</button></div>}
  {cloud.saveBlocked&&<div className="notice" role="alert">Account storage limit reached. Keep this tab open and contact support@resumestride.com before leaving this page.<button className="text-button" onClick={cloud.retryAfterStorageReview}>Retry after storage review</button></div>}
+ {hasSuspendedJobDraft&&!jobContext&&<div className="notice" role="status">A local job-specific draft is set aside in this browser. It has not been deleted or mixed into this workspace item.<button className="text-button" onClick={resumeSuspendedJobDraft}>Resume local job draft</button></div>}
  {incomingJobCapture&&(!captureOwner.current||captureOwner.current===(session.user?.id??null))&&!jobContext&&<Suspense fallback={null}><CapturedJobReview key={captureKey} capture={incomingJobCapture} resume={resume} ownerId={session.loading?null:session.user?.id??null} loading={session.loading} onSignIn={openAccount} onSaved={alreadySaved=>{setIncomingJobCapture(null);setCapturedJobsRevision(value=>value+1);setPage('jobs');setMessage(alreadySaved?'This job was already saved. Its existing snapshot and resume were kept; incoming edits did not replace them.':'Job saved to your account. Review its Match Analysis below.');}}/></Suspense>}
  {incomingJobCapture&&(!captureOwner.current||captureOwner.current===(session.user?.id??null))&&(jobContext?<div className="notice" role="status">A new job was captured, but you’re already editing a job-specific draft. Discard the current draft below first, then trigger the capture again from the extension.<button className="text-button" onClick={()=>setIncomingJobCapture(null)}>Dismiss</button></div>:(cloud.linked||cloud.loading)?<div className="notice" role="status">A job was captured from the ResumeStride extension, and can be saved to your account using the review above. Local drafts are unavailable while cloud saving is active.<button className="text-button" onClick={()=>setIncomingJobCapture(null)}>Dismiss</button></div>:<div className="notice" role="status">A job was captured from the ResumeStride extension: “{incomingJobCapture.title||'Untitled role'}”{incomingJobCapture.company?` at ${incomingJobCapture.company}`:''}. Start a job-specific draft — a separate copy of your resume that never changes your saved master resume — to work from these details? Save the job above for Match Analysis and Pro tailoring on a persistent job-specific resume. A local draft supports manual editing only.<button className="text-button" onClick={startJobDraft}>Start job-specific draft</button><button className="text-button" onClick={()=>setIncomingJobCapture(null)}>Dismiss</button></div>)}
  {jobContext&&<div className="notice job-draft-notice" role="status"><strong>{activeJobVersion?'Job-specific resume':'Job-specific draft'}</strong> — Tailored for {jobContext.title||'this role'}{jobContext.company?` · ${jobContext.company}`:''}. Your master resume is preserved separately. {activeJobVersion?'This version is saved to your account; accepted AI suggestions and manual edits update only this version.':'This draft is kept only in this browser and should recover here after a reload.'}{jobVersionMasterChanged&&<span> Your master resume has changed since this version was created. Keep this version, or update from master to replace its tailored/manual changes.</span>}{jobVersionMasterChanged&&<><button className="text-button" onClick={()=>setJobVersionMasterChanged(false)}>Keep this version</button><button className="text-button" onClick={()=>void resetJobResumeFromMaster()}>Update from master</button></>}<button className="text-button" onClick={discardJobDraft}>{activeJobVersion?'Return to master resume':'Discard draft & return to master resume'}</button></div>}
@@ -444,7 +491,7 @@ function App(){
  {jobContext?.description&&<details className="job-description-details"><summary>View captured job description</summary><pre className="job-description-text">{jobContext.description}</pre></details>}
  {!routeJourney&&(page==='builder'||page==='jobs')&&<JourneyRail current={page==='jobs'?'opportunities':jobContext?'tailor':'resume'} onResume={page==='jobs'?()=>setPage('builder'):undefined} onJobs={page==='builder'?()=>setPage('jobs'):undefined}/>}
  {!routeJourney&&(page==='builder'||page==='jobs')&&<div role="region" aria-label="Active document" className={`document-identity ${jobContext?'is-tailored':''}`}><div><span>{activeDocumentKind}</span><strong>{activeDocumentName}</strong></div><p>{jobContext?'A separate version. Your master stays unchanged.':'Your foundation for every application.'}<span className="document-storage-scope">{activeStorageScope}</span><span className="document-save-label">{documentSaveLabel}</span></p></div>}
- {routeJourney?<JourneyStart journey={routeJourney} onChooseFile={routeJourney==='import_first'?()=>file.current?.click():()=>setPage(routeForJourney('import_first'))} onStartBuilding={()=>setPage('builder')} onUseRealJob={()=>setPage('jobs')} onUseSample={()=>setPage(routeForJourney('sample'))}/>:route.kind==='workspace_match'?<main className="route-loading-page" id="main-content"><h1>Open Match Analysis from your saved jobs</h1><p>This private link needs its owner-scoped saved job before evidence can be shown.</p><button className="button" onClick={()=>setPage('jobs',{replace:true})}>Go to saved jobs</button></main>:route.kind==='workspace_job_resume'&&activeJobVersion?.id!==route.versionId?<main className="route-loading-page" id="main-content"><h1>Open this version from your saved jobs</h1><p>This private link needs its owner-scoped job-specific resume before editing can begin. Your master resume has not been changed.</p><button className="button" onClick={()=>setPage('jobs',{replace:true})}>Go to saved jobs</button></main>:page==='pro'?<Suspense fallback={<main className="route-loading-page" id="main-content"><h1 className="visually-hidden">Loading…</h1><p className="route-loading" role="status">Loading…</p></main>}><ProPage ownerId={session.user?.id??null} onBack={returnHome} onSignIn={openAccount}/></Suspense>:page==='account'?<Suspense fallback={<main className="route-loading-page" id="main-content"><h1 className="visually-hidden">Loading…</h1><p className="route-loading" role="status">Loading…</p></main>}><AuthPanel onBack={()=>setPage('home',{replace:true})}/></Suspense>:page==='jobs'?<main className="builder jobs-page" id="main-content"><Suspense fallback={<><h1 className="visually-hidden">Find jobs</h1><p className="route-loading" role="status">Loading…</p></>}><JobsPanel key={capturedJobsRevision} resume={resume} ownerId={session.user?.id??null} onSignIn={openAccount} onViewPro={viewPro} onBack={()=>setPage(resume.name||resume.headline?'builder':'home')} onEditJobResume={editJobResume}/></Suspense></main>:page==='home'?<HomePage onBuild={()=>begin('build_first')} onUpload={selectImportJourney} onJobs={selectJobJourney} onPro={viewPro} onTemplate={template=>{selectTemplate(template);begin();}}/>:<main id="main-content" className={`builder ${previewMode?'is-previewing':'is-editing'}`}><aside className="builder-sidebar"><button className="back-link" onClick={returnHome}><ArrowLeft size={15}/>Back to home</button><h2>Your resume</h2><p className="muted">A foundation to build on.</p><div className="progress-track"><span style={{width:`${completion*20}%`}}/></div><small>{completion} of 5 essentials added</small><nav aria-label="Resume sections"><button className={tab==='personal'?'active':''} onClick={()=>goTo('personal')}><UserRound size={18}/>Personal details</button><button className={tab==='profile'?'active':''} onClick={()=>goTo('profile')}><FileText size={18}/>Profile & skills</button>{resume.sections.map(section=><button className={tab===section.id?'active':''} key={section.id} onClick={()=>goTo(section.id)}><GripVertical size={18}/>{section.title || 'Untitled section'}</button>)}<button disabled={resume.sections.length>=30} title={resume.sections.length>=30?'Maximum of 30 sections reached':undefined} onClick={()=>{if(!enforcePersonal()||!enforceSectionsBefore(tabOrder.indexOf('design')))return;const id=crypto.randomUUID();update({sections:[...resume.sections,{id,title:'Additional experience',entries:[entry()]}]});setTab(id);setPreviewMode(false);}}><Plus size={18}/>Add a section</button><button className={tab==='design'?'active':''} onClick={()=>goTo('design')}><LayoutTemplate size={18}/>Design & format</button></nav><div className="sidebar-tip"><ShieldCheck size={19}/><strong>Your story stays yours.</strong><p>{activeJobVersion?'This version saves to your account. Your master stays separate.':cloud.linked?'Your resume saves to your account. Review it before downloading.':session.user?'Your draft is kept in this browser. Review and confirm it before downloading.':authConfigured?'Your draft is kept only for this browsing session. Confirm your resume, then create a free account to download it.':'Your draft is kept only for this browsing session.'}</p></div><div className="sidebar-tools"><button className="back-link sidebar-upload" onClick={()=>file.current?.click()}><Upload size={15}/>Upload</button><button className="back-link sidebar-sample" onClick={()=>setSampleOpen(true)}><FileText size={15}/>View sample resume</button><button className="back-link sidebar-jobs" onClick={()=>setPage('jobs')}><Search size={15}/>Find jobs</button></div></aside>
+ {routeJourney?<JourneyStart journey={routeJourney} onChooseFile={routeJourney==='import_first'?()=>file.current?.click():()=>setPage(routeForJourney('import_first'))} onStartBuilding={()=>setPage('builder')} onUseRealJob={()=>setPage('jobs')} onUseSample={()=>setPage(routeForJourney('sample'))}/>:page==='pro'?<Suspense fallback={<main className="route-loading-page" id="main-content"><h1 className="visually-hidden">Loading…</h1><p className="route-loading" role="status">Loading…</p></main>}><ProPage ownerId={session.user?.id??null} onBack={returnHome} onSignIn={openAccount}/></Suspense>:page==='account'?<Suspense fallback={<main className="route-loading-page" id="main-content"><h1 className="visually-hidden">Loading…</h1><p className="route-loading" role="status">Loading…</p></main>}><AuthPanel onBack={()=>setPage('home',{replace:true})}/></Suspense>:(page==='jobs'||(route.kind==='workspace_job_resume'&&activeJobVersion?.id!==route.versionId))?<main className="builder jobs-page" id="main-content"><Suspense fallback={<><h1 className="visually-hidden">Opportunity workspace</h1><p className="route-loading" role="status">Loading…</p></>}><JobsPanel key={`${capturedJobsRevision}:${session.user?.id??'guest'}`} resume={resume} ownerId={session.user?.id??null} masterReady={!session.loading&&!cloud.loading&&!cloud.loadFailed&&!cloud.conflict&&!cloud.consentPending&&!rescue&&!conflict&&!jobContext&&!activeJobVersion} target={route.kind==='workspace_match'?{kind:'match',savedJobId:route.savedJobId}:route.kind==='workspace_job_resume'?{kind:'job_resume',versionId:route.versionId}:route.kind==='workspace_saved_jobs'?{kind:'saved_jobs'}:{kind:'jobs'}} onSignIn={openAccount} onViewPro={viewPro} onBack={()=>setPage(resume.name||resume.headline?'builder':'home')} onOpenSavedJobs={()=>setPage(savedJobsRoute())} onOpenMatch={savedJobId=>setPage(matchRoute(savedJobId))} onEditJobResume={editJobResume}/></Suspense></main>:page==='home'?<HomePage onBuild={()=>begin('build_first')} onUpload={selectImportJourney} onJobs={selectJobJourney} onCompare={selectCompareJourney} onPro={viewPro} onTemplate={template=>{selectTemplate(template);begin();}}/>:<main id="main-content" className={`builder ${previewMode?'is-previewing':'is-editing'}`}><aside className="builder-sidebar"><button className="back-link" onClick={returnHome}><ArrowLeft size={15}/>Back to home</button><h2>Your resume</h2><p className="muted">A foundation to build on.</p><div className="progress-track"><span style={{width:`${completion*20}%`}}/></div><small>{completion} of 5 essentials added</small><nav aria-label="Resume sections"><button className={tab==='personal'?'active':''} onClick={()=>goTo('personal')}><UserRound size={18}/>Personal details</button><button className={tab==='profile'?'active':''} onClick={()=>goTo('profile')}><FileText size={18}/>Profile & skills</button>{resume.sections.map(section=><button className={tab===section.id?'active':''} key={section.id} onClick={()=>goTo(section.id)}><GripVertical size={18}/>{section.title || 'Untitled section'}</button>)}<button disabled={resume.sections.length>=30} title={resume.sections.length>=30?'Maximum of 30 sections reached':undefined} onClick={()=>{if(!enforcePersonal()||!enforceSectionsBefore(tabOrder.indexOf('design')))return;const id=crypto.randomUUID();update({sections:[...resume.sections,{id,title:'Additional experience',entries:[entry()]}]});setTab(id);setPreviewMode(false);}}><Plus size={18}/>Add a section</button><button className={tab==='design'?'active':''} onClick={()=>goTo('design')}><LayoutTemplate size={18}/>Design & format</button></nav><div className="sidebar-tip"><ShieldCheck size={19}/><strong>Your story stays yours.</strong><p>{activeJobVersion?'This version saves to your account. Your master stays separate.':cloud.linked?'Your resume saves to your account. Review it before downloading.':session.user?'Your draft is kept in this browser. Review and confirm it before downloading.':authConfigured?'Your draft is kept only for this browsing session. Confirm your resume, then create a free account to download it.':'Your draft is kept only for this browsing session.'}</p></div><div className="sidebar-tools"><button className="back-link sidebar-upload" onClick={()=>file.current?.click()}><Upload size={15}/>Upload</button><button className="back-link sidebar-sample" onClick={()=>setSampleOpen(true)}><FileText size={15}/>View sample resume</button><button className="back-link sidebar-jobs" onClick={()=>setPage('jobs')}><Search size={15}/>Find jobs</button></div></aside>
  <section className="editor-panel" hidden={previewMode}><div className="editor-heading"><span className="section-label">{tab==='design'?'Finish / Design & format':'Build / Your experience'}</span><h1>{tab==='personal'?'Let’s start with you.':tab==='profile'?'Tell your story.':tab==='design'?'Make it your own.':selectedSection?.title || 'Your experience'}</h1><p>{tab==='personal'?'Your name, a title, and one way to reach you are required. Everything else here is optional.':tab==='profile'?'A little context goes a long way. Keep it clear and true to you.':tab==='design'?'Simple choices. A polished result.':'Every kind of experience counts. Add what matters to your next role.'}</p></div>
  {tab==='personal'&&<><div className="field-grid">{field('Full name','name','e.g. Alex Morgan')}{field('Professional title','headline','Your role or the opportunity you want')}{field('Email','email','you@example.com')}{field('Phone','phone','Include your country code')}{field('Location','location','City, region, or country')}{field('Website or professional profile','website','Portfolio, LinkedIn, or personal website')}</div><div className="helper-box"><Globe2 size={20}/><div><strong>At home, anywhere.</strong><p>Use your preferred name and local contact format — any name, any script. No postal code, street address, or US-style phone format required. Fill in at least one of email, phone, or website so someone can reach you.</p></div></div></>}
  {tab==='profile'&&<div className="field-grid">{field('Professional profile','summary','Introduce your experience, strengths, and the contribution you want to make.',true)}<p className="field-hint">New to work? Include coursework, volunteering, personal projects, or transferable skills.</p>{field('Skills & languages','skills','e.g. Project coordination, Customer service, Excel, English (fluent)',true)}<label className="field">Profile section heading<input name="profile-heading" autoComplete="off" maxLength={200} value={resume.profileHeading} placeholder="Profile" onChange={event=>update({profileHeading:event.target.value})}/></label><label className="field">Skills section heading<input name="skills-heading" autoComplete="off" maxLength={200} value={resume.skillsHeading} placeholder="Skills & languages" onChange={event=>update({skillsHeading:event.target.value})}/></label><div className="helper-box"><ShieldCheck size={20} aria-hidden="true"/><div><strong>Specific is stronger than impressive.</strong><p>Use real examples and only include skills you can confidently discuss. Review your wording and keep every detail accurate.</p></div></div></div>}

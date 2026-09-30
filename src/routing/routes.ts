@@ -111,6 +111,10 @@ export function matchRoute(savedJobId: string): NavigableRoute {
  return route;
 }
 
+export function savedJobsRoute(): NavigableRoute {
+ return { kind: 'workspace_saved_jobs', path: '/workspace/jobs/saved' };
+}
+
 export function jobResumeRoute(versionId: string): NavigableRoute {
  const route = parseAppRoute(new URL(`/workspace/resumes/${versionId}`, 'https://resumestride.invalid'));
  if (route.kind !== 'workspace_job_resume') throw new Error('A valid job-resume identifier is required.');

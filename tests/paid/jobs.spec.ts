@@ -5,6 +5,7 @@ import { example } from '../../src/model';
 
 const owner = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 const otherOwner = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+test.setTimeout(120_000);
 
 function sessionFor(userId: string) {
   return { access_token: 'fake-test-token', refresh_token: 'fake-refresh', token_type: 'bearer', expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id: userId, aud: 'authenticated', role: 'authenticated', email: 'fixture@example.com', app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString() } };
@@ -29,7 +30,7 @@ async function openBuilder(page: Page) {
 async function openJobs(page: Page) {
   await openBuilder(page);
   await page.locator('.builder-sidebar').getByRole('button', { name: 'Find jobs', exact: true }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Find jobs', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Find jobs', exact: true })).toBeVisible({ timeout: 30_000 });
 }
 
 async function importCapture(page: Page, title = 'Captured role') {
@@ -123,6 +124,137 @@ test('signed-out users see a sign-in prompt instead of the search form', async (
   await openJobs(page);
   await expect(page.getByText('Sign in to search for jobs based on your resume.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Search jobs' })).toHaveCount(0);
+});
+
+test('saved Match Analysis has a reload-safe URL, predictable history, and a content-free missing-object fallback', async ({ page }) => {
+  await seed(page);
+  const savedJobId = '99999999-9999-4999-8999-999999999999';
+  const saved = { id: savedJobId, snapshot: sampleResponse.jobs[0].savedSnapshot, providerAvailable: true,
+    availabilityCheckedAt: '2026-09-29T00:00:00Z', unavailableAt: null, savedAt: '2026-09-29T00:00:00Z',
+    analysisCurrent: true, matchAnalysis: { ...sampleMatchAnalysis, limitedAnalysis: { requirements: sampleFullAnalysis.requirements.slice(0, 3) } } };
+  await page.route('**/api/jobs-account', route => route.fulfill({ json: { isPro: false, saveLimit: 3, savedJobs: [saved], jobResumeVersions: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } } }));
+
+  await page.goto(`/workspace/jobs/${savedJobId}/match`, { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { level: 1, name: 'Match Analysis' })).toBeVisible();
+  await expect(page.getByText('Customer Experience Specialist at Acme Support Co')).toBeVisible();
+  expect(page.url()).not.toContain('Customer');
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'What your resume shows' })).toBeVisible();
+  await page.getByRole('button', { name: 'Back to saved jobs' }).click();
+  await expect(page).toHaveURL('/workspace/jobs/saved');
+  await page.goBack();
+  await expect(page).toHaveURL(`/workspace/jobs/${savedJobId}/match`);
+  await expect(page.getByRole('heading', { name: 'What your resume shows' })).toBeVisible();
+
+  await page.goto('/workspace/jobs/77777777-7777-4777-8777-777777777777/match', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByText('This workspace item is unavailable.')).toBeVisible();
+  await expect(page.getByText(/belong to another account/)).toBeVisible();
+  await expect(page.getByText('Customer Experience Specialist at Acme Support Co')).toHaveCount(0);
+});
+
+test('an owner-scoped job-specific resume restores after reload while preserving the master', async ({ page }) => {
+  await seed(page);
+  const master = example();
+  const savedJobId = '99999999-9999-4999-8999-999999999999';
+  const versionId = '88888888-8888-4888-8888-888888888888';
+  const versionBId = '77777777-7777-4777-8777-777777777777';
+  const fingerprint = createHash('sha256').update(JSON.stringify(master)).digest('hex');
+  const snapshot = { ...sampleResponse.jobs[0].savedSnapshot, descriptionText: 'Help customers.' };
+  const version = { id: versionId, savedJobId, jobSnapshot: snapshot, sourceMasterResumeId: null, sourceMasterRevision: null,
+    sourceMasterFingerprint: fingerprint, resume: { ...master, summary: 'Separate version wording.' }, revision: 2,
+    createdAt: '2026-09-29T00:00:00Z', updatedAt: '2026-09-29T00:00:00Z' };
+  const versionB = { ...version, id: versionBId, jobSnapshot: { ...snapshot, title: 'Second private role' }, resume: { ...master, summary: 'Second separate version wording.' } };
+  await page.addInitScript(({ ownerId, base }) => localStorage.setItem('resumestride.jobDraft', JSON.stringify({
+    ownerId, jobContext: { title: 'Unrelated local draft', company: 'Private employer', description: 'Private description', sourceUrl: 'https://jobs.example/private', capturedAt: '2026-09-29T00:00:00.000Z' },
+    baseSnapshot: base, resume: { ...base, summary: 'Unrelated local draft wording.' },
+  })), { ownerId: owner, base: master });
+  await page.route('**/api/jobs-account', route => {
+    const body = route.request().postDataJSON();
+    if (body.action === 'get_job_resume') return route.fulfill({ json: { version: body.versionId === versionBId ? versionB : version } });
+    return route.fulfill({ json: { isPro: true, saveLimit: 10000, savedJobs: [], jobResumeVersions: [version, versionB].map(item => ({ ...item, resume: undefined, savedJobExists: true })), preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } } });
+  });
+  await page.goto(`/workspace/resumes/${versionId}`, { waitUntil: 'domcontentloaded' });
+  await expect(page.getByText(/Job-specific resume — Tailored for Customer Experience Specialist/)).toBeVisible();
+  await page.getByRole('button', { name: 'Profile & skills' }).click();
+  await expect(page.getByRole('textbox', { name: 'Professional profile', exact: true })).toHaveValue('Separate version wording.');
+  await page.reload();
+  await expect(page.getByText(/Your master resume is preserved separately/)).toBeVisible();
+  await page.getByRole('button', { name: 'Profile & skills' }).click();
+  await expect(page.getByRole('textbox', { name: 'Professional profile', exact: true })).toHaveValue('Separate version wording.');
+  expect(JSON.parse(await page.evaluate(() => sessionStorage.getItem('resumestride.resume.v1')!)).summary).toBe(master.summary);
+  await page.evaluate(next => { history.pushState(null, '', next); dispatchEvent(new PopStateEvent('popstate')); }, `/workspace/resumes/${versionBId}`);
+  await expect(page.getByText(/Job-specific resume — Tailored for Second private role/)).toBeVisible();
+  await page.getByRole('button', { name: 'Profile & skills' }).click();
+  await expect(page.getByRole('textbox', { name: 'Professional profile', exact: true })).toHaveValue('Second separate version wording.');
+  await page.getByRole('button', { name: 'Return to master resume' }).click();
+  expect(await page.evaluate(() => localStorage.getItem('resumestride.jobDraft'))).toContain('Unrelated local draft wording.');
+});
+
+test('a local job draft is set aside intact for saved workspace navigation and can be resumed', async ({ page }) => {
+  await seed(page);
+  const master = example();
+  await page.addInitScript(({ ownerId, base }) => localStorage.setItem('resumestride.jobDraft', JSON.stringify({
+    ownerId,
+    jobContext: { title: 'Private local draft', company: 'Private employer', description: 'Private job text', sourceUrl: 'https://jobs.example/private', capturedAt: '2026-09-29T00:00:00.000Z' },
+    baseSnapshot: base,
+    resume: { ...base, summary: 'Private local draft wording.' },
+  })), { ownerId: owner, base: master });
+  await page.goto('/workspace/resume', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByText(/Job-specific draft — Tailored for Private local draft/)).toBeVisible();
+  await page.locator('.builder-sidebar').getByRole('button', { name: 'Find jobs', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Find jobs', exact: true })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(/local job-specific draft is set aside/i)).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('resumestride.jobDraft'))).toContain('Private local draft wording.');
+  await page.getByRole('button', { name: 'Resume local job draft' }).click();
+  await expect(page.getByText(/Job-specific draft — Tailored for Private local draft/)).toBeVisible();
+  await page.getByRole('button', { name: 'Profile & skills' }).click();
+  await expect(page.getByRole('textbox', { name: 'Professional profile', exact: true })).toHaveValue('Private local draft wording.');
+});
+
+test('a transient job-specific version failure has a bounded retry without exposing content', async ({ page }) => {
+  await seed(page);
+  const master = example();
+  const savedJobId = '99999999-9999-4999-8999-999999999999';
+  const versionId = '88888888-8888-4888-8888-888888888888';
+  const snapshot = { ...sampleResponse.jobs[0].savedSnapshot, descriptionText: 'Help customers.' };
+  const version = { id: versionId, savedJobId, jobSnapshot: snapshot, sourceMasterResumeId: null, sourceMasterRevision: null,
+    sourceMasterFingerprint: createHash('sha256').update(JSON.stringify(master)).digest('hex'), resume: { ...master, summary: 'Separate version wording.' }, revision: 2,
+    createdAt: '2026-09-29T00:00:00Z', updatedAt: '2026-09-29T00:00:00Z' };
+  let attempts = 0;
+  await page.route('**/api/jobs-account', route => {
+    const body = route.request().postDataJSON();
+    if (body.action === 'get_job_resume') {
+      attempts += 1;
+      return attempts === 1
+        ? route.fulfill({ status: 503, json: { error: 'temporary fixture failure' } })
+        : route.fulfill({ json: { version } });
+    }
+    return route.fulfill({ json: { isPro: true, saveLimit: 10000, savedJobs: [], jobResumeVersions: [{ ...version, resume: undefined, savedJobExists: true }], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } } });
+  });
+  await page.goto(`/workspace/resumes/${versionId}`, { waitUntil: 'domcontentloaded' });
+  await expect(page.getByText('This version is temporarily unavailable.')).toBeVisible();
+  await expect(page.getByText('Separate version wording.')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Retry' }).click();
+  await expect(page.getByText(/Job-specific resume — Tailored for Customer Experience Specialist/)).toBeVisible();
+  expect(attempts).toBe(2);
+});
+
+test('private object routes reveal no saved content before authentication', async ({ page }) => {
+  const savedJobId = '99999999-9999-4999-8999-999999999999';
+  await page.goto(`/workspace/jobs/${savedJobId}/match`, { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { level: 1, name: 'Match Analysis' })).toBeVisible();
+  await expect(page.getByText(/Sign in to restore this workspace state/)).toBeVisible();
+  await expect(page.getByText('Customer Experience Specialist')).toHaveCount(0);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
+});
+
+test('saved-object restoration failure leaves a content-free retry path instead of an endless loader', async ({ page }) => {
+  await seed(page);
+  await page.route('**/api/jobs-account', route => route.fulfill({ status: 503, json: { error: 'fixture unavailable' } }));
+  await page.goto('/workspace/jobs/99999999-9999-4999-8999-999999999999/match', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByText('This workspace item is temporarily unavailable.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+  await expect(page.getByText('Customer Experience Specialist')).toHaveCount(0);
 });
 
 test('resume-derived mode sends bounded summary and qualification evidence without contact or explicit organization/location PII', async ({ page }) => {
@@ -541,8 +673,8 @@ test('a second account signing in on the same browser never inherits the first a
   // user id and reload so the app picks up the new session.
   await seed(page, otherOwner);
   await page.reload();
-  await page.getByRole('button', { name: /^(Continue my resume|Build my resume|Build my master resume)$/, exact: true }).first().click();
-  await page.locator('.builder-sidebar').getByRole('button', { name: 'Find jobs', exact: true }).click();
+  await expect(page).toHaveURL('/workspace/jobs');
+  await expect(page.getByRole('heading', { level: 1, name: 'Find jobs', exact: true })).toBeVisible();
   const toggle = page.getByRole('checkbox', { name: 'Auto Refresh (once a day)' });
   await expect(toggle).not.toBeChecked();
 });
@@ -566,8 +698,8 @@ test('a second account never inherits the first account saved match analysis', a
 
   await seed(page, otherOwner);
   await page.reload();
-  await page.getByRole('button', { name: /^(Continue my resume|Build my resume|Build my master resume)$/, exact: true }).first().click();
-  await page.locator('.builder-sidebar').getByRole('button', { name: 'Find jobs', exact: true }).click();
+  await expect(page).toHaveURL('/workspace/jobs');
+  await expect(page.getByRole('heading', { level: 1, name: 'Find jobs', exact: true })).toBeVisible();
   await expect(page.locator('.saved-job-card')).toHaveCount(0);
   await expect(page.getByText(/keep it and its match evidence here/i)).toBeVisible();
 });

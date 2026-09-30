@@ -9,21 +9,22 @@ Status date: 2026-09-29. This contract is the common foundation for Groups 2, 3 
 - Resume text, job text, URLs, auth secrets and other user content never enter navigation metadata.
 - Object routes accept only UUID-shaped saved-job or version identifiers. The identifier selects an owner-scoped server record; it is not authorization.
 - Missing, invalid or no-longer-owned objects must resolve to a useful workspace fallback, never another owner's data.
+- Missing, deleted and unauthorized references deliberately share one content-free unavailable state. Load failures use a distinct content-free retry state without claiming the object exists.
 
 ## Route contract
 
 | Route | Purpose | Current delivery boundary |
 | --- | --- | --- |
 | `/` | Public homepage | Complete existing public entry |
-| `/start/import` | Import-first onboarding | Reserved and routed to the resume workspace; journey UI remains G3 work |
-| `/start/build` | Build-first onboarding | Reserved and routed to the resume workspace; journey UI remains G3 work |
-| `/start/job` | Job-first onboarding | Reserved and routed to Jobs; capture-first UI remains G3 work |
-| `/start/sample` | Fictional sample | Reserved and routed to Jobs; guided sample remains G3 work |
+| `/start/import` | Import-first onboarding | Truthful local parsing/review guidance and shared resume workspace |
+| `/start/build` | Build-first onboarding | Essentials-first guidance and shared resume workspace |
+| `/start/job` | Job-first onboarding | Job-context guidance and shared opportunity workspace |
+| `/start/sample` | Fictional sample | Account-free, storage-free evidence-to-separate-version walkthrough |
 | `/workspace/resume` | Master resume workspace | Stable, reloadable private entry |
 | `/workspace/jobs` | Jobs and recommendations | Stable, reloadable private entry |
-| `/workspace/jobs/saved` | Saved jobs | Typed route; dedicated state selection remains G3/G5 work |
-| `/workspace/jobs/:savedJobId/match` | Match Analysis | Strict identifier route; owner-scoped object restoration remains G3/G5 work |
-| `/workspace/resumes/:versionId` | Job-specific resume | Strict identifier route; owner-scoped object restoration remains G3/G5 work |
+| `/workspace/jobs/saved` | Saved jobs | Stable saved-only state backed by the authenticated owner's list |
+| `/workspace/jobs/:savedJobId/match` | Match Analysis | Strict UUID; restores only from the authenticated owner's saved-job snapshot |
+| `/workspace/resumes/:versionId` | Job-specific resume | Strict UUID; waits for the owner master, then restores the separate version without replacing it |
 | `/workspace/account` | Account access | Stable private entry and auth-return boundary |
 | `/workspace/pro` | Product access and purchase | Stable private product state; public pricing remains `/#pricing` until static pricing HTML exists |
 
@@ -33,10 +34,13 @@ Legacy `?builder=1`, `?jobs=1`, `?pro=1` and authentication callbacks remain rea
 
 - Meaningful screen changes create browser history entries. Minor editor tabs, template selection and modal state do not.
 - `popstate` restores the corresponding safe screen without overwriting document state.
+- Search criteria, editor tabs, template selection, dialogs and other minor presentation state remain component state and do not create history entries.
 - Sign-in continuation is a single-use session record containing only a validated private path, an optional owner identifier, a version and a timestamp.
 - Guest continuation can be claimed by the account that completes sign-in in that browser session. A continuation already scoped to one owner is discarded for every other owner.
 - Continuations expire after 30 minutes and are removed whether accepted or rejected.
 - Sensitive callback parameters remain available to the auth client until it consumes them; they are never copied into the continuation record.
+- A browser-local job draft never replaces or blocks a requested saved-object URL. In-app navigation sets it aside intact, restores the master in memory and exposes an explicit “Resume local job draft” action; initial object deep links leave the stored draft untouched for the same explicit return.
+- Account-backed object restoration waits until master-resume synchronization, consent/conflict and rescue state have settled. This prevents a guest or blank draft from becoming the protected master snapshot.
 
 ## Shared state ownership
 

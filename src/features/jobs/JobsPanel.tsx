@@ -69,7 +69,24 @@ type Criteria = {
   salary?: { period: SalaryPeriod; currency: string; min?: number | null; max?: number | null };
 };
 
-type Props = { resume: Resume; ownerId: string | null; onSignIn: () => void; onViewPro: () => void; onBack: () => void; onEditJobResume: (version: JobResumeVersion, masterChanged: boolean) => void };
+export type WorkspaceTarget =
+  | { kind: 'jobs' }
+  | { kind: 'saved_jobs' }
+  | { kind: 'match'; savedJobId: string }
+  | { kind: 'job_resume'; versionId: string };
+
+type Props = {
+  resume: Resume;
+  ownerId: string | null;
+  masterReady: boolean;
+  target: WorkspaceTarget;
+  onSignIn: () => void;
+  onViewPro: () => void;
+  onBack: () => void;
+  onOpenSavedJobs: () => void;
+  onOpenMatch: (savedJobId: string) => void;
+  onEditJobResume: (version: JobResumeVersion, masterChanged: boolean) => void;
+};
 
 const WORKPLACE_VALUES: Workplace[] = ['remote', 'hybrid', 'onsite', 'field'];
 const EMPLOYMENT_VALUES: EmploymentType[] = ['full_time', 'part_time', 'contract', 'temporary', 'internship'];
@@ -81,6 +98,13 @@ const EMPLOYMENT_LABELS: Record<EmploymentType | 'unknown', string> = { full_tim
 const MATCH_LABELS: Record<MatchLabel, string> = { strong: 'Strong match', good: 'Good match', stretch: 'Stretch' };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+class AccountRequestError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+    this.name = 'AccountRequestError';
+  }
+}
 
 function record(value: unknown): value is Record<string, unknown> { return !!value && typeof value === 'object'; }
 
@@ -298,7 +322,7 @@ function MatchAnalysisPanel({ analysis, isPro, onViewPro, onClarify, onEvidenceR
   </section>;
 }
 
-export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEditJobResume }: Props) {
+export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onViewPro, onBack, onOpenSavedJobs, onOpenMatch, onEditJobResume }: Props) {
   const [mode, setMode] = useState<'resume' | 'explicit'>('resume');
   const proposals = useMemo(() => proposeSearchesFromResume(resume), [resume]);
   const [title, setTitle] = useState(proposals[0]?.title ?? '');
@@ -319,8 +343,12 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
   const [saveLimit, setSaveLimit] = useState(3);
   const [accountIsPro, setAccountIsPro] = useState(false);
   const [accountLoaded, setAccountLoaded] = useState(false);
+  const [accountLoadFailed, setAccountLoadFailed] = useState(false);
+  const [accountLoadRevision, setAccountLoadRevision] = useState(0);
   const [nextFreeRefreshAt, setNextFreeRefreshAt] = useState(0);
   const [jobResumeVersions, setJobResumeVersions] = useState<JobResumeVersionSummary[]>([]);
+  const [restoreFailure, setRestoreFailure] = useState<'unavailable' | 'transient' | null>(null);
+  const [versionRestoreRevision, setVersionRestoreRevision] = useState(0);
   const inFlight = useRef(false);
   const active = useRef(true);
   const controllerRef = useRef<AbortController | null>(null);
@@ -328,6 +356,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
   const lastProviderRefreshRef = useRef(0);
   const savedJobsViewed = useRef(false);
   const currentOwnerRef = useRef(ownerId);
+  const restoredVersionRef = useRef<string | null>(null);
   currentOwnerRef.current = ownerId;
 
   useEffect(() => {
@@ -346,7 +375,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
     });
     let body: unknown;
     try { body = await response.json(); } catch { throw new Error('Saved jobs returned an unusable response.'); }
-    if (!response.ok) throw new Error(record(body) && typeof body.error === 'string' ? body.error : 'Saved jobs are temporarily unavailable.');
+    if (!response.ok) throw new AccountRequestError(record(body) && typeof body.error === 'string' ? body.error : 'Saved jobs are temporarily unavailable.', response.status);
     if (!record(body)) throw new Error('Saved jobs returned an unusable response.');
     return body;
   }
@@ -384,14 +413,18 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
     setAutoRefresh(false);
     setSavedJobs([]);
     setJobResumeVersions([]);
+    setRestoreFailure(null);
     setSaveLimit(3);
     setAccountIsPro(false);
     setAccountLoaded(false);
+    setAccountLoadFailed(false);
     setNextFreeRefreshAt(0);
     recordedEvidence.current.clear();
     lastProviderRefreshRef.current = 0;
     lastCriteriaRef.current = null;
-    if (ownerId) void accountRequest({ action: 'load', evidence: buildResumeEvidence(resume) }, controller.signal).then(body => {
+    const restoringEvidence = target.kind === 'match' || target.kind === 'job_resume';
+    const loadAction = masterReady ? { action: 'load', evidence: buildResumeEvidence(resume) } : { action: 'load' };
+    if (ownerId && (masterReady || !restoringEvidence)) void accountRequest(loadAction, controller.signal).then(body => {
       if (controller.signal.aborted) return;
       const preferences = body.preferences;
       if (!record(preferences) || typeof preferences.autoRefresh !== 'boolean'
@@ -408,12 +441,12 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
       setNextFreeRefreshAt(body.isPro || !lastProviderRefreshRef.current ? 0 : lastProviderRefreshRef.current + DAY_MS);
       if (criteria && typeof criteria.title === 'string') applyCriteria(criteria);
     }).catch(error => {
-      if (!controller.signal.aborted) setMessage(error instanceof Error ? error.message : 'Saved jobs are temporarily unavailable.');
+      if (!controller.signal.aborted) { setAccountLoadFailed(true); setMessage(error instanceof Error ? error.message : 'Saved jobs are temporarily unavailable.'); }
     });
     return () => { active.current = false; controller.abort(); controllerRef.current?.abort(); };
     // accountRequest intentionally resolves the currently verified owner each time.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ownerId]);
+  }, [ownerId, masterReady, accountLoadRevision, target.kind]);
 
   useEffect(() => {
     if (!message) return;
@@ -595,14 +628,29 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
   async function openJobResume(summary: JobResumeVersionSummary) {
     if (!ownerId) return;
     const requestedOwner = ownerId;
+    setRestoreFailure(null);
     try {
       const body = await accountRequest({ action: 'get_job_resume', versionId: summary.id });
       const version = parseJobResumeVersion(body.version);
       const masterChanged = version.sourceMasterFingerprint !== await fingerprintResume(resume);
       if (currentOwnerRef.current !== requestedOwner) return;
       onEditJobResume(version, masterChanged);
-    } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to load this job-specific resume.'); }
+    } catch (error) {
+      const unavailable = error instanceof AccountRequestError && [401, 403, 404].includes(error.status);
+      setRestoreFailure(unavailable ? 'unavailable' : 'transient');
+      setMessage(error instanceof Error ? error.message : 'Unable to load this job-specific resume.');
+    }
   }
+
+  useEffect(() => {
+    if (!ownerId || !accountLoaded || target.kind !== 'job_resume' || restoredVersionRef.current === target.versionId) return;
+    const summary = jobResumeVersions.find(version => version.id === target.versionId);
+    if (!summary) return;
+    restoredVersionRef.current = target.versionId;
+    void openJobResume(summary);
+    // openJobResume deliberately verifies the live account before and after fetching.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountLoaded, masterReady, ownerId, target.kind, target.kind === 'job_resume' ? target.versionId : '', jobResumeVersions, versionRestoreRevision]);
 
   async function startTailoring(saved: SavedJob) {
     if (!ownerId) return;
@@ -646,10 +694,15 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
 
   const freeRefreshBlocked = !accountIsPro && nextFreeRefreshAt > Date.now();
 
+  const privateHeading = target.kind === 'match' ? 'Match Analysis'
+    : target.kind === 'job_resume' ? 'Job-specific resume'
+    : target.kind === 'saved_jobs' ? 'Saved jobs'
+    : 'Find jobs';
+
   if (!ownerId) {
     return <section className="field jobs-panel" aria-label="Job search">
       <div className="jobs-panel-heading">
-        <div><span className="section-label">Your opportunity workspace</span><h1>Find jobs</h1><p>Opportunities sourced across 190+ job portals and employer career sites. See what each role asks for, and what your resume already shows.</p></div>
+        <div><span className="section-label">{target.kind === 'jobs' ? 'Your opportunity workspace' : 'Private opportunity workspace'}</span><h1>{privateHeading}</h1><p>{target.kind === 'jobs' ? 'Sign in to search for opportunities based on the evidence in your resume.' : 'Sign in to restore this workspace state. ResumeStride verifies ownership before showing any saved job, evidence, or job-specific document.'}</p></div>
         <button className="back-link" onClick={onBack}>Back</button>
       </div>
       <div className="notice" role="status">
@@ -659,12 +712,58 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
     </section>;
   }
 
+  if (!masterReady && (target.kind === 'match' || target.kind === 'job_resume')) return <section className="field jobs-panel" aria-label="Opportunity workspace restoration">
+    <div className="jobs-panel-heading"><div><span className="section-label">Private workspace</span><h1>{privateHeading}</h1><p>Finish the master-resume recovery, storage choice, or account conflict shown above before using job evidence.</p></div><button className="back-link" onClick={onBack}>Back</button></div>
+    <p className="route-loading" role="status">Waiting for your master resume to be ready…</p>
+  </section>;
+
+  const retryAccountLoad = () => setAccountLoadRevision(value => value + 1);
+  if ((target.kind === 'match' || target.kind === 'job_resume') && accountLoadFailed) return <section className="field jobs-panel" aria-label="Workspace restoration">
+    <div className="jobs-panel-heading"><div><span className="section-label">Private workspace</span><h1>{privateHeading}</h1></div><button className="back-link" onClick={onOpenSavedJobs}>Back to saved jobs</button></div>
+    <div className="empty-state" role="alert"><strong>This workspace item is temporarily unavailable.</strong><p>ResumeStride could not verify and restore the owner-scoped item. No job or resume content was loaded.</p><button className="button" onClick={retryAccountLoad}>Retry</button></div>
+  </section>;
+
+
+  if (target.kind === 'job_resume') {
+    const exists = jobResumeVersions.some(version => version.id === target.versionId);
+    const retryVersionRestore = () => {
+      restoredVersionRef.current = null;
+      setRestoreFailure(null);
+      setVersionRestoreRevision(value => value + 1);
+    };
+    return <section className="field jobs-panel" aria-label="Job-specific resume restoration">
+      <div className="jobs-panel-heading"><div><span className="section-label">Private workspace</span><h1>Job-specific resume</h1></div><button className="back-link" onClick={onOpenSavedJobs}>Back to saved jobs</button></div>
+      {!accountLoaded || !masterReady ? <p className="route-loading" role="status">Restoring your master resume and owner-scoped version…</p>
+        : exists && !restoreFailure ? <p className="route-loading" role="status">Opening your job-specific resume. Your master resume remains unchanged.</p>
+        : exists && restoreFailure === 'transient' ? <div className="empty-state" role="alert"><strong>This version is temporarily unavailable.</strong><p>ResumeStride could not complete the owner-scoped restore. No resume content was loaded.</p><button className="button" onClick={retryVersionRestore}>Retry</button></div>
+        : <div className="empty-state" role="status"><strong>This workspace item is unavailable.</strong><p>It may have been removed, belong to another account, or no longer be accessible. No resume content was loaded.</p><button className="button" onClick={onOpenSavedJobs}>Go to saved jobs</button></div>}
+    </section>;
+  }
+
+  if (target.kind === 'match') {
+    const saved = savedJobs.find(job => job.id === target.savedJobId);
+    if (!accountLoaded || !masterReady) return <section className="field jobs-panel" aria-label="Match Analysis restoration"><h1>Match Analysis</h1><p className="route-loading" role="status">Restoring your master resume and owner-scoped evidence…</p></section>;
+    if (!saved) return <section className="field jobs-panel" aria-label="Match Analysis restoration">
+      <div className="jobs-panel-heading"><div><span className="section-label">Private workspace</span><h1>Match Analysis</h1></div><button className="back-link" onClick={onOpenSavedJobs}>Back to saved jobs</button></div>
+      <div className="empty-state" role="status"><strong>This workspace item is unavailable.</strong><p>It may have been removed, belong to another account, or no longer be accessible. No job or resume content was loaded.</p><button className="button" onClick={onOpenSavedJobs}>Go to saved jobs</button></div>
+    </section>;
+    const job = saved.snapshot;
+    return <section className="field jobs-panel" aria-label="Match Analysis">
+      <div className="jobs-panel-heading"><div><span className="section-label">Saved job · Private workspace</span><h1>Match Analysis</h1><p>{job.title} at {job.company}</p></div><button className="back-link" onClick={onOpenSavedJobs}>Back to saved jobs</button></div>
+      {saved.analysisCurrent === false && <><p className="match-stale" role="status">This analysis needs refreshing because its saved context changed.</p><button className="button" onClick={() => void refreshSavedAnalysis(saved.id)}>Refresh Match Analysis</button></>}
+      {saved.analysisCurrent !== false && saved.matchAnalysis
+        ? <MatchAnalysisPanel jobTitle={`${job.title} at ${job.company}`} analysis={saved.matchAnalysis} isPro={accountIsPro} onViewPro={onViewPro} onClarify={(id, value) => void clarify(id, value, { savedJobId: saved.id })} onEvidenceReviewed={scope => recordEvidenceReview(job.dedupeKey as string, saved.matchAnalysis!.contextHash, scope)} />
+        : <div className="empty-state"><strong>Evidence is not available yet.</strong><p>Return to saved jobs to refresh this role against your current master resume.</p></div>}
+      <div className="job-card-actions"><button className="button" onClick={() => void startTailoring(saved)}>{jobResumeVersions.some(version => version.savedJobId === saved.id) ? 'Open job-specific resume' : accountIsPro ? 'Create a separate job-specific resume' : 'Tailor my resume with Pro'}</button></div>
+    </section>;
+  }
+
   return <section className="field jobs-panel" aria-label="Job search">
     <div className="jobs-panel-heading">
-      <div><span className="section-label">Your opportunity workspace</span><h1>Find jobs</h1><p>Opportunities sourced across 190+ job portals and employer career sites. See what each role asks for, and what your resume already shows.</p></div>
+        <div><span className="section-label">Your opportunity workspace</span><h1>{target.kind === 'saved_jobs' ? 'Saved jobs' : 'Find jobs'}</h1><p>{target.kind === 'saved_jobs' ? 'Roles and evidence you explicitly chose to keep.' : 'Opportunities sourced across 190+ job portals and employer career sites. See what each role asks for, and what your resume already shows.'}</p></div>
       <button className="back-link" onClick={onBack}>Back</button>
     </div>
-    <div className="opportunity-desk"><aside className="opportunity-search" aria-label="Search preferences"><h2>Find your next fit</h2>
+    <div className={`opportunity-desk ${target.kind === 'saved_jobs' ? 'saved-only' : ''}`}>{target.kind === 'jobs' && <aside className="opportunity-search" aria-label="Search preferences"><h2>Find your next fit</h2>
     <div className="jobs-mode-toggle" role="radiogroup" aria-label="Job search mode">
       <label className={`jobs-mode-option ${mode === 'resume' ? 'active' : ''}`}>
         <input type="radio" name="jobs-mode" value="resume" checked={mode === 'resume'} onChange={() => setMode('resume')} />
@@ -699,18 +798,19 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
         : 'No salary preference set — jobs with any salary, or none listed, stay eligible.'}
     </p>
     {accountLoaded && !accountIsPro && !freeRefreshBlocked && <p className="field-hint">Free accounts get one search every 24 hours, with up to 5 results. Set your criteria first.</p>}
-    <button className="button" disabled={busy || freeRefreshBlocked} onClick={search}><Search size={16} />{busy ? 'Searching…' : 'Search jobs'}</button>
+    {!masterReady && <p className="field-hint" role="status">Saved jobs remain available, but search and Match updates pause until your master resume recovery or account check is resolved.</p>}
+    <button className="button" disabled={busy || freeRefreshBlocked || !masterReady} onClick={search}><Search size={16} />{busy ? 'Searching…' : 'Search jobs'}</button>
     {freeRefreshBlocked && <p className="field-hint" role="status">Free recommendations can refresh again {formatRefreshTime(nextFreeRefreshAt)}. Your current results and saved jobs stay available. Pro has no once-a-day limit. <button className="text-button" onClick={onViewPro}>View Pro options</button></p>}
 
     <div className="jobs-toolbar">
-      {results && <button className="text-button" disabled={busy || freeRefreshBlocked} onClick={refresh}><RefreshCw size={14} />Refresh</button>}
+      {results && <button className="text-button" disabled={busy || freeRefreshBlocked || !masterReady} onClick={refresh}><RefreshCw size={14} />Refresh</button>}
       <label className="jobs-auto-refresh"><input type="checkbox" checked={autoRefresh} onChange={event => void toggleAutoRefresh(event.target.checked)} />{accountIsPro ? 'Auto Refresh (daily background update)' : 'Auto Refresh (once a day)'}</label>
     </div>
 
-    </aside><div className="opportunity-content">
+    </aside>}<div className="opportunity-content">
     {message && <p role="status" className="field-hint">{message}</p>}
     {busy && <div className="jobs-skeleton" role="status"><strong>Looking for opportunities…</strong><span aria-hidden="true"/><span aria-hidden="true"/><p className="field-hint">Checking each role against your preferences and the evidence in your resume.</p></div>}
-    {!results && !busy && savedJobs.length === 0 && <div className="empty-state"><strong>Your experience is the starting point.</strong><p>Choose a suggested role or enter your own criteria, then search. You’ll see why each opportunity may fit before deciding what to save.</p></div>}
+    {target.kind === 'jobs' && !results && !busy && savedJobs.length === 0 && <div className="empty-state"><strong>Your experience is the starting point.</strong><p>Choose a suggested role or enter your own criteria, then search. You’ll see why each opportunity may fit before deciding what to save.</p></div>}
 
     <section className="saved-jobs-section" aria-labelledby="saved-jobs-heading">
       <div className="saved-jobs-heading"><h2 id="saved-jobs-heading">Saved jobs</h2><span>{savedJobs.length}{accountIsPro ? '' : ` of ${saveLimit}`}</span></div>
@@ -736,6 +836,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
             {saved.analysisCurrent === false && <button className="text-button" onClick={() => void refreshSavedAnalysis(saved.id)}>Refresh match analysis</button>}
             {saved.analysisCurrent !== false && saved.matchAnalysis && <MatchAnalysisPanel jobTitle={`Saved: ${job.title} at ${job.company}`} analysis={saved.matchAnalysis} isPro={accountIsPro} onViewPro={onViewPro} onClarify={(id, value) => void clarify(id, value, { savedJobId: saved.id })} onEvidenceReviewed={scope=>recordEvidenceReview(job.dedupeKey as string,saved.matchAnalysis!.contextHash,scope)} />}
             <div className="job-card-actions">
+              {saved.matchAnalysis && <button className="button outline" onClick={() => onOpenMatch(saved.id)}>Open Match Analysis</button>}
               <button className="button" onClick={() => void startTailoring(saved)}>
                 {jobResumeVersions.some(version => version.savedJobId === saved.id) ? 'Open tailored resume' : accountIsPro ? 'Tailor my resume for this job' : 'Tailor my resume with Pro'}
               </button>
@@ -759,7 +860,7 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
       </li>)}</ul>
     </section>}
 
-    {results && <>
+    {target.kind === 'jobs' && results && <>
       <div className="saved-jobs-heading"><h2>Opportunities worth your attention</h2></div>
       {results.jobs.length === 0 && <div className="empty-state"><strong>No matching roles in this search.</strong><p>Try a broader title or location, or remove a preference. Your saved jobs are still here.</p></div>}
       <p className="field-hint" role="status">
