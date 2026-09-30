@@ -28,6 +28,7 @@
     "quality:gate": "node scripts/run-quality-gate.mjs all",
     "quality:gate:static": "node scripts/run-quality-gate.mjs static",
     "quality:gate:browser": "node scripts/run-quality-gate.mjs browser",
+    "performance:budgets": "node scripts/check-performance-budgets.mjs",
     "stripe:catalog": "node --import tsx scripts/provision-stripe-catalog.ts",
     "premium-runtime:generate": "esbuild template-library/templates/index.tsx --bundle --platform=node --format=esm --jsx=automatic --external:react --external:react/* --outfile=template-library/export/premium-templates.generated.mjs"
   },

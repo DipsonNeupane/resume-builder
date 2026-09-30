@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // Copper silk on carbon for the public landing hero (approved in
 // experiments/patina). The folding technique (iterated cosine domain warp,
@@ -90,8 +90,26 @@ type Props = {
 
 export function Silk({ className, offset = 0, slope = -0.6, lift = 0.08, intensity = 1 }: Props) {
  const ref = useRef<HTMLCanvasElement>(null);
+ const [activation, setActivation] = useState<'waiting' | 'static-low-power' | 'ready'>('waiting');
 
  useEffect(() => {
+  const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+  if (connection?.saveData || (navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency <= 2)) {
+   setActivation('static-low-power');
+   return;
+  }
+  let timer = 0;
+  let idle = 0;
+  const activate = () => setActivation('ready');
+  // Decorative GPU work is deliberately queued behind the primary React commit.
+  // The CSS carbon/copper background is the complete fallback while waiting.
+  if ('requestIdleCallback' in window) idle = window.requestIdleCallback(activate, { timeout: 2000 });
+  else timer = globalThis.setTimeout(activate, 1200) as unknown as number;
+  return () => { if (idle) window.cancelIdleCallback(idle); if (timer) window.clearTimeout(timer); };
+ }, []);
+
+ useEffect(() => {
+  if (activation !== 'ready') return;
   const canvas = ref.current;
   if (!canvas) return;
   // StrictMode remounts immediately; only release the GPU context if it stays unmounted.
@@ -187,7 +205,7 @@ export function Silk({ className, offset = 0, slope = -0.6, lift = 0.08, intensi
    gl.deleteProgram(prog);
    pendingRelease.set(canvas, window.setTimeout(() => { pendingRelease.delete(canvas); gl.getExtension('WEBGL_lose_context')?.loseContext(); }, 0));
   };
- }, [offset, slope, lift, intensity]);
+ }, [offset, slope, lift, intensity, activation]);
 
- return <canvas ref={ref} className={className} aria-hidden="true" />;
+ return <canvas ref={ref} className={className} data-silk-mode={activation} aria-hidden="true" />;
 }
