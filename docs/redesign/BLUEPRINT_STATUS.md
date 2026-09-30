@@ -1,80 +1,56 @@
 # ResumeStride redesign blueprint status
 
-Status date: 2026-09-29. This ledger reports verified redesign-branch evidence without changing the historical production baseline or claiming undeployed work is live.
+Status date: 2026-09-29. This ledger describes only the isolated redesign branch. It does not claim that undeployed work is live.
+
+## Status model
+
+- **COMPLETE** — implementation and all currently automatable verification are complete.
+- **VALIDATION PENDING** — implementation is complete; final human, physical-device, production-field or post-release validation remains.
+- **PARTIAL** — implementation itself remains incomplete.
+- **NOT STARTED** — no blueprint-specific implementation has begun.
+- **BLOCKED** — progress genuinely requires an owner decision, permission, credential, external dependency or unresolved technical blocker.
+
+## All-65 ledger
+
+Every task is included exactly once:
+
+- **COMPLETE (16):** 2, 3, 6–18, 31.
+- **VALIDATION PENDING (6):** 5, 19–22, 46.
+- **PARTIAL (14):** 1, 4, 32–34, 37–45.
+- **NOT STARTED (29):** 23–30, 35–36, 47–65.
+- **BLOCKED (0):** none.
+
+Production analytics and post-release field evidence are represented as **VALIDATION PENDING**, not Partial or Blocked. Broad G4/G5, bulk G7, occupation SEO, partnerships and localization have not been started in this batch.
+
+## Group summary
 
 | Group | Status | Current truth |
 | --- | --- | --- |
-| 1. Product strategy and measurement | [~] | Strategy contracts and the north-star measurement foundation are implemented; public rollout, complete funnel coverage and unavailable baseline denominators remain partial. |
-| 2. Homepage and navigation UI | [~] | The evidence-led hero, working primary/secondary actions, three measurable start journeys, compact proof, simplified demonstration and public-route performance budgets are implemented. Static template/pricing destinations and complete template browsing remain. |
-| 3. Onboarding and workspace | [~] | Four entry routes converge on shared workspaces; the no-account fictional sandbox is complete; saved jobs, Match and job-specific versions have owner-scoped reload-safe URLs. Full cross-workflow/history/recovery and human device/assistive-tech validation remain. |
-| 4. Trust, pricing and monetization | [ ] | Not started in the redesign. Existing production capabilities remain the truth boundary. |
-| 5. Jobs, Match and application workflow | [~] | Existing saved jobs, deterministic Match, clarifications and job-specific versions are reusable foundations; the broader blueprint workflow is not complete. |
-| 6. Technical SEO, accessibility and performance | [~] | Static public routes, strict private-route noindex/no-store policy, enforceable public bundle/defer/runtime lab budgets and a consolidated local/PR technical gate are implemented; capability pages and owner-approved field Core Web Vitals evidence remain. |
-| 7. Content and search acquisition | [ ] | Broad production is intentionally not started. Architecture may begin only after product vocabulary/routes stabilize. |
-| 8. Growth, research and global expansion | [ ] | Not started; it depends on validated outcomes from earlier groups. |
+| 1. Product strategy and measurement | Mixed | North-star storage/review qualification and entry-journey contracts are complete. Product-position rollout and later funnel instrumentation remain partial. Baseline implementation is complete; unavailable production field denominators remain validation pending. |
+| 2. Homepage and navigation UI | COMPLETE | Tasks 6–14 meet current automatable Done When conditions: evidence-led homepage, permanent navigation, curated showcase, complete truthful template discovery and indexable detail/pricing routes. |
+| 3. Onboarding and workspace | Mixed | Tasks 15–18 are complete. Tasks 19–22 are implementation-complete with automated coverage; real email-provider, human/device, assistive-technology and post-release validation remain. |
+| 4. Trust, pricing and monetization | NOT STARTED | No broad G4 implementation was begun. The pricing route exposes only existing verified access facts needed by G2 navigation/template discovery. |
+| 5. Jobs, Match and application workflow | Mixed | Task 31 is complete; tasks 32–34 remain partial and later G5 tasks are not started. |
+| 6. Technical SEO, accessibility and performance | Mixed | Existing public/private policy, route quality and performance gates cover the new routes. Broader G6 implementation remains partial; task 46 awaits field/human validation. |
+| 7. Content and search acquisition | NOT STARTED | URL architecture is coordinated; no bulk content or occupation SEO was started. |
+| 8. Growth, research and global expansion | NOT STARTED | Work remains intentionally dependent on validated earlier outcomes. |
 
-## Group 1 task-level status
+## Current G2/G3/G6 task truth
 
-| # | Task | Status | Remaining boundary |
-| --- | --- | --- | --- |
-| 1 | Finalize the primary product position | [~] | Strategy artifacts complete; rollout and claim audit continue with public surfaces. |
-| 2 | Define the three primary entry journeys | [~] | Contracts complete; route/onboarding delivery continues in G2/G3. |
-| 3 | Define the north-star outcome | [x] | Durable, owner-scoped, content-free and behavior-qualified implementation verified. |
-| 4 | Define the complete product funnel | [~] | Core contract and corrected instrumentation exist; later product states/events remain. |
-| 5 | Establish baseline product measurements | [~] | Production snapshot captured; missing instrumentation is explicitly unavailable, not zero. |
-
-The governing task definitions remain in `RESUMESTRIDE_PRODUCT_BLUEPRINT.md` outside the production checkout. This status file is the tracked execution record for the isolated redesign branch.
-
-## All-65 progress count
-
-Strict status after this consolidation batch: **11 complete / 25 partial / 29 not started / 0 blocked**.
-
-- Complete: 3, 6–11, 16–18 and 31.
-- Partial: 1, 2, 4, 5, 12–15, 19–22, 32–34 and 37–46.
-- Not started: every remaining task (23–30, 35–36 and 47–65).
-- Blocked: none. Owner/external validation still required by some partial Done When conditions is recorded as a remaining boundary, not mislabeled as completed implementation.
-
-“Partial” means repository/product behavior or verification exists but at least one Done When condition remains. Pre-existing live capability alone does not make a redesign task complete.
-
-## Shared G2/G3/G6 foundation status
-
-| Blueprint task | Status | Verified boundary |
+| Task | Status | Verified boundary |
 | --- | --- | --- |
-| 12. Primary navigation | [~] | Typed destinations, history behavior and reusable public discovery navigation exist; dedicated static Templates/Pricing destinations and the complete route set remain. |
-| 15. Journey-specific onboarding | [~] | Import-, build-, job- and sample-first routes now have truthful journey-specific progress, limits and preservation guidance and converge on the same workspaces. Pasted-job capture and extracted-field review UI remain. |
-| 18. Permanent workspace URLs | [x] | Master resume, jobs, saved jobs, Match and job-specific version states restore through stable private URLs; object access is owner-scoped and missing/deleted/unauthorized references share a safe fallback. |
-| 19. Browser navigation | [~] | Meaningful transitions use history, minor state does not, saved-object Back/Forward is covered, and dirty job-version exits are guarded. Public-tool/auth and checkout-cancel matrices remain. |
-| 20. Sign-in/recovery context | [~] | Content-free owner-scoped continuation exists; all journey payload recovery remains. |
-| 38. Public capability URLs | [~] | Public/private publishing rule is locked; new public capability HTML is not yet produced. |
-| 46. Technical quality gate | [~] | One local/PR command now composes build/type, public performance budgets, links, SEO/schema, accessibility, responsive, motion, console, route and PDF/Word checks. Owner-approved field Core Web Vitals monitoring and final release-environment enforcement remain. |
+| 12. Permanent primary navigation | COMPLETE | Homepage, tools, resources, templates and pricing use intentional destinations; mobile menu Escape/focus and native new-tab behavior are covered. |
+| 13. Curated template showcase | COMPLETE | Six explicitly non-ranked examples span verified structural families and link to permanent details. |
+| 14. Template gallery and detail architecture | COMPLETE | All 27 registry-backed templates have indexable URLs, useful filters, verified tier/family/density/facts, A4/Letter and RTL/LTR boundaries, and preview-before-purchase transitions. |
+| 15. Journey-specific onboarding | COMPLETE | Import-, build- and direct pasted-job paths preserve context and converge on the shared workspace; requirements reuse the public matcher parser and remain local/content-free in URLs and analytics. |
+| 16. No-signup evidence moment | COMPLETE | Public requirement-level review remains behavior-qualified and content-free. |
+| 17. Guided fictional sample | COMPLETE | Fictional/real state isolation, master safety, grounded suggestions and reset are automated and independently reviewed. |
+| 18. Permanent workspace URLs | COMPLETE | Owner-scoped saved objects restore safely; invalid/missing/unauthorized objects fail closed. |
+| 19. Browser navigation | VALIDATION PENDING | Automated meaningful history, mobile Back, public-to-auth return, checkout-cancel return and object-route behavior are complete; physical-device confirmation remains. |
+| 20. Sign-in/recovery context | VALIDATION PENDING | Same-tab and content-free new-tab return keys, recovery completion, owner switching and local/cloud precedence are implemented; real provider-link acceptance remains. |
+| 21. Document/storage concepts | VALIDATION PENDING | UI implementation is complete; comprehension testing with people remains. |
+| 22. Responsive/accessibility workflow | VALIDATION PENDING | Automated narrow/desktop overflow, keyboard, focus and axe checks are complete; physical-device and assistive-technology matrix remains. |
+| 38. Public capability URLs | PARTIAL | Template/pricing/tool/resource route architecture is stable and G7-compatible; the broader capability-page set is not built. |
+| 46. Technical quality gate | VALIDATION PENDING | Build/type, SEO, links, accessibility, responsive, privacy and lab performance checks are enforced; production field CWV/release validation remains. |
 
-## Group 2 task-level status
-
-| # | Task | Status | Verified boundary |
-| --- | --- | --- | --- |
-| 6 | Simplify the homepage hero | [x] | One short promise, one explanatory sentence, one primary action, one secondary action and a reduced one-role/three-requirement demonstration are implemented without changing the Patina identity. |
-| 7 | Make evidence comparison the primary CTA | [x] | “Compare my resume with a job” reaches the working browser-only, no-signup requirement comparison. Completion, genuine result review and continuation use separate content-free events. |
-| 8 | Keep building a resume as the secondary CTA | [x] | The secondary action opens `/start/build`; seven Free templates, PDF/Word, free-account and no-card boundaries are stated consistently. |
-| 9 | Add the three start cards | [x] | Upload, build and job-first cards each enter a coherent real flow; job-first now accepts pasted resume and job text in the browser-only limited comparison. |
-| 10 | Add a compact product-proof strip | [x] | Five implementation-backed facts appear beside the first conversion choices without badges, seals or outcome claims. |
-| 11 | Simplify the hero product illustration | [x] | The first frame shows one role and three evidence states; content remains complete without decoration, WebGL is idle/deferred with low-power and reduced-motion fallbacks, and lab artifact/runtime budgets enforce regressions. |
-| 12 | Redesign primary navigation | [~] | A reusable, keyboard-safe public navigation exposes real `/start/*`, Tools and Resources links. Templates and Pricing remain truthful homepage anchors until unique static pages exist. |
-
-## Group 3 task-level status
-
-| # | Task | Status | Verified boundary |
-| --- | --- | --- | --- |
-| 15 | Create journey-specific onboarding | [~] | Each typed start has specific language and a shared destination. Import is local/best-effort with review required; build defers design; job-first states save/account boundaries; sample is isolated. Direct pasted-job onboarding is not implemented. |
-| 16 | Deliver a no-signup evidence moment | [x] | The public matcher shows up to 12 requirement-level rows with source text and bounded evidence labels, runs entirely in the browser, retains no pasted content and offers signup only after value. Review qualification requires a requirement row to be visibly reached and records `review_scope=limited`. |
-| 17 | Add a guided fictional sample | [x] | The account-free, storage-free sandbox teaches direct, adjacent and unknown evidence, user authority, grounded suggestions, separate-version/master safety, explicit real-work transitions and complete reset without touching a real draft. |
-| 18 | Give major workspace states permanent URLs | [x] | Saved jobs, Match and job-specific versions reload through strict content-free routes, wait for settled owner state, transition safely between versions, set local drafts aside intact, fail safely and remain private/noindex. |
-| 19 | Make browser navigation reliable | [~] | Saved Match and saved-list transitions support Back/Forward/reload; minor UI state stays out of history and unsaved version exits are guarded. Public-tool/auth, checkout-cancel and the full mobile matrix remain. |
-| 20 | Preserve context across sign-in and recovery | [~] | Same-tab authentication continuation, settled-master restoration, owner switches and local-draft precedence are protected. New-tab magic-link/recovery and all imported/job/evidence payload recovery remain. |
-| 21 | Clarify document and storage concepts | [~] | Master/job-specific identity and local/account storage scope remain visible across Builder and Jobs, with master-return language. Confusion testing with users remains. |
-| 22 | Verify the responsive and accessible workflow | [~] | The new journey route receives automated axe and narrow/desktop route coverage; the blueprint's complete device, screen-reader and failure matrix remains. |
-
-## Group 5 task-level status (current cross-group slice)
-
-| # | Task | Status | Verified boundary |
-| --- | --- | --- | --- |
-| 31 | Reposition the free evidence tool around search intent | [x] | The indexable Free Resume-to-Job evidence checker uses recognizable comparison language, preserves requirement-level source/evidence rows and explicitly rejects ATS percentages and hiring predictions. |
+Detailed evidence, architecture, commands and review findings are recorded in `SHARED_DISCOVERY_BATCH_2026-09-29.md`, `SHARED_ROUTE_STATE_ARCHITECTURE.md`, `PERFORMANCE_BUDGETS.md` and the batch commits.

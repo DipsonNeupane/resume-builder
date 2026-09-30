@@ -1,3 +1,29 @@
+## September 29 — shared discovery foundations (isolated redesign only)
+
+Completed G2 tasks 12–14 and implementation-level G3 task 15 on
+`redesign/shared-route-state`; advanced tasks 19–20 to validation pending. Production,
+hosted data, provider calls, push, merge and deployment were untouched.
+
+- Added permanent static `/templates/`, 27 registry-backed detail routes and `/pricing/`,
+  with truthful filters/facts, preview-before-purchase boundaries, canonical/sitemap policy,
+  keyboard/mobile behavior, and the existing route-quality/performance enforcement.
+- Added direct pasted-job onboarding using the existing matcher extraction architecture.
+  Its bounded session-only content state survives import/build review, converges on the
+  shared workspace, never enters URLs/analytics, and fails closed across owner changes.
+- Bounded auth/recovery returns to a content-free enum, corrected checkout-cancel returns,
+  and covered safe reload/Back, invalid object, noindex, owner isolation and new-tab fallback
+  behavior. Real provider links, physical mobile devices and assistive technology remain
+  validation pending rather than implementation gaps.
+- Claude's independent adversarial pass produced ten actionable findings; all were resolved
+  and rerun. Detailed evidence is in
+  `docs/redesign/SHARED_DISCOVERY_BATCH_2026-09-29.md`; the exhaustive 65-task truth is in
+  `docs/redesign/BLUEPRINT_STATUS.md`.
+
+Verification: production build/client TypeScript PASS; server TypeScript PASS; targeted
+server/SEO 22/22; shared-discovery browser 4/4; navigation 5/5; public route
+quality PASS across 320/1440 widths; sample/performance 5/5; artifact budgets and diff check
+PASS. No production field metric is claimed.
+
 ## September 29 — Group 3 onboarding and workspace foundation (isolated redesign only)
 
 Implemented the first shared G3 batch on `redesign/g3-onboarding-workspace`, based on the

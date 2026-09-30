@@ -21,14 +21,14 @@ The pull-request workflow installs a pinned lockfile and Chromium, then runs the
 | Mobile overflow | Every public page at 320px; workspace/international-content checks also retain 390px, 768px and 1920px coverage |
 | Keyboard and automated accessibility | Existing keyboard/dialog/focus workflows plus axe on every public page |
 | Reduced motion | CSS and scripted scrolling regression coverage |
-| Public-route performance | Built entry/CSS and matcher-script ceilings; deferred feature chunks; lab LCP/CLS/navigation signal; idle WebGL and data-saver/reduced-motion behavior |
+| Public-route performance | Built entry/CSS, matcher-script and template-gallery ceilings; deferred feature chunks; lab LCP/CLS/navigation signal; idle WebGL and data-saver/reduced-motion behavior |
 | Public-page console errors | Same-origin HTTP, request, page and console errors fail the public-page browser test |
 | PDF and Word smoke tests | Request/accounting contracts, real DOCX round trip, mocked browser requests and real local generated-PDF text extraction |
 
 ## Honest limits
 
-- Core Web Vitals field monitoring cannot be established by a local or pull-request test. It remains partial until an owner-approved redesign deployment collects real traffic in the configured field-performance service. No synthetic score or production threshold is claimed here.
+- Core Web Vitals field monitoring cannot be established by a local or pull-request test. Task 46 remains **VALIDATION PENDING** until an owner-approved redesign deployment collects real traffic in the configured field-performance service. No synthetic score or production threshold is claimed here.
 - Lab budgets and field data are kept separate in `PERFORMANCE_BUDGETS.md`; the only current field truth remains the bounded production snapshot already captured there and in the production-baseline document.
 - Chromium automation is not physical-device, screen-reader, Safari or Firefox acceptance. Cross-engine and assistive-technology review remains part of later release acceptance.
 - A passing local PDF/DOCX smoke test does not prove the hosted Chromium package or every real-world document. Packaged-runtime and representative-document acceptance remain separate release checks.
-- Task 38 remains partial: the gate protects the current public/private route contract, but it does not create capability pages before meaningful static HTML exists.
+- Task 38 remains partial: the gate now protects permanent template and pricing routes, but the broader capability-page set is intentionally not created before meaningful static content exists.
