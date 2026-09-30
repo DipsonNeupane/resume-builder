@@ -40,7 +40,7 @@ export async function exportDocument(config:DocumentExportConfig,request:Request
   const hash=createHash('sha256').update(`${config.format}\0${JSON.stringify(body.resume)}`).digest('hex')
   const {data,error}=await db.rpc('product_begin_document',{p_id:body.requestId,p_owner:owner,p_hash:hash,p_template:body.resume.template,p_premium_template:isPremiumTemplate(body.resume.template),p_format:config.format,p_job_resume_version:qualifiedVersionId})
   if(error?.message==='Premium template access required')throw new HttpError(403,'An active subscription for this Premium template or Pro is required.')
-  if(error?.message==='Free PDF allowance reached')throw new HttpError(403,'Your Free document download allowance is used for this period.')
+  if(error?.message==='Free PDF allowance reached'||error?.message==='Free document allowance reached')throw new HttpError(403,'Your Free document download allowance is used for this period.')
   if(error||!data?.[0])throw new HttpError(409,'Download unavailable: check your allowance or retry after the current download finishes.')
   const reservation=data[0]
   let bytes:Uint8Array

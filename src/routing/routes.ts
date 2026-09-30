@@ -127,4 +127,5 @@ export const publicDestinations = {
  resources: '/resources/',
  templates: '/templates/',
  pricing: '/pricing/',
+ trust: '/trust/',
 } as const;

@@ -26,6 +26,8 @@ const toolFiles = ['analysis.js', 'public-tools.js', 'tool-analytics.js'].map(fi
 budget('Public matcher JavaScript', toolFiles, 30 * 1024, 10 * 1024);
 budget('Template gallery JavaScript', [join(root, 'public/templates-filter.js')], 4 * 1024, 2 * 1024);
 budget('Template gallery CSS', [join(root, 'public/templates.css')], 16 * 1024, 4 * 1024);
+budget('Commercial static HTML', [join(root, 'public/pricing/index.html'), join(root, 'public/trust/index.html')], 48 * 1024, 14 * 1024);
+budget('Commercial shared CSS', [join(root, 'public/resources.css'), join(root, 'public/templates.css')], 32 * 1024, 8 * 1024);
 
 const assets = readdirSync(join(root, 'dist/assets'));
 for (const feature of ['JobsPanel-', 'FictionalSample-', 'GeneratedPdfControls-', 'pdfImport-', 'docx-']) {

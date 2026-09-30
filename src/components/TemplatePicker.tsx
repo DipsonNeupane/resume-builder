@@ -44,7 +44,7 @@ export function TemplatePicker({ resume, accessState, onSelect, onUnlock, onView
     const active = premium && entitled.has(template.id);
     const locked = premium && accessState.status === 'ready' && !access?.isPro && !active;
     const subscription = premium ? access?.subscriptions.find(item => item.kind === 'template' && item.templateId === template.id && item.currentPeriodEnd) : undefined;
-    const accessLabel = !premium ? 'Free / Included' : access?.isPro ? 'Included with Pro' : active ? 'Premium · Active' : accessState.status === 'ready' ? 'Premium · $1.99/month' : 'Premium · Checking access';
+    const accessLabel = !premium ? 'Free / Included' : access?.isPro ? 'Included with Pro' : active ? subscription?.cancelAtPeriodEnd ? 'Premium · Renewal off' : 'Premium · Active' : accessState.status === 'ready' ? 'Premium · $1.99/month' : 'Premium · Checking access';
     const throughDate = subscription?.currentPeriodEnd ? new Date(subscription.currentPeriodEnd) : null;
     const through = throughDate && Number.isFinite(throughDate.getTime()) ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(throughDate) : null;
     return <li key={template.id} className="template-picker-card">

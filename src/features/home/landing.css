@@ -278,7 +278,7 @@
 .landing .landing-pricing { max-width:none; background:var(--rs-canvas); color:var(--rs-heading); padding:96px var(--gut) 110px; border-top:1px solid var(--rs-line); }
 .landing .landing-pricing>* { max-width:1400px; margin-inline:auto; }
 .landing-pricing .section-introduction>p:last-child { color:var(--rs-slate); font-size:16px; line-height:1.7; }
-.landing .plan-comparison { border:0; gap:16px; grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr); }
+.landing .plan-comparison { border:0; gap:16px; grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr)); }
 .landing .plan-comparison article { border-radius:18px; border:1px solid var(--rs-line); background:var(--pt-paper); }
 .landing .plan-comparison h3 { font:800 26px/1.08 var(--pt-display); letter-spacing:-.02em; }
 .landing .plan-price { font:800 48px/1 var(--pt-display); letter-spacing:-.03em; }

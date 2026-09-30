@@ -8,9 +8,9 @@ export function ProPage({ ownerId, onBack, onSignIn }: Props) {
   <button className="back-link" onClick={onBack}><ArrowLeft size={15}/>Back to home</button>
   <div className="pro-page-grid">
    <div className="pro-page-intro">
-    <span className="price-tag">PRO PASS</span>
+    <span className="price-tag">PRO MONTHLY</span>
     <h1>A promising role. A considered application.</h1>
-    <p>Get ResumeStride Pro for US$19.99/month. It renews automatically until you cancel.</p>
+    <p>Get ResumeStride Pro for US$19.99/month. It renews automatically until you cancel; access continues through the paid billing period.</p>
     <ul>
      <li><Check size={18}/>Full Match Analysis, requirement by requirement</li>
      <li><Check size={18}/>Up to 20 job results per search, with no once-a-day limit</li>
@@ -19,10 +19,11 @@ export function ProPage({ ownerId, onBack, onSignIn }: Props) {
     </ul>
     <p className="pro-outcome">Understand the match → review each suggestion → download your tailored resume. Your master stays separate. All seven templates remain Free.</p>
     <div className="pro-page-trust"><ShieldCheck size={20}/><span>Checkout is handled securely by Stripe. Fair-use limits apply.</span></div>
+    <p className="field-hint"><a href="/pricing/">Compare Free, one Premium template and Pro</a> or read the <a href="/trust/">factual trust record</a>.</p>
    </div>
    <aside className="pro-checkout-card" aria-label="Pro purchase options">
     <div className="pro-checkout-price"><strong>US$19.99</strong><span>/month</span></div>
-    {ownerId?<BillingPanel key={ownerId} ownerId={ownerId} surface="purchase"/>:<><h2>Sign in to continue</h2><p>Your Pro pass will be connected to your ResumeStride account.</p><button className="button" onClick={onSignIn}>Sign in or create account</button></>}
+    {ownerId?<BillingPanel key={ownerId} ownerId={ownerId} surface="purchase"/>:<><h2>Sign in to continue</h2><p>Your Pro subscription will be connected to your ResumeStride account. Signing in does not start checkout.</p><button className="button" onClick={onSignIn}>Sign in or create account</button></>}
    </aside>
   </div>
  </section></main>;

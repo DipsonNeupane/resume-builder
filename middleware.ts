@@ -23,7 +23,8 @@ export const publicPages = {
  '/tools/resume-job-match/': { title: 'Compare your resume to a job description free | ResumeStride', description: 'Compare resume evidence with job requirements—clearly demonstrated, worth reviewing or not demonstrated. No ATS score, signup or upload.' },
  '/tools/resume-bullet-checker/': { title: 'Free resume bullet point checker | ResumeStride', description: 'Check one resume bullet for action, specificity, context, evidence, readability and filler—without an ATS score or invented metrics.' },
  '/templates/': { title: 'Resume templates: preview before choosing | ResumeStride', description: 'Browse all ResumeStride resume templates by verified structure, density and access tier. Preview any design with your own content before choosing it.' },
- '/pricing/': { title: 'ResumeStride pricing and template access', description: 'Compare ResumeStride Free, individual Premium template and Pro access with clear renewal, preview and download boundaries.' },
+ '/pricing/': { title: 'ResumeStride pricing and template access', description: 'Compare ResumeStride Free, one Premium template and Pro with explicit recurring terms, cancellation behavior and PDF or Word export boundaries.' },
+ '/trust/': { title: 'How ResumeStride earns trust', description: 'Review factual ResumeStride boundaries for Match evidence, master-resume safety, template preview, exports, privacy and customer proof.' },
  '/privacy.html': { title: 'Privacy notice | ResumeStride', description: 'Read how ResumeStride handles resume drafts, account information, document uploads, payments and optional AI processing, and how to contact support.' },
  '/terms.html': { title: 'Terms and refunds | ResumeStride', description: 'Read the ResumeStride terms of service, Pro purchase and renewal conditions, refund information, usage limits and support details.' },
  ...templatePages,
@@ -47,7 +48,7 @@ export function isPublicLocation(url: URL): boolean {
  return isPublicPath(url.pathname) && !url.search && isPublicAnchor(url.pathname, url.hash);
 }
 function isPublicAnchor(path: string, hash: string): boolean {
- return path.startsWith('/resources/') || path.startsWith('/tools/') || path.startsWith('/templates/') || path==='/pricing/' ? hash === '' || /^#[a-z0-9]+(?:-[a-z0-9]+)*$/.test(hash) : publicAnchors.has(hash);
+ return path.startsWith('/resources/') || path.startsWith('/tools/') || path.startsWith('/templates/') || path==='/pricing/' || path==='/trust/' ? hash === '' || /^#[a-z0-9]+(?:-[a-z0-9]+)*$/.test(hash) : publicAnchors.has(hash);
 }
 const campaignKeys = new Set(['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term']);
 const campaignToken = /^[A-Za-z0-9][A-Za-z0-9._~-]{0,79}$/;

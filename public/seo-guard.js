@@ -2,9 +2,10 @@
 // reach HTTP middleware. Keep this allowlist aligned with src/seo/policy.ts.
 (() => {
  const url = new URL(location.href);
- const publicPath = url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/privacy.html' || url.pathname === '/terms.html' || url.pathname.startsWith('/resources/') || url.pathname.startsWith('/tools/');
- const resourceFragment = url.pathname.startsWith('/resources/') && (url.hash === '' || /^#[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url.hash));
- const publicFragment = resourceFragment || ['', '#how-it-works', '#templates', '#pricing', '#main-content'].includes(url.hash);
+ const contentPath = url.pathname.startsWith('/resources/') || url.pathname.startsWith('/tools/') || url.pathname.startsWith('/templates/') || url.pathname === '/pricing/' || url.pathname === '/trust/';
+ const publicPath = url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/privacy.html' || url.pathname === '/terms.html' || contentPath;
+ const contentFragment = contentPath && (url.hash === '' || /^#[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url.hash));
+ const publicFragment = contentFragment || ['', '#how-it-works', '#templates', '#pricing', '#main-content'].includes(url.hash);
  const campaignKeys = new Set(['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term']);
  const campaignToken = /^[A-Za-z0-9][A-Za-z0-9._~-]{0,79}$/;
  const seen = new Set();

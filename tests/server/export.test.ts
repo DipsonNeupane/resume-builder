@@ -11,7 +11,7 @@ const owner='33333333-3333-3333-3333-333333333333'
 const env={EXPORTS_ENABLED:'true',APP_ORIGIN:'https://resumestride.com',SUPABASE_URL:'https://fixture.supabase.co',SUPABASE_PUBLISHABLE_KEY:'fixture',SUPABASE_SERVICE_ROLE_KEY:'fixture'}
 const req=(format:'pdf'|'docx'='pdf',resume:ReturnType<typeof example> = example(),requestId=owner,jobResumeVersionId?:string)=>new Request(`${env.APP_ORIGIN}/api/export-${format}`,{method:'POST',headers:{origin:env.APP_ORIGIN,'content-type':'application/json'},body:JSON.stringify({requestId,resume,...(jobResumeVersionId?{jobResumeVersionId}:{})})})
 
-function fixtures(options:{quotaError?:boolean;pdfRenderError?:boolean;docxRenderError?:boolean;finishError?:boolean;complete?:boolean}={}){
+function fixtures(options:{quotaError?:boolean|'current';pdfRenderError?:boolean;docxRenderError?:boolean;finishError?:boolean;complete?:boolean}={}){
  const calls:string[]=[]
  const hashes:string[]=[]
  const deps={
@@ -21,15 +21,15 @@ function fixtures(options:{quotaError?:boolean;pdfRenderError?:boolean;docxRende
   serviceDatabase:()=>({rpc:async(name:string,args:Record<string,unknown>)=>{
    calls.push(name==='product_finish_document'?`finish:${args.p_success}`:name)
    if(name==='product_begin_document')hashes.push(String(args.p_hash))
-   return name==='product_begin_document'?{data:[{lease:'fixture',already_complete:!!options.complete}],error:options.quotaError?{message:'Free PDF allowance reached'}:null}:{data:null,error:options.finishError?{}:null}
+   return name==='product_begin_document'?{data:[{lease:'fixture',already_complete:!!options.complete}],error:options.quotaError?{message:options.quotaError==='current'?'Free document allowance reached':'Free PDF allowance reached'}:null}:{data:null,error:options.finishError?{}:null}
   }}) as unknown as ReturnType<typeof serviceDatabase>,
  }
  return {calls,hashes,deps}
 }
 
-test('exhausted shared allowance never renders PDF or DOCX',async()=>{
- for(const format of ['pdf','docx'] as const){
-  const {calls,deps}=fixtures({quotaError:true})
+test('legacy and current exhausted shared-allowance errors never render PDF or DOCX',async()=>{
+ for(const quotaError of [true,'current'] as const)for(const format of ['pdf','docx'] as const){
+  const {calls,deps}=fixtures({quotaError})
   const response=format==='pdf'?await exportPdf(req(format),env,{...deps,renderDocument:deps.renderPdf}):await exportDocx(req(format),env,{...deps,renderDocument:deps.renderDocx})
   assert.equal(response.status,403)
   assert.deepEqual(await response.json(),{error:'Your Free document download allowance is used for this period.'})

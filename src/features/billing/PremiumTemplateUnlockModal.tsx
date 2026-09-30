@@ -5,6 +5,7 @@ import { templates, type PremiumTemplateId } from '../../model';
 import { trackProductEvent } from '../../services/analytics';
 import { supabase } from '../../services/supabase';
 import type { TemplateAccess } from '../../hooks/useTemplateAccess';
+import { commercialPolicy } from '../../content/commercial';
 
 type Props = {
  templateId: PremiumTemplateId;
@@ -44,14 +45,17 @@ export function PremiumTemplateUnlockModal({ templateId, ownerId, access, onClos
  return <Modal className="premium-unlock-modal" labelledBy="premium-unlock-title" describedBy="premium-unlock-description" onClose={onClose}>
   <span className="price-tag"><Lock size={13} aria-hidden="true" /> PREMIUM</span>
   <h2 id="premium-unlock-title">Unlock {template.label}</h2>
-  <p id="premium-unlock-description">US$1.99/month. Unlocking includes generous reasonable-human-use PDF and editable DOCX downloads with this template. It renews automatically until cancelled.</p>
+  <p id="premium-unlock-description">US$1.99/month for this selected design. This is a recurring subscription, not a one-time purchase. It includes reasonable-human-use PDF and editable Word downloads with this template.</p>
+  <dl className="premium-choice-summary" aria-label="Access choices"><div><dt>Free</dt><dd>Keep previewing, choose any Free design, and do not purchase.</dd></div><div><dt>One design</dt><dd>US$1.99/month for {template.label} only.</dd></div><div><dt>Pro</dt><dd>US$19.99/month for all Premium designs plus implemented Pro features.</dd></div></dl>
   {!ownerId ? <><p>Sign in to start this subscription. Your preview will remain in your resume.</p><button className="button" onClick={()=>{onClose();onSignIn();}}>Sign in to unlock</button></> : access?.isPro ? <p>This template is already included with Pro.</p> : <>
-   <label className="checkbox-field"><input type="checkbox" checked={consent} onChange={event=>setConsent(event.target.checked)} />I agree to a recurring US$1.99 monthly subscription. I can cancel anytime; access continues through the paid billing period.</label>
+   <label className="checkbox-field"><input type="checkbox" checked={consent} onChange={event=>setConsent(event.target.checked)} />I agree to a recurring US$1.99 monthly subscription for {template.label}. It renews until I cancel; cancellation stops renewal and access continues through the paid period.</label>
    <button className="button" disabled={!consent || busy || !access?.salesAvailable} onClick={checkout}>{busy ? 'Opening…' : 'Continue to secure checkout'}</button>
+   <p className="field-hint">New paid subscriptions are available only in the United States. {commercialPolicy.templateAfterCancellation}</p>
    {!access?.salesAvailable && <p className="field-hint">New paid subscriptions are not available right now.</p>}
   </>}
   <button className="button outline" onClick={()=>{onClose();onViewPro();}}>Get Pro — all Premium templates</button>
   {message && <p role="status">{message}</p>}
-  <button className="text-button" onClick={onClose}>Not now</button>
+  <a href="/pricing/">Compare every access path and export policy</a>
+  <button className="text-button" onClick={onClose}>Keep previewing — no purchase</button>
  </Modal>;
 }
