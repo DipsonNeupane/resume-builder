@@ -241,12 +241,17 @@ test('free tools are complete, private-by-design and distinct from paid Match', 
   const html = read(publicHtmlFile(tool.path));
   assert.equal((html.match(/<h1>/g) || []).length, 1);
   assert.match(html, /No signup/); assert.match(html, /Processed only in this browser/);
-  assert.match(html, /not uploaded, saved, placed in the URL or sent to analytics/i);
+  if (tool.id === 'resume-job-match') {
+   assert.match(html, /not uploaded, placed in the URL or sent to analytics/i);
+   assert.match(html, /only the job description—not your resume text—is kept/i);
+  } else assert.match(html, /not uploaded, saved, placed in the URL or sent to analytics/i);
   assert.match(html, /data-tool-form/); assert.match(html, /data-tool-cta=/);
   assert.doesNotMatch(html, /(?:score|match)\s*(?:out of 100|\d+\s*%|percentage)|<meter|class="[^"]*score/i);
  }
  const controller = read('public/tools/public-tools.js');
- assert.doesNotMatch(controller, /\bfetch\s*\(|XMLHttpRequest|sendBeacon|localStorage|sessionStorage|console\./);
+ assert.doesNotMatch(controller, /\bfetch\s*\(|XMLHttpRequest|sendBeacon|localStorage|console\./);
+ assert.match(controller, /sessionStorage\.setItem\(pendingJobKey/);
+ assert.match(controller, /description: analyzedJobText/);
  assert.match(controller, /textContent/); assert.doesNotMatch(controller, /innerHTML|insertAdjacentHTML/);
  const analytics = read('public/tools/tool-analytics.js');
  assert.match(analytics, /tool_viewed/); assert.match(controller, /tool_started/); assert.match(controller, /tool_completed/); assert.match(controller, /tool_result_reviewed/); assert.match(analytics, /tool_cta_clicked/);

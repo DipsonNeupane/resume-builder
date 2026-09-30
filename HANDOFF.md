@@ -1,3 +1,29 @@
+## September 30 — parallel G4/G5 product-core batch (isolated redesign only)
+
+Integrated the independently reviewed `redesign/g4-trust-pricing` and
+`redesign/g5-jobs-match` workstreams into `redesign/shared-route-state`. Production,
+hosted data, provider calls, push, merge and deployment were untouched.
+
+- G4 tasks 23–30 are complete: verified three-path commerce, individual-template and
+  cancellation/export terms, adjacent unchecked recurring consent, factual trust,
+  unpublished-by-default proof architecture, and permanent `/pricing/` + `/trust/` routes.
+- G5 tasks 32–36 are complete: requirement evidence, explicit owner decision, manual
+  application history, notes/contact and opt-in workspace follow-up dates retain
+  owner/privacy and master-resume boundaries and pass the integrated private-route check.
+- Task 37 is blocked only because repository evidence says the extension is unpublished and
+  provides no verified public store/install URL or released version. No public claim was
+  invented.
+- Independent Claude reviews produced ten G4 and twelve G5 actionable findings; all were
+  resolved. Exact findings, architecture and branch-level test evidence are in
+  `docs/redesign/G4_BATCH_2026-09-30.md` and `docs/redesign/G5_BATCH_2026-09-30.md`.
+
+The exhaustive status is now 29 complete / 6 validation pending / 10 partial / 19 not
+started / 1 blocked. Consolidated verification after integration: production build/client
+TypeScript PASS; server TypeScript PASS; database replay/pgTAP PASS; SEO 19/19;
+commercial contract 4/4; G4 built-preview + public route quality 6/6; G5 public continuation
+1/1 and private workflow 1/1; performance budgets and diff check PASS. Regenerate and rerun
+these gates again before any future release action.
+
 ## September 29 — shared discovery foundations (isolated redesign only)
 
 Completed G2 tasks 12–14 and implementation-level G3 task 15 on

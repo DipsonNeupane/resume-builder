@@ -138,7 +138,7 @@ test('saved Match keeps job wording and resume evidence connected while the owne
   });
   await page.goto(`/workspace/jobs/${savedJobId}/match`, { waitUntil: 'domcontentloaded' });
   await expect(page.getByText('Job wording', { exact: true })).toBeVisible();
-  await expect(page.getByText('Must hold an active support certification.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Must hold an active support certification.', { exact: true }).first()).toBeVisible();
   await expect(page.getByText('Resume evidence', { exact: true })).toBeVisible();
   await expect(page.getByText(/unknown, not proof/i)).toBeVisible();
 
