@@ -317,8 +317,8 @@ test('free tools are complete, private-by-design and distinct from paid Match', 
 });
 
 test('resource content is complete, deliberate and free of disallowed claims', () => {
- assert.equal(guides.length, 8);
- assert.equal(new Set(guides.map(guide => guide.slug)).size, 8);
+ assert.equal(guides.length, 12);
+ assert.equal(new Set(guides.map(guide => guide.slug)).size, 12);
  for (const guide of guides) {
   assert.ok(guide.sections.length >= 5, guide.slug);
   assert.ok(guide.directAnswer.length > 100, guide.slug);

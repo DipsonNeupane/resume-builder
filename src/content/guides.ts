@@ -6,12 +6,25 @@ export type Guide = {
  eyebrow: string;
  deck: string;
  directAnswer: string;
+ directAnswerTitle?: string;
  sections: Array<{ id: string; title: string; html: string }>;
  related: string[];
  cta: { label: string; href: string; destination: string; note: string };
 };
 
 export const resourcesPath = '/resources/';
+
+export const contentClusters = [
+ { id: 'role-fit', label: 'Role fit and qualification', question: 'Am I qualified for this job?', slugs: ['how-to-know-if-qualified-for-job'] },
+ { id: 'requirement-evidence', label: 'Requirements and evidence', question: 'Does my experience demonstrate what they want?', slugs: ['compare-resume-to-job-description'] },
+ { id: 'application-decisions', label: 'Application decisions', question: 'Is this job worth applying to?', slugs: ['should-you-tailor-resume-for-every-job'] },
+ { id: 'truthful-tailoring', label: 'Truthful tailoring', question: 'How should I tailor for this job?', slugs: ['tailor-resume-to-job-description', 'how-much-resume-should-change', 'tailor-resume-without-lying'] },
+ { id: 'master-and-transitions', label: 'Master resumes and career transitions', question: 'What evidence transfers to a new direction?', slugs: ['master-resume-vs-tailored-resume', 'career-change-transferable-evidence'] },
+ { id: 'resume-writing', label: 'Resume writing and keywords', question: 'What is missing or unclear?', slugs: ['resume-keywords'] },
+ { id: 'templates-and-formats', label: 'Templates, formats and regional context', question: 'How should I present this evidence?', slugs: ['choose-resume-template', 'a4-vs-letter-resume', 'resume-or-cv-by-country'] },
+] as const;
+
+export const clusterByGuideSlug = new Map(contentClusters.flatMap(cluster => cluster.slugs.map(slug => [slug, cluster] as const)));
 
 export const guides: Guide[] = [
  {
@@ -101,7 +114,7 @@ export const guides: Guide[] = [
    { id: 'system', title: 'A simple version system', html: `<ol><li>Update the master when you gain or remember useful evidence.</li><li>Duplicate it before any job-specific edits.</li><li>Name the version with the role and employer, not “resume-final-final.”</li><li>Keep a copy of exactly what you submitted.</li><li>Return new verified details to the master so future versions improve.</li></ol><div class="example"><p><span>Master</span>resumestride-master-2026.docx</p><p><span>Submitted version</span>alex-chen-operations-coordinator-northstar.pdf</p></div>` },
    { id: 'failure', title: 'When one document tries to do both jobs', html: `<p>A “universal” resume often becomes crowded because it tries to support every direction at once. The opposite failure is also common: a tailored resume gets overwritten repeatedly until earlier evidence disappears. Separating the two documents solves both problems—breadth stays in the master; focus belongs in the application version.</p>` },
   ],
-  related: ['should-you-tailor-resume-for-every-job', 'how-much-resume-should-change', 'tailor-resume-to-job-description'],
+  related: ['career-change-transferable-evidence', 'how-much-resume-should-change', 'tailor-resume-to-job-description'],
   cta: { label: 'Build your master resume', href: '/start/build', destination: 'builder', note: 'Create the foundation first, then keep job-specific versions separate.' },
  },
  {
@@ -119,7 +132,7 @@ export const guides: Guide[] = [
    { id: 'stop', title: 'Know when to stop editing', html: `<p>Your version is ready when a reader can quickly understand:</p><ul class="checklist"><li>What direction you are pursuing</li><li>Which past evidence supports the central work</li><li>What scope and outcomes you can credibly discuss</li><li>Where any important gap remains</li></ul><p>It is not ready merely because every phrase from the job posting appears somewhere. More edits can make the document less coherent, less human and harder to defend.</p>` },
    { id: 'never', title: 'What should never change', html: `<aside class="callout warning"><strong>The truth boundary</strong><p>Never change a date, title, credential, client type, tool proficiency, team size or result to resemble the posting. If the only way to make a resume look aligned is to alter a fact, the role is revealing a gap—not an editing task.</p></aside>` },
   ],
-  related: ['should-you-tailor-resume-for-every-job', 'master-resume-vs-tailored-resume', 'tailor-resume-without-lying'],
+  related: ['career-change-transferable-evidence', 'master-resume-vs-tailored-resume', 'tailor-resume-without-lying'],
   cta: { label: 'Create a separate job-specific version', href: '/start/job', destination: 'tailoring', note: 'Start from your master and keep the original unchanged.' },
  },
  {
@@ -158,6 +171,82 @@ export const guides: Guide[] = [
   ],
   related: ['tailor-resume-to-job-description', 'resume-keywords', 'how-to-know-if-qualified-for-job'],
   cta: { label: 'Check one resume bullet', href: '/tools/resume-bullet-checker/', destination: 'bullet_checker', note: 'Get transparent feedback without invented metrics, tools or outcomes.' },
+ },
+ {
+  slug: 'career-change-transferable-evidence',
+  title: 'How to show transferable experience for a career change',
+  seoTitle: 'Transferable experience for a career change | ResumeStride',
+  description: 'Map a new role’s real requirements to transferable evidence without renaming old jobs, overstating responsibility or hiding genuine gaps.',
+  eyebrow: 'Career change without identity change',
+  deck: 'Translate the work you have done into evidence a new field can understand—while keeping titles, scope and gaps honest.',
+  directAnswer: '<p>Start with the target role’s work, not its title. For each central requirement, find a real example with a similar action, constraint or outcome. Describe that example in plain language, keep the original setting visible and mark exact, adjacent and missing evidence separately. A career change needs a bridge, not a rewritten past.</p>',
+  directAnswerTitle: 'Build a truthful bridge to the new work.',
+  sections: [
+   { id: 'requirements', title: '1. Separate the title from the work', html: `<p>Job titles vary across employers and countries. Break the target role into observable responsibilities, tools, qualifications and constraints before comparing it with your background.</p><ul><li><strong>Actions:</strong> what the person must do</li><li><strong>Context:</strong> who, what or where the work supports</li><li><strong>Standards:</strong> licences, safety rules or methods that may be mandatory</li><li><strong>Outcomes:</strong> what the work is meant to improve or protect</li></ul><p>The <a href="/tools/job-requirement-extractor/" data-content-cta="requirement_extractor">requirement extractor</a> keeps each item beside the posting’s source wording.</p>` },
+   { id: 'evidence', title: '2. Map evidence by action and outcome', html: `<p>Look across paid work, projects, education, volunteering and caregiving. Comparable evidence may live in a different setting.</p><div class="example"><p><span>Target work</span>Coordinate stakeholders and keep delivery risks visible.</p><p><span>Existing evidence</span>Organised community events with venue staff, volunteers and suppliers; maintained a shared issue list.</p><p><span>Honest bridge</span>Coordinated volunteers, venues and suppliers for community events and tracked open delivery issues through completion.</p></div>` },
+   { id: 'distance', title: '3. Name the distance honestly', html: `<div class="evidence-grid"><div><strong>Direct</strong><span>You performed substantially the same work.</span></div><div><strong>Adjacent</strong><span>The action or outcome transfers, but context differs.</span></div><div><strong>Learned</strong><span>You studied or practised it without workplace ownership.</span></div><div><strong>Not demonstrated</strong><span>Your current materials do not establish it.</span></div></div><p>“Not demonstrated” is not proof that you cannot do something. It tells you what to clarify, investigate or develop before making your decision.</p>` },
+   { id: 'resume', title: '4. Build the career-change version', html: `<ul><li>Keep original employers, titles, dates and credentials unchanged.</li><li>Lead with the most relevant supported projects and outcomes.</li><li>Use a short summary to name the direction and evidence—not to declare expertise you have not earned.</li><li>Explain transferable context inside bullets instead of filling a detached skills list.</li><li>Create a separate version so the master remains complete.</li></ul>` },
+   { id: 'decision', title: '5. Decide whether the bridge is credible', html: `<p>Apply when central work is supported and remaining gaps are explainable or learnable. Investigate when the posting is ambiguous. Step back when a legal eligibility condition, required licence or central capability is absent and cannot be bridged truthfully.</p><aside class="callout"><strong>Your decision, not a prediction</strong><p>No keyword score can decide whether the employer values your transition. Use the evidence to make a considered choice and keep important unknowns visible.</p></aside>` },
+  ],
+  related: ['how-to-know-if-qualified-for-job', 'compare-resume-to-job-description', 'master-resume-vs-tailored-resume'],
+  cta: { label: 'Compare my evidence with the new role', href: '/tools/resume-job-match/', destination: 'resume_job_match', note: 'Review direct, adjacent and not-demonstrated evidence before rewriting.' },
+ },
+ {
+  slug: 'choose-resume-template',
+  title: 'How to choose a resume template for the work you need to show',
+  seoTitle: 'How to choose a resume template | ResumeStride',
+  description: 'Choose a resume template by content density, hierarchy, paper size and direction—not by unsupported claims about hiring or ATS success.',
+  eyebrow: 'Let the evidence choose the layout',
+  deck: 'A useful template makes your strongest real evidence easier to scan without forcing your career into the wrong structure.',
+  directAnswer: '<p>Choose a template after you know what the resume must contain. Compare the amount of experience, section hierarchy, reading direction, paper size and the employer’s requested format. Preview your own content before paying. No design determines hiring outcomes or proves that every hiring system will parse a document the same way.</p>',
+  directAnswerTitle: 'Let your content choose the structure.',
+  sections: [
+   { id: 'content', title: '1. Start with content volume', html: `<p>A compact layout can help a detailed career record, while a more spacious layout can give a shorter record clearer rhythm. Do not shrink type or remove relevant evidence merely to imitate a one-page example.</p><p>ResumeStride labels templates with verified density and structural family in the <a href="/templates/">template gallery</a>; those labels describe layout, not candidate quality.</p>` },
+   { id: 'hierarchy', title: '2. Check the hierarchy with your own resume', html: `<ul><li>Can a reader find role, employer and dates quickly?</li><li>Are long titles and multilingual names still readable?</li><li>Do projects, volunteering or certifications receive the space they need?</li><li>Does the design still work when one section is much longer than the sample?</li></ul>` },
+   { id: 'direction', title: '3. Verify language direction and typography', html: `<p>Right-to-left content and non-Latin scripts need more than mirrored decoration. Preview actual names, headings and paragraphs, then check punctuation, line breaks and font coverage. ResumeStride’s template metadata states verified RTL/LTR behavior; the interface itself remains English.</p>` },
+   { id: 'paper', title: '4. Choose paper and file format deliberately', html: `<p>A4 and Letter have different proportions. Use the size requested by the employer or normal for the application context, then review page breaks after changing it. Download requirements also vary: follow the posting when it asks for PDF or Word rather than assuming one format is universally preferred.</p>` },
+   { id: 'access', title: '5. Preview before choosing access', html: `<p>Free, individual Premium-template and Pro access are different purchase paths. The template page should show the verified tier and let you preview first; payment is a later explicit action. Read the current <a href="/pricing/">pricing and renewal terms</a> beside any paid choice.</p><aside class="callout warning"><strong>Avoid template mythology</strong><p>“ATS-proof,” “guaranteed,” and “best for every role” are not verifiable template properties. Judge the actual structure and output instead.</p></aside>` },
+  ],
+  related: ['a4-vs-letter-resume', 'master-resume-vs-tailored-resume', 'resume-or-cv-by-country'],
+  cta: { label: 'Compare verified template details', href: '/templates/', destination: 'templates', note: 'Filter by structure, density and access, then preview with your own content.' },
+ },
+ {
+  slug: 'a4-vs-letter-resume',
+  title: 'A4 vs. Letter: choosing a resume page size',
+  seoTitle: 'A4 vs. Letter resume page size | ResumeStride',
+  description: 'Choose A4 or Letter for a resume by following the application context, then verify pagination and export instead of relying on a universal country rule.',
+  eyebrow: 'A practical output decision',
+  deck: 'The page sizes are close, but changing between them can move lines and page breaks.',
+  directAnswer: '<p>Use the size explicitly requested by the employer or application system. If no size is specified, use the convention you can verify for that application context. Always inspect the final PDF or Word file after switching: A4 is narrower and taller than US Letter, so a stable draft can repaginate.</p>',
+  directAnswerTitle: 'Follow the request, then check the exported pages.',
+  sections: [
+   { id: 'dimensions', title: '1. Know the physical difference', html: `<div class="comparison"><div><strong>A4</strong><p>210 × 297 millimetres</p></div><div><strong>US Letter</strong><p>8.5 × 11 inches (215.9 × 279.4 millimetres)</p></div></div><p>The difference is large enough to affect wrapping and page breaks even when the type and margins stay the same.</p>` },
+   { id: 'request', title: '2. Follow the actual request', html: `<p>A country-level convention is only a default. A multinational employer, university, government portal or recruiter may specify a different page size or file format. The job posting and upload instructions are stronger evidence than a generic list.</p>` },
+   { id: 'preview', title: '3. Recheck after every size change', html: `<ul class="checklist"><li>No heading is stranded at the bottom of a page</li><li>Dates and contact details have not wrapped awkwardly</li><li>Bullets are not clipped or split confusingly</li><li>Page count still suits the amount of relevant evidence</li><li>The downloaded file matches the preview</li></ul>` },
+   { id: 'formats', title: '4. Keep page size separate from file format', html: `<p>A4 versus Letter describes the page dimensions. PDF versus Word describes the file. An employer may request any combination. ResumeStride supports both page sizes in its templates and provides server-generated PDF and Word exports under the current access policy.</p>` },
+   { id: 'international', title: '5. Verify the local convention', html: `<p>Paper size varies within countries and organizations. Use the <a href="/resources/resume-or-cv-by-country/">regional verification method</a>, then let the vacancy and upload instructions control.</p>` },
+  ],
+  related: ['choose-resume-template', 'resume-or-cv-by-country', 'master-resume-vs-tailored-resume'],
+  cta: { label: 'Preview A4 and Letter templates', href: '/templates/', destination: 'templates', note: 'Use verified template metadata, then inspect your own pagination before export.' },
+ },
+ {
+  slug: 'resume-or-cv-by-country',
+  title: 'Resume or CV by country: a safer way to check local expectations',
+  seoTitle: 'Resume or CV by country: verify local expectations | ResumeStride',
+  description: 'Check regional resume and CV expectations through official current sources while keeping employer instructions and occupation rules in control.',
+  eyebrow: 'Worldwide scope without universal rules',
+  deck: 'Terms, personal details, length and document conventions differ. Verify the exact market and application instead of copying a global checklist.',
+  directAnswer: '<p>Start with the employer’s instructions, then consult a current government or official employment source for the country where you are applying. Check terminology, personal-information norms, required credentials and file expectations separately. A national guide is context—not permission to ignore the posting, regulated-occupation rules or privacy concerns.</p>',
+  directAnswerTitle: 'Verify the market and the exact application.',
+  sections: [
+   { id: 'order', title: '1. Use a reliable order of evidence', html: `<ol><li>The vacancy and application portal</li><li>The employer’s official careers guidance</li><li>Government employment or recognised public career services</li><li>Regulator instructions for licensed occupations</li><li>General articles only when stronger sources are silent</li></ol><p>This order prevents a broad internet convention from overriding a specific requirement.</p>` },
+   { id: 'sources', title: '2. Starting points from official services', html: `<p>These sources were checked on 30 September 2026. They are examples, not a complete world directory.</p><ul><li><a href="https://nationalcareers.service.gov.uk/careers-advice/cv-sections">England: National Careers Service CV guidance</a></li><li><a href="https://europass.europa.eu/en/create-europass-cv">European Union: Europass CV guidance</a></li><li><a href="https://www.jobbank.gc.ca/findajob/resources/write-good-resume">Canada: Job Bank resume guidance</a></li><li><a href="https://www.workforceaustralia.gov.au/individuals/coaching/job-applications/job-application-tips">Australia: Workforce Australia application guidance</a></li><li><a href="https://www.careers.govt.nz/how-to-get-a-job/cvs-and-cover-letters/">New Zealand: government careers guidance</a></li></ul>` },
+   { id: 'differences', title: '3. Check differences one by one', html: `<ul><li>Whether the document is normally called a resume or CV in this context</li><li>Whether photos or personal details are expected, optional or discouraged</li><li>Typical page length and paper size</li><li>How education, licences and language proficiency should be expressed</li><li>Whether references belong in the document</li><li>Whether the employer requests PDF, Word or an application form</li></ul>` },
+   { id: 'privacy', title: '4. Minimise personal information', html: `<p>Do not add a date of birth, government identifier, marital status, banking data or a third party’s contact details merely because an unsourced example contains them. Include only what the application legitimately requires, and confirm how the employer asks to receive sensitive documentation.</p>` },
+   { id: 'limits', title: '5. What this guide does not claim', html: `<aside class="callout warning"><strong>No country is one hiring market</strong><p>Practices vary by occupation, sector, employer and time. This page does not claim complete coverage, translated interface support or local legal advice. Recheck the linked source and its update date before relying on it.</p></aside><p>ResumeStride supports Unicode content, right-to-left resume direction, A4 and Letter output, and flexible section headings. Those technical capabilities do not automatically localise the English interface or validate a country-specific convention.</p>` },
+  ],
+  related: ['a4-vs-letter-resume', 'choose-resume-template', 'career-change-transferable-evidence'],
+  cta: { label: 'Build with flexible sections and page size', href: '/start/build', destination: 'resume_builder', note: 'Use the verified local convention you found; ResumeStride does not choose it for you.' },
  },
 ];
 
