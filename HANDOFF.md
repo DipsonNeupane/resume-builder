@@ -1,3 +1,28 @@
+## October 1 — APWICO pre-release blocker clearance (no cutover)
+
+Completed the remaining agent-executable clearance work on `redesign/shared-route-state`.
+APWICO apex/`www` DNS now resolves through two public resolvers to the existing Vercel
+project with valid TLS; the alternate host remains `noindex` and intentionally serves the
+live ResumeStride artifact/canonical until an authorized candidate deployment. Search
+Console ownership is verified, exact APWICO Supabase callbacks coexist with legacy ones,
+and Resend reports `auth.apwico.com` verified. Stripe was audited read-only; no live brand,
+return, webhook, product, Price, customer or subscription mutation was made.
+
+Reconciled stale browser tests with permanent workspace/account routes, the default-open
+full-evidence disclosure, explicit pursue-before-tailoring policy and current document
+identity copy. Final verification: auth 41/41, paid 82/82, server/billing 448/448,
+database replay/pgTAP PASS, recurring quality gate 13/13 stages, extension 42/42 plus
+package checks, brand check and production dependency audit PASS. Local/account retention
+rehearsal proves same-origin legacy keys, owner-scoped cloud/job/version data, account-switch
+fail-closed behavior, preserved Stripe/database references and no cross-origin content
+bridge. Full evidence and the single remaining physical/human acceptance script are in
+`docs/redesign/PRE_RELEASE_BLOCKER_CLEARANCE_2026-10-01.md`.
+
+Release remains NOT READY only because the consolidated physical/human acceptance has not
+been performed and the controlled cutover validations/migrations require separate explicit
+authorization. No push, merge, production deployment, redirect activation, hosted migration,
+Supabase Site URL/sender switch, Stripe mutation or destructive action occurred.
+
 ## September 30 — Group 9 APWICO repository migration (isolated redesign only)
 
 APWICO is now the product identity on the isolated redesign branch; `apwico.com` and

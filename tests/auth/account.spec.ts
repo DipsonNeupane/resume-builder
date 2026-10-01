@@ -99,7 +99,7 @@ test('forgot password sends a recovery link without creating another account',as
  await page.getByRole('button',{name:'Send password-reset link'}).click();
  await expect(page.getByText('If an account exists for this address',{exact:false})).toBeVisible();
  expect(requests[0].email).toBe('legacy@example.com');
- expect(redirect).toBe('http://127.0.0.1:5174/?account=1&reset=1');
+ expect(redirect).toBe('http://127.0.0.1:5174/workspace/account?reset=1');
 });
 
 test('a recovery link lets the authenticated user choose and confirm a new password',async({page})=>{
@@ -120,7 +120,7 @@ test('a recovery link lets the authenticated user choose and confirm a new passw
  await page.getByRole('button',{name:'Update password'}).click();
  await expect(page.getByText('Your password has been updated.',{exact:false})).toBeVisible();
  expect(updates[0].password).toBe('new-correct-horse-1');
- await expect(page).toHaveURL(/account=1(?!.*reset=1)/);
+ await expect(page).toHaveURL('http://127.0.0.1:5174/workspace/account');
 });
 
 test('customer-facing copy never names Supabase or an email delivery provider',async({page})=>{

@@ -4,12 +4,14 @@ Date: 2026-10-01. Candidate: isolated `redesign/shared-route-state`. No producti
 
 ## Executive decision
 
-- **Release audit:** FAIL until the required-before-production gates below are completed. This is an external-readiness result, not authorization to cut over.
+- **Release audit:** FAIL only on the remaining physical/human acceptance; every final automated repository gate passes.
 - **Repository and non-live rehearsal:** PASS after the stable automated gates and independent review recorded below.
-- **Production cutover rehearsal:** FAIL because APWICO is not attached to the production hosting project and provider/live-retention checks cannot be proved without an authorized window.
-- **Production release status:** NOT READY until the required-before-production owner/provider gates in this report are completed during an explicitly authorized window.
+- **Production cutover rehearsal:** PASS for additive preparation. APWICO is attached to the existing Vercel project, DNS/TLS resolve globally, exact dual-domain Auth callbacks are present, Search Console ownership is verified, and the APWICO Resend domain is verified. The candidate/provider mutations intentionally reserved for cutover were not performed.
+- **Production release status:** NOT READY until the physical/human acceptance passes and the owner explicitly authorizes the controlled cutover window.
 - **Rollback:** READY for the required temporary-redirect stage. Permanent 301 promotion is separately gated and has a documented five-minute cache plus DNS/intermediary recovery limitation.
-- **Current domain fact:** read-only DNS/HTTP checks on 2026-10-01 found `apwico.com` at GoDaddy (`76.223.105.230`, `13.248.243.5`; `www` points to apex; response server `DPS`). Read-only Vercel inspection found the existing project `resumestride` and no `apwico.com` domain attached. This is a required pre-cutover action, not a code failure.
+- **Current domain fact:** `apwico.com` now resolves to the Vercel-provided `216.150.1.1` and `216.150.16.1`; `www` resolves to `b1a8974757d5aa3a.vercel-dns-016.com`. Both hosts serve the existing project with valid TLS and `noindex`. They intentionally still expose the live ResumeStride artifact/canonical until a frozen APWICO candidate is deployed in the authorized cutover.
+
+Detailed clearance evidence, the local-retention matrix and the single human acceptance script are in `PRE_RELEASE_BLOCKER_CLEARANCE_2026-10-01.md`.
 
 The original uploaded blueprint file is not present on this host. This audit therefore uses the exhaustive 65-task ledger, the owner’s task-by-task acceptance restatements in this work history, every group evidence record, current source/tests and Group 9’s supplied migration brief. It does not invent unavailable Done When wording.
 
@@ -55,14 +57,9 @@ The exact task membership remains authoritative in `BLUEPRINT_STATUS.md`; detail
 
 ### A — required before production
 
-1. Owner approves the release window, rollback threshold and browser-only state coexistence/retention window.
-2. Attach APWICO to the existing Vercel project, validate TLS/candidate with redirects off, then replace the GoDaddy web target using provider-supplied DNS values.
-3. Reconcile hosted database/migration catalog; take a current recovery point and complete a populated isolated restore/owner-isolation drill. Apply the new APWICO support-message migration only in the authorized plan.
-4. Add APWICO Supabase confirmation/recovery callbacks while retaining legacy callbacks; verify two synthetic accounts and account-switch isolation.
-5. Verify APWICO transactional sender/domain/reply handling and provider-generated links.
-6. Verify Stripe live catalog/account country, methods, renewal/cancellation/refund/tax/invoice disclosures, APWICO return/webhook URLs and preservation of customers/subscriptions/lookup keys.
-7. Complete physical mobile Back/narrow workflow, representative screen-reader/keyboard and low-powered/reduced-motion acceptance. Any severe defect stops release.
-8. Freeze the commit/artifact and run the final gate with production-equivalent public configuration but no live mutations.
+1. Complete the consolidated physical mobile Back/narrow workflow, representative screen-reader/keyboard and reduced-motion acceptance in `PRE_RELEASE_BLOCKER_CLEARANCE_2026-10-01.md`. Any severe defect stops release.
+2. Owner approves the release window, rollback threshold and browser-only state coexistence/retention window.
+3. Freeze the commit/artifact and take a current provider-supported recovery point immediately before the authorized migration/deployment sequence.
 
 ### B — validation during controlled cutover
 
@@ -81,7 +78,7 @@ The exact task membership remains authoritative in `BLUEPRINT_STATUS.md`; detail
 
 | Scenario | Rehearsal result |
 | --- | --- |
-| Target readiness | FAIL as a production prerequisite: APWICO currently serves GoDaddy and is not attached to Vercel. The exact corrective/rollback action is documented. |
+| Target readiness | PASS for additive preparation: APWICO DNS/TLS reaches the existing Vercel project on apex and `www`; alternate-host responses are intentionally noindex. Frozen-candidate/canonical validation remains a controlled-cutover check. |
 | Old path/query → APWICO | PASS in source/tests: default-off; one no-store 307 during reversible cutover, then separately gated bounded-cache 301; path/query preserved and `/index.html` normalized. |
 | Loop/chain safety | PASS: APWICO canonical host never self-redirects; `www.apwico.com` and both old hosts map directly to the apex. |
 | Canonical/sitemap/robots | PASS in built artifacts; live verification belongs to cutover. Private/query routes remain noindex/no-store. |

@@ -23,13 +23,12 @@ async function seed(page: Page, userId: string = owner) {
 }
 
 async function openBuilder(page: Page) {
-  await page.goto('/');
-  await page.getByRole('button', { name: /^(Continue my resume|Build my resume|Build my master resume)$/, exact: true }).first().click();
+  await page.goto('/workspace/resume');
+  await expect(page.getByRole('textbox', { name: 'Full name', exact: true })).toBeVisible({ timeout: 30_000 });
 }
 
 async function openJobs(page: Page) {
-  await openBuilder(page);
-  await page.locator('.builder-sidebar').getByRole('button', { name: 'Find jobs', exact: true }).click();
+  await page.goto('/workspace/jobs');
   await expect(page.getByRole('heading', { level: 1, name: 'Find jobs', exact: true })).toBeVisible({ timeout: 30_000 });
 }
 
@@ -370,11 +369,11 @@ test('Pro match analysis exposes classified evidence depth and a truthful saved-
   await page.route('**/api/jobs-search', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(response) }));
   await openJobs(page);
   await page.getByRole('button', { name: 'Search jobs' }).click();
-  await page.getByText('Full evidence analysis').click();
-  await expect(page.getByText('Required', { exact: true })).toBeVisible();
-  await expect(page.getByText('Preferred', { exact: true })).toBeVisible();
-  await expect(page.getByText('Nice to have', { exact: true })).toBeVisible();
-  await expect(page.getByText('Not demonstrated', { exact: true })).toBeVisible();
+  const full = page.locator('.match-analysis details.match-details[open]');
+  await expect(full.getByText('Required', { exact: true })).toBeVisible();
+  await expect(full.getByText('Preferred', { exact: true })).toBeVisible();
+  await expect(full.getByText('Nice to have', { exact: true })).toBeVisible();
+  await expect(full.getByText('Not demonstrated', { exact: true })).toBeVisible();
   await expect(page.getByText(/Save this job to start a separate job-specific resume/i)).toBeVisible();
   await expect(page.getByText(/master resume stays unchanged/i)).toBeVisible();
   const axe = await new AxeBuilder({ page }).include('.match-analysis').analyze();
@@ -391,10 +390,10 @@ test('current Pro saved analysis restores and renders complete evidence depth af
   }) }));
   await openJobs(page);
   const savedCard = page.locator('.saved-job-card');
-  await savedCard.getByText('Full evidence analysis').click();
-  await expect(savedCard.getByText('Required', { exact: true })).toBeVisible();
-  await expect(savedCard.getByText('Preferred', { exact: true })).toBeVisible();
-  await expect(savedCard.getByText('Nice to have', { exact: true })).toBeVisible();
+  const full = savedCard.locator('details.match-details[open]');
+  await expect(full.getByText('Required', { exact: true })).toBeVisible();
+  await expect(full.getByText('Preferred', { exact: true })).toBeVisible();
+  await expect(full.getByText('Nice to have', { exact: true })).toBeVisible();
 });
 
 test('Free saved analysis reload renders only the bounded preview and never Pro depth', async ({ page }) => {
@@ -811,6 +810,13 @@ for (const fromCapture of [false, true]) test(`${fromCapture ? 'extension captur
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ version: version() }) });
     }
     if (body.action === 'get_job_resume') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ version: version() }) });
+    if (body.action === 'update_workflow') {
+      const workflow = body.workflow as Record<string, unknown>;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ workflow: {
+        savedJobId, ...workflow, revision: 1, updatedAt: new Date().toISOString(),
+        history: [{ decision: workflow.decision, applicationStatus: workflow.applicationStatus, changedAt: new Date().toISOString() }],
+      } }) });
+    }
     return route.fulfill({ status: 200, contentType: 'application/json', body: '{"saved":true}' });
   });
   await page.route('**/api/tailor', route => {
@@ -844,6 +850,11 @@ for (const fromCapture of [false, true]) test(`${fromCapture ? 'extension captur
   const headerJobs = page.locator('.site-header').getByRole('button', { name: 'Find jobs', exact: true });
   if (!fromCapture) { await expect(headerJobs).toBeVisible(); await headerJobs.click(); }
   await expect(page.getByRole('heading', { level: 1, name: 'Find jobs', exact: true })).toBeVisible();
+  await page.getByText('My decision and application', { exact: true }).click();
+  const workflowPanel = page.locator('.job-workflow').first();
+  await workflowPanel.locator('select').first().selectOption('pursue');
+  await workflowPanel.getByRole('button', { name: 'Save my update', exact: true }).click();
+  await expect(page.getByText('Your decision and application update were saved.', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Tailor my resume for this job' })).toBeVisible();
   await page.getByRole('button', { name: 'Tailor my resume for this job' }).click();
   await expect(page.getByText(/Job-specific resume — Tailored for Customer Experience Specialist · Acme Support Co/)).toBeVisible();
@@ -1065,7 +1076,10 @@ for (const width of [320, 390, 768, 1440, 1920]) test(`premium opportunity and t
   await page.evaluate(()=>window.scrollTo(0,0));
   await page.screenshot({path:`/tmp/rs-premium-jobs-${width}.png`});
   await page.getByRole('button',{name:'Open tailored resume',exact:true}).click();
-  await expect(page.getByRole('region',{name:'Active document'})).toContainText('Tailored for');
+  const activeDocument = page.getByRole('region',{name:'Active document'});
+  await expect(activeDocument).toContainText('Job-specific resume');
+  await expect(activeDocument).toContainText('Customer Experience Specialist · Acme Support Co');
+  await expect(activeDocument).toContainText('Your master stays unchanged');
   await expect(page.getByRole('button',{name:'Keep this version'})).toBeVisible();
   await page.getByRole('button',{name:'Keep this version'}).click();
   await page.getByRole('button',{name:'Preview resume',exact:true}).click();

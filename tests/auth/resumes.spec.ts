@@ -689,7 +689,6 @@ test('a job draft restores after a reload under the real signed-in account that 
  await expect(page.getByText(/was restored in this browser after reload/)).toHaveCount(0);
  await expect(page.getByRole('status').filter({hasText:/Job-specific draft — Tailored for/})).toHaveCount(0);
  expect(await page.evaluate(()=>localStorage.getItem('resumestride.jobDraft')),'a foreign-account draft must be discarded, not left around, once a different real account reloads').toBeNull();
- await page.getByRole('button',{name:'Continue my resume',exact:true}).click();
  await expect(page.getByRole('textbox',{name:'Full name',exact:true}),'account B must see its own cloud resume, never account A\'s job-draft content').toHaveValue('Cloud B');
 });
 

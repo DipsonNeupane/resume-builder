@@ -10,6 +10,10 @@ Prepared 2026-10-01 for the isolated redesign candidate. This is a rehearsal art
 - Keep `resumestride.com` and its TLS active throughout the monitoring window. Never recreate Supabase, Stripe customers/subscriptions, local-storage keys or database identifiers for branding.
 - Stop on an unexpected migration, redirect chain/loop, cross-owner read, failed cancellation, invalid webhook, missing recovery email, or loss of browser-only work.
 
+## Pre-release clearance checkpoint — 2026-10-01
+
+Additive preparation is complete without cutover: APWICO apex/`www` DNS and TLS reach the existing Vercel project; both alternate hosts remain noindex and still serve the live ResumeStride artifact/canonical; exact APWICO Supabase callbacks coexist with legacy callbacks; Search Console ownership and the Resend `auth.apwico.com` domain are verified. Stripe and Supabase production identity/return/sender mutations remain in their ordered cutover steps. Local/account retention and the final automated gate are recorded in `PRE_RELEASE_BLOCKER_CLEARANCE_2026-10-01.md`. Do not repeat these completed setup actions unless verification later regresses.
+
 ## Ordered owner-action checklist
 
 Every required provider action is consolidated here. “Expected value” is public/configuration data, never a secret.
