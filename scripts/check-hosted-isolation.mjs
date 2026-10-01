@@ -1,4 +1,4 @@
-// ResumeStride: hosted Supabase Auth/PostgREST two-account acceptance harness.
+// APWICO: hosted Supabase Auth/PostgREST two-account acceptance harness.
 //
 // Verifies, against a REAL hosted Supabase project, the same owner-isolation
 // contract the local pgTAP suite (supabase/tests/resumes_rls.test.sql) already

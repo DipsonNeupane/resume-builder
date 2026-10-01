@@ -100,7 +100,7 @@ export function useCloudResume(
   const value=error as {code?:unknown;message?:unknown};
   if(value.code!=='P0001' || typeof value.message!=='string' || !/^Account save-history (?:storage )?limit reached/.test(value.message)) return false;
   setSaveBlocked(true);
-  notify('Account storage limit reached. Your latest edits are not saved to your account. Keep this tab open and contact support@resumestride.com before leaving this page.');
+  notify('Account storage limit reached. Your latest edits are not saved to your account. Keep this tab open and contact support@apwico.com before leaving this page.');
   return true;
  };
  const resumeRef = useRef(resume);
@@ -183,7 +183,7 @@ export function useCloudResume(
     } else {
      setLinked(true); setRevision(existing.revision);
      setResume(existing.resume); setDirty(false);
-     notify('Loaded your saved resume from your ResumeStride account. Your local draft on this device is unchanged and returns if you sign out.');
+     notify('Loaded your saved resume from your APWICO account. Your local draft on this device is unchanged and returns if you sign out.');
     }
    }
   }).catch(() => {

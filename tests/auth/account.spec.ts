@@ -18,7 +18,7 @@ test('create account and sign in use genuinely distinct in-app Supabase auth cal
  await page.getByLabel('Confirm password').fill('correct-horse-1');
  await page.locator('form').getByRole('button',{name:'Create account',exact:true}).click();
  await expect(page.getByText('Check your inbox if this is a new email address.',{exact:false})).toBeVisible();
- await expect(page.getByText('If you have used ResumeStride before, no new account email will be sent.',{exact:false})).toBeVisible();
+ await expect(page.getByText('If you have used APWICO before, no new account email will be sent.',{exact:false})).toBeVisible();
  expect(signups[0].email).toBe('test@example.com');
  expect(signups[0].password).toBe('correct-horse-1');
 

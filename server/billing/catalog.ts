@@ -59,7 +59,8 @@ export function offerFor(config: OfferCatalogConfig, key: unknown): Offer {
 
 export function assertPaidTerritory(request: Request, env: NodeJS.ProcessEnv): void {
   const trustedCountry = request.headers.get('x-vercel-ip-country')
-  const localCountry = env.VERCEL_ENV ? null : request.headers.get('x-resumestride-country')
+  // The legacy header is accepted only by local/test requests during migration.
+  const localCountry = env.VERCEL_ENV ? null : request.headers.get('x-apwico-country') || request.headers.get('x-resumestride-country')
   const country = trustedCountry || localCountry || (!env.VERCEL_ENV ? 'US' : null)
   if (country !== 'US') throw new HttpError(403, 'New paid subscriptions are currently available only in the United States.')
 }

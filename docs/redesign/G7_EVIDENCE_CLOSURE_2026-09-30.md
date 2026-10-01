@@ -9,11 +9,11 @@ Scope: isolated `redesign/shared-route-state` worktree. No production, hosted da
 | 51. First occupation set | VALIDATION PENDING | A nine-role portfolio spans technical, healthcare, operations, education, service, skilled trades, research, creative and leadership work. Selection uses dated official external evidence. Production Search Console, internal search, builder-title and saved-job category demand data remain unavailable; private-demand ranking is validation pending, not treated as zero. |
 | 52. Occupation hubs | VALIDATION PENDING | Nine permanent pages include structure, flexible sections, skills in context, fictional strong/weak bullets, common requirement patterns, direct/adjacent/not-demonstrated examples, registry-backed templates, jurisdiction notes and direct Match entry. Automated source/route review is complete; qualified occupation/regulator review remains appropriate. |
 | 53. Regional guidance | VALIDATION PENDING | `/regions/` records sourced guidance from Canada, England, New Zealand, Australia and Europass, plus A4/Letter, contact/date, direction, credential and privacy boundaries. It explicitly excludes unsupported regional coverage. Local human review remains pending; no IP inference or global rule is implemented. |
-| 55. Factual comparisons | COMPLETE | Five named pages cover Teal, Huntr, Jobscan, Resume.io and Enhancv with official sources, checked/review dates, source locale/currency where established, vendor strengths, unknowns, ResumeStride boundaries and no winner claim. Generation/checks fail after a source review deadline. Jobscan pricing remains explicitly not established. |
+| 55. Factual comparisons | COMPLETE | Five named pages cover Teal, Huntr, Jobscan, Resume.io and Enhancv with official sources, checked/review dates, source locale/currency where established, vendor strengths, unknowns, APWICO boundaries and no winner claim. Generation/checks fail after a source review deadline. Jobscan pricing remains explicitly not established. |
 
 ## Occupation selection rationale
 
-Internal occupation demand is unavailable because the production Search Console property is inaccessible/not configured for this repository and privacy-safe analytics intentionally do not retain raw job titles, search text, job URLs or user content. The portfolio is therefore editorially selected from external evidence and evidence-shape diversity; it is **not** labelled “top ResumeStride occupations.”
+Internal occupation demand is unavailable because the production Search Console property is inaccessible/not configured for this repository and privacy-safe analytics intentionally do not retain raw job titles, search text, job URLs or user content. The portfolio is therefore editorially selected from external evidence and evidence-shape diversity; it is **not** labelled “top APWICO occupations.”
 
 | Category | Initial occupation | Selection evidence |
 | --- | --- | --- |
@@ -41,7 +41,7 @@ Regional sources checked 2026-09-30:
 - Workforce Australia: https://www.workforceaustralia.gov.au/individuals/coaching/job-applications/job-application-tips
 - Europass: https://europass.europa.eu/en/create-europass-cv and linked profile/privacy guidance
 
-Comparison sources and per-source review dates are rendered on each named comparison and stored in `src/content/comparisons.ts`. Prices are omitted when locale/currency could not be stably established. ResumeStride’s own pricing, trust and Match pages are dated and linked under the same standard.
+Comparison sources and per-source review dates are rendered on each named comparison and stored in `src/content/comparisons.ts`. Prices are omitted when locale/currency could not be stably established. APWICO’s own pricing, trust and Match pages are dated and linked under the same standard.
 
 - `scripts/render-search-hubs.ts` generates three hubs, nine occupation pages and five comparison pages.
 - `middleware.ts` is the public allowlist; detail routes receive canonical metadata, sitemap membership, unique social assets and query-state noindex/private-cache behavior.
@@ -53,7 +53,7 @@ Comparison sources and per-source review dates are rendered on each named compar
 The independent reviewer identified expiry enforcement, asymmetric comparisons, locale loss, occupation review labelling, US framing, duplicate regional ownership, missing coverage boundaries and detail-page footer/breadcrumb issues. Resolved:
 
 - generation fails after recorded review deadlines;
-- comparison sources show locale/currency and ResumeStride’s own dated limitations;
+- comparison sources show locale/currency and APWICO’s own dated limitations;
 - occupation pages show editorial reviewer, review dates, jurisdiction-labelled headings and O*NET 31.0/profile dates;
 - additional England/Canada/Australia sources reduce single-country dependence where a direct official analogue exists;
 - unsupported demand wording was removed from public occupation copy;

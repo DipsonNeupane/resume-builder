@@ -42,7 +42,7 @@ export const commercialPlans: readonly CommercialPlan[] = [
 export const commercialPolicy = {
  territory: 'New paid subscriptions are currently available only in the United States.',
  currency: 'All current subscription prices are presented and charged in United States dollars (USD). No local-currency price is promised.',
- paymentMethods: 'Stripe Checkout shows only payment methods enabled for the configured account and compatible with the buyer, device, USD price and subscription. ResumeStride does not promise a particular method before checkout displays it.',
+ paymentMethods: 'Stripe Checkout shows only payment methods enabled for the configured account and compatible with the buyer, device, USD price and subscription. APWICO does not promise a particular method before checkout displays it.',
  taxesAndInvoices: 'Tax calculation, tax-inclusive pricing and invoice availability are not promised. Any tax, conversion or receipt detail must be reviewed in Stripe Checkout before payment; provider configuration requires release validation.',
  refunds: 'Purchases are generally non-refundable except where mandatory consumer, unauthorized-charge, duplicate-charge or non-supply rights apply. The terms and refund policy control.',
  renewal: 'Paid subscriptions renew monthly until cancelled.',
@@ -53,7 +53,7 @@ export const commercialPolicy = {
  docx: 'Word (.docx) is a clean, editable content document; it does not promise visual parity with the PDF template.',
  freeDownloads: 'Free includes 3 successful PDF or Word downloads in each fixed 30-day period starting at signup. Both formats share the allowance and unused downloads do not roll over.',
  paidDownloads: 'Pro uses the paid reasonable-human-use policy for every template. An individual Premium-template subscription uses it only when exporting that selected design; other designs follow their own entitlement or the Free allowance. Server-side size and abuse protections apply. No unlimited-download claim is made.',
- exportBoundary: 'Downloads require a signed-in account and explicit consent to send the current resume to ResumeStride for server generation. The export routes do not intentionally keep the resume or generated file as a separate permanent server copy.',
+ exportBoundary: 'Downloads require a signed-in account and explicit consent to send the current resume to APWICO for server generation. The export routes do not intentionally keep the resume or generated file as a separate permanent server copy.',
  outcomes: 'No plan or template promises ATS passage, interviews, job offers or hiring outcomes.',
  checkout: 'Previewing a template does not start checkout. A recurring paid action requires an explicit consent checkbox before Stripe checkout opens.',
 } as const;
@@ -93,7 +93,7 @@ export function publishableCustomerProof(entries: readonly CustomerProof[], toda
   const stamps = days.map(value => Date.parse(`${value}T00:00:00Z`));
   if (stamps.some(value => value > todayMs) || stamps.some((value, index) => index > 0 && value < stamps[index - 1])) throw new Error(`Customer proof ${proof.id} has an invalid lifecycle order.`);
   if (proof.withdrawnAt !== null && (!isoDay.test(proof.withdrawnAt) || !Number.isFinite(Date.parse(`${proof.withdrawnAt}T00:00:00Z`)))) throw new Error(`Customer proof ${proof.id} has an invalid withdrawal date.`);
-  if (proof.withdrawalContact !== 'support@resumestride.com') throw new Error(`Customer proof ${proof.id} needs the verified withdrawal contact.`);
+  if (proof.withdrawalContact !== 'support@apwico.com') throw new Error(`Customer proof ${proof.id} needs the verified withdrawal contact.`);
   return proof.withdrawnAt === null;
  });
 }

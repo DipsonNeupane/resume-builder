@@ -53,5 +53,5 @@ for (const comparison of comparisons) {
 assert.ok(regionalGuidance.length >= 5, 'Regional guide needs meaningful, bounded coverage.');
 
 const sitemap = readFileSync('public/sitemap.xml', 'utf8');
-for (const path of ['/resources/', '/occupations/', '/regions/', '/compare/', ...occupations.map(item => `/occupations/${item.slug}/`), ...comparisons.map(item => `/compare/${item.slug}/`)]) assert.ok(sitemap.includes(`https://resumestride.com${path}`));
+for (const path of ['/resources/', '/occupations/', '/regions/', '/compare/', ...occupations.map(item => `/occupations/${item.slug}/`), ...comparisons.map(item => `/compare/${item.slug}/`)]) assert.ok(sitemap.includes(`https://apwico.com${path}`));
 console.log(`Search content check passed: ${contentClusters.length} clusters, ${guides.length} guides, ${occupations.length} occupations, ${comparisons.length} comparisons.`);

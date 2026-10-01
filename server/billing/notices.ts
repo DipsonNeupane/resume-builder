@@ -13,20 +13,20 @@ function escape(value: unknown): string {
 }
 
 export function emailCopy(kind: string, payload: Record<string, unknown>) {
-  const names: Record<string, string> = { 'pro:monthly':'ResumeStride Pro', purchase:'Purchase confirmed', renewal_reminder:'Subscription renewal reminder', renewal_receipt:'Renewal receipt', cancellation:'Cancellation confirmed', payment_failed:'Payment action required', expiration:'Subscription expired', material_change:'Important subscription update', price_change:'Subscription price change' }
-  const offer = typeof payload.offerKey === 'string' ? (names[payload.offerKey] || payload.offerKey.replace('template:', '') + ' Premium template') : 'ResumeStride subscription'
+  const names: Record<string, string> = { 'pro:monthly':'APWICO Pro', purchase:'Purchase confirmed', renewal_reminder:'Subscription renewal reminder', renewal_receipt:'Renewal receipt', cancellation:'Cancellation confirmed', payment_failed:'Payment action required', expiration:'Subscription expired', material_change:'Important subscription update', price_change:'Subscription price change' }
+  const offer = typeof payload.offerKey === 'string' ? (names[payload.offerKey] || payload.offerKey.replace('template:', '') + ' Premium template') : 'APWICO subscription'
   const date = typeof payload.accessEndsAt === 'string' ? new Date(payload.accessEndsAt).toLocaleDateString('en-US', { dateStyle:'long', timeZone:'UTC' }) : typeof payload.periodEnd === 'string' ? new Date(payload.periodEnd).toLocaleDateString('en-US', { dateStyle:'long', timeZone:'UTC' }) : ''
   const copy: Record<string, [string,string]> = {
     purchase: ['Purchase confirmed', `${offer} is active. It renews monthly until cancelled.`],
-    renewal_reminder: ['Your subscription renews in 3 days', `${offer} is scheduled to renew in 3 days. You can manage or cancel it from your ResumeStride account.`],
+    renewal_reminder: ['Your subscription renews in 3 days', `${offer} is scheduled to renew in 3 days. You can manage or cancel it from your APWICO account.`],
     renewal_receipt: ['Subscription renewed', `${offer} renewed successfully${date ? ` through ${date}` : ''}.`],
     cancellation: ['Cancellation confirmed', `${offer} will not renew. Your access continues through the already-paid billing period${date ? ` ending ${date}` : ''}. Your resumes and account content will remain.`],
-    payment_failed: ['Payment action required', `We could not renew ${offer}. Please update your payment method from your ResumeStride billing portal.`],
+    payment_failed: ['Payment action required', `We could not renew ${offer}. Please update your payment method from your APWICO billing portal.`],
     expiration: ['Subscription expired', `${offer} has expired. Your account has returned to the applicable Free access. Your resumes and account content remain available.`],
-    material_change: ['Important subscription update', String(payload.message || 'Review an important update to your ResumeStride subscription.')],
-    price_change: ['Subscription price change', String(payload.message || 'Review an upcoming price change to your ResumeStride subscription.')],
+    material_change: ['Important subscription update', String(payload.message || 'Review an important update to your APWICO subscription.')],
+    price_change: ['Subscription price change', String(payload.message || 'Review an upcoming price change to your APWICO subscription.')],
   }
-  return copy[kind] || ['ResumeStride billing update', 'There is an update to your ResumeStride subscription.']
+  return copy[kind] || ['APWICO billing update', 'There is an update to your APWICO subscription.']
 }
 
 const dependencies = { serviceDatabase, fetch: globalThis.fetch }
@@ -66,7 +66,7 @@ export async function dispatchNotices(request: Request, env: NodeJS.ProcessEnv =
 export async function dispatchPendingNotices(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   const secret = env.NOTICE_DISPATCH_SECRET || env.CRON_SECRET
   if (!secret || !env.RESEND_API_KEY || !env.BILLING_EMAIL_FROM) return
-  await dispatchNotices(new Request(`${env.APP_ORIGIN || 'https://resumestride.com'}/api/dispatch-billing-notices`, {
+  await dispatchNotices(new Request(`${env.APP_ORIGIN || 'https://apwico.com'}/api/dispatch-billing-notices`, {
     method: 'POST', headers: { authorization: `Bearer ${secret}` },
   }), env)
 }

@@ -30,7 +30,7 @@ export const guides: Guide[] = [
  {
   slug: 'tailor-resume-to-job-description',
   title: 'How to tailor a resume to a job description',
-  seoTitle: 'How to tailor a resume to a job description | ResumeStride',
+  seoTitle: 'How to tailor a resume to a job description | APWICO',
   description: 'Tailor your resume by mapping the role’s real requirements to evidence you already have—without rewriting everything or adding unsupported claims.',
   eyebrow: 'A practical, evidence-first method',
   deck: 'Turn a long job posting into a focused resume by changing the emphasis—not the truth.',
@@ -48,7 +48,7 @@ export const guides: Guide[] = [
  {
   slug: 'should-you-tailor-resume-for-every-job',
   title: 'Should you tailor your resume for every job?',
-  seoTitle: 'Should you tailor your resume for every job? | ResumeStride',
+  seoTitle: 'Should you tailor your resume for every job? | APWICO',
   description: 'Decide when a job deserves a fully tailored resume, a light role-family edit or no application at all—with a practical effort framework.',
   eyebrow: 'A realistic answer for a real job search',
   deck: 'Tailor for every serious application, but do not give every posting the same amount of time.',
@@ -66,7 +66,7 @@ export const guides: Guide[] = [
  {
   slug: 'compare-resume-to-job-description',
   title: 'How to compare your resume to a job description',
-  seoTitle: 'How to compare your resume to a job description | ResumeStride',
+  seoTitle: 'How to compare your resume to a job description | APWICO',
   description: 'Compare a resume with a job description using a requirement-to-evidence table, not a misleading keyword percentage or interview prediction.',
   eyebrow: 'A manual comparison you can trust',
   deck: 'The useful question is not “What is my match score?” It is “What can my resume actually demonstrate?”',
@@ -84,7 +84,7 @@ export const guides: Guide[] = [
  {
   slug: 'how-to-know-if-qualified-for-job',
   title: 'How to know if you’re qualified for a job',
-  seoTitle: 'How to know if you’re qualified for a job | ResumeStride',
+  seoTitle: 'How to know if you’re qualified for a job | APWICO',
   description: 'Evaluate job qualifications without arbitrary percentage rules: check eligibility, core work, evidence, transferable experience and genuine gaps.',
   eyebrow: 'A better answer than “meet 60% and apply”',
   deck: 'Qualification is not a single percentage. Start with hard constraints, then judge whether your evidence supports the work.',
@@ -102,7 +102,7 @@ export const guides: Guide[] = [
  {
   slug: 'master-resume-vs-tailored-resume',
   title: 'Master resume vs. tailored resume',
-  seoTitle: 'Master resume vs. tailored resume: what to keep in each | ResumeStride',
+  seoTitle: 'Master resume vs. tailored resume: what to keep in each | APWICO',
   description: 'Learn the difference between a complete master resume and a focused tailored resume, what belongs in each and how to keep versions organized.',
   eyebrow: 'One career record, many focused versions',
   deck: 'Your master resume preserves the full record. A tailored resume selects the evidence that matters for one role.',
@@ -111,7 +111,7 @@ export const guides: Guide[] = [
    { id: 'difference', title: 'The difference at a glance', html: `<div class="matrix" role="table" aria-label="Master and tailored resume comparison"><div role="row"><strong role="columnheader">Question</strong><strong role="columnheader">Master resume</strong><strong role="columnheader">Tailored resume</strong></div><div role="row"><span>Who is it for?</span><span>You</span><span>One employer or role family</span></div><div role="row"><span>What does it include?</span><span>Your useful career evidence</span><span>The most relevant, supported evidence</span></div><div role="row"><span>How long?</span><span>As long as needed to preserve detail</span><span>As concise as the context requires</span></div><div role="row"><span>Does it get submitted?</span><span>Usually no</span><span>Yes, after review</span></div></div>` },
    { id: 'master', title: 'What belongs in the master resume', html: `<ul><li>Roles, projects, education, training, certifications and volunteering</li><li>Fuller accomplishment notes, scope, tools and outcomes</li><li>Different kinds of work that support different future directions</li><li>Accurate dates, titles and context you do not want to reconstruct later</li><li>Prompts for evidence you still need to verify or quantify</li></ul><p>The master is not a dumping ground for private data. It still does not need government ID numbers, banking information, irrelevant confidential material or claims you cannot support.</p>` },
    { id: 'tailored', title: 'What changes in a tailored resume', html: `<ul><li>The order and space given to relevant sections</li><li>Which bullets, projects or skills are included</li><li>How clearly the summary connects your real background to the role</li><li>Terminology where the employer’s wording accurately describes your experience</li><li>Details that are trimmed because they distract from stronger evidence</li></ul><p>The facts do not change: dates, credentials, employers, responsibility level and results must remain accurate.</p>` },
-   { id: 'system', title: 'A simple version system', html: `<ol><li>Update the master when you gain or remember useful evidence.</li><li>Duplicate it before any job-specific edits.</li><li>Name the version with the role and employer, not “resume-final-final.”</li><li>Keep a copy of exactly what you submitted.</li><li>Return new verified details to the master so future versions improve.</li></ol><div class="example"><p><span>Master</span>resumestride-master-2026.docx</p><p><span>Submitted version</span>alex-chen-operations-coordinator-northstar.pdf</p></div>` },
+   { id: 'system', title: 'A simple version system', html: `<ol><li>Update the master when you gain or remember useful evidence.</li><li>Duplicate it before any job-specific edits.</li><li>Name the version with the role and employer, not “resume-final-final.”</li><li>Keep a copy of exactly what you submitted.</li><li>Return new verified details to the master so future versions improve.</li></ol><div class="example"><p><span>Master</span>apwico-master-2026.docx</p><p><span>Submitted version</span>alex-chen-operations-coordinator-northstar.pdf</p></div>` },
    { id: 'failure', title: 'When one document tries to do both jobs', html: `<p>A “universal” resume often becomes crowded because it tries to support every direction at once. The opposite failure is also common: a tailored resume gets overwritten repeatedly until earlier evidence disappears. Separating the two documents solves both problems—breadth stays in the master; focus belongs in the application version.</p>` },
   ],
   related: ['career-change-transferable-evidence', 'how-much-resume-should-change', 'tailor-resume-to-job-description'],
@@ -120,7 +120,7 @@ export const guides: Guide[] = [
  {
   slug: 'how-much-resume-should-change',
   title: 'How much of your resume should change for each job?',
-  seoTitle: 'How much should your resume change for each job? | ResumeStride',
+  seoTitle: 'How much should your resume change for each job? | APWICO',
   description: 'Learn what to change, what to keep fixed and when a resume needs a light edit versus a deeper job-specific version.',
   eyebrow: 'Change relevance, not identity',
   deck: 'There is no honest percentage. The amount should follow how different the role is from your current resume’s focus.',
@@ -138,7 +138,7 @@ export const guides: Guide[] = [
  {
   slug: 'resume-keywords',
   title: 'Resume keywords: what actually belongs in your resume',
-  seoTitle: 'Resume keywords: what actually belongs in your resume | ResumeStride',
+  seoTitle: 'Resume keywords: what actually belongs in your resume | APWICO',
   description: 'Choose resume keywords that describe real skills, tools, methods and qualifications—and place them where your evidence supports them.',
   eyebrow: 'Use the language of the work, not a keyword dump',
   deck: 'A keyword belongs when it accurately names something you can demonstrate and helps a reader understand your fit.',
@@ -156,7 +156,7 @@ export const guides: Guide[] = [
  {
   slug: 'tailor-resume-without-lying',
   title: 'How to tailor a resume without making things up',
-  seoTitle: 'How to tailor a resume without lying or making things up | ResumeStride',
+  seoTitle: 'How to tailor a resume without lying or making things up | APWICO',
   description: 'Tailor your resume honestly by clarifying, selecting and translating real experience—without inventing skills, titles, results or credentials.',
   eyebrow: 'Make the evidence clearer. Keep every claim defensible.',
   deck: 'Honest tailoring changes what you emphasize. Fabrication changes what happened.',
@@ -175,7 +175,7 @@ export const guides: Guide[] = [
  {
   slug: 'career-change-transferable-evidence',
   title: 'How to show transferable experience for a career change',
-  seoTitle: 'Transferable experience for a career change | ResumeStride',
+  seoTitle: 'Transferable experience for a career change | APWICO',
   description: 'Map a new role’s real requirements to transferable evidence without renaming old jobs, overstating responsibility or hiding genuine gaps.',
   eyebrow: 'Career change without identity change',
   deck: 'Translate the work you have done into evidence a new field can understand—while keeping titles, scope and gaps honest.',
@@ -194,16 +194,16 @@ export const guides: Guide[] = [
  {
   slug: 'choose-resume-template',
   title: 'How to choose a resume template for the work you need to show',
-  seoTitle: 'How to choose a resume template | ResumeStride',
+  seoTitle: 'How to choose a resume template | APWICO',
   description: 'Choose a resume template by content density, hierarchy, paper size and direction—not by unsupported claims about hiring or ATS success.',
   eyebrow: 'Let the evidence choose the layout',
   deck: 'A useful template makes your strongest real evidence easier to scan without forcing your career into the wrong structure.',
   directAnswer: '<p>Choose a template after you know what the resume must contain. Compare the amount of experience, section hierarchy, reading direction, paper size and the employer’s requested format. Preview your own content before paying. No design determines hiring outcomes or proves that every hiring system will parse a document the same way.</p>',
   directAnswerTitle: 'Let your content choose the structure.',
   sections: [
-   { id: 'content', title: '1. Start with content volume', html: `<p>A compact layout can help a detailed career record, while a more spacious layout can give a shorter record clearer rhythm. Do not shrink type or remove relevant evidence merely to imitate a one-page example.</p><p>ResumeStride labels templates with verified density and structural family in the <a href="/templates/">template gallery</a>; those labels describe layout, not candidate quality.</p>` },
+   { id: 'content', title: '1. Start with content volume', html: `<p>A compact layout can help a detailed career record, while a more spacious layout can give a shorter record clearer rhythm. Do not shrink type or remove relevant evidence merely to imitate a one-page example.</p><p>APWICO labels templates with verified density and structural family in the <a href="/templates/">template gallery</a>; those labels describe layout, not candidate quality.</p>` },
    { id: 'hierarchy', title: '2. Check the hierarchy with your own resume', html: `<ul><li>Can a reader find role, employer and dates quickly?</li><li>Are long titles and multilingual names still readable?</li><li>Do projects, volunteering or certifications receive the space they need?</li><li>Does the design still work when one section is much longer than the sample?</li></ul>` },
-   { id: 'direction', title: '3. Verify language direction and typography', html: `<p>Right-to-left content and non-Latin scripts need more than mirrored decoration. Preview actual names, headings and paragraphs, then check punctuation, line breaks and font coverage. ResumeStride’s template metadata states verified RTL/LTR behavior; the interface itself remains English.</p>` },
+   { id: 'direction', title: '3. Verify language direction and typography', html: `<p>Right-to-left content and non-Latin scripts need more than mirrored decoration. Preview actual names, headings and paragraphs, then check punctuation, line breaks and font coverage. APWICO’s template metadata states verified RTL/LTR behavior; the interface itself remains English.</p>` },
    { id: 'paper', title: '4. Choose paper and file format deliberately', html: `<p>A4 and Letter have different proportions. Use the size requested by the employer or normal for the application context, then review page breaks after changing it. Download requirements also vary: follow the posting when it asks for PDF or Word rather than assuming one format is universally preferred.</p>` },
    { id: 'access', title: '5. Preview before choosing access', html: `<p>Free, individual Premium-template and Pro access are different purchase paths. The template page should show the verified tier and let you preview first; payment is a later explicit action. Read the current <a href="/pricing/">pricing and renewal terms</a> beside any paid choice.</p><aside class="callout warning"><strong>Avoid template mythology</strong><p>“ATS-proof,” “guaranteed,” and “best for every role” are not verifiable template properties. Judge the actual structure and output instead.</p></aside>` },
   ],
@@ -213,7 +213,7 @@ export const guides: Guide[] = [
  {
   slug: 'a4-vs-letter-resume',
   title: 'A4 vs. Letter: choosing a resume page size',
-  seoTitle: 'A4 vs. Letter resume page size | ResumeStride',
+  seoTitle: 'A4 vs. Letter resume page size | APWICO',
   description: 'Choose A4 or Letter for a resume by following the application context, then verify pagination and export instead of relying on a universal country rule.',
   eyebrow: 'A practical output decision',
   deck: 'The page sizes are close, but changing between them can move lines and page breaks.',
@@ -223,7 +223,7 @@ export const guides: Guide[] = [
    { id: 'dimensions', title: '1. Know the physical difference', html: `<div class="comparison"><div><strong>A4</strong><p>210 × 297 millimetres</p></div><div><strong>US Letter</strong><p>8.5 × 11 inches (215.9 × 279.4 millimetres)</p></div></div><p>The difference is large enough to affect wrapping and page breaks even when the type and margins stay the same.</p>` },
    { id: 'request', title: '2. Follow the actual request', html: `<p>A country-level convention is only a default. A multinational employer, university, government portal or recruiter may specify a different page size or file format. The job posting and upload instructions are stronger evidence than a generic list.</p>` },
    { id: 'preview', title: '3. Recheck after every size change', html: `<ul class="checklist"><li>No heading is stranded at the bottom of a page</li><li>Dates and contact details have not wrapped awkwardly</li><li>Bullets are not clipped or split confusingly</li><li>Page count still suits the amount of relevant evidence</li><li>The downloaded file matches the preview</li></ul>` },
-   { id: 'formats', title: '4. Keep page size separate from file format', html: `<p>A4 versus Letter describes the page dimensions. PDF versus Word describes the file. An employer may request any combination. ResumeStride supports both page sizes in its templates and provides server-generated PDF and Word exports under the current access policy.</p>` },
+   { id: 'formats', title: '4. Keep page size separate from file format', html: `<p>A4 versus Letter describes the page dimensions. PDF versus Word describes the file. An employer may request any combination. APWICO supports both page sizes in its templates and provides server-generated PDF and Word exports under the current access policy.</p>` },
    { id: 'international', title: '5. Verify the local convention', html: `<p>Paper size varies within countries and organizations. Use the <a href="/resources/resume-or-cv-by-country/">regional verification method</a>, then let the vacancy and upload instructions control.</p>` },
   ],
   related: ['choose-resume-template', 'resume-or-cv-by-country', 'master-resume-vs-tailored-resume'],
@@ -232,7 +232,7 @@ export const guides: Guide[] = [
  {
   slug: 'resume-or-cv-by-country',
   title: 'Resume or CV by country: a safer way to check local expectations',
-  seoTitle: 'Resume or CV by country: verify local expectations | ResumeStride',
+  seoTitle: 'Resume or CV by country: verify local expectations | APWICO',
   description: 'Check regional resume and CV expectations through official current sources while keeping employer instructions and occupation rules in control.',
   eyebrow: 'Worldwide scope without universal rules',
   deck: 'Terms, personal details, length and document conventions differ. Verify the exact market and application instead of copying a global checklist.',
@@ -243,10 +243,10 @@ export const guides: Guide[] = [
    { id: 'sources', title: '2. Use the sourced regional matrix', html: `<p>The <a href="/regions/">regional matrix</a> records what named public services actually say, what each source leaves unresolved and when it was checked. This guide explains the method; the matrix holds the maintained source summaries. It is an initial set, not a complete world directory.</p>` },
    { id: 'differences', title: '3. Check differences one by one', html: `<ul><li>Whether the document is normally called a resume or CV in this context</li><li>Whether photos or personal details are expected, optional or discouraged</li><li>Typical page length and paper size</li><li>How education, licences and language proficiency should be expressed</li><li>Whether references belong in the document</li><li>Whether the employer requests PDF, Word or an application form</li></ul>` },
    { id: 'privacy', title: '4. Minimise personal information', html: `<p>Do not add a date of birth, government identifier, marital status, banking data or a third party’s contact details merely because an unsourced example contains them. Include only what the application legitimately requires, and confirm how the employer asks to receive sensitive documentation.</p>` },
-   { id: 'limits', title: '5. What this guide does not claim', html: `<aside class="callout warning"><strong>No country is one hiring market</strong><p>Practices vary by occupation, sector, employer and time. This page does not claim complete coverage, translated interface support or local legal advice. Recheck the linked source and its update date before relying on it.</p></aside><p>ResumeStride supports Unicode content, right-to-left resume direction, A4 and Letter output, and flexible section headings. Those technical capabilities do not automatically localise the English interface or validate a country-specific convention.</p>` },
+   { id: 'limits', title: '5. What this guide does not claim', html: `<aside class="callout warning"><strong>No country is one hiring market</strong><p>Practices vary by occupation, sector, employer and time. This page does not claim complete coverage, translated interface support or local legal advice. Recheck the linked source and its update date before relying on it.</p></aside><p>APWICO supports Unicode content, right-to-left resume direction, A4 and Letter output, and flexible section headings. Those technical capabilities do not automatically localise the English interface or validate a country-specific convention.</p>` },
   ],
   related: ['a4-vs-letter-resume', 'choose-resume-template', 'career-change-transferable-evidence'],
-  cta: { label: 'Build with flexible sections and page size', href: '/start/build', destination: 'resume_builder', note: 'Use the verified local convention you found; ResumeStride does not choose it for you.' },
+  cta: { label: 'Build with flexible sections and page size', href: '/start/build', destination: 'resume_builder', note: 'Use the verified local convention you found; APWICO does not choose it for you.' },
  },
 ];
 

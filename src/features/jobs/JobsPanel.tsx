@@ -1,4 +1,4 @@
-/** Local ResumeStride V1 job recommendation experience over the provider-neutral
+/** Local APWICO V1 job recommendation experience over the provider-neutral
  * Techmap foundation (server/jobs/*). This panel never talks to Techmap directly — it
  * always calls the authenticated, origin-checked /api/jobs-search route, which is the
  * only thing that ever forwards a bounded title/country/workplace to Techmap and never
@@ -349,7 +349,7 @@ function MatchAnalysisPanel({ analysis, isPro, onViewPro, onClarify, onEvidenceR
     {analysis.importantWarning && <div className="match-warning" role="note"><strong>Important requirement</strong><span>{analysis.importantWarning}</span></div>}
     {analysis.seniorityMessage && <p className="match-seniority">{analysis.seniorityMessage}</p>}
     {analysis.clarification && <fieldset className="match-clarification">
-      <legend>Help ResumeStride understand this requirement</legend>
+      <legend>Help APWICO understand this requirement</legend>
       <span>{analysis.clarification.text}</span>
       <div><button className="text-button" onClick={() => onClarify(analysis.clarification!.requirementId, 'demonstrated')}>I can demonstrate this</button><button className="text-button" onClick={() => onClarify(analysis.clarification!.requirementId, 'not_have')}>I don’t have this</button><button className="text-button" onClick={() => onClarify(analysis.clarification!.requirementId, 'unsure')}>Not sure</button></div>
     </fieldset>}
@@ -824,7 +824,7 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
   if (!ownerId) {
     return <section className="field jobs-panel" aria-label="Job search">
       <div className="jobs-panel-heading">
-        <div><span className="section-label">{target.kind === 'jobs' ? 'Your opportunity workspace' : 'Private opportunity workspace'}</span><h1>{privateHeading}</h1><p>{target.kind === 'jobs' ? 'Sign in to search for opportunities based on the evidence in your resume.' : 'Sign in to restore this workspace state. ResumeStride verifies ownership before showing any saved job, evidence, or job-specific document.'}</p></div>
+        <div><span className="section-label">{target.kind === 'jobs' ? 'Your opportunity workspace' : 'Private opportunity workspace'}</span><h1>{privateHeading}</h1><p>{target.kind === 'jobs' ? 'Sign in to search for opportunities based on the evidence in your resume.' : 'Sign in to restore this workspace state. APWICO verifies ownership before showing any saved job, evidence, or job-specific document.'}</p></div>
         <button className="back-link" onClick={onBack}>Back</button>
       </div>
       <div className="notice" role="status">
@@ -842,7 +842,7 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
   const retryAccountLoad = () => setAccountLoadRevision(value => value + 1);
   if ((target.kind === 'match' || target.kind === 'job_resume') && accountLoadFailed) return <section className="field jobs-panel" aria-label="Workspace restoration">
     <div className="jobs-panel-heading"><div><span className="section-label">Private workspace</span><h1>{privateHeading}</h1></div><button className="back-link" onClick={onOpenSavedJobs}>Back to saved jobs</button></div>
-    <div className="empty-state" role="alert"><strong>This workspace item is temporarily unavailable.</strong><p>ResumeStride could not verify and restore the owner-scoped item. No job or resume content was loaded.</p><button className="button" onClick={retryAccountLoad}>Retry</button></div>
+    <div className="empty-state" role="alert"><strong>This workspace item is temporarily unavailable.</strong><p>APWICO could not verify and restore the owner-scoped item. No job or resume content was loaded.</p><button className="button" onClick={retryAccountLoad}>Retry</button></div>
   </section>;
 
 
@@ -857,7 +857,7 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
       <div className="jobs-panel-heading"><div><span className="section-label">Private workspace</span><h1>Job-specific resume</h1></div><button className="back-link" onClick={onOpenSavedJobs}>Back to saved jobs</button></div>
       {!accountLoaded || !masterReady ? <p className="route-loading" role="status">Restoring your master resume and owner-scoped version…</p>
         : exists && !restoreFailure ? <p className="route-loading" role="status">Opening your job-specific resume. Your master resume remains unchanged.</p>
-        : exists && restoreFailure === 'transient' ? <div className="empty-state" role="alert"><strong>This version is temporarily unavailable.</strong><p>ResumeStride could not complete the owner-scoped restore. No resume content was loaded.</p><button className="button" onClick={retryVersionRestore}>Retry</button></div>
+        : exists && restoreFailure === 'transient' ? <div className="empty-state" role="alert"><strong>This version is temporarily unavailable.</strong><p>APWICO could not complete the owner-scoped restore. No resume content was loaded.</p><button className="button" onClick={retryVersionRestore}>Retry</button></div>
         : <div className="empty-state" role="status"><strong>This workspace item is unavailable.</strong><p>It may have been removed, belong to another account, or no longer be accessible. No resume content was loaded.</p><button className="button" onClick={onOpenSavedJobs}>Go to saved jobs</button></div>}
     </section>;
   }

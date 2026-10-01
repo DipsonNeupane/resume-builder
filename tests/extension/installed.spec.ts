@@ -7,7 +7,7 @@ for (const closePopup of [false,true]) test(`unpacked extension delivers reviewe
  const context=await chromium.launchPersistentContext('',{channel:'chromium',headless:true,args:[`--disable-extensions-except=${extensionPath}`,`--load-extension=${extensionPath}`]});
  try {
   const manager=await context.newPage();await manager.goto('chrome://extensions/');
-  const item=manager.locator('extensions-item').filter({hasText:'ResumeStride Job Capture'});
+  const item=manager.locator('extensions-item').filter({hasText:'APWICO Job Capture'});
   await expect(item).toHaveCount(1);
   const id=await item.getAttribute('id');expect(id).toBeTruthy();
   const worker=context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
@@ -28,12 +28,12 @@ for (const closePopup of [false,true]) test(`unpacked extension delivers reviewe
   await popup.getByLabel('Job description',{exact:true}).fill('Support customers and document solutions.');
   await popup.locator('#app').screenshot({path:'/tmp/rs-premium-extension-review.png'});
   await popup.getByText('Source & connection', {exact:true}).click();
-  await popup.getByLabel('ResumeStride app URL',{exact:true}).fill('http://127.0.0.1:5185/');
+  await popup.getByLabel('APWICO app URL',{exact:true}).fill('http://127.0.0.1:5185/');
   let release!:()=>void;
   const gate=new Promise<void>(resolve=>{release=resolve;});
   if(closePopup) await context.route('http://127.0.0.1:5185/',async route=>{await gate;await route.continue();});
   const destinationPromise=context.waitForEvent('page');
-  await popup.getByRole('button',{name:'Send reviewed details to ResumeStride'}).click();
+  await popup.getByRole('button',{name:'Send reviewed details to APWICO'}).click();
   const destination=await destinationPromise;
   if(closePopup){await popup.close();release();}
   await expect(destination.getByText('Extension smoke role',{exact:false}).first()).toBeVisible();
@@ -50,7 +50,7 @@ test('installed worker rejects invalid destinations, oversized captures and non-
  const context=await chromium.launchPersistentContext('',{channel:'chromium',headless:true,args:[`--disable-extensions-except=${extensionPath}`,`--load-extension=${extensionPath}`]});
  try {
   const manager=await context.newPage();await manager.goto('chrome://extensions/');
-  const item=manager.locator('extensions-item').filter({hasText:'ResumeStride Job Capture'});
+  const item=manager.locator('extensions-item').filter({hasText:'APWICO Job Capture'});
   await expect(item).toHaveCount(1);
   const id=await item.getAttribute('id');expect(id).toBeTruthy();
   const popup=await context.newPage();await popup.goto(`chrome-extension://${id}/popup.html`);

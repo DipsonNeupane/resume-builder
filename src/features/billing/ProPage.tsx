@@ -10,7 +10,7 @@ export function ProPage({ ownerId, onBack, onSignIn }: Props) {
    <div className="pro-page-intro">
     <span className="price-tag">PRO MONTHLY</span>
     <h1>A promising role. A considered application.</h1>
-    <p>Get ResumeStride Pro for US$19.99/month. It renews automatically until you cancel; access continues through the paid billing period.</p>
+    <p>Get APWICO Pro for US$19.99/month. It renews automatically until you cancel; access continues through the paid billing period.</p>
     <ul>
      <li><Check size={18}/>Full Match Analysis, requirement by requirement</li>
      <li><Check size={18}/>Up to 20 job results per search, with no once-a-day limit</li>
@@ -23,7 +23,7 @@ export function ProPage({ ownerId, onBack, onSignIn }: Props) {
    </div>
    <aside className="pro-checkout-card" aria-label="Pro purchase options">
     <div className="pro-checkout-price"><strong>US$19.99</strong><span>/month</span></div>
-    {ownerId?<BillingPanel key={ownerId} ownerId={ownerId} surface="purchase"/>:<><h2>Sign in to continue</h2><p>Your Pro subscription will be connected to your ResumeStride account. Signing in does not start checkout.</p><button className="button" onClick={onSignIn}>Sign in or create account</button></>}
+    {ownerId?<BillingPanel key={ownerId} ownerId={ownerId} surface="purchase"/>:<><h2>Sign in to continue</h2><p>Your Pro subscription will be connected to your APWICO account. Signing in does not start checkout.</p><button className="button" onClick={onSignIn}>Sign in or create account</button></>}
    </aside>
   </div>
  </section></main>;

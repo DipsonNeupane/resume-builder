@@ -33,7 +33,7 @@ const onet = (code: string, label: string): OccupationSource => ({ label, url: `
 // Selection balances nine materially different evidence shapes. It uses current,
 // official external occupation/demand sources because production query, saved-job
 // category and Search Console occupation data are unavailable. It is therefore an
-// initial editorial portfolio, not a ranking of ResumeStride user demand.
+// initial editorial portfolio, not a ranking of APWICO user demand.
 export const occupations: OccupationPage[] = [
   {
     slug: 'software-developer', category: 'technical', title: 'Software developer resume evidence guide',

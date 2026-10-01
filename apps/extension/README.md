@@ -1,10 +1,10 @@
-# ResumeStride Job Capture — V1 candidate 0.2.0
+# APWICO Job Capture — V1 candidate 0.2.0
 
 Unpublished integration candidate. **No deployment or Chrome Web Store submission.**
 The app, API and migration in this change must be released together in a later authorized
 release. A package pointing at production does not make this source available there.
 
-Click the extension on a public job page → review/edit the fields → send to ResumeStride
+Click the extension on a public job page → review/edit the fields → send to APWICO
 → sign in there if necessary → **Save job and see how I match** → normal Saved Jobs /
 Match Analysis → Pro creates or reopens the persistent job-specific resume → explicit
 AI consent → review individual Accept/Reject suggestions → manual edits → PDF/Word.
@@ -71,11 +71,11 @@ npx playwright test --config playwright.capture.config.ts # fixture extraction o
 
 In a disposable Chrome profile, open `chrome://extensions`, enable Developer mode, Load
 unpacked, select the appropriate folder, pin the action, and click it on a job page.
-Development delivery allows only root URLs on `https://resumestride.com` or HTTP
+Development delivery allows only root URLs on `https://apwico.com` or HTTP
 localhost/127.0.0.1 ports 5173, 5183, 5185. The production artifact removes all localhost
 host permissions **and** disables localhost in its built destination allowlist.
 Never load the development package into the store. Packaging now also writes the local
-`dist/resumestride-extension.zip` and `dist/extension-package-report.json` with file and
+`dist/apwico-extension.zip` and `dist/extension-package-report.json` with file and
 archive hashes. It verifies both the allowlisted folder and extracted ZIP; it never
 installs, uploads or submits. Requires local `zip`/`unzip`. Package after the web build,
 which clears root `dist/`. Source maps, secrets, tests, docs and stale files are excluded;
@@ -91,7 +91,7 @@ browser tests, not a real authenticated save. Do not call paid providers for acc
 - `scripting`: inject the extractor and the destination receipt bridge.
 - `storage`: single bounded session capture, only for review/retry across popup closure.
 - `alarms`: expire that session capture without requiring another popup invocation.
-- Host permissions: production ResumeStride only; local ports only in developer manifest.
+- Host permissions: production APWICO only; local ports only in developer manifest.
 
 No `tabs`, `history`, `cookies`, `webRequest`, `<all_urls>`, clipboard, auth or AI permissions.
 The action popup is the only accepted internal sender. The web bridge is same-window,

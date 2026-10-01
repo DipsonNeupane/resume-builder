@@ -1,4 +1,4 @@
-/* Patina — the approved ResumeStride visual system, applied to the product.
+/* Patina — the approved APWICO visual system, applied to the product.
    Source of truth: experiments/patina (approved 2026-09-26).
 
    Copper is movement and action. Petrol and mint are proof and trust. Carbon holds
@@ -13,9 +13,9 @@
  --pt-petrol:#0b3c43; --pt-petrol-2:#082d33; --pt-petrol-3:#0f4b53;
  --pt-mint:#6ccfb6; --pt-mint-ink:#0e6a5b; --pt-mint-tint:#e6f3ef;
  --pt-paper:#ffffff; --pt-desk:#e9e7e3;
- --pt-display:'ResumeStride Sans',system-ui,sans-serif;
- --pt-serif:'ResumeStride Serif',Georgia,serif;
- --pt-mono:'ResumeStride Mono',ui-monospace,monospace;
+ --pt-display:'APWICO Sans',system-ui,sans-serif;
+ --pt-serif:'APWICO Serif',Georgia,serif;
+ --pt-mono:'APWICO Mono',ui-monospace,monospace;
 }
 
 body { font-size:15px; -webkit-font-smoothing:antialiased; }

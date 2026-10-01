@@ -9,6 +9,7 @@ export {
  noindex,
  notFoundHtml,
  privateMetadata,
+ legacyProductionOrigins,
  productionOrigin,
  publicAnchors,
  publicPages,

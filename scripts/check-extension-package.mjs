@@ -28,12 +28,12 @@ export async function inspectPackage(root) {
   const manifest = JSON.parse(await readFile(resolve(root, 'manifest.json'), 'utf8'));
   assert.deepEqual(Object.keys(manifest).sort(), ['manifest_version', 'name', 'version', 'description', 'action', 'permissions', 'host_permissions', 'background', 'minimum_chrome_version', 'content_security_policy', 'icons'].sort(), 'Review any new manifest capability');
   assert.equal(manifest.manifest_version, 3);
-  assert.equal(manifest.name, 'ResumeStride Job Capture');
+  assert.equal(manifest.name, 'APWICO Job Capture');
   assert.match(manifest.version, /^\d+(\.\d+){0,3}$/);
   assert(manifest.version.split('.').every(part => Number(part) <= 65535));
   assert(manifest.description.length > 0 && manifest.description.length <= 132);
   assert.deepEqual(manifest.permissions, ['activeTab', 'scripting', 'storage', 'alarms']);
-  assert.deepEqual(manifest.host_permissions, ['https://resumestride.com/*']);
+  assert.deepEqual(manifest.host_permissions, ['https://apwico.com/*', 'https://resumestride.com/*']);
   assert.deepEqual(manifest.background, { service_worker: 'dist/background/worker.js', type: 'module' });
   assert.equal(manifest.minimum_chrome_version, '120');
   assert.deepEqual(manifest.content_security_policy, { extension_pages: "script-src 'self'; object-src 'none';" });
@@ -69,17 +69,19 @@ export async function inspectPackage(root) {
   assert(configText.includes('const devPorts = [];'), 'Development destination allowlist remains');
   // Execute only the reviewed local configuration module to verify packaged behavior.
   const config = await import(`${pathToFileURL(resolve(root, 'dist/lib/config.js')).href}?audit=${Date.now()}`);
-  assert.equal(config.productionAppOrigin, 'https://resumestride.com');
-  assert.equal(config.defaultAppUrl, 'https://resumestride.com/');
+  assert.equal(config.productionAppOrigin, 'https://apwico.com');
+  assert.equal(config.legacyProductionAppOrigin, 'https://resumestride.com');
+  assert.equal(config.defaultAppUrl, 'https://apwico.com/');
   assert(config.isAllowedAppUrl(new URL(config.defaultAppUrl)));
-  for (const url of ['http://resumestride.com/', 'https://www.resumestride.com/', 'https://resumestride.com.evil.test/', 'https://user@resumestride.com/', 'https://resumestride.com/path', 'https://resumestride.com/?q=1', 'https://resumestride.com/#capture', 'https://resumestride.com:444/', ...['localhost', '127.0.0.1'].flatMap(host => ['5173', '5183', '5185'].map(port => `http://${host}:${port}/`))]) {
+  assert(config.isAllowedAppUrl(new URL('https://resumestride.com/')), 'Legacy exact root must remain available during migration');
+  for (const url of ['http://resumestride.com/', 'https://www.resumestride.com/', 'https://apwico.com.evil.test/', 'https://user@resumestride.com/', 'https://apwico.com/path', 'https://apwico.com/?q=1', 'https://apwico.com/#capture', 'https://apwico.com:444/', ...['localhost', '127.0.0.1'].flatMap(host => ['5173', '5183', '5185'].map(port => `http://${host}:${port}/`))]) {
     assert.equal(config.isAllowedAppUrl(new URL(url)), false, 'Unsafe destination accepted');
   }
   const popup = await readFile(resolve(root, 'dist/popup/popup.js'), 'utf8');
-  assert(popup.includes('This production package sends only to https://resumestride.com/.'));
-  assert(popup.includes('Enter the official app URL: https://resumestride.com/'));
-  assert(popup.includes('Use https://resumestride.com/ with no credentials, query or fragment. Other destinations are not supported.'));
-  assert(popup.includes('Could not open or reach ResumeStride. Check your connection and try again.'));
+  assert(popup.includes('This production package defaults to https://apwico.com/.'));
+  assert(popup.includes('Enter the official app URL: https://apwico.com/'));
+  assert(popup.includes('Use https://apwico.com/ with no credentials, query or fragment. The legacy resumestride.com root remains available only during migration.'));
+  assert(popup.includes('Could not open or reach APWICO. Check your connection and try again.'));
   assert(!/local testing|local server|localhost|127\.0\.0\.1/i.test(popup), 'Development guidance remains in production popup');
   return { name: manifest.name, version: manifest.version, files, totalBytes: files.reduce((sum, file) => sum + file.bytes, 0) };
 }

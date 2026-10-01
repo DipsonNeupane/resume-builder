@@ -13,7 +13,7 @@ export function updateAppHead(page: AppPage, privateOverlay: boolean, sensitiveE
  document.title = details.title;
  meta('description', details.description);
  meta('robots', isHome && url.origin === productionOrigin ? 'index, follow' : noindex);
- for (const [key, value] of Object.entries({ 'og:title': details.title, 'og:description': details.description, 'og:type': 'website', 'og:site_name': 'ResumeStride' })) meta(key, value, true);
+ for (const [key, value] of Object.entries({ 'og:title': details.title, 'og:description': details.description, 'og:type': 'website', 'og:site_name': 'APWICO' })) meta(key, value, true);
  meta('twitter:title', details.title); meta('twitter:description', details.description);
  document.head.querySelectorAll('link[rel="canonical"], meta[property="og:url"], script[data-seo-schema]').forEach(node => node.remove());
  if (isHome) {

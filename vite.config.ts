@@ -23,6 +23,6 @@ export function seoPolicy() {
    next();
   }
  };
- return { name: 'resumestride-seo-policy', configureServer(server) { server.middlewares.use(handler(true)); }, configurePreviewServer(server) { server.middlewares.use(handler(false)); } } satisfies Plugin;
+ return { name: 'apwico-seo-policy', configureServer(server) { server.middlewares.use(handler(true)); }, configurePreviewServer(server) { server.middlewares.use(handler(false)); } } satisfies Plugin;
 }
 export default defineConfig({ plugins: [seoPolicy()] });

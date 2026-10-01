@@ -11,7 +11,7 @@ test('Match methodology is public, indexable, truthful and responsive', async ({
   await expect(page.getByText(/does not use a generative-AI model/)).toBeVisible();
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     'href',
-    'https://resumestride.com/features/match-methodology/',
+    'https://apwico.com/features/match-methodology/',
   );
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /index/);
   const widths = await page.evaluate(() => ({

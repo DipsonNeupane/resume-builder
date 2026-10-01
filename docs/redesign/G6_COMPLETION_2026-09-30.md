@@ -43,7 +43,7 @@ Lab budgets and automated browser observations are not production field data. Th
 Claude reviewed the complete diff silently and did not edit files. It found one critical, three high, three medium and five low items. The actionable findings were resolved as follows:
 
 - Added `/features/` to both the early browser guard and public-anchor policy, with static guard cases proving the capability pages retain index/canonical/schema state.
-- Replaced misleading borrowed font family names with truthful `ResumeStride Sans`, `ResumeStride Serif` and `ResumeStride Mono` aliases, declared only supported weights, removed the redundant absolute CSS import, and updated the font-vendoring source so regeneration preserves `swap`.
+- Replaced misleading borrowed font family names with truthful `APWICO Sans`, `APWICO Serif` and `APWICO Mono` aliases, declared only supported weights, removed the redundant absolute CSS import, and updated the font-vendoring source so regeneration preserves `swap`.
 - Made social-image bytes depend on the route's title, description and explicit review date; corrected the brand-stroke direction; and replaced title-like alt text with an accurate description of the abstract image.
 - Recorded the repository-wide 2026-09-30 review date while retaining authored/reviewed dates at each route call site. This removes the mismatch with the visible September 27/28 policy dates and the September 30 commercial review.
 - Removed duplicate font preload, stylesheet and guard tags from the capability shell; the central SEO generator remains their single owner.

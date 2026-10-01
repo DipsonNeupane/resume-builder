@@ -95,10 +95,10 @@ test('regional matrix records verified claims and explicit unknowns without IP i
 
 test('search routes retain canonical public and content-free query privacy boundaries', () => {
   for (const path of ['/occupations/', '/regions/', '/compare/', ...occupations.map(item => `/occupations/${item.slug}/`), ...comparisons.map(item => `/compare/${item.slug}/`), ...guides.map(guide => `/resources/${guide.slug}/`)]) {
-    const clean = requestSeo(new URL(path, 'https://resumestride.com'), true);
+    const clean = requestSeo(new URL(path, 'https://apwico.com'), true);
     assert.equal(clean.status, 0);
     assert.equal(clean.headers['X-Robots-Tag'], undefined);
-    const query = requestSeo(new URL(`${path}?query=private`, 'https://resumestride.com'), true);
+    const query = requestSeo(new URL(`${path}?query=private`, 'https://apwico.com'), true);
     assert.equal(query.headers['X-Robots-Tag'], 'noindex, nofollow, noarchive');
     assert.equal(query.headers['Cache-Control'], 'private, no-store');
   }

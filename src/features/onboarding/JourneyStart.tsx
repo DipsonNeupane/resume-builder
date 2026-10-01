@@ -33,7 +33,7 @@ export function JourneyStart({ journey, onChooseFile, onStartBuilding, onUseReal
   <div className="journey-start-icon"><FileText aria-hidden="true" /></div>
   <div><span className="section-label">Build / Your essentials first</span><h1 id="build-start-title">Start with your story, not a design.</h1>
    <p>Add your name, target direction and one contact method first. Then add the experience types that fit you—work, education, projects, volunteering, research or something else.</p>
-   <ul><li>Examples are prompts only; ResumeStride never inserts qualifications for you.</li><li>Your progress stays in this browsing session unless account saving is explicitly enabled and accepted.</li><li>Templates and formatting wait until your useful content exists.</li></ul>
+   <ul><li>Examples are prompts only; APWICO never inserts qualifications for you.</li><li>Your progress stays in this browsing session unless account saving is explicitly enabled and accepted.</li><li>Templates and formatting wait until your useful content exists.</li></ul>
    <div className="journey-start-actions"><button className="button" onClick={onStartBuilding}>Start building</button><button className="button outline" onClick={onChooseFile}>Import instead</button></div>
   </div>
  </main>;

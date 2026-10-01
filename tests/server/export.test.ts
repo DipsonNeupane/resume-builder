@@ -8,7 +8,7 @@ import {docxMimeType} from '../../src/services/docx.ts'
 import {serviceDatabase} from '../../server/database.ts'
 
 const owner='33333333-3333-3333-3333-333333333333'
-const env={EXPORTS_ENABLED:'true',APP_ORIGIN:'https://resumestride.com',SUPABASE_URL:'https://fixture.supabase.co',SUPABASE_PUBLISHABLE_KEY:'fixture',SUPABASE_SERVICE_ROLE_KEY:'fixture'}
+const env={EXPORTS_ENABLED:'true',APP_ORIGIN:'https://apwico.com',SUPABASE_URL:'https://fixture.supabase.co',SUPABASE_PUBLISHABLE_KEY:'fixture',SUPABASE_SERVICE_ROLE_KEY:'fixture'}
 const req=(format:'pdf'|'docx'='pdf',resume:ReturnType<typeof example> = example(),requestId=owner,jobResumeVersionId?:string)=>new Request(`${env.APP_ORIGIN}/api/export-${format}`,{method:'POST',headers:{origin:env.APP_ORIGIN,'content-type':'application/json'},body:JSON.stringify({requestId,resume,...(jobResumeVersionId?{jobResumeVersionId}:{})})})
 
 function fixtures(options:{quotaError?:boolean|'current';pdfRenderError?:boolean;docxRenderError?:boolean;finishError?:boolean;complete?:boolean}={}){
@@ -53,7 +53,7 @@ test('successful documents are counted before bytes return; completed retries ar
   const response=format==='pdf'?await exportPdf(req(format),env,{...deps,renderDocument:deps.renderPdf}):await exportDocx(req(format),env,{...deps,renderDocument:deps.renderDocx})
   assert.equal(response.status,200)
   assert.equal(response.headers.get('content-type'),format==='pdf'?'application/pdf':docxMimeType)
-  assert.equal(response.headers.get('content-disposition'),`attachment; filename="ResumeStride.${format}"`)
+  assert.equal(response.headers.get('content-disposition'),`attachment; filename="APWICO.${format}"`)
   assert.deepEqual(calls,complete?['product_begin_document',`render:${format}`]:['product_begin_document',`render:${format}`,'finish:true'])
  }
 })
@@ -117,6 +117,7 @@ test('qualified job-specific export records a bounded durable conversion after c
  }
  const response=await exportPdf(req('pdf',example(),owner,versionId),env,deps)
  assert.equal(response.status,200)
+ assert.equal(response.headers.get('x-apwico-qualified-conversion'),'limited')
  assert.equal(response.headers.get('x-resumestride-qualified-conversion'),'limited')
  assert.deepEqual(calls.map(call=>call.name),['job_resume_version_get','product_begin_document','product_finish_document'])
  assert.equal(calls.find(call=>call.name==='product_begin_document')?.args.p_job_resume_version,versionId)

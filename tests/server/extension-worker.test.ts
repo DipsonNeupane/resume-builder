@@ -23,14 +23,14 @@ await import('../../apps/extension/src/background/worker.ts')
 const { readPending, clearPending } = await import('../../apps/extension/src/lib/pending.ts')
 const capture = { title: 'Role', company: 'Company', description: 'Duties', sourceUrl: 'https://jobs.example/one', capturedAt: new Date().toISOString() }
 const sender = { id: 'extension-fixture', url: 'chrome-extension://extension-fixture/popup.html' }
-const message = { type: 'resumestride:send-reviewed-job', capture, appUrl: 'https://resumestride.com/' }
+const message = { type: 'resumestride:send-reviewed-job', capture, appUrl: 'https://apwico.com/' }
 const send = (data: unknown) => new Promise<{received: boolean}>(resolve => listener(data, sender, resolve))
 
 test('worker rejects foreign senders, non-popup paths, unsafe destinations and malformed captures before opening a tab', async () => {
-  for (const badSender of [{ ...sender, id: 'other' }, { ...sender, url: sender.url + '?bad' }, { ...sender, url: 'https://resumestride.com/' }]) {
+  for (const badSender of [{ ...sender, id: 'other' }, { ...sender, url: sender.url + '?bad' }, { ...sender, url: 'https://apwico.com/' }]) {
     assert.equal(listener(message, badSender, () => assert.fail('must not respond to foreign sender')), false)
   }
-  for (const appUrl of ['https://evil.test/','https://resumestride.com.evil.test/','https://user@resumestride.com/','https://resumestride.com/path','https://resumestride.com/?secret=1','http://127.0.0.1:9999/']) assert.deepEqual(await send({ ...message, appUrl }), { received: false })
+  for (const appUrl of ['https://evil.test/','https://apwico.com.evil.test/','https://user@resumestride.com/','https://apwico.com/path','https://apwico.com/?secret=1','http://127.0.0.1:9999/']) assert.deepEqual(await send({ ...message, appUrl }), { received: false })
   for (const change of [{ description: 'x'.repeat(12001) }, { authToken: 'secret' }, { sourceUrl: 'javascript:alert(1)' }, { originalSourceUrl: 'https://jobs.example/?secret=1' }]) assert.deepEqual(await send({ ...message, capture: { ...capture, ...change } }), { received: false })
   assert.equal(tabCount, 0)
   assert.deepEqual(state, {})

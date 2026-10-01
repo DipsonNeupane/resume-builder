@@ -34,5 +34,5 @@ test('auth return URLs contain only bounded route keys and downgrade object rout
  assert.doesNotMatch(accountUrl(objectRoute),/11111111|match/);
  assert.equal(authReturnRoute('saved')?.path,'/workspace/jobs/saved');
  assert.equal(authReturnRoute('private user text'),null);
- assert.equal(parseAppRoute(new URL('https://resumestride.test/workspace/account?return_to=jobs&code=opaque')).kind,'workspace_account');
+ assert.equal(parseAppRoute(new URL('https://apwico.test/workspace/account?return_to=jobs&code=opaque')).kind,'workspace_account');
 });

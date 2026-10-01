@@ -41,7 +41,7 @@ export function PublicNavigation({ authAvailable, signedIn, profileName, resumeR
  const continuing = signedIn && resumeReady;
 
  return <header className="site-header public-header">
-  <button className="brand" onClick={() => { setOpen(false); onHome(); }} aria-label="ResumeStride home"><span className="brand-icon"><span className="stride-mark" aria-hidden="true"><i/><i/><i/></span></span>Resume<span className="brand-light">Stride</span></button>
+  <button className="brand" onClick={() => { setOpen(false); onHome(); }} aria-label="APWICO home"><span className="brand-icon"><span className="stride-mark" aria-hidden="true"><i/><i/><i/></span></span><span>APWICO</span></button>
   <button ref={toggle} className="icon-button mobile-menu" aria-label="Toggle navigation" aria-controls="main-navigation" aria-expanded={open} onClick={() => setOpen(current => !current)}><Menu aria-hidden="true"/></button>
   <nav id="main-navigation" aria-label="Main navigation" className={open ? 'nav public-nav open' : 'nav public-nav'}>
    <a href="/workspace/resume" onClick={event => routeClick(event, onContinue)}>Resume Builder</a>

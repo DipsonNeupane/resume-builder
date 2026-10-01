@@ -4,7 +4,7 @@ import type Stripe from 'stripe'
 import { webhook, dependencies } from '../../server/billing/handlers.ts'
 import { stripeClient, billingConfig } from '../../server/billing/stripe.ts'
 
-const env = { BILLING_ENABLED: 'true', STRIPE_MODE: 'test', STRIPE_SECRET_KEY: 'sk_test_fixture', STRIPE_WEBHOOK_SECRET: 'whsec_fixture', STRIPE_ACCOUNT_ID: 'acct_fixture', STRIPE_PASS_PRICE_ID: 'price_fixture', APP_ORIGIN: 'https://resumestride.com', SUPABASE_URL: 'https://fixture.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'public', SUPABASE_SERVICE_ROLE_KEY: 'fixture' }
+const env = { BILLING_ENABLED: 'true', STRIPE_MODE: 'test', STRIPE_SECRET_KEY: 'sk_test_fixture', STRIPE_WEBHOOK_SECRET: 'whsec_fixture', STRIPE_ACCOUNT_ID: 'acct_fixture', STRIPE_PASS_PRICE_ID: 'price_fixture', APP_ORIGIN: 'https://apwico.com', SUPABASE_URL: 'https://fixture.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'public', SUPABASE_SERVICE_ROLE_KEY: 'fixture' }
 
 function fixture(options: { charge?: Record<string, unknown>; dispute?: Record<string, unknown>; rpcError?: boolean; target?: 'manual' | 'subscription' | null; lookupError?: boolean } = {}) {
   const stripe = stripeClient(billingConfig(env))

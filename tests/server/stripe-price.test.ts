@@ -5,7 +5,7 @@ import { validateCatalog, validateRecurringCatalog, type BillingConfig, type Rec
 
 const baseConfig: BillingConfig = {
   secret: 'sk_test_fixture', webhookSecret: 'whsec_fixture', accountId: 'acct_fixture',
-  priceId: 'price_one_time', live: false, origin: 'https://resumestride.com',
+  priceId: 'price_one_time', live: false, origin: 'https://apwico.com',
 }
 
 function stripeWithPrice(price: Record<string, unknown>): Stripe {

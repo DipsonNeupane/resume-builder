@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { webhook, subscribeCheckout, dependencies } from '../../server/billing/handlers.ts'
 import { stripeClient, billingConfig } from '../../server/billing/stripe.ts'
-const env={BILLING_ENABLED:'true',BILLING_RECURRING_ENABLED:'true',STRIPE_MODE:'test',STRIPE_SECRET_KEY:'sk_test_fixture',STRIPE_WEBHOOK_SECRET:'whsec_fixture',STRIPE_ACCOUNT_ID:'acct_fixture',STRIPE_PASS_PRICE_ID:'price_manual',STRIPE_RECURRING_PRICE_ID:'price_recurring',APP_ORIGIN:'https://resumestride.com',SUPABASE_URL:'https://fixture.supabase.co',SUPABASE_PUBLISHABLE_KEY:'public',SUPABASE_SERVICE_ROLE_KEY:'fixture'}
+const env={BILLING_ENABLED:'true',BILLING_RECURRING_ENABLED:'true',STRIPE_MODE:'test',STRIPE_SECRET_KEY:'sk_test_fixture',STRIPE_WEBHOOK_SECRET:'whsec_fixture',STRIPE_ACCOUNT_ID:'acct_fixture',STRIPE_PASS_PRICE_ID:'price_manual',STRIPE_RECURRING_PRICE_ID:'price_recurring',APP_ORIGIN:'https://apwico.com',SUPABASE_URL:'https://fixture.supabase.co',SUPABASE_PUBLISHABLE_KEY:'public',SUPABASE_SERVICE_ROLE_KEY:'fixture'}
 function fixture(extraLines=false) {
  const stripe=stripeClient(billingConfig(env));const calls: {name:string,args:Record<string,unknown>}[]=[]
  const line={quantity:1,pricing:{price_details:{price:'price_recurring'}},period:{start:1700000000,end:1702592000}}

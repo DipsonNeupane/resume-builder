@@ -22,7 +22,7 @@ function findPgBin() {
   return '/usr/local/opt/postgresql@17/bin';
 }
 const bin=findPgBin();
-const root=await mkdtemp(path.join(os.tmpdir(),'resumestride-pg-race-'));
+const root=await mkdtemp(path.join(os.tmpdir(),'apwico-pg-race-'));
 const data=path.join(root,'data'),socket=path.join(root,'socket');
 // A caller may point PGBIN at a relocatable PostgreSQL bundle (for example an
 // extracted Homebrew bottle in CI). In that case initdb cannot rely on the

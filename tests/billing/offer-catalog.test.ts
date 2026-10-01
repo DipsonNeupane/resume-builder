@@ -6,7 +6,7 @@ import { premiumTemplateIds } from '../../src/model.ts'
 import { billingConfig, recurringConfig } from '../../server/billing/stripe.ts'
 
 const templatePrices=Object.fromEntries(premiumTemplateIds.map(templateId=>[templateId,`price_${templateId}`]))
-const env={BILLING_ENABLED:'true',STRIPE_SECRET_KEY:'sk_test_fixture',STRIPE_WEBHOOK_SECRET:'whsec_fixture',STRIPE_ACCOUNT_ID:'acct_fixture',STRIPE_PASS_PRICE_ID:'price_pass',STRIPE_RECURRING_PRICE_ID:'price_legacy_recurring',STRIPE_MODE:'test',APP_ORIGIN:'https://resumestride.com',SUBSCRIPTION_OFFERS_ENABLED:'true',STRIPE_PRO_MONTHLY_PRICE_ID:'price_pro',STRIPE_TEMPLATE_PRICE_MAP:JSON.stringify(templatePrices)}
+const env={BILLING_ENABLED:'true',STRIPE_SECRET_KEY:'sk_test_fixture',STRIPE_WEBHOOK_SECRET:'whsec_fixture',STRIPE_ACCOUNT_ID:'acct_fixture',STRIPE_PASS_PRICE_ID:'price_pass',STRIPE_RECURRING_PRICE_ID:'price_legacy_recurring',STRIPE_MODE:'test',APP_ORIGIN:'https://apwico.com',SUBSCRIPTION_OFFERS_ENABLED:'true',STRIPE_PRO_MONTHLY_PRICE_ID:'price_pro',STRIPE_TEMPLATE_PRICE_MAP:JSON.stringify(templatePrices)}
 
 test('offer catalog is an explicit server allowlist with fixed prices',()=>{
  const config=offerCatalogConfig(env)
@@ -26,8 +26,8 @@ test('enabling the new catalog disables both historical checkout products',()=>{
 })
 
 test('paid territory accepts trusted US and rejects unsupported countries',()=>{
- assert.doesNotThrow(()=>assertPaidTerritory(new Request('https://resumestride.com',{headers:{'x-vercel-ip-country':'US'}}),{VERCEL_ENV:'preview'}))
- assert.throws(()=>assertPaidTerritory(new Request('https://resumestride.com',{headers:{'x-vercel-ip-country':'CA'}}),{VERCEL_ENV:'production'}))
+ assert.doesNotThrow(()=>assertPaidTerritory(new Request('https://apwico.com',{headers:{'x-vercel-ip-country':'US'}}),{VERCEL_ENV:'preview'}))
+ assert.throws(()=>assertPaidTerritory(new Request('https://apwico.com',{headers:{'x-vercel-ip-country':'CA'}}),{VERCEL_ENV:'production'}))
 })
 
 test('Stripe offer validation requires active matching product metadata and monthly cadence',async()=>{

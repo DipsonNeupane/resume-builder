@@ -89,7 +89,7 @@ test('public evidence can continue with bounded job context without carrying res
   await page.locator('#resume-text').fill(privateResume);
   await page.locator('#job-description').fill(job);
   await page.getByRole('button', { name: 'Check the evidence' }).click();
-  await page.getByRole('link', { name: /Continue with full ResumeStride Match/ }).click();
+  await page.getByRole('link', { name: /Continue with full APWICO Match/ }).click();
   await expect(page).toHaveURL('/start/job');
   expect(page.url()).not.toContain('Salesforce');
   const continuation = await page.evaluate(() => sessionStorage.getItem('resumestride.pendingJobFirst.v1'));

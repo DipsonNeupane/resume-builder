@@ -42,7 +42,7 @@ async function extractFromActiveTab(): Promise<{ result: ExtractResult; tabUrl: 
     return {
       result: {
         supported: false,
-        reason: "ResumeStride can't read this page (it may be a browser-internal page). Type the details yourself below.",
+        reason: "APWICO can't read this page (it may be a browser-internal page). Type the details yourself below.",
       },
       tabUrl: tab.url ?? '',
     };
@@ -53,18 +53,18 @@ function render(root: HTMLElement, result: ExtractResult, tabUrl: string): void 
   root.textContent = '';
 
   const heading = document.createElement('h1');
-  heading.textContent = 'ResumeStride job capture';
+  heading.textContent = 'APWICO job capture';
   root.appendChild(heading);
   const steps = document.createElement('div');
   steps.className = 'capture-steps';
   const current = document.createElement('strong'); current.textContent = '01 Review job';
-  const next = document.createElement('span'); next.textContent = '02 Open in ResumeStride';
+  const next = document.createElement('span'); next.textContent = '02 Open in APWICO';
   steps.append(current, next); root.appendChild(steps);
 
   const notice = document.createElement('p');
   notice.className = 'notice';
   notice.textContent = result.supported
-    ? 'Review the captured job details before sending them to ResumeStride. Your resume has not been sent.'
+    ? 'Review the captured job details before sending them to APWICO. Your resume has not been sent.'
     : result.reason;
   root.appendChild(notice);
   if (result.supported && result.capture.description.endsWith('…')) {
@@ -84,10 +84,10 @@ function render(root: HTMLElement, result: ExtractResult, tabUrl: string): void 
   const locationField = field('Location (optional)', initialCapture.location || '', 300, false);
   const sourceField = field('Source URL', initialCapture.sourceUrl, 2000, false);
   const descriptionField = field('Job description', initialCapture.description, maxDescriptionChars, true);
-  const appUrlField = field('ResumeStride app URL', defaultAppUrl, 200, false);
+  const appUrlField = field('APWICO app URL', defaultAppUrl, 200, false);
   const appUrlHint = document.createElement('p');
   appUrlHint.className = 'hint';
-  appUrlHint.textContent = 'Defaults to the production ResumeStride site. For local testing, use http://localhost or http://127.0.0.1 on port 5173, 5183, or 5185.';
+  appUrlHint.textContent = 'Defaults to the production APWICO site. For local testing, use http://localhost or http://127.0.0.1 on port 5173, 5183, or 5185.';
   function select(label: string, values: string[], current: string) {
     const wrapper = document.createElement('label'); wrapper.className = 'field'; wrapper.textContent = label;
     const control = document.createElement('select');
@@ -134,7 +134,7 @@ function render(root: HTMLElement, result: ExtractResult, tabUrl: string): void 
 
   const submitButton = document.createElement('button');
   submitButton.type = 'submit';
-  submitButton.textContent = 'Send reviewed details to ResumeStride';
+  submitButton.textContent = 'Send reviewed details to APWICO';
   form.appendChild(submitButton);
 
   const status = document.createElement('p');
@@ -159,20 +159,20 @@ function render(root: HTMLElement, result: ExtractResult, tabUrl: string): void 
     }
     const isAllowedDestination = isAllowedAppUrl(appUrl);
     if (!isAllowedDestination) {
-      status.textContent = 'Use https://resumestride.com, or for local testing http://localhost or http://127.0.0.1 on port 5173, 5183 or 5185 — with path / and no credentials, query or fragment.';
+      status.textContent = 'Use https://apwico.com, or for local testing http://localhost or http://127.0.0.1 on port 5173, 5183 or 5185 — with path / and no credentials, query or fragment.';
       return;
     }
     if (submitButton.disabled) return;
     submitButton.disabled = true;
-    status.textContent = 'Opening a separate ResumeStride tab…';
+    status.textContent = 'Opening a separate APWICO tab…';
     try {
       await pendingWrite;
       await keepPending(capture);
       const response = await chrome.runtime.sendMessage({type:'resumestride:send-reviewed-job',capture,appUrl:appUrl.toString()});
       const received = response?.received === true;
-      status.textContent=received?'ResumeStride received the details. Switch to the new tab to save the job and see how you match.':'Delivery was not confirmed. Check the new tab before retrying. This capture is kept for up to 30 minutes in this browser session; reopen the extension to retry.';
+      status.textContent=received?'APWICO received the details. Switch to the new tab to save the job and see how you match.':'Delivery was not confirmed. Check the new tab before retrying. This capture is kept for up to 30 minutes in this browser session; reopen the extension to retry.';
     } catch {
-      status.textContent='Could not open or reach ResumeStride. Check the local server and try again.';
+      status.textContent='Could not open or reach APWICO. Check the local server and try again.';
     } finally { submitButton.disabled=false; }
 
   });

@@ -6,7 +6,7 @@ import { HttpError } from '../../server/http/security.ts'
 import type { NormalizedJob } from '../../server/jobs/types.ts'
 
 const env = {
-  APP_ORIGIN: 'https://resumestride.com',
+  APP_ORIGIN: 'https://apwico.com',
   TECHMAP_API_KEY: 'x'.repeat(20),
   SUPABASE_URL: 'https://fixture.supabase.co',
   SUPABASE_PUBLISHABLE_KEY: 'public',
@@ -77,7 +77,7 @@ function fixture(options: { isPro?: boolean; page1?: NormalizedJob[]; page2?: No
 const evidence = { headline: 'Senior Software Engineer', skills: 'TypeScript, PostgreSQL', roles: [] }
 
 function request(body: unknown): Request {
-  return new Request('https://resumestride.com/api/jobs-search', {
+  return new Request('https://apwico.com/api/jobs-search', {
     method: 'POST',
     headers: { origin: env.APP_ORIGIN, 'content-type': 'application/json' },
     body: JSON.stringify(body),
@@ -336,9 +336,9 @@ test('rejects a request missing resume evidence', async () => {
 
 test('rejects a request with an invalid origin or method', async () => {
   const { deps } = fixture()
-  const badOrigin = new Request('https://resumestride.com/api/jobs-search', { method: 'POST', headers: { origin: 'https://evil.example', 'content-type': 'application/json' }, body: JSON.stringify({ criteria: { title: uniqueTitle() }, evidence }) })
+  const badOrigin = new Request('https://apwico.com/api/jobs-search', { method: 'POST', headers: { origin: 'https://evil.example', 'content-type': 'application/json' }, body: JSON.stringify({ criteria: { title: uniqueTitle() }, evidence }) })
   assert.equal((await searchJobs(badOrigin, env, deps)).status, 403)
-  const badMethod = new Request('https://resumestride.com/api/jobs-search', { method: 'GET', headers: { origin: env.APP_ORIGIN } })
+  const badMethod = new Request('https://apwico.com/api/jobs-search', { method: 'GET', headers: { origin: env.APP_ORIGIN } })
   assert.equal((await searchJobs(badMethod, env, deps)).status, 405)
 })
 
@@ -346,13 +346,13 @@ test('an invalid origin or method never reaches authentication, provider config,
   const { deps, calls, dbCalls } = fixture()
   let techmapConfigTouched = false
   const badEnv = { ...env, get TECHMAP_API_KEY(): string { techmapConfigTouched = true; return env.TECHMAP_API_KEY } }
-  const badOrigin = new Request('https://resumestride.com/api/jobs-search', { method: 'POST', headers: { origin: 'https://evil.example', 'content-type': 'application/json' }, body: JSON.stringify({ criteria: { title: uniqueTitle() }, evidence }) })
+  const badOrigin = new Request('https://apwico.com/api/jobs-search', { method: 'POST', headers: { origin: 'https://evil.example', 'content-type': 'application/json' }, body: JSON.stringify({ criteria: { title: uniqueTitle() }, evidence }) })
   await searchJobs(badOrigin, badEnv as unknown as typeof env, deps)
   assert.equal(dbCalls.length, 0, 'authenticate/serviceDatabase must never be called for a rejected origin')
   assert.equal(calls.length, 0, 'the provider must never be called for a rejected origin')
   assert.equal(techmapConfigTouched, false, 'TECHMAP_API_KEY must never even be read for a rejected origin')
 
-  const badMethod = new Request('https://resumestride.com/api/jobs-search', { method: 'GET', headers: { origin: env.APP_ORIGIN } })
+  const badMethod = new Request('https://apwico.com/api/jobs-search', { method: 'GET', headers: { origin: env.APP_ORIGIN } })
   await searchJobs(badMethod, badEnv as unknown as typeof env, deps)
   assert.equal(dbCalls.length, 0, 'authenticate/serviceDatabase must never be called for a rejected method')
   assert.equal(calls.length, 0, 'the provider must never be called for a rejected method')

@@ -222,17 +222,17 @@ export function TailoringPanel({ resume, ownerId, onSignIn, onViewPro, versionId
    <li><strong>You</strong>Accept, reject or edit</li>
   </ol>
   <ol className="review-progress" aria-label="Tailoring progress"><li aria-current={!draft?'step':undefined}>01 / Get suggestions</li><li aria-current={draft&&items.some(item=>item.status==='pending')?'step':undefined}>02 / Review each change</li><li aria-current={draft&&!items.some(item=>item.status==='pending')?'step':undefined}>03 / Your resume</li></ol>
-  {!jobDescriptionAvailable && <p className="notice" role="status">This saved job has no description available, so ResumeStride cannot generate grounded tailoring suggestions.</p>}
+  {!jobDescriptionAvailable && <p className="notice" role="status">This saved job has no description available, so APWICO cannot generate grounded tailoring suggestions.</p>}
   <div className="field checkbox-field">
    <label>
     <input type="checkbox" checked={consent} disabled={busy} onChange={event => setConsent(event.target.checked)} />
-    I consent to sending this saved job-specific resume and job description to ResumeStride for tailoring suggestions.
+    I consent to sending this saved job-specific resume and job description to APWICO for tailoring suggestions.
    </label>
   </div>
   <button className="button" disabled={busy || !consent || !jobDescriptionAvailable} onClick={fetchSuggestions}>
    {busy ? 'Getting suggestions…' : 'Get tailoring suggestions'}
   </button>
-  <p className="field-hint">ResumeStride sends your headline, summary, skills, section entries and relevant Match Analysis evidence to OpenAI. Dedicated contact fields are excluded; contact details you write in summaries or entries may still be included.</p>
+  <p className="field-hint">APWICO sends your headline, summary, skills, section entries and relevant Match Analysis evidence to OpenAI. Dedicated contact fields are excluded; contact details you write in summaries or entries may still be included.</p>
   <p className="field-hint">Requires an active Pro pass. Suggestions are designed to rework only what your resume already says, so check each one before you accept it. {onAcceptedResume ? 'Accept applies a change to this job-specific resume only. Reject leaves it as it is. You can still edit any wording yourself in the editor. Your master never changes.' : 'Accepted changes go into a separate draft; your original stays unchanged.'}</p>
   {message && <p role="status" className="field-hint">{message}</p>}
   {items.length > 0 && <p role="status" className="field-hint">{items.filter(item=>item.status!=='pending').length} of {items.length} suggestions reviewed · {items.filter(item=>item.status==='accepted').length} accepted</p>}

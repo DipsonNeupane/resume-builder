@@ -18,7 +18,7 @@ import type { PremiumId } from '../registry';
 import { renderPremiumPdf } from '../export/premium-pdf';
 
 const lab = process.env.LAB_URL ?? 'http://127.0.0.1:5178';
-const out = process.env.OUT_DIR ?? '/tmp/resumestride-template-lab';
+const out = process.env.OUT_DIR ?? '/tmp/apwico-template-lab';
 const only = process.env.ONLY?.split(',');
 const ids = (Object.keys(premiumRenderers) as PremiumId[]).filter(id => !only || only.includes(id));
 const papers = ['A4', 'Letter'] as const;

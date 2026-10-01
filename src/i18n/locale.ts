@@ -25,6 +25,6 @@ export function applyInterfaceLocale(): InterfaceLocale {
  document.documentElement.dir='ltr';
  return locale;
 }
-export const protectedProductIdentifiers = ['ResumeStride','Free','Premium','Pro','Match Analysis'] as const;
+export const protectedProductIdentifiers = ['APWICO','Free','Premium','Pro','Match Analysis'] as const;
 export const localeDate = (value: Date|string|number, options: Intl.DateTimeFormatOptions={dateStyle:'medium'}): string => new Intl.DateTimeFormat(initialInterfaceLocale(),options).format(new Date(value));
 export const localeNumber = (value: number, options?: Intl.NumberFormatOptions): string => new Intl.NumberFormat(initialInterfaceLocale(),options).format(value);

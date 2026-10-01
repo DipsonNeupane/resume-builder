@@ -9,7 +9,7 @@ test('mobile navigation has sequential keyboard access, Escape, and destination 
  await page.keyboard.press(tab);
  await expect(page.getByRole('link', { name: 'Skip to main content' })).toBeFocused();
  await page.keyboard.press(tab);
- await expect(page.getByRole('button', { name: 'ResumeStride home' })).toBeFocused();
+ await expect(page.getByRole('button', { name: 'APWICO home' })).toBeFocused();
  await page.keyboard.press(tab);
  const toggle = page.getByRole('button', { name: 'Toggle navigation' });
  await expect(toggle).toBeFocused();
@@ -21,6 +21,7 @@ test('mobile navigation has sequential keyboard access, Escape, and destination 
  await expect(toggle).toBeFocused();
  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
  await page.keyboard.press('Enter');
+ await page.keyboard.press(tab);
  await page.keyboard.press(tab);
  await page.keyboard.press(tab);
  await page.keyboard.press(tab);

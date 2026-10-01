@@ -10,7 +10,8 @@ export const jobImportMessageType = 'resumestride:job-import' as const;
 // The exact production origin the extension is allowed to deliver into (apps/extension/src/lib/config.ts
 // carries the matching constant on the extension side). Hardcoded, not derived from window.location,
 // so this boundary can't be widened by a misconfigured deployment.
-const productionOrigin = 'https://resumestride.com';
+const productionOrigin = 'https://apwico.com';
+const legacyProductionOrigin = 'https://resumestride.com';
 export const isJobCapturePayload = isJobCapture;
 
 // Registers the (single) listener for incoming job captures. Returns an unsubscribe function.
@@ -19,7 +20,7 @@ export const isJobCapturePayload = isJobCapture;
 // fails validation records only a local category; untrusted page text is never recorded.
 export function listenForJobImport(onCapture: (payload: JobCapturePayload) => void): () => void {
   const isDevLocal = import.meta.env.DEV && window.location.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(window.location.hostname) && ['5173','5174','5181','5183','5185'].includes(window.location.port);
-  const isProduction = window.location.origin === productionOrigin;
+  const isProduction = [productionOrigin, legacyProductionOrigin].includes(window.location.origin);
   if (!isDevLocal && !isProduction) return () => {};
   const delivered = new Set<string>();
   const handler = (event: MessageEvent) => {

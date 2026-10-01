@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import type Stripe from 'stripe'
 import { applyOfferInvoice, applyOfferSubscriptionStatus } from '../../server/billing/offer-handlers.ts'
 
-const env={BILLING_ENABLED:'true',STRIPE_SECRET_KEY:'sk_test_fixture',STRIPE_WEBHOOK_SECRET:'whsec_fixture',STRIPE_ACCOUNT_ID:'acct_fixture',STRIPE_PASS_PRICE_ID:'price_pass',STRIPE_MODE:'test',APP_ORIGIN:'https://resumestride.com',STRIPE_PRO_MONTHLY_PRICE_ID:'price_pro',STRIPE_TEMPLATE_PRICE_MAP:'{}'}
+const env={BILLING_ENABLED:'true',STRIPE_SECRET_KEY:'sk_test_fixture',STRIPE_WEBHOOK_SECRET:'whsec_fixture',STRIPE_ACCOUNT_ID:'acct_fixture',STRIPE_PASS_PRICE_ID:'price_pass',STRIPE_MODE:'test',APP_ORIGIN:'https://apwico.com',STRIPE_PRO_MONTHLY_PRICE_ID:'price_pro',STRIPE_TEMPLATE_PRICE_MAP:'{}'}
 const trusted={owner_id:'abababab-abab-abab-abab-abababababab',subscription_id:'sub_pro',offer_key:'pro:monthly',cancel_at_period_end:false,current_period_end:'2026-11-01T00:00:00.000Z'}
 
 function paidInvoice(): Stripe.Invoice {

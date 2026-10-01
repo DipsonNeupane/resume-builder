@@ -45,7 +45,7 @@ test('localization contract defaults to an explicit supported locale without cou
  assert.equal(parseInterfaceLocale('fr'),null);
  assert.equal(initialInterfaceLocale({getItem:()=>null}),'en');
  assert.equal(initialInterfaceLocale({getItem:()=> 'en'}),'en');
- assert.ok(protectedProductIdentifiers.includes('ResumeStride'));
+ assert.ok(protectedProductIdentifiers.includes('APWICO'));
  const source=read('src/i18n/locale.ts');
  assert.doesNotMatch(source,/x-vercel-ip-country|geoip|navigator\.language/);
  const builder=read('src/main.tsx');

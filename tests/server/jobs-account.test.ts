@@ -7,10 +7,10 @@ import type { NormalizedJob } from '../../server/jobs/types.ts'
 import { blank } from '../../src/model.ts'
 
 const owner = '11111111-1111-1111-1111-111111111111'
-const env = { APP_ORIGIN: 'https://resumestride.com', SUPABASE_URL: 'https://fixture.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'public', SUPABASE_SERVICE_ROLE_KEY: 'secret' }
+const env = { APP_ORIGIN: 'https://apwico.com', SUPABASE_URL: 'https://fixture.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'public', SUPABASE_SERVICE_ROLE_KEY: 'secret' }
 
 function request(body: unknown, origin = env.APP_ORIGIN): Request {
-  return new Request('https://resumestride.com/api/jobs-account', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify(body) })
+  return new Request('https://apwico.com/api/jobs-account', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify(body) })
 }
 
 const job: NormalizedJob = {

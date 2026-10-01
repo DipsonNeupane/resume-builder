@@ -19,8 +19,8 @@ test('public pricing presents all access paths, cancellation and export policy b
 
 test('trust page publishes factual boundaries and no fabricated customer proof', async ({ page }) => {
  await page.goto('/trust/');
- await expect(page).toHaveTitle('How ResumeStride earns trust');
- await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://resumestride.com/trust/');
+ await expect(page).toHaveTitle('How APWICO earns trust');
+ await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://apwico.com/trust/');
  await expect(page.getByRole('heading', { name: 'No customer stories are published yet.' })).toBeVisible();
  await expect(page.locator('blockquote')).toHaveCount(0);
  await expect(page.getByText(/does not decide whether you should apply/)).toBeVisible();

@@ -33,7 +33,7 @@ test('customer proof is unpublished by default and its future shape requires sco
  assert.match(trust, /No customer stories are published yet/);
  assert.match(trust, /withdraw future public display/);
  assert.doesNotMatch(trust, /<blockquote>/);
- const valid: CustomerProof = { id: 'story-one', quote: 'The requirement view helped me decide.', context: 'A customer describing the decision workflow.', consentRecordedAt: '2026-01-01', factsVerifiedAt: '2026-01-02', consentScope: 'public_quote', consentReference: 'proof-consent-story-one', moderatedAt: '2026-01-03', publishedAt: '2026-01-04', withdrawnAt: null, withdrawalContact: 'support@resumestride.com' };
+ const valid: CustomerProof = { id: 'story-one', quote: 'The requirement view helped me decide.', context: 'A customer describing the decision workflow.', consentRecordedAt: '2026-01-01', factsVerifiedAt: '2026-01-02', consentScope: 'public_quote', consentReference: 'proof-consent-story-one', moderatedAt: '2026-01-03', publishedAt: '2026-01-04', withdrawnAt: null, withdrawalContact: 'support@apwico.com' };
  assert.deepEqual(publishableCustomerProof([valid], new Date('2026-09-30T00:00:00Z')), [valid]);
  assert.deepEqual(publishableCustomerProof([{ ...valid, withdrawnAt: '2026-01-05' }], new Date('2026-09-30T00:00:00Z')), []);
  assert.throws(() => publishableCustomerProof([{ ...valid, quote: 'Call 312-555-1212' }], new Date('2026-09-30T00:00:00Z')), /contact detail/);

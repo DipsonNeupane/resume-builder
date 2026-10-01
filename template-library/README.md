@@ -1,4 +1,4 @@
-# ResumeStride Premium Template Library
+# APWICO Premium Template Library
 
 Integrated with the production Builder and PDF export path. Billing and entitlement
 authority remain in the server/database layers; this directory owns template metadata,

@@ -59,7 +59,11 @@ export async function exportDocument(config:DocumentExportConfig,request:Request
     if(!outcome.error&&(outcome.data==='limited'||outcome.data==='full'))qualifiedScope=outcome.data
   }
   const headers:Record<string,string>={'Content-Type':config.contentType,'Content-Disposition':`attachment; filename="${config.filename}"`,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}
-  if(qualifiedScope)headers['X-ResumeStride-Qualified-Conversion']=qualifiedScope
+  if(qualifiedScope){
+   headers['X-APWICO-Qualified-Conversion']=qualifiedScope
+   // Temporary response compatibility for clients shipped before the brand migration.
+   headers['X-ResumeStride-Qualified-Conversion']=qualifiedScope
+  }
   return new Response(new Uint8Array(bytes).buffer,{headers})
  }catch(error){return safeError(error)}
 }

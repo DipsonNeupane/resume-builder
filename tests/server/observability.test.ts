@@ -132,7 +132,7 @@ test('auth verification failures carry correlation but no bearer token or provid
  const records: Diagnostic[] = []
  const response = await runObservedRequest('billing-status', 'entitlement', async () => {
   try {
-   await authenticate(new Request('https://resumestride.com', { headers: { authorization: 'Bearer private-token' } }), { url: 'https://db.invalid', publicKey: secret }, async () => Response.json({ message: secret }, { status: 401 }))
+   await authenticate(new Request('https://apwico.com', { headers: { authorization: 'Bearer private-token' } }), { url: 'https://db.invalid', publicKey: secret }, async () => Response.json({ message: secret }, { status: 401 }))
    return json(200, {})
   } catch (error) { return safeError(error) }
  }, env, record => records.push(record))
@@ -158,7 +158,7 @@ test('provider 429s remain diagnosable even when an optional page failure is swa
 test('all deployed API entrypoints generate IDs and ignore attacker-controlled IDs/URLs', async () => {
  for (const file of (await readdir(new URL('../../api/', import.meta.url))).filter(file => file.endsWith('.ts'))) {
   const handler = (await import(`../../api/${file}`)).default
-  const response = await handler.fetch(new Request(`https://resumestride.com/api/${file}?token=private-query`, { headers: { 'X-Request-ID': 'private-incoming-id' } }))
+  const response = await handler.fetch(new Request(`https://apwico.com/api/${file}?token=private-query`, { headers: { 'X-Request-ID': 'private-incoming-id' } }))
   assert.match(response.headers.get('x-request-id')!, uuid, file)
   assert.notEqual(response.headers.get('x-request-id'), 'private-incoming-id')
   assert.ok(response.status >= 400, file)
@@ -166,7 +166,7 @@ test('all deployed API entrypoints generate IDs and ignore attacker-controlled I
 })
 
 test('analytics permits only sanitized public pageviews, closed product events and coarse properties', () => {
- const origin = 'https://resumestride.com'
+ const origin = 'https://apwico.com'
  for (const path of ['/?account=1', '/?code=private-token', '/#access_token=private-token', '/resume/private-name', '/jobs', '/?job=private-description']) {
   assert.equal(safeAnalyticsEvent({ type: 'pageview', url: origin + path }), null)
  }

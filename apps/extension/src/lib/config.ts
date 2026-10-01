@@ -6,7 +6,10 @@ export const maxDescriptionChars = 12000;
 // The exact production origin this extension is allowed to deliver into. Kept as a single
 // hardcoded constant (not overridable by any field the popup can widen) so the destination
 // allowlist below can never be tricked into treating a look-alike host as production.
-export const productionAppOrigin = 'https://resumestride.com';
+export const productionAppOrigin = 'https://apwico.com';
+// Kept during the controlled domain migration so an already-installed extension can
+// finish a capture from the legacy host. APWICO remains the only default destination.
+export const legacyProductionAppOrigin = 'https://resumestride.com';
 export const productionAppUrl = `${productionAppOrigin}/`;
 // Production is the default destination. A developer can still point the popup's app-URL field
 // at a local dev server for testing (see apps/extension/README.md's demo steps) — localhost stays
@@ -20,7 +23,7 @@ function isExactRootUrl(url: URL): boolean {
 }
 
 export function isAllowedAppUrl(url: URL): boolean {
- if (url.protocol === 'https:' && url.origin === productionAppOrigin) return isExactRootUrl(url);
+ if (url.protocol === 'https:' && [productionAppOrigin, legacyProductionAppOrigin].includes(url.origin)) return isExactRootUrl(url);
  if (url.protocol === 'http:' && ['localhost','127.0.0.1'].includes(url.hostname) && devPorts.includes(url.port)) return isExactRootUrl(url);
  return false;
 }

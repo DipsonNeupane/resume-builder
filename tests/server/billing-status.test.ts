@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { billingStatus, dependencies } from '../../server/billing/handlers.ts'
-const env={BILLING_ENABLED:'true',BILLING_RECURRING_ENABLED:'true',STRIPE_MODE:'test',STRIPE_SECRET_KEY:'sk_test_fixture',STRIPE_WEBHOOK_SECRET:'whsec_fixture',STRIPE_ACCOUNT_ID:'acct_fixture',STRIPE_PASS_PRICE_ID:'price_fixture',STRIPE_RECURRING_PRICE_ID:'price_recurring',APP_ORIGIN:'https://resumestride.com',SUPABASE_URL:'https://fixture.supabase.co',SUPABASE_PUBLISHABLE_KEY:'public',SUPABASE_SERVICE_ROLE_KEY:'fixture'}
+const env={BILLING_ENABLED:'true',BILLING_RECURRING_ENABLED:'true',STRIPE_MODE:'test',STRIPE_SECRET_KEY:'sk_test_fixture',STRIPE_WEBHOOK_SECRET:'whsec_fixture',STRIPE_ACCOUNT_ID:'acct_fixture',STRIPE_PASS_PRICE_ID:'price_fixture',STRIPE_RECURRING_PRICE_ID:'price_recurring',APP_ORIGIN:'https://apwico.com',SUPABASE_URL:'https://fixture.supabase.co',SUPABASE_PUBLISHABLE_KEY:'public',SUPABASE_SERVICE_ROLE_KEY:'fixture'}
 const owner='22222222-2222-2222-2222-222222222222'
 const req=()=>new Request(env.APP_ORIGIN+'/api/billing-status',{headers:{authorization:'Bearer fixture'}})
 function fixture(subscriptionRow:unknown){

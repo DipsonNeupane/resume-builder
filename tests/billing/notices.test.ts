@@ -28,10 +28,10 @@ test('safe acceptance sink dispatches six durable notice kinds without external 
       if(name==='billing_finish_notice'){finished.push(args);return{error:null,data:null}}
       throw new Error(`Unexpected RPC ${name}`)
     },
-    auth:{admin:{getUserById:async()=>({data:{user:{email:'billing-acceptance@resumestride.test'}}})}},
+    auth:{admin:{getUserById:async()=>({data:{user:{email:'billing-acceptance@apwico.test'}}})}},
   }
-  const response=await dispatchNotices(new Request('https://resumestride.test/api/dispatch',{method:'POST',headers:{authorization:`Bearer ${'x'.repeat(24)}`}}),{
-    NOTICE_DISPATCH_SECRET:'x'.repeat(24),RESEND_API_KEY:'re_test_fixture',BILLING_EMAIL_FROM:'ResumeStride <billing@resumestride.test>',APP_ORIGIN:'https://resumestride.test',
+  const response=await dispatchNotices(new Request('https://apwico.test/api/dispatch',{method:'POST',headers:{authorization:`Bearer ${'x'.repeat(24)}`}}),{
+    NOTICE_DISPATCH_SECRET:'x'.repeat(24),RESEND_API_KEY:'re_test_fixture',BILLING_EMAIL_FROM:'APWICO <billing@apwico.test>',APP_ORIGIN:'https://apwico.test',
   } as NodeJS.ProcessEnv,{
     serviceDatabase:()=>db as never,
     fetch:async(url,init)=>{const body=JSON.parse(String(init?.body));sent.push({url:String(url),init:init!,body});return Response.json({id:`email_${sent.length}`})},
@@ -42,6 +42,6 @@ test('safe acceptance sink dispatches six durable notice kinds without external 
   assert.equal(finished.length,6)
   assert.ok(finished.every(call=>call.p_success===true&&typeof call.p_provider_id==='string'))
   assert.deepEqual(sent.map(item=>item.init.headers&&new Headers(item.init.headers).get('Idempotency-Key')),kinds.map(kind=>`acceptance:${kind}`))
-  assert.ok(sent.every(item=>item.body.to instanceof Array&&item.body.to[0]==='billing-acceptance@resumestride.test'))
+  assert.ok(sent.every(item=>item.body.to instanceof Array&&item.body.to[0]==='billing-acceptance@apwico.test'))
   assert.ok(sent.every(item=>!/upgrade|sale|discount|recommended|popular/i.test(`${item.body.subject} ${item.body.text}`)))
 })

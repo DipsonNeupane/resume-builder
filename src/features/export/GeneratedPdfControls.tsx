@@ -15,8 +15,8 @@ type ExportFormat = 'pdf' | 'docx';
 type Props = { resume: Resume; ownerId: string | null; documentScope: 'master' | 'job_draft' | 'job_specific'; jobResumeVersionId?: string; onSignIn: () => void; onViewPro: () => void };
 
 const formats: Record<ExportFormat, { label: string; endpoint: string; mime: string; filename: string }> = {
- pdf: { label: 'PDF', endpoint: '/api/export-pdf', mime: 'application/pdf', filename: 'ResumeStride.pdf' },
- docx: { label: 'Word', endpoint: '/api/export-docx', mime: docxMimeType, filename: 'ResumeStride.docx' },
+ pdf: { label: 'PDF', endpoint: '/api/export-pdf', mime: 'application/pdf', filename: 'APWICO.pdf' },
+ docx: { label: 'Word', endpoint: '/api/export-docx', mime: docxMimeType, filename: 'APWICO.docx' },
 };
 
 export function GeneratedDocumentControls({ resume, ownerId, documentScope, jobResumeVersionId, onSignIn, onViewPro }: Props) {
@@ -141,7 +141,7 @@ export function GeneratedDocumentControls({ resume, ownerId, documentScope, jobR
    finally { setTimeout(() => URL.revokeObjectURL(url), 1000); }
    setMessage(`${selected.label} document generated. Your browser should offer the download.`);
    trackProductEvent('export_completed', { surface: 'export', user_state: 'authenticated', export_type: format === 'pdf' ? 'PDF' : 'DOCX', document_scope: documentScope, outcome: 'success' });
-   const qualifiedScope = response.headers.get('x-resumestride-qualified-conversion');
+   const qualifiedScope = response.headers.get('x-apwico-qualified-conversion') ?? response.headers.get('x-resumestride-qualified-conversion');
    const requestState = lastRequests.current[format];
    if ((qualifiedScope === 'limited' || qualifiedScope === 'full') && requestState?.id === id && !requestState.conversionReported) {
     requestState.conversionReported = true;
@@ -164,7 +164,7 @@ export function GeneratedDocumentControls({ resume, ownerId, documentScope, jobR
  </div>;
 
  return <><div ref={downloadGroup} role="group" aria-label="Document downloads" tabIndex={-1} className="field checkbox-field">
-  <label><input type="checkbox" checked={consent} disabled={busyFormat !== null} onChange={event => setConsent(event.target.checked)} />I consent to uploading my resume content to ResumeStride’s server to generate my document.</label>
+  <label><input type="checkbox" checked={consent} disabled={busyFormat !== null} onChange={event => setConsent(event.target.checked)} />I consent to uploading my resume content to APWICO’s server to generate my document.</label>
   <p className="field-hint">PDF and Word share your download allowance. Choose the format you need.</p>
   {availabilityUnknown?<p className="field-hint" aria-live="polite">We couldn’t check your download allowance. Free accounts include 3 downloads every 30 days. Free downloads exhausted? <button className="text-button" onClick={()=>{setUpgradeConfirmed(false);setUpgradeOpen(true);}}>View Pro options</button></p>:<p className="field-hint" aria-live="polite">{allowance}</p>}
   <div className="document-download-actions">

@@ -48,7 +48,7 @@ export function JobWorkflowPanel({ value, busy, available = true, conflict = fal
     <summary>My decision and application</summary>
     {!available && <p className="field-hint" role="alert">Decision and application updates are temporarily unavailable. Your saved job and resume remain available.</p>}
     {conflict && <p className="field-hint" role="alert">This update changed in another tab. Your entries here have not been overwritten. <button className="text-button" onClick={onReload}>Discard these entries and reload the saved update</button></p>}
-    <p className="field-hint">You control these fields. ResumeStride does not submit an application or infer a status from visits, downloads, or job activity.</p>
+    <p className="field-hint">You control these fields. APWICO does not submit an application or infer a status from visits, downloads, or job activity.</p>
     <div className="job-workflow-grid">
       <label className="field"><span>My decision</span><select value={draft.decision} onChange={event => update('decision', event.target.value as JobDecision)}>
         <option value="review">Reviewing — I have not decided</option><option value="pursue">Pursue — I want to continue</option><option value="pass">Pass — I am not pursuing this role</option>

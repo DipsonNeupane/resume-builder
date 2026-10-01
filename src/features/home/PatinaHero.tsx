@@ -125,7 +125,7 @@ export function PatinaHero({ sample, onBuild }: Props) {
   <div className="pt-hero-copy">
    <p className="pt-hero-kicker"><span className="pt-dot" aria-hidden="true"/>Evidence before effort</p>
    <h1 className="pt-hero-title"><span>Find the roles</span> <span><em>worth your effort.</em></span></h1>
-   <p className="hero-deck">ResumeStride connects each job requirement to evidence from your experience, then helps you prepare a truthful resume for the roles you choose.</p>
+   <p className="hero-deck">APWICO connects each job requirement to evidence from your experience, then helps you prepare a truthful resume for the roles you choose.</p>
    <div className="hero-actions"><a className="button large" href="/tools/resume-job-match/">Compare my resume with a job<ArrowRight size={18} aria-hidden="true"/></a><button className="text-button" onClick={onBuild}>Build a resume free<ArrowRight size={15} aria-hidden="true"/></button></div>
    <p className="pt-hero-free">The limited comparison runs in this browser without signup.<span>Job search and PDF or Word downloads require a free account.</span></p>
   </div>

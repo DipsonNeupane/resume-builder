@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { authenticate, boundedBody, jsonBody, requirePost, safeError } from '../../server/http/security.ts'
-const origin = 'https://resumestride.com'
+const origin = 'https://apwico.com'
 const request = (body: string, headers: Record<string,string> = {}) => new Request(origin, {method:'POST',body,headers:{origin,'content-type':'application/json',...headers}})
 test('mutation boundary rejects foreign or missing origin, wrong methods and media types', () => {
   requirePost(request('{}'),origin)

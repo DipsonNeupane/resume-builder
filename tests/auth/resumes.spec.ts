@@ -86,7 +86,7 @@ test('signed-in user with local content is asked before saving to the cloud, and
  });
  await seedSignedIn(page, 'Local Guest Person');
  await page.goto('/');
- await expect(page.getByText('Save your local resume to your ResumeStride account?')).toBeVisible();
+ await expect(page.getByText('Save your local resume to your APWICO account?')).toBeVisible();
  const originalGuestDraft = await page.evaluate(() => sessionStorage.getItem('resumestride.resume.v1'));
  await page.getByRole('button', { name: 'Save to my account' }).click();
  await page.getByRole('button', { name: /Build my resume|Continue my resume/ }).first().click();
@@ -108,9 +108,9 @@ test('declining consent keeps working locally without creating a cloud resume', 
  });
  await seedSignedIn(page, 'Declined Consent Person');
  await page.goto('/');
- await expect(page.getByText('Save your local resume to your ResumeStride account?')).toBeVisible();
+ await expect(page.getByText('Save your local resume to your APWICO account?')).toBeVisible();
  await page.getByRole('button', { name: 'Not now' }).click();
- await expect(page.getByText('Save your local resume to your ResumeStride account?')).toHaveCount(0);
+ await expect(page.getByText('Save your local resume to your APWICO account?')).toHaveCount(0);
  await page.getByRole('button', { name: /Build my resume|Continue my resume/ }).first().click();
  await expectLocalDraftName(page,'Declined Consent Person');
  expect(insertCount, 'declining must never create a cloud resume').toBe(0);
@@ -125,7 +125,7 @@ test('an existing cloud resume loads automatically, the local guest draft is nev
  await page.route('**/auth/v1/logout**', route => route.fulfill({ status: 204, body: '' }));
  await seedSignedIn(page, 'Guest Device Draft');
  await page.goto('/');
- await expect(page.getByText('Loaded your saved resume from your ResumeStride account.', { exact: false })).toBeVisible();
+ await expect(page.getByText('Loaded your saved resume from your APWICO account.', { exact: false })).toBeVisible();
  await page.getByRole('button', { name: /Build my resume|Continue my resume/ }).first().click();
  await expect(page.getByRole('textbox', { name: 'Full name', exact: true })).toHaveValue('Cloud Person');
  expect(await page.evaluate(() => JSON.parse(sessionStorage.getItem('resumestride.resume.v1')!).name), 'loading the account resume must not touch the local guest draft on disk').toBe('Guest Device Draft');
@@ -321,7 +321,7 @@ test('switching to a different signed-in account mid-session cannot leak the pre
  await page.route('**/auth/v1/logout**', route => route.fulfill({ status: 204, body: '' }));
  await seedSignedIn(page, 'Original Guest Draft', userId);
  await page.goto('/');
- await expect(page.getByText('Loaded your saved resume from your ResumeStride account.', { exact: false })).toBeVisible();
+ await expect(page.getByText('Loaded your saved resume from your APWICO account.', { exact: false })).toBeVisible();
  await page.getByRole('button', { name: 'Continue my resume' }).click();
  await expect(page.getByRole('textbox', { name: 'Full name', exact: true })).toHaveValue('Cloud A');
  const guestDraftBeforeSwitch = await page.evaluate(() => sessionStorage.getItem('resumestride.resume.v1'));
@@ -360,12 +360,12 @@ test('a failed initial cloud-resume check never offers to save the local draft, 
  await seedSignedIn(page, 'Local Draft With Content');
  await page.goto('/');
  await expect(page.getByText('Could not check your account for a saved resume', { exact: false })).toBeVisible();
- await expect(page.getByText('Save your local resume to your ResumeStride account?')).toHaveCount(0);
+ await expect(page.getByText('Save your local resume to your APWICO account?')).toHaveCount(0);
  await page.getByRole('button', { name: 'Continue my resume' }).click();
- await expect(page.getByText('Save your local resume to your ResumeStride account?'), 'a failed check must never be treated as confirmation that there is nothing to overwrite').toHaveCount(0);
+ await expect(page.getByText('Save your local resume to your APWICO account?'), 'a failed check must never be treated as confirmation that there is nothing to overwrite').toHaveCount(0);
  await page.getByRole('button', { name: 'Retry account resume check' }).click();
  await expect.poll(() => getAttempts).toBe(2);
- await expect(page.getByText('Save your local resume to your ResumeStride account?'), 'consent is safe only after retry confirms the account has no resume').toBeVisible();
+ await expect(page.getByText('Save your local resume to your APWICO account?'), 'consent is safe only after retry confirms the account has no resume').toBeVisible();
 });
 
 test('a conflict where the account resume itself is gone is an explicit, recoverable state, not silently indistinguishable from "no conflict"', async ({ page }) => {
@@ -431,7 +431,7 @@ test('a delayed initial account-creation save does not mark a newer edit clean, 
  });
  await seedSignedIn(page, 'Local Guest Person');
  await page.goto('/');
- await expect(page.getByText('Save your local resume to your ResumeStride account?')).toBeVisible();
+ await expect(page.getByText('Save your local resume to your APWICO account?')).toBeVisible();
  await page.getByRole('button', { name: 'Save to my account' }).click();
  await page.getByRole('button', { name: 'Continue my resume' }).click();
  // The create POST above is now in flight and deliberately slow. Typing a
@@ -666,7 +666,7 @@ test('a job draft restores after a reload under the real signed-in account that 
  await page.goto('/',{waitUntil:'domcontentloaded'});
  // Confirms cloud.loading has resolved (no cloud resume yet for A) and cloud.linked is false —
  // the state startJobDraft requires to allow an already-signed-in user to start a draft.
- await expect(page.getByText('Save your local resume to your ResumeStride account?')).toBeVisible();
+ await expect(page.getByText('Save your local resume to your APWICO account?')).toBeVisible();
  await page.getByRole('button',{name:'Continue my resume',exact:true}).click();
  await page.evaluate(()=>window.postMessage({type:'resumestride:job-import',payload:{title:'Role',company:'Co',description:'Duties',sourceUrl:'',capturedAt:new Date().toISOString()}},location.origin));
  await page.getByRole('button',{name:'Start job-specific draft'}).click();

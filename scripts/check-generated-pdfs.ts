@@ -3,7 +3,7 @@ import {chromium} from '@playwright/test'
 import {PDFParse} from 'pdf-parse'
 import {example} from '../src/model.ts'
 import {renderPdf} from '../server/export/render.ts'
-const dir='/tmp/resumestride-pdf-qa'
+const dir='/tmp/apwico-pdf-qa'
 await mkdir(dir,{recursive:true})
 const smoke=process.argv.includes('--smoke')
 const templates=smoke?(['modern'] as const):(['modern','classic','minimal'] as const)

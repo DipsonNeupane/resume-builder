@@ -19,14 +19,14 @@ for (const key of ['BILLING_ENABLED', 'AI_ENABLED', 'EXPORTS_ENABLED']) process.
  try {
   process.env.VERCEL_ENV = 'production';
   const mod = await import(pathToFileURL(path.join(root, config.entrypoint)));
-  const home = await mod.default(new Request('https://resumestride.com/'));
+  const home = await mod.default(new Request('https://apwico.com/'));
   assert.equal(home.status, 200);
   assert.equal(home.headers.get('x-middleware-next'), '1');
   assert.equal(home.headers.get('x-robots-tag'), null);
-  const api = await mod.default(new Request('https://resumestride.com/api/tailor'));
+  const api = await mod.default(new Request('https://apwico.com/api/tailor'));
   assert.equal(api.headers.get('x-middleware-next'), '1');
   assert.equal(api.headers.get('x-robots-tag'), 'noindex, nofollow, noarchive');
-  const missing = await mod.default(new Request('https://resumestride.com/not-a-page', { method: 'HEAD' }));
+  const missing = await mod.default(new Request('https://apwico.com/not-a-page', { method: 'HEAD' }));
   assert.equal(missing.status, 404);
   assert.equal(missing.body, null);
   assert.equal(missing.headers.get('x-robots-tag'), 'noindex, nofollow, noarchive');
@@ -49,7 +49,7 @@ for (const name of ['checkout','subscribe','cancel-subscription','stripe-webhook
  process.chdir(root);
  const config = JSON.parse(await readFile('.vc-config.json', 'utf8'));
  const mod = await import(pathToFileURL(path.join(root, config.handler)));
- const result = await mod.default.fetch(new Request(`https://resumestride.com/api/${name}`, {method: name.endsWith('status') ? 'GET' : 'POST'}));
+ const result = await mod.default.fetch(new Request(`https://apwico.com/api/${name}`, {method: name.endsWith('status') ? 'GET' : 'POST'}));
  assert.equal(result.status, 503, `${name} must fail closed`);
  assert.equal(result.headers.get('cache-control'), 'no-store');
  console.log(`${name}: packaged handler loads and fails closed (503)`);

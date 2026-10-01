@@ -1,7 +1,7 @@
-/* ResumeStride product chrome. Resume documents have their own independent styles
+/* APWICO product chrome. Resume documents have their own independent styles
    in styles.css / resumeMarkup; never target their headings with product tokens. */
 :root {
- /* Patina — the approved ResumeStride system (experiments/patina). Working
+ /* Patina — the approved APWICO system (experiments/patina). Working
     surfaces stay light and calm; carbon, petrol and copper carry the brand. */
  --rs-heading:#1b1a19; --rs-text:#2e2a27; --rs-action:#ad521b; --rs-action-hover:#95450f;
  --rs-highlight:#de8044; --rs-selected:#f8ece3; --rs-canvas:#f6f5f2; --rs-surface:#eeece8;
@@ -12,7 +12,7 @@
  --rs-cobalt-hover:var(--rs-action-hover); --rs-blue:var(--rs-highlight); --rs-sky:var(--rs-selected);
  --rs-cream:var(--rs-canvas); --rs-slate-strong:var(--rs-text); --rs-surface-soft:var(--rs-surface);
  --rs-info-surface:var(--rs-selected); --rs-warning:var(--rs-attention-ink); --rs-warning-surface:var(--rs-attention-surface);
- --rs-font-body:'ResumeStride Sans',system-ui,sans-serif; --rs-font-heading:'ResumeStride Sans',system-ui,sans-serif;
+ --rs-font-body:'APWICO Sans',system-ui,sans-serif; --rs-font-heading:'APWICO Sans',system-ui,sans-serif;
  --rs-radius-sm:8px; --rs-radius-md:12px; --rs-shadow-sm:0 1px 2px #1b1a190d,0 6px 18px #281e140f;
  --rs-shadow-md:0 30px 60px -24px #281e1440; --rs-focus:0 0 0 3px #ad521b33;
  font-family:var(--rs-font-body); color:var(--rs-text); background:var(--rs-canvas);

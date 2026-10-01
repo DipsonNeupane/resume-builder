@@ -1,4 +1,4 @@
-# ResumeStride redesign execution map
+# APWICO redesign execution map
 
 This is a dependency map, not a calendar. Production stays live and unchanged while all work is developed and verified on redesign branches.
 

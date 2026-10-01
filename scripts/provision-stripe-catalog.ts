@@ -11,8 +11,8 @@ if (live && (!apply || process.env.STRIPE_CATALOG_APPLY_LIVE !== 'true')) {
 }
 const stripe = new Stripe(secret)
 const specs = [
- { key:'pro:monthly', name:'ResumeStride Pro', amount:1999 },
- ...premiumTemplates.map(template=>({key:`template:${template.id}`,name:`ResumeStride Premium — ${template.label}`,amount:199})),
+ { key:'pro:monthly', name:'APWICO Pro', amount:1999 },
+ ...premiumTemplates.map(template=>({key:`template:${template.id}`,name:`APWICO Premium — ${template.label}`,amount:199})),
 ]
 
 const mapping:Record<string,string>={}

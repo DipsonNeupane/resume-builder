@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import type Stripe from 'stripe'
 import { checkout, dependencies, webhook } from '../../server/billing/handlers.ts'
 import { stripeClient, billingConfig } from '../../server/billing/stripe.ts'
-const env={BILLING_ENABLED:'true',STRIPE_MODE:'test',STRIPE_SECRET_KEY:'sk_test_fixture',STRIPE_WEBHOOK_SECRET:'whsec_fixture',STRIPE_ACCOUNT_ID:'acct_fixture',STRIPE_PASS_PRICE_ID:'price_fixture',APP_ORIGIN:'https://resumestride.com',SUPABASE_URL:'https://fixture.supabase.co',SUPABASE_PUBLISHABLE_KEY:'public',SUPABASE_SERVICE_ROLE_KEY:'fixture'}
+const env={BILLING_ENABLED:'true',STRIPE_MODE:'test',STRIPE_SECRET_KEY:'sk_test_fixture',STRIPE_WEBHOOK_SECRET:'whsec_fixture',STRIPE_ACCOUNT_ID:'acct_fixture',STRIPE_PASS_PRICE_ID:'price_fixture',APP_ORIGIN:'https://apwico.com',SUPABASE_URL:'https://fixture.supabase.co',SUPABASE_PUBLISHABLE_KEY:'public',SUPABASE_SERVICE_ROLE_KEY:'fixture'}
 const id='11111111-1111-1111-1111-111111111111', owner='22222222-2222-2222-2222-222222222222'
 const req=(body:unknown)=>new Request(env.APP_ORIGIN+'/api/checkout',{method:'POST',headers:{origin:env.APP_ORIGIN,'content-type':'application/json'},body:JSON.stringify(body)})
 const ownLock={owner_id:owner,kind:'manual',request_id:id,session_id:null,price_id:'price_fixture',live:false,created_at:new Date().toISOString()}

@@ -6,7 +6,7 @@ Status on 2026-09-29: implementation complete for the locked measurement foundat
 
 **Product definition**
 
-ResumeStride is a connected job-search decision workspace that helps a person evaluate a role, connect each requirement to evidence from their real experience, and prepare a truthful job-specific resume without changing the master resume.
+APWICO is a connected job-search decision workspace that helps a person evaluate a role, connect each requirement to evidence from their real experience, and prepare a truthful job-specific resume without changing the master resume.
 
 **Tagline**
 
@@ -18,7 +18,7 @@ Choose the right role, prove the match, and tailor your resume without inventing
 
 **Product description**
 
-ResumeStride helps people decide which roles deserve their effort. It separates a job into understandable requirements, shows what the person's resume does and does not demonstrate, asks the person to resolve uncertainty, and then creates a reviewable job-specific resume while the master resume remains unchanged. AI is subordinate to this workflow: it may propose grounded wording, but it does not invent qualifications, predict hiring, or decide whether a person should apply.
+APWICO helps people decide which roles deserve their effort. It separates a job into understandable requirements, shows what the person's resume does and does not demonstrate, asks the person to resolve uncertainty, and then creates a reviewable job-specific resume while the master resume remains unchanged. AI is subordinate to this workflow: it may propose grounded wording, but it does not invent qualifications, predict hiring, or decide whether a person should apply.
 
 ### Approved vocabulary
 
@@ -37,7 +37,7 @@ ResumeStride helps people decide which roles deserve their effort. It separates 
 | Storage | Local draft; account-saved resume | saved without naming the destination |
 | Opportunity | Saved job | application unless the person records an application |
 
-### Claims ResumeStride deliberately avoids
+### Claims APWICO deliberately avoids
 
 - ATS-beating, ranking, pass-rate, or keyword-score promises.
 - Guaranteed interviews, offers, hiring probability, or career outcomes.
@@ -45,7 +45,7 @@ ResumeStride helps people decide which roles deserve their effort. It separates 
 - Invented user counts, testimonials, ratings, employer logos, expert endorsements, certifications, or research findings.
 - Claims that cloud saving, paid access, AI, imports, extension capture, or regional availability exceed the verified production candidate.
 - Claims that absence from a resume proves the person lacks a qualification.
-- Claims that ResumeStride applied for a role or caused a later interview/offer.
+- Claims that APWICO applied for a role or caused a later interview/offer.
 
 ## 2. Three primary entry journeys — definition completed
 

@@ -19,7 +19,7 @@ for (const [path, details] of publicEntries) {
 <link rel="canonical" href="${canonical}">
 <link rel="preload" href="/fonts/brand-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/fonts.css">
-<meta name="application-name" content="ResumeStride">
+<meta name="application-name" content="APWICO">
 <meta name="theme-color" content="#0b0a09">
 <link rel="icon" href="/favicon.ico" sizes="64x64">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any">
@@ -27,19 +27,19 @@ for (const [path, details] of publicEntries) {
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
 <link rel="manifest" href="/site.webmanifest">
 <meta property="og:type" content="${path.startsWith('/resources/') && path !== '/resources/' ? 'article' : 'website'}">
-<meta property="og:site_name" content="ResumeStride">
+<meta property="og:site_name" content="APWICO">
 <meta property="og:title" content="${escape(details.title)}">
 <meta property="og:description" content="${escape(details.description)}">
 <meta property="og:url" content="${canonical}">
 <meta property="og:image" content="${productionOrigin}${details.socialImage}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Abstract ResumeStride route card in copper, mint and dark green">
+<meta property="og:image:alt" content="Abstract APWICO route card in copper, mint and dark green">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${escape(details.title)}">
 <meta name="twitter:description" content="${escape(details.description)}">
 <meta name="twitter:image" content="${productionOrigin}${details.socialImage}">
-<meta name="twitter:image:alt" content="Abstract ResumeStride route card in copper, mint and dark green">
+<meta name="twitter:image:alt" content="Abstract APWICO route card in copper, mint and dark green">
 <script type="application/ld+json" data-seo-schema>${JSON.stringify(schema)}</script>
 <script src="/seo-guard.js"></script>
 <!-- seo:end -->`;

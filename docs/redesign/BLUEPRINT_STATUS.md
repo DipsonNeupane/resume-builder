@@ -1,4 +1,4 @@
-# ResumeStride redesign blueprint status
+# APWICO redesign blueprint status
 
 Status date: 2026-09-30. This ledger describes only the isolated redesign branch. It does not claim that undeployed work is live.
 
@@ -20,7 +20,7 @@ Every task is included exactly once:
 - **NOT STARTED (4):** 58–61.
 - **BLOCKED (1):** 37.
 
-Production analytics, human/device checks and post-release field evidence are represented as **VALIDATION PENDING**, not Partial or Blocked. Task 37 alone is blocked because repository truth says the extension is unpublished and contains no verified public install URL/version. The first occupation and regional sets are implementation-complete but await internal-demand and qualified local validation. Group 8 has not started.
+Production analytics, human/device checks and post-release field evidence are represented as **VALIDATION PENDING**, not Partial or Blocked. Task 37 alone is blocked because repository truth says the extension is unpublished and contains no verified public install URL/version. The first occupation and regional sets are implementation-complete but await internal-demand and qualified local validation. Group 8 pre-launch foundations are implemented; Tasks 58–61 remain deliberate post-launch work.
 
 ## Group summary
 
@@ -61,7 +61,7 @@ Production analytics, human/device checks and post-release field evidence are re
 | 47–50. Evidence-first content and product intent | COMPLETE | Twelve substantive guides, seven problem-led clusters, working high-intent tools and practical template resources lead into the evidence workflow without thin pages. |
 | 51–53. Occupation and regional evidence | VALIDATION PENDING | Nine evidence-shape-diverse occupation pages and a bounded five-source regional matrix are implemented and automatically checked. Production/internal demand ranking and qualified local occupation/region review remain unavailable and are not fabricated. |
 | 54. Internal linking | COMPLETE | Cluster membership, related-guide edges, contextual CTAs and research-hub links are source-driven and automatically checked for orphans. |
-| 55. Factual comparisons | COMPLETE | Five named comparisons use dated official sources, visible locale/currency or explicit unknowns, balanced strengths/boundaries, symmetric ResumeStride facts and build/quality-gate expiry enforcement. |
+| 55. Factual comparisons | COMPLETE | Five named comparisons use dated official sources, visible locale/currency or explicit unknowns, balanced strengths/boundaries, symmetric APWICO facts and build/quality-gate expiry enforcement. |
 | 56. Search review process | VALIDATION PENDING | The privacy-safe review process and zero-data dry run are complete; meaningful Search Console, index, field-performance and conversion results require a future release. |
 | 57. Match methodology | COMPLETE | Permanent public methodology matches deterministic Match behavior, clarification semantics, limitations, AI boundaries and user decision authority. |
 | 58–61. Advisory, partnership, distribution and original research | NOT STARTED | Explicit post-launch growth/validation work; no participants, partners, distribution programs, samples or findings were invented. |
@@ -71,3 +71,13 @@ Production analytics, human/device checks and post-release field evidence are re
 | 65. Localization readiness | COMPLETE | English-only explicit locale architecture, locale formatting helpers, no IP inference, protected identifiers and existing Unicode/RTL/text-expansion foundations are in place; actual translated journeys remain post-launch. |
 
 Detailed evidence, architecture, commands and review findings are recorded in `G8_PRELAUNCH_2026-09-30.md`, `G6_COMPLETION_2026-09-30.md`, `G7_CONTENT_SEARCH_2026-09-30.md`, `G7_EVIDENCE_CLOSURE_2026-09-30.md`, `G6_G7_INTEGRATION_2026-09-30.md`, `SEARCH_PERFORMANCE_REVIEW.md` and the earlier batch records.
+
+## Group 9 — APWICO rebrand and migration (outside the original 65 tasks)
+
+| Scope | Status | Current truth |
+| --- | --- | --- |
+| Repository/product brand migration | COMPLETE | APWICO product identity, public origin/support address, SEO assets, legal/product copy and compatibility guards are implemented and automatically checked on the isolated redesign branch. |
+| Production/provider migration | VALIDATION PENDING | DNS/hosting, Auth/email, Stripe, analytics/search, extension listing and dual-domain browser-state rehearsal require authenticated production validation and explicit release approval. Redirects remain disabled by default. |
+
+The exhaustive original 65-task count is unchanged. Group 9 inventory, state protections,
+cutover order, rollback and owner checklist are in `G9_APWICO_BRAND_MIGRATION_2026-09-30.md`.

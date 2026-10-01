@@ -14,7 +14,7 @@ Scope: isolated `redesign/g7-content-search` worktree only. No production, provi
 | 52. Occupation hub architecture/content | VALIDATION PENDING | Nine substantive pages now carry dated jurisdiction sources, evidence examples, safe template links and direct product entry. Qualified local/occupation review remains. |
 | 53. Regional/international guidance | VALIDATION PENDING | The guide and maintained `/regions/` matrix cover five official services with explicit unknowns and omitted-region boundaries. Local human review remains. |
 | 54. Internal linking system | COMPLETE | Cluster membership, three related-guide edges per article, contextual tool CTAs, template-resource links and occupation/comparison paths are source-driven and link-checked. |
-| 55. Factual comparison architecture | COMPLETE | Five named pages use official, dated evidence, balanced strengths/limits, symmetric ResumeStride boundaries and enforced 30/90-day expiry. |
+| 55. Factual comparison architecture | COMPLETE | Five named pages use official, dated evidence, balanced strengths/limits, symmetric APWICO boundaries and enforced 30/90-day expiry. |
 | 56. Search-performance review | VALIDATION PENDING | The repeatable privacy-safe review process, five-problem intent taxonomy, CSV schema and zero-data dry run are complete. Search Console/index/field results require a future released surface. |
 
 ## Audience and page hierarchy
@@ -37,13 +37,13 @@ Checked 2026-09-30. Facts remain jurisdiction-scoped and links point to primary/
 | --- | --- | --- |
 | Worldwide occupation taxonomy | https://isco.ilo.org/ | ISCO groups work by tasks/duties for international comparison; it is not a resume rule or demand ranking. |
 | US occupation content | https://www.onetcenter.org/db_releases.html | O*NET 31.0 was the current listed production release; US-specific detail does not establish global requirements. |
-| US outlook cross-check | https://www.bls.gov/ooh/ | BLS evidence is US-only; no wage/outlook number is published in ResumeStride’s current pages. |
+| US outlook cross-check | https://www.bls.gov/ooh/ | BLS evidence is US-only; no wage/outlook number is published in APWICO’s current pages. |
 | England CV starting point | https://nationalcareers.service.gov.uk/careers-advice/cv-sections | Advice is scoped to that public service and can change; employer instructions still control. |
 | European Union CV starting point | https://europass.europa.eu/en/create-europass-cv | Europass is one official EU option, not a universal European employer requirement. |
 | Canada resume starting point | https://www.jobbank.gc.ca/findajob/resources/write-good-resume | Canadian guidance is not generalized to other countries. |
 | Australia application starting point | https://www.workforceaustralia.gov.au/individuals/coaching/job-applications/job-application-tips | Australian guidance is not generalized to other countries. |
 | New Zealand CV starting point | https://www.careers.govt.nz/how-to-get-a-job/cvs-and-cover-letters/ | The public guidance is linked with its own current page context. |
-| Comparison pricing evidence | https://www.tealhq.com/pricing | US/English/USD source; next pricing review 2026-10-30; used with symmetric ResumeStride boundaries. |
+| Comparison pricing evidence | https://www.tealhq.com/pricing | US/English/USD source; next pricing review 2026-10-30; used with symmetric APWICO boundaries. |
 | Comparison feature evidence | https://help.tealhq.com/en/collections/9568976-resume-builder | English help source; next feature review 2026-12-29. |
 
 `src/content/comparisons.ts` and `src/content/comparisonEvidence.ts` are the source and flattened research ledger. Pricing evidence expires after 30 days; feature evidence after 90 days. Teal, Huntr, Jobscan, Resume.io and Enhancv have named pages; Jobscan pricing remains explicitly not established.

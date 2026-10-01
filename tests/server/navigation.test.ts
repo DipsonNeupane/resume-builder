@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { consumeContinuation, continuationStorageKey, saveContinuation } from '../../src/routing/continuation.ts';
 import { jobResumeRoute, journeyForRoute, matchRoute, parseAppRoute, routeForJourney, routeForPage, routePage } from '../../src/routing/routes.ts';
 
-const origin = 'https://resumestride.com';
+const origin = 'https://apwico.com';
 const id = '11111111-1111-4111-8111-111111111111';
 
 test('workspace routes are strict, stable and map to the existing screen boundary', () => {

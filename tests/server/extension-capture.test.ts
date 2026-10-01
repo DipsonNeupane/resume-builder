@@ -8,8 +8,8 @@ const capture = { title: 'Support specialist', company: 'Example', description: 
 const owner = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 const savedId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
 const evidence = { headline: 'Support specialist', summary: 'Customer support', skills: 'Support', roles: [], qualifications: [] }
-const env = { APP_ORIGIN: 'https://resumestride.com', SUPABASE_URL: 'https://fixture.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'public', SUPABASE_SERVICE_ROLE_KEY: 'test-only' }
-const request = (body: unknown) => new Request('https://resumestride.com/api/jobs-account', { method: 'POST', headers: { origin: env.APP_ORIGIN, 'content-type': 'application/json' }, body: JSON.stringify(body) })
+const env = { APP_ORIGIN: 'https://apwico.com', SUPABASE_URL: 'https://fixture.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'public', SUPABASE_SERVICE_ROLE_KEY: 'test-only' }
+const request = (body: unknown) => new Request('https://apwico.com/api/jobs-account', { method: 'POST', headers: { origin: env.APP_ORIGIN, 'content-type': 'application/json' }, body: JSON.stringify(body) })
 
 test('capture contract rejects URL credentials/tracking/protocols, unknown fields, malformed metadata and hard overflow', () => {
   assert.equal(isJobCapture(capture), true)

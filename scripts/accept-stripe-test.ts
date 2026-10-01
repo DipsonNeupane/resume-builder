@@ -33,7 +33,7 @@ const env={
   ...process.env,
   STRIPE_MODE:'test',STRIPE_ACCOUNT_ID:'acct_1QqPbAGGSDSNHj5K',STRIPE_WEBHOOK_SECRET:'whsec_acceptance_fixture',
   STRIPE_PASS_PRICE_ID:'price_acceptance_legacy',BILLING_ENABLED:'true',SUBSCRIPTION_OFFERS_ENABLED:'true',
-  APP_ORIGIN:'https://resumestride.test',SUPABASE_URL:'https://local.invalid',SUPABASE_SERVICE_ROLE_KEY:'sb_secret_acceptance',
+  APP_ORIGIN:'https://apwico.test',SUPABASE_URL:'https://local.invalid',SUPABASE_SERVICE_ROLE_KEY:'sb_secret_acceptance',
   SUPABASE_PUBLISHABLE_KEY:'sb_publishable_acceptance',EXPORTS_ENABLED:'true',NODE_ENV:'test',
 } as NodeJS.ProcessEnv
 
@@ -59,7 +59,7 @@ const db={
 
 const owners={template:'11111111-1111-1111-1111-111111111111',pro:'22222222-2222-2222-2222-222222222222',overlap:'33333333-3333-3333-3333-333333333333',failure:'44444444-4442-4444-4444-444444444444',other:'55555555-5555-5555-5555-555555555555'}
 const depsFor=(owner:string)=>({authenticate:async()=>owner,serviceDatabase:()=>db as never,stripeClient:()=>stripe,validateOffer:async(s:Stripe,c:never,o:never)=>{const {validateOffer}=await import('../server/billing/catalog.ts');return validateOffer(s,c,o)}})
-const request=(pathName:string,body:Record<string,unknown>)=>new Request(`${env.APP_ORIGIN}${pathName}`,{method:'POST',headers:{origin:env.APP_ORIGIN!,'content-type':'application/json','x-resumestride-country':'US'},body:JSON.stringify(body)})
+const request=(pathName:string,body:Record<string,unknown>)=>new Request(`${env.APP_ORIGIN}${pathName}`,{method:'POST',headers:{origin:env.APP_ORIGIN!,'content-type':'application/json','x-apwico-country':'US'},body:JSON.stringify(body)})
 const rpc=async(name:string,args:Record<string,unknown>)=>{const result=await db.rpc(name,args);if(result.error)throw new Error(`${name}: ${result.error.message}`);return result.data}
 
 function subscriptionPeriod(subscription:Stripe.Subscription){
@@ -151,7 +151,7 @@ try{
   // Customer Portal and ordinary cancellation retain the paid period.
   let portal=await customerPortal(request('/api/customer-portal',{}),env,depsFor(owners.template) as never)
   if(portal.status!==200){
-    await stripe.billingPortal.configurations.create({business_profile:{headline:'Manage ResumeStride billing'},features:{invoice_history:{enabled:true},customer_update:{enabled:false}}})
+    await stripe.billingPortal.configurations.create({business_profile:{headline:'Manage APWICO billing'},features:{invoice_history:{enabled:true},customer_update:{enabled:false}}})
     portal=await customerPortal(request('/api/customer-portal',{}),env,depsFor(owners.template) as never)
   }
   assert.equal(portal.status,200)
@@ -221,7 +221,7 @@ try{
 
   // Stripe test clock proves cancellation reaches a terminal state; local wall-clock
   // simulation then proves the same recorded paid period reverts to Free without deletion.
-  const clock=await stripe.testHelpers.testClocks.create({frozen_time:Math.floor(Date.now()/1000),name:`ResumeStride ${runTag}`})
+  const clock=await stripe.testHelpers.testClocks.create({frozen_time:Math.floor(Date.now()/1000),name:`APWICO ${runTag}`})
   createdClocks.push(clock.id)
   const expiryOwner=owners.other
   const expiring=await paidSubscription(expiryOwner,'template:plainsong',templatePrices.plainsong,clock.id)

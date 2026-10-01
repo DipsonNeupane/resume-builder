@@ -13,7 +13,7 @@ export const regionalNextReviewAt = '2026-12-29' as const;
 
 // These are bounded summaries of named public-service guidance, not national
 // hiring rules. A vacancy, employer, regulator and applicant's actual location
-// always take precedence. ResumeStride never selects a convention from an IP.
+// always take precedence. APWICO never selects a convention from an IP.
 export const regionalGuidance: RegionalGuidance[] = [
   {
     id: 'canada', place: 'Canada', documentTerm: 'Resume in the cited Job Bank guidance',
@@ -48,9 +48,9 @@ export const regionalGuidance: RegionalGuidance[] = [
 ];
 
 export const formatBoundaries = [
-  { title: 'A4 and Letter', body: 'ResumeStride can render both. No source above establishes a universal country rule, so follow the employer or portal and inspect pagination in the selected size.' },
+  { title: 'A4 and Letter', body: 'APWICO can render both. No source above establishes a universal country rule, so follow the employer or portal and inspect pagination in the selected size.' },
   { title: 'Dates, addresses and phone numbers', body: 'Keep the applicant’s intended meaning and use a format the recipient can understand. Include an international calling code for cross-border use when appropriate; no automatic locale rewrite is performed.' },
-  { title: 'Writing direction', body: 'ResumeStride supports left-to-right and right-to-left document direction. Direction follows the language and content—not a guessed country or IP address—and still requires human review.' },
+  { title: 'Writing direction', body: 'APWICO supports left-to-right and right-to-left document direction. Direction follows the language and content—not a guessed country or IP address—and still requires human review.' },
   { title: 'Credentials', body: 'Use the credential’s official name, awarding body and jurisdiction. Do not translate it into an “equivalent” qualification unless an authoritative evaluator or regulator has done so.' },
   { title: 'Privacy', body: 'Minimize personal information. Never add identity numbers, banking data or protected characteristics just because an unsourced example contains them.' },
 ] as const;

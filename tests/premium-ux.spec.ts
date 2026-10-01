@@ -24,7 +24,7 @@ for (const width of [320, 390, 768, 1440, 1920]) test(`premium public and docume
  await page.getByRole('button',{name:'Preview resume',exact:true}).click();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
- await page.getByRole('button',{name:'ResumeStride home'}).click();
+ await page.getByRole('button',{name:'APWICO home'}).click();
  await page.getByRole('button',{name:'View Pro options',exact:true}).click();
  expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

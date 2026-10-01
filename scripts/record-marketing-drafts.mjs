@@ -10,13 +10,13 @@ async function record(slug,draft,run){
 
  const page=await context.newPage();let cloudRequests=0;const errors=[];
  page.on('request',r=>{if(r.url().includes('supabase.co'))cloudRequests++;});page.on('pageerror',e=>errors.push(e.message));
- await page.goto('https://resumestride.com',{waitUntil:'networkidle'});
+ await page.goto('https://apwico.com',{waitUntil:'networkidle'});
  await page.evaluate(d=>localStorage.setItem('resumestride.resume.v1',JSON.stringify(d)),draft);
  await page.reload({waitUntil:'networkidle'});
  console.log(slug,(await page.locator('body').innerText()).slice(0,220));
  await page.getByRole('button',{name:'Build my resume',exact:true}).first().click();
  async function caption(title,detail){await page.evaluate(({title,detail})=>{
-  let el=document.getElementById('demo-caption');if(!el){el=document.createElement('div');el.id='demo-caption';document.body.appendChild(el);el.style.cssText='position:fixed;z-index:99999;inset:0 0 auto;background:#143e32;color:white;padding:22px 26px;font:700 28px/1.15 Arial;pointer-events:none;box-shadow:0 3px 14px #0002';document.body.style.paddingTop='145px';const foot=document.createElement('div');foot.style.cssText='position:fixed;z-index:99999;inset:auto 0 0;background:#143e32;color:white;padding:16px 24px;font:700 20px/1.4 Arial;pointer-events:none';foot.textContent='Build yours free • resumestride.com';document.body.appendChild(foot);}
+  let el=document.getElementById('demo-caption');if(!el){el=document.createElement('div');el.id='demo-caption';document.body.appendChild(el);el.style.cssText='position:fixed;z-index:99999;inset:0 0 auto;background:#143e32;color:white;padding:22px 26px;font:700 28px/1.15 Arial;pointer-events:none;box-shadow:0 3px 14px #0002';document.body.style.paddingTop='145px';const foot=document.createElement('div');foot.style.cssText='position:fixed;z-index:99999;inset:auto 0 0;background:#143e32;color:white;padding:16px 24px;font:700 20px/1.4 Arial;pointer-events:none';foot.textContent='Build yours free • apwico.com';document.body.appendChild(foot);}
   el.replaceChildren();const h=document.createElement('div');h.textContent=title;const p=document.createElement('div');p.style.cssText='font:400 16px/1.4 Arial;margin-top:10px';p.textContent=detail+' • Fictional example';el.append(h,p);
  },{title,detail});}
  const hold=async()=>page.waitForTimeout(5000);

@@ -1,3 +1,13 @@
+## September 30 — Group 9 APWICO repository migration (isolated redesign only)
+
+APWICO is now the product identity on the isolated redesign branch; `apwico.com` and
+`support@apwico.com` are the public defaults. Persistent browser/protocol/provider IDs are
+deliberately retained, legacy extension/header compatibility is bounded, and old-domain
+301s exist only behind a default-off release flag. No production/provider/DNS action was
+taken. Full inventory, cutover ordering, local-origin state limitation, rollback and owner
+actions: `docs/redesign/G9_APWICO_BRAND_MIGRATION_2026-09-30.md`. Group 9 is separate from
+the unchanged 65-task blueprint ledger. Production migration remains validation pending.
+
 ## September 30 — G6/G7 technical and evidence-first acquisition batch (isolated redesign only)
 
 Integrated G6 and G7 on `redesign/shared-route-state`; production, hosted data, push,

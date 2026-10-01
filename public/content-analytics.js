@@ -3,7 +3,7 @@
  const slug = current instanceof HTMLScriptElement ? current.dataset.articleSlug : '';
  const token = /^[A-Za-z0-9][A-Za-z0-9._~-]{0,79}$/;
  const attributionKeys = new Set(['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'referrer_host']);
- if (!slug || !token.test(slug) || location.origin !== 'https://resumestride.com') return;
+ if (!slug || !token.test(slug) || location.origin !== 'https://apwico.com') return;
  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
  const storageKey = 'resumestride.analytics.firstTouch';
  let attribution = {};

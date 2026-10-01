@@ -146,7 +146,7 @@
     return {
       supported: false,
       reason:
-        "ResumeStride doesn't have a reviewed way to read job details from this page yet (supported: verified JobPosting structured data, public Greenhouse pages, selected Lever pages, and the local test page). Type the title, company, and description yourself below — nothing was read from this page.",
+        "APWICO doesn't have a reviewed way to read job details from this page yet (supported: verified JobPosting structured data, public Greenhouse pages, selected Lever pages, and the local test page). Type the title, company, and description yourself below — nothing was read from this page.",
     };
   }
 

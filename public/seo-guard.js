@@ -14,7 +14,7 @@
   seen.add(key); return true;
  });
  const privateEntry = !publicPath || (Boolean(url.search) && !publicCampaign) || !publicFragment;
- if (url.origin !== 'https://resumestride.com' || privateEntry) {
+ if (url.origin !== 'https://apwico.com' || privateEntry) {
   const robots = document.querySelector('meta[name="robots"]');
   if (robots) robots.content = 'noindex, nofollow, noarchive';
  }

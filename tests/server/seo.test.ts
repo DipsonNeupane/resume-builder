@@ -107,7 +107,7 @@ test('robots allows public crawling and the sitemap uses explicit source-owned m
  const robots = read('public/robots.txt');
  assert.match(robots, /^User-agent: \*$/m); assert.match(robots, /^Allow: \/$/m);
  assert.doesNotMatch(robots, /^Disallow:\s*\//m);
- assert.match(robots, /^Sitemap: https:\/\/resumestride.com\/sitemap.xml$/m);
+ assert.match(robots, /^Sitemap: https:\/\/apwico.com\/sitemap.xml$/m);
  const xml = read('public/sitemap.xml');
  assert.match(xml, /<urlset xmlns="http:\/\/www.sitemaps.org\/schemas\/sitemap\/0.9">/);
  const entries = [...xml.matchAll(/<url><loc>([^<]+)<\/loc><lastmod>([^<]+)<\/lastmod><\/url>/g)].map(match => ({ loc: match[1], lastModified: match[2] }));
@@ -125,7 +125,7 @@ test('all public source HTML has unique, consistent metadata before JavaScript',
   const html = read(publicHtmlFile(path));
   const title = html.match(/<title>(.*?)<\/title>/)?.[1];
   const description = html.match(/<meta name="description" content="([^"]+)"/ )?.[1];
-  assert.ok(title && title.includes('ResumeStride')); assert.ok(description && description.length > 60);
+  assert.ok(title && title.includes('APWICO')); assert.ok(description && description.length > 60);
   titles.add(title); descriptions.add(description);
   assert.equal((html.match(/rel="canonical"/g) || []).length, 1);
   assert.ok(html.includes(`rel="canonical" href="${productionOrigin}${path}"`));
@@ -136,13 +136,13 @@ test('all public source HTML has unique, consistent metadata before JavaScript',
   assert.match(html, /name="twitter:card" content="summary_large_image"/);
   assert.ok(html.includes(`property="og:image" content="${productionOrigin}${publicPages[path as keyof typeof publicPages].socialImage}"`));
   assert.ok(html.includes(`name="twitter:image" content="${productionOrigin}${publicPages[path as keyof typeof publicPages].socialImage}"`));
-  assert.match(html, /property="og:image:alt" content="Abstract ResumeStride route card in copper, mint and dark green"/);
+  assert.match(html, /property="og:image:alt" content="Abstract APWICO route card in copper, mint and dark green"/);
   assert.match(html, /rel="preload" href="\/fonts\/brand-sans\.woff2" as="font" type="font\/woff2" crossorigin/);
   assert.match(html, /rel="stylesheet" href="\/fonts\.css"/);
   assert.match(html, /<script src="\/seo-guard.js"><\/script>/);
  }
  assert.equal(titles.size, Object.keys(publicPages).length); assert.equal(descriptions.size, Object.keys(publicPages).length);
- assert.equal(publicPages['/'].title, 'ResumeStride — Resume Builder, Job Match & Tailoring');
+ assert.equal(publicPages['/'].title, 'APWICO — Resume Builder, Job Match & Tailoring');
  assert.equal(publicPages['/'].description, 'Build a master resume, find relevant jobs, compare your evidence with each role, and create truthful job-specific versions without changing your original.');
 });
 
@@ -164,7 +164,7 @@ test('canonical public production URLs are indexable and crawlable, previews nev
  for (const path of Object.keys(publicPages)) {
   assert.equal(policy(path).status, 0); assert.equal(policy(path).headers['X-Robots-Tag'], undefined);
   assert.equal(policy(path, false).headers['X-Robots-Tag'], noindex);
-  for (const origin of ['https://preview.vercel.app', 'http://localhost:5173', 'https://resumestride.com.evil.test']) {
+  for (const origin of ['https://preview.vercel.app', 'http://localhost:5173', 'https://apwico.com.evil.test']) {
    const result = requestSeo(new URL(path, origin), true);
    assert.equal(result.headers['X-Robots-Tag'], noindex); assert.equal(result.status, 0);
   }
@@ -214,19 +214,23 @@ test('query states and private paths never enter the index, canonical or sitemap
  }
 });
 
-test('hostname and index aliases redirect once, preserving callback queries', () => {
- for (const url of ['http://resumestride.com/index.html?account=1&code=abc', 'https://www.resumestride.com/index.html?account=1&code=abc']) {
-  const result = requestSeo(new URL(url), true);
-  assert.equal(result.status, 308); assert.equal(result.headers.Location, 'https://resumestride.com/?account=1&code=abc');
+test('domain migration redirects only behind the launch gate and preserves paths and queries', () => {
+ for (const url of ['https://resumestride.com/index.html?account=1&code=abc', 'https://www.resumestride.com/index.html?account=1&code=abc']) {
+  assert.equal(requestSeo(new URL(url), true).status, 308);
+  const result = requestSeo(new URL(url), true, true);
+  assert.equal(result.status, 301); assert.equal(result.headers.Location, 'https://apwico.com/?account=1&code=abc');
   assert.equal(requestSeo(new URL(result.headers.Location!), true).status, 0);
  }
- assert.equal(policy('/index.html').headers.Location, `${productionOrigin}/`);
+ const nested = requestSeo(new URL('https://resumestride.com/resources/resume-keywords/?utm_source=legacy'), true, true);
+ assert.equal(nested.status, 301); assert.equal(nested.headers.Location, 'https://apwico.com/resources/resume-keywords/?utm_source=legacy');
+ assert.equal(requestSeo(new URL('https://apwico.com/resources/'), true, true).headers.Location, undefined);
+ assert.equal(policy('/index.html').headers.Location, '/');
  assert.equal(policy('/').headers.Location, undefined);
 });
 
 test('favicon, app and social metadata refer to real assets without claiming an offline app', () => {
  const manifest = JSON.parse(read('public/site.webmanifest'));
- assert.equal(manifest.name, 'ResumeStride'); assert.equal(manifest.display, 'browser'); assert.equal(manifest.start_url, '/');
+ assert.equal(manifest.name, 'APWICO'); assert.equal(manifest.display, 'browser'); assert.equal(manifest.start_url, '/');
  for (const [file, width, height] of [['favicon.png', 32, 32], ['favicon-192.png', 192, 192], ['favicon-512.png', 512, 512], ['apple-touch-icon.png', 180, 180]] as const) {
   const png = readFileSync(`public/${file}`); assert.equal(png.toString('ascii', 1, 4), 'PNG');
   assert.equal(png.readUInt32BE(16), width); assert.equal(png.readUInt32BE(20), height);
@@ -379,20 +383,20 @@ test('every internal link, script, stylesheet and image in public HTML resolves'
 
 test('early head guard protects token fragments even before the auth client consumes them', () => {
  for (const [href, isPrivate, blocked] of [
-  ['https://resumestride.com/', false, false],
-  ['https://resumestride.com/#templates', false, false],
-  ['https://resumestride.com/#access_token=secret', true, true],
-  ['https://resumestride.com/?account=1&code=secret', true, true],
-  ['https://resumestride.com/?utm_source=google&utm_campaign=launch', false, false],
-  ['https://resumestride.com/resources/resume-keywords/#placement', false, false],
-  ['https://resumestride.com/resources/resume-keywords/#access_token-secret', true, true],
-  ['https://resumestride.com/features/', false, false],
-  ['https://resumestride.com/features/job-match/#boundaries-title', false, false],
-  ['https://resumestride.com/templates/boardroom/', false, false],
-  ['https://resumestride.com/pricing/#export-policy-title', false, false],
-  ['https://resumestride.com/trust/#customer-proof-title', false, false],
-  ['https://resumestride.com/workspace/resume', true, true],
-  ['https://resumestride.com/start/job', true, true],
+  ['https://apwico.com/', false, false],
+  ['https://apwico.com/#templates', false, false],
+  ['https://apwico.com/#access_token=secret', true, true],
+  ['https://apwico.com/?account=1&code=secret', true, true],
+  ['https://apwico.com/?utm_source=google&utm_campaign=launch', false, false],
+  ['https://apwico.com/resources/resume-keywords/#placement', false, false],
+  ['https://apwico.com/resources/resume-keywords/#access_token-secret', true, true],
+  ['https://apwico.com/features/', false, false],
+  ['https://apwico.com/features/job-match/#boundaries-title', false, false],
+  ['https://apwico.com/templates/boardroom/', false, false],
+  ['https://apwico.com/pricing/#export-policy-title', false, false],
+  ['https://apwico.com/trust/#customer-proof-title', false, false],
+  ['https://apwico.com/workspace/resume', true, true],
+  ['https://apwico.com/start/job', true, true],
   ['https://preview.vercel.app/', false, true],
  ] as const) {
   const robots = { content: 'index, follow' }; const dataset: Record<string, string> = {}; let removed = 0;
@@ -422,7 +426,7 @@ test('Vercel middleware emits HTTP noindex, safe continuation, redirect and HEAD
   assert.equal(middleware(new Request(`${productionOrigin}/?code=secret`)).headers.get('X-Robots-Tag'), noindex);
   const missing = middleware(new Request(`${productionOrigin}/missing`, { method: 'HEAD' }));
   assert.equal(missing.status, 404); assert.equal(missing.body, null); assert.equal(missing.headers.get('x-middleware-next'), null);
-  assert.equal(middleware(new Request('https://www.resumestride.com/')).status, 308);
+  assert.equal(middleware(new Request('https://www.resumestride.com/')).status, 200);
   process.env.VERCEL_ENV = 'preview'; assert.equal(middleware(new Request(`${productionOrigin}/`)).headers.get('X-Robots-Tag'), noindex);
  } finally { if (before === undefined) delete process.env.VERCEL_ENV; else process.env.VERCEL_ENV = before; }
 });

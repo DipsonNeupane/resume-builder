@@ -6,14 +6,14 @@ const escape = (value: string) => value.replaceAll('&', '&amp;').replaceAll('"',
 const withoutSeo = (text: string) => text.replace(/<!-- seo:start -->[\s\S]*?<!-- seo:end -->/, '<!-- seo:block -->');
 
 function shell(title: string, description: string, path: string, main: string, slug = 'resources') {
- const canonical = `https://resumestride.com${path}`;
+ const canonical = `https://apwico.com${path}`;
  const ogType = slug === 'resources' ? 'website' : 'article';
  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><!-- seo:start -->
 <title>${escape(title)}</title>
 <meta name="description" content="${escape(description)}">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="${canonical}">
-<meta name="application-name" content="ResumeStride">
+<meta name="application-name" content="APWICO">
 <meta name="theme-color" content="#0b0a09">
 <link rel="icon" href="/favicon.ico" sizes="64x64">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any">
@@ -21,21 +21,21 @@ function shell(title: string, description: string, path: string, main: string, s
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
 <link rel="manifest" href="/site.webmanifest">
 <meta property="og:type" content="${ogType}">
-<meta property="og:site_name" content="ResumeStride">
+<meta property="og:site_name" content="APWICO">
 <meta property="og:title" content="${escape(title)}">
 <meta property="og:description" content="${escape(description)}">
 <meta property="og:url" content="${canonical}">
-<meta property="og:image" content="https://resumestride.com/social-card.png">
+<meta property="og:image" content="https://apwico.com/social-card.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="ResumeStride — Your experience is the starting point.">
+<meta property="og:image:alt" content="APWICO — Your experience is the starting point.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${escape(title)}">
 <meta name="twitter:description" content="${escape(description)}">
-<meta name="twitter:image" content="https://resumestride.com/social-card.png">
-<meta name="twitter:image:alt" content="ResumeStride — Your experience is the starting point.">
+<meta name="twitter:image" content="https://apwico.com/social-card.png">
+<meta name="twitter:image:alt" content="APWICO — Your experience is the starting point.">
 <script src="/seo-guard.js"></script>
-<!-- seo:end --><link rel="stylesheet" href="/resources.css"><script defer src="/_vercel/insights/script.js"></script><script defer src="/content-analytics.js" data-article-slug="${escape(slug)}"></script></head><body><a class="skip-link" href="#main-content">Skip to content</a><header class="resource-header"><a class="resource-brand" href="/" aria-label="ResumeStride home"><span class="stride-mark" aria-hidden="true"><i></i><i></i></span><span>ResumeStride</span></a><nav aria-label="Main navigation"><a href="/tools/">Free tools</a><a href="/templates/">Templates</a><a href="${resourcesPath}" aria-current="${path === resourcesPath ? 'page' : 'false'}">Resources</a><a href="/pricing/">Pricing</a><a href="/trust/">Trust</a><a href="/start/job" data-content-cta="jobs">Jobs &amp; Match</a><a class="header-action" href="/start/build" data-content-cta="builder">Build your resume</a></nav></header>${main}<footer class="resource-footer"><div><a class="resource-brand" href="/"><span class="stride-mark" aria-hidden="true"><i></i><i></i></span><span>ResumeStride</span></a><p>Your experience is the starting point.</p></div><nav aria-label="Footer navigation"><a href="/tools/">Free tools</a><a href="/templates/">Templates</a><a href="${resourcesPath}">Resources</a><a href="/occupations/">Occupations</a><a href="/compare/">Compare tools</a><a href="/pricing/">Pricing</a><a href="/trust/">Trust</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms &amp; refunds</a></nav></footer></body></html>\n`;
+<!-- seo:end --><link rel="stylesheet" href="/resources.css"><script defer src="/_vercel/insights/script.js"></script><script defer src="/content-analytics.js" data-article-slug="${escape(slug)}"></script></head><body><a class="skip-link" href="#main-content">Skip to content</a><header class="resource-header"><a class="resource-brand" href="/" aria-label="APWICO home"><span class="stride-mark" aria-hidden="true"><i></i><i></i></span><span>APWICO</span></a><nav aria-label="Main navigation"><a href="/tools/">Free tools</a><a href="/templates/">Templates</a><a href="${resourcesPath}" aria-current="${path === resourcesPath ? 'page' : 'false'}">Resources</a><a href="/pricing/">Pricing</a><a href="/trust/">Trust</a><a href="/start/job" data-content-cta="jobs">Jobs &amp; Match</a><a class="header-action" href="/start/build" data-content-cta="builder">Build your resume</a></nav></header>${main}<footer class="resource-footer"><div><a class="resource-brand" href="/"><span class="stride-mark" aria-hidden="true"><i></i><i></i></span><span>APWICO</span></a><p>Your experience is the starting point.</p></div><nav aria-label="Footer navigation"><a href="/tools/">Free tools</a><a href="/templates/">Templates</a><a href="${resourcesPath}">Resources</a><a href="/occupations/">Occupations</a><a href="/compare/">Compare tools</a><a href="/pricing/">Pricing</a><a href="/trust/">Trust</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms &amp; refunds</a></nav></footer></body></html>\n`;
 }
 
 function related(guide: Guide) {
@@ -73,7 +73,7 @@ function hub() {
   return `<section class="cluster" aria-labelledby="cluster-${cluster.id}"><header><p class="section-label">${escape(cluster.label)}</p><h2 id="cluster-${cluster.id}">${escape(cluster.question)}</h2></header><ol>${cards}</ol></section>`;
  }).join('');
  const main = `<main id="main-content"><section class="hub-hero"><div><p class="eyebrow">Resume resources</p><h1>Make the evidence<br><em>easy to see.</em></h1></div><div><p>Practical guides for understanding a role, deciding whether it fits and making your resume relevant—without turning your experience into a score or a set of copied keywords.</p><div class="hub-principle"><span>Am I qualified?</span><i aria-hidden="true">→</i><span>What do I demonstrate?</span><i aria-hidden="true">→</i><span>How should I tailor?</span></div></div></section><div class="cluster-index"><div class="cluster-intro"><p class="section-label">Seven intentional clusters</p><h2>Start with the problem slowing down your application.</h2><p>The path is not always linear. Keep unknowns visible, make your own pursue decision and return to the master before creating a job-specific version.</p></div>${clusters}<section class="cluster" aria-labelledby="research-paths"><header><p class="section-label">Research boundaries</p><h2 id="research-paths">Go beyond one posting without inventing certainty.</h2></header><ol><li><a href="/occupations/"><span class="guide-number">A</span><span><small>Occupation research</small><strong>Use occupation data as questions, not copied claims</strong><p>See the first broad research set and the review gate for future occupation pages.</p></span><b aria-hidden="true">→</b></a></li><li><a href="/compare/"><span class="guide-number">B</span><span><small>Product comparison</small><strong>Compare tools through dated, primary-source facts</strong><p>Check output, billing, privacy, evidence and user control without declaring a winner.</p></span><b aria-hidden="true">→</b></a></li></ol></section></div><section class="hub-next"><p class="section-label">A practical next step</p><div><h2>Start with your master resume.</h2><p>Give your experience a reliable home before you decide what each application needs.</p></div><a class="primary-action" href="/start/build" data-content-cta="builder">Build your resume <span aria-hidden="true">→</span></a></section></main>`;
- return shell('Resume resources: evidence-first job search guides | ResumeStride', description, resourcesPath, main);
+ return shell('Resume resources: evidence-first job search guides | APWICO', description, resourcesPath, main);
 }
 
 function output(file: string, html: string) {
