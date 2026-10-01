@@ -1,6 +1,6 @@
 # Group 1 — product strategy and measurement
 
-Status on 2026-09-29: implementation complete for the locked measurement foundation. The full blueprint group remains partially complete because Tasks 1, 2, 4 and 5 include later public-surface, journey and reporting work.
+Status on 2026-10-01: Tasks 1–4 are implementation-complete on the isolated redesign candidate. Task 5 remains validation pending only because production denominators and post-release field data cannot exist before release.
 
 ## 1. Primary product position — completed for redesign
 
@@ -95,7 +95,7 @@ Count of successful job-specific PDF or Word application-package exports after r
 
 The source of truth is the server-only `application_package_conversions` ledger, not client analytics. A conversion is inserted only after the existing export reservation is committed, the account-owned job-specific version resolves to the same bounded job identity as an earlier requirement-row review, and the request ID has not already converted. Master exports, local job drafts, failed exports and unreviewed jobs do not qualify.
 
-## 4. Complete funnel — contract defined, implementation incomplete
+## 4. Complete funnel — implemented and automatically checked
 
 The canonical path is:
 
@@ -112,15 +112,15 @@ The baseline is intentionally incomplete where the current product has no event 
 ## Deliberately deferred, not Group 1 blockers
 
 1. **Return-use window:** the event contract remains defined, while the reporting window is deferred until a durable active-search model exists. The working reporting proposal is a return on a different local calendar day within 30 days, aggregate only.
-2. **Application outcomes:** the event contract is defined; the manual product state remains Group 5 work so Group 1 does not invent an unconnected tracker.
+2. **Application outcomes:** the manual, owner-controlled application state and voluntary outcome foundation now exist. Public outcome claims still require a future adequate sample and methodology review.
 3. **Repository protection:** branch protection and required CI affect the production repository and require a later owner-approved release-control action. No production setting was changed.
 
 ## Blueprint task status
 
 | Task | Status | Evidence |
 | --- | --- | --- |
-| 1. Finalize the primary product position | [~] | Strategy, vocabulary and avoided-claims registry are complete; public-surface rollout remains in G2/G4/G7. |
-| 2. Define the three primary entry journeys | [~] | Journey contracts are complete; shared route/onboarding implementation remains in G2/G3. |
+| 1. Finalize the primary product position | [x] | Strategy, vocabulary, avoided-claims registry and public/private surface rollout are complete and covered by brand/content checks. |
+| 2. Define the three primary entry journeys | [x] | Journey contracts and shared route/onboarding implementation are complete. |
 | 3. Define the north-star outcome | [x] | Durable owner-scoped review/conversion records, behavior-based limited/full qualification, committed-export deduplication and privacy tests exist. |
-| 4. Define the complete product funnel | [~] | Canonical schema and core corrected signals exist; application status, return use and some later feature events remain intentionally deferred. |
-| 5. Establish baseline product measurements | [~] | Dated production snapshot is complete; unavailable denominators remain labeled “not instrumented” rather than zero. |
+| 4. Define the complete product funnel | [x] | The canonical content-free event path now covers landing through manual application status; server-authoritative review/conversion records remain the north-star source. |
+| 5. Establish baseline product measurements | [validation pending] | Dated production snapshot is complete; unavailable denominators remain labeled “not instrumented” rather than zero and require post-release field validation. |

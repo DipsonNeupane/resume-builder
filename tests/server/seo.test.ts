@@ -217,13 +217,18 @@ test('query states and private paths never enter the index, canonical or sitemap
 test('domain migration redirects only behind the launch gate and preserves paths and queries', () => {
  for (const url of ['https://resumestride.com/index.html?account=1&code=abc', 'https://www.resumestride.com/index.html?account=1&code=abc']) {
   assert.equal(requestSeo(new URL(url), true).status, 308);
-  const result = requestSeo(new URL(url), true, true);
-  assert.equal(result.status, 301); assert.equal(result.headers.Location, 'https://apwico.com/?account=1&code=abc');
+  const staged = requestSeo(new URL(url), true, true);
+  assert.equal(staged.status, 307); assert.equal(staged.headers['Cache-Control'], 'private, no-store');
+  const result = requestSeo(new URL(url), true, true, true);
+  assert.equal(result.status, 301); assert.equal(result.headers['Cache-Control'], 'public, max-age=300'); assert.equal(result.headers.Location, 'https://apwico.com/?account=1&code=abc');
   assert.equal(requestSeo(new URL(result.headers.Location!), true).status, 0);
  }
- const nested = requestSeo(new URL('https://resumestride.com/resources/resume-keywords/?utm_source=legacy'), true, true);
+ const nested = requestSeo(new URL('https://resumestride.com/resources/resume-keywords/?utm_source=legacy'), true, true, true);
  assert.equal(nested.status, 301); assert.equal(nested.headers.Location, 'https://apwico.com/resources/resume-keywords/?utm_source=legacy');
  assert.equal(requestSeo(new URL('https://apwico.com/resources/'), true, true).headers.Location, undefined);
+ const legacyApi = new URL('https://resumestride.com/api/export-pdf');
+ assert.equal(requestSeo(legacyApi, true, true, true, 'POST').status, 0);
+ assert.equal(requestSeo(legacyApi, true, true, true, 'GET').status, 0);
  assert.equal(policy('/index.html').headers.Location, '/');
  assert.equal(policy('/').headers.Location, undefined);
 });

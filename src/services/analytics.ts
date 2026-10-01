@@ -2,7 +2,7 @@ import { track, type BeforeSendEvent } from '@vercel/analytics';
 import { isPublicAttributionLocation, isPublicLocation, productionOrigin } from '../seo/policy';
 
 export const productEvents = [
- 'landing_page_view', 'builder_started', 'resume_created', 'template_selected', 'resume_completed',
+ 'landing_page_view', 'public_landing_viewed', 'builder_started', 'resume_created', 'template_selected', 'resume_completed',
  'jobs_viewed', 'jobs_search_performed', 'job_saved', 'saved_jobs_viewed', 'match_opened', 'match_completed',
  'tailoring_started', 'suggestion_reviewed', 'suggestion_accepted', 'suggestion_rejected',
  'job_specific_resume_completed', 'export_started', 'export_completed', 'pricing_viewed',
@@ -10,7 +10,7 @@ export const productEvents = [
  'content_page_view', 'content_cta_clicked',
  'tool_viewed', 'tool_started', 'tool_completed', 'tool_cta_clicked',
  'entry_journey_selected', 'first_useful_input_completed',
- 'import_started', 'import_completed', 'import_failed', 'master_resume_usable',
+ 'import_started', 'import_completed', 'import_failed', 'master_resume_usable', 'job_added',
  'requirements_extracted', 'evidence_reviewed', 'decision_recorded',
  'job_specific_version_created', 'changes_reviewed', 'application_package_exported',
  'application_status_recorded',

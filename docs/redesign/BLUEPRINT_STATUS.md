@@ -1,6 +1,6 @@
 # APWICO redesign blueprint status
 
-Status date: 2026-09-30. This ledger describes only the isolated redesign branch. It does not claim that undeployed work is live.
+Status date: 2026-10-01. This ledger describes only the isolated redesign branch. It does not claim that undeployed work is live.
 
 ## Status model
 
@@ -14,9 +14,9 @@ Status date: 2026-09-30. This ledger describes only the isolated redesign branch
 
 Every task is included exactly once:
 
-- **COMPLETE (45):** 2, 3, 6–18, 23–36, 38–44, 47–50, 54, 55, 57, 62, 65.
+- **COMPLETE (47):** 1–4, 6–18, 23–36, 38–44, 47–50, 54, 55, 57, 62, 65.
 - **VALIDATION PENDING (13):** 5, 19–22, 45, 46, 51–53, 56, 63, 64.
-- **PARTIAL (2):** 1, 4.
+- **PARTIAL (0):** none.
 - **NOT STARTED (4):** 58–61.
 - **BLOCKED (1):** 37.
 
@@ -26,7 +26,7 @@ Production analytics, human/device checks and post-release field evidence are re
 
 | Group | Status | Current truth |
 | --- | --- | --- |
-| 1. Product strategy and measurement | Mixed | North-star storage/review qualification and entry-journey contracts are complete. Product-position rollout and later funnel instrumentation remain partial. Baseline implementation is complete; unavailable production field denominators remain validation pending. |
+| 1. Product strategy and measurement | Validation pending | Tasks 1–4 are complete: positioning is rolled out, journeys converge, north-star records are durable/content-free and the full content-free funnel is instrumented. Task 5 awaits production field denominators. |
 | 2. Homepage and navigation UI | COMPLETE | Tasks 6–14 meet current automatable Done When conditions: evidence-led homepage, permanent navigation, curated showcase, complete truthful template discovery and indexable detail/pricing routes. |
 | 3. Onboarding and workspace | Mixed | Tasks 15–18 are complete. Tasks 19–22 are implementation-complete with automated coverage; real email-provider, human/device, assistive-technology and post-release validation remain. |
 | 4. Trust, pricing and monetization | COMPLETE | Tasks 23–30 meet current automatable conditions with verified pricing/cancellation/export terms, factual trust, unpublished-by-default proof architecture and permanent commercial routes. |

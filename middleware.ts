@@ -119,19 +119,32 @@ export const notFoundHtml = '<!doctype html><html lang="en"><head><meta charset=
 
 // Request policy shared by Vercel middleware and the local Vite adapter. No user
 // identity, tokens, forwarded hosts, or content are read into metadata or logs.
-export function requestSeo(url: URL, production: boolean, domainMigrationEnabled = false) {
+export function requestSeo(url: URL, production: boolean, domainMigrationEnabled = false, permanentDomainMigration = false, method = 'GET') {
  const headers: Record<string, string> = {};
  const canonicalHost = url.origin === productionOrigin;
  const crawlerAsset = ['/robots.txt', '/sitemap.xml', '/favicon.ico', '/favicon.svg', '/favicon.png', '/favicon-192.png', '/favicon-512.png', '/apple-touch-icon.png'].includes(url.pathname) || /^\/(?:fonts|social)\/[a-z0-9._-]+$/.test(url.pathname);
  if (!production || !canonicalHost || (!isPublicLocation(url) && !isPublicAttributionLocation(url) && !crawlerAsset)) headers['X-Robots-Tag'] = noindex;
  if (url.search) headers['Cache-Control'] = 'private, no-store';
+ const infrastructure = /^\/(?:api(?:\/|$)|assets\/|_vercel\/|\.well-known\/)/.test(url.pathname);
  const migrationSource = legacyProductionOrigins.includes(url.origin as (typeof legacyProductionOrigins)[number]) || url.origin === 'https://www.apwico.com';
- if (domainMigrationEnabled && migrationSource) {
-  return { status: 301, headers: { ...headers, Location: `${productionOrigin}${url.pathname === '/index.html' ? '/' : url.pathname}${url.search}` }, body: '' };
+ // Redirect browser navigations only. Old-origin API/write traffic must keep reaching
+ // this compatible deployment during the coexistence window; redirecting a POST can
+ // drop its body/authentication or change its method. Start with a no-store 307 so the
+ // cutover remains reversible, then promote navigation GET/HEAD traffic to a bounded
+ // 301 only after the live matrix and browser-only-state window have passed.
+ if (domainMigrationEnabled && migrationSource && (method === 'GET' || method === 'HEAD') && !infrastructure) {
+  return {
+   status: permanentDomainMigration ? 301 : 307,
+   headers: {
+    ...headers,
+    'Cache-Control': permanentDomainMigration ? 'public, max-age=300' : 'private, no-store',
+    Location: `${productionOrigin}${url.pathname === '/index.html' ? '/' : url.pathname}${url.search}`,
+   },
+   body: '',
+  };
  }
  if (url.pathname === '/index.html') return { status: 308, headers: { ...headers, Location: `/${url.search}` }, body: '' };
  const asset = ['/robots.txt', '/sitemap.xml', '/favicon.ico', '/favicon.svg', '/favicon.png', '/favicon-192.png', '/favicon-512.png', '/apple-touch-icon.png', '/social-card.png', '/site.webmanifest', '/seo-guard.js', '/resources.css', '/content-analytics.js', '/tools.css', '/tools/analysis.js', '/tools/public-tools.js', '/tools/tool-analytics.js', '/templates.css', '/templates-filter.js', '/features.css', '/fonts.css'].includes(url.pathname) || /^\/(?:fonts|social)\/[a-z0-9._-]+$/.test(url.pathname);
- const infrastructure = /^\/(?:api(?:\/|$)|assets\/|_vercel\/|\.well-known\/)/.test(url.pathname);
  // The extension fixture remains reachable for local installed-extension tests,
  // but must never be an indexable job page.
  const fixture = url.pathname.startsWith('/extension-fixture/');
@@ -146,11 +159,13 @@ export function requestSeo(url: URL, production: boolean, domainMigrationEnabled
 }
 
 export default function middleware(request: Request): Response {
- const runtime = globalThis as typeof globalThis & { process?: { env?: { VERCEL_ENV?: string; BRAND_DOMAIN_REDIRECTS_ENABLED?: string } } };
+ const runtime = globalThis as typeof globalThis & { process?: { env?: { VERCEL_ENV?: string; BRAND_DOMAIN_REDIRECTS_ENABLED?: string; BRAND_PERMANENT_REDIRECTS_ENABLED?: string } } };
  const result = requestSeo(
   new URL(request.url),
   runtime.process?.env?.VERCEL_ENV === 'production',
   runtime.process?.env?.BRAND_DOMAIN_REDIRECTS_ENABLED === 'true',
+  runtime.process?.env?.BRAND_PERMANENT_REDIRECTS_ENABLED === 'true',
+  request.method,
  );
  if (result.status) return new Response(request.method === 'HEAD' ? null : result.body, { status: result.status, headers: result.headers });
  // Vercel's native continuation protocol, identical to next() without pulling

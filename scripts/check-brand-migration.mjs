@@ -24,11 +24,20 @@ for (const directory of roots) files.push(...await filesUnder(join(root, directo
 const publicIdentityExceptions = new Set([
   'src/brand.ts',
   'server/export/document-handler.ts',
+  // Deliberate migration boundaries: the old-origin notice names the product
+  // users are leaving, and the mutation guard accepts only the exact legacy
+  // origins while both domains coexist.
+  'src/main.tsx',
+  'server/http/security.ts',
   'scripts/check-brand-migration.mjs',
+  // Negative UI assertions intentionally name the legacy brand to prove it is absent.
+  'tests/brand.spec.ts',
 ])
 const legacyDomainExceptions = new Set([
   'src/brand.ts',
   'middleware.ts',
+  'src/main.tsx',
+  'server/http/security.ts',
   'src/services/extensionImport.ts',
   'apps/extension/src/lib/config.ts',
   'apps/extension/manifest.json',

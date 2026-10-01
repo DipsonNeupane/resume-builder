@@ -639,6 +639,7 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
       setSavedJobs(parseSavedJobs(body.savedJobs));
       setMessage('Job saved. Its Match Analysis is in Saved jobs.');
       trackProductEvent('job_saved', { surface: 'jobs', user_state: 'authenticated', plan: accountIsPro ? 'Pro' : 'Free', outcome: 'success', job_source: 'search' });
+      trackProductEvent('job_added', { surface: 'jobs', user_state: 'authenticated', plan: accountIsPro ? 'Pro' : 'Free', outcome: 'success', job_source: 'search' });
       trackProductEvent('decision_recorded', { surface: 'match', user_state: 'authenticated', plan: accountIsPro ? 'Pro' : 'Free', decision: 'save_later' });
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to save this job.'); }
   }

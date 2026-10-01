@@ -36,11 +36,12 @@ inside a documented compatibility boundary.
   document filenames, metadata, schema and social assets now identify APWICO.
 - Canonical origin, sitemap and robots references are `https://apwico.com`; route paths are
   preserved one-for-one. `www.apwico.com`, `resumestride.com` and
-  `www.resumestride.com` have a 301 implementation that is disabled by default behind
-  `BRAND_DOMAIN_REDIRECTS_ENABLED=false`.
-- The redirect preserves the full path and query and normalizes `/index.html` to `/`. It
-  does not activate merely because code is deployed, preventing premature production
-  cutover and redirect loops.
+  `www.resumestride.com` have staged redirects disabled by default. The first gate enables
+  navigation-only, no-store 307s; a second default-off gate promotes them to bounded-cache
+  301s only after coexistence validation. API/write traffic is never redirected.
+- Navigation redirects preserve the full path and query and normalize `/index.html` to `/`.
+  They do not activate merely because code is deployed, preventing premature production
+  cutover and redirect loops while old tabs can continue exact-origin API writes.
 - The extension defaults to APWICO but temporarily accepts the exact legacy HTTPS root.
   Look-alike hosts, credentials, paths, queries, fragments and alternate ports remain
   rejected. The unpublished store status remains unchanged.
@@ -113,14 +114,17 @@ drafts, the retention-window decision and live rehearsal remain validation pendi
    stays blocked until publication facts exist.
 7. **Release:** snapshot/recovery check; deploy candidate without redirect; run old/new host
    auth, cloud, billing, export, ownership, local-state and noindex tests; obtain explicit
-   owner release approval; then enable DNS/canonical host and finally the redirect flag.
+   owner release approval; then enable DNS/canonical host, the temporary 307 flag, and only
+   after the coexistence/monitoring window the separately authorized permanent 301 flag.
 
 ## Rollback
 
-Disable `BRAND_DOMAIN_REDIRECTS_ENABLED`, restore the previous canonical host at the edge
-only if required, keep both domains and provider callbacks valid, and do not roll back or
-rewrite database/payment identifiers. Investigate with content-free request/account IDs;
-never place resume/job text in logs. A rollback does not authorize a production change.
+Disable both redirect flags, restore the previous canonical host at the edge only if
+required, keep both domains and provider callbacks valid, and do not roll back or rewrite
+database/payment identifiers. The temporary 307 is no-store; a promoted 301 declares a
+five-minute cache but intermediaries and DNS can recover later. Investigate with content-free
+request/account IDs; never place resume/job text in logs. A rollback does not authorize a
+production change.
 
 ## Independent review
 

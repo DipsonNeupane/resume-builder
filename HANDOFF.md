@@ -4097,3 +4097,11 @@ production bundle; static performance budgets; and focused Chromium accessibilit
 canonical/indexing and 320px overflow checks. The build identified and resolved one
 closed-vocabulary diagnostic omission for account-master deletion. The remaining Task
 63 and 64 work is hosted/provider validation, not incomplete implementation.
+# Final pre-release rehearsal (2026-10-01)
+
+- Completed the non-live APWICO cutover, provider, compatibility and full 65-task release audit on `redesign/shared-route-state`; no deploy, DNS/provider mutation, redirect activation, merge or push occurred.
+- Release decision is **NOT READY**: `apwico.com` still serves GoDaddy and is not attached to the existing Vercel project; provider callbacks/email/Stripe, hosted two-account recovery, browser-only retention, and physical accessibility/mobile/low-power acceptance remain required-before-production gates.
+- Status: **47 COMPLETE / 13 VALIDATION PENDING / 0 PARTIAL / 4 NOT STARTED / 1 BLOCKED**. Tasks 58–61 are legitimate post-launch; Task 37 remains blocked on a real published extension listing and is not claimed.
+- Added the single ordered owner/provider checklist and rollback runbook in `docs/redesign/APWICO_PRODUCTION_CUTOVER_RUNBOOK.md`; audit/evidence and A/B/C classification are in `docs/redesign/FINAL_PRE_RELEASE_REHEARSAL_2026-10-01.md`.
+- The redirect remains default-off. Authorized rollout must use the no-store 307 stage before the separately gated bounded-cache 301. Old-tab API writes are not redirected; only exact legacy origins are accepted by the existing strict mutation guard during coexistence.
+- Independent review findings were resolved: API-method redirect safety, explicit browser-only state transition UX, realistic cached-301 rollback limits, and explicit missing-original-blueprint evidence limitation.

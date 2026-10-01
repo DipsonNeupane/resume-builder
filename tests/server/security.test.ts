@@ -5,6 +5,8 @@ const origin = 'https://apwico.com'
 const request = (body: string, headers: Record<string,string> = {}) => new Request(origin, {method:'POST',body,headers:{origin,'content-type':'application/json',...headers}})
 test('mutation boundary rejects foreign or missing origin, wrong methods and media types', () => {
   requirePost(request('{}'),origin)
+  requirePost(request('{}',{origin:'https://resumestride.com'}),origin)
+  requirePost(request('{}',{origin:'https://www.resumestride.com'}),origin)
   for (const r of [request('{}',{origin:'https://evil.test'}),request('{}',{origin:''}),request('{}',{'content-type':'text/plain'}),new Request(origin)]) assert.throws(()=>requirePost(r,origin))
 })
 test('body bounded by actual bytes regardless of content length', async () => {

@@ -27,6 +27,7 @@ test('APWICO is the public default while compatibility is explicit and bounded',
  assert.match(read('package.json'), /"name": "apwico"/)
  assert.match(read('.env.example'), /APP_ORIGIN=https:\/\/apwico\.com/)
  assert.match(read('.env.example'), /BRAND_DOMAIN_REDIRECTS_ENABLED=false/)
+ assert.match(read('.env.example'), /BRAND_PERMANENT_REDIRECTS_ENABLED=false/)
  assert.match(read('middleware.ts'), /productionOrigin = 'https:\/\/apwico\.com'/)
  assert.match(read('src/brand.ts'), /supportEmail = 'support@apwico\.com'/)
 })
