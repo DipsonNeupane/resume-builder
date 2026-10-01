@@ -188,6 +188,7 @@ test('saved Match Analysis has a reload-safe URL, predictable history, and a con
 });
 
 test('an owner-scoped job-specific resume restores after reload while preserving the master', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await seed(page);
   const master = example();
   const savedJobId = '99999999-9999-4999-8999-999999999999';
@@ -210,6 +211,14 @@ test('an owner-scoped job-specific resume restores after reload while preserving
   });
   await page.goto(`/workspace/resumes/${versionId}`, { waitUntil: 'domcontentloaded' });
   await expect(page.getByText(/Job-specific resume — Tailored for Customer Experience Specialist/)).toBeVisible();
+  const journey = page.locator('.journey-rail');
+  const activeStage = journey.locator('[aria-current="step"]');
+  await expect(activeStage).toContainText('Tailor');
+  await expect.poll(async () => activeStage.evaluate(active => {
+    const item = active.getBoundingClientRect();
+    const rail = active.closest('.journey-rail')!.getBoundingClientRect();
+    return item.left >= rail.left && item.right <= rail.right;
+  })).toBe(true);
   await page.getByRole('button', { name: 'Profile & skills' }).click();
   await expect(page.getByRole('textbox', { name: 'Professional profile', exact: true })).toHaveValue('Separate version wording.');
   await page.reload();
@@ -390,7 +399,9 @@ test('current Pro saved analysis restores and renders complete evidence depth af
   }) }));
   await openJobs(page);
   const savedCard = page.locator('.saved-job-card');
-  const full = savedCard.locator('details.match-details[open]');
+  const full = savedCard.locator('details.match-details');
+  await expect(full).not.toHaveAttribute('open', '');
+  await full.locator('summary').click();
   await expect(full.getByText('Required', { exact: true })).toBeVisible();
   await expect(full.getByText('Preferred', { exact: true })).toBeVisible();
   await expect(full.getByText('Nice to have', { exact: true })).toBeVisible();

@@ -325,7 +325,7 @@ function RequirementLedger({ requirements, scope, onReviewed }: { requirements: 
   </article>)}</div>;
 }
 
-function MatchAnalysisPanel({ analysis, isPro, onViewPro, onClarify, onEvidenceReviewed, jobTitle }: { jobTitle: string; analysis: MatchAnalysis; isPro: boolean; onViewPro: () => void; onClarify: (id: string, value: 'demonstrated'|'not_have'|'unsure') => void; onEvidenceReviewed: (scope: 'limited'|'full') => Promise<boolean> }) {
+function MatchAnalysisPanel({ analysis, isPro, onViewPro, onClarify, onEvidenceReviewed, jobTitle, fullAnalysisInitiallyOpen = true }: { jobTitle: string; analysis: MatchAnalysis; isPro: boolean; onViewPro: () => void; onClarify: (id: string, value: 'demonstrated'|'not_have'|'unsure') => void; onEvidenceReviewed: (scope: 'limited'|'full') => Promise<boolean>; fullAnalysisInitiallyOpen?: boolean }) {
   const full = analysis.fullAnalysis;
   const panel = useRef<HTMLElement>(null);
   const viewed = useRef(false);
@@ -358,7 +358,7 @@ function MatchAnalysisPanel({ analysis, isPro, onViewPro, onClarify, onEvidenceR
       {analysis.additionalAreasAnalyzed > 0 && <span>{analysis.additionalAreasAnalyzed} additional {analysis.additionalAreasAnalyzed === 1 ? 'area' : 'areas'} analyzed</span>}
       <button className="text-button" onClick={onViewPro}>View the full evidence analysis with Pro</button>
     </div>}
-    {isPro && full && <details className="match-details" open><summary>Full evidence analysis</summary>
+    {isPro && full && <details className="match-details" {...(fullAnalysisInitiallyOpen ? { open: true } : {})}><summary>Full evidence analysis</summary>
       <p>{full.deeperExplanation}</p>
       <RequirementLedger requirements={full.requirements} scope="full" onReviewed={onEvidenceReviewed}/>
       {full.strengths.length > 0 && <><h4>Strengths</h4><ul>{full.strengths.map((item,index)=><li key={index}>{item}</li>)}</ul></>}
@@ -964,7 +964,7 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
             </>}
             {saved.analysisCurrent === false && <p className="match-stale" role="status">Saved match analysis needs refreshing because the resume, job, preferences, or clarifications changed.</p>}
             {saved.analysisCurrent === false && <button className="text-button" onClick={() => void refreshSavedAnalysis(saved.id)}>Refresh match analysis</button>}
-            {saved.analysisCurrent !== false && saved.matchAnalysis && <MatchAnalysisPanel jobTitle={`Saved: ${job.title} at ${job.company}`} analysis={saved.matchAnalysis} isPro={accountIsPro} onViewPro={onViewPro} onClarify={(id, value) => void clarify(id, value, { savedJobId: saved.id })} onEvidenceReviewed={scope=>recordEvidenceReview(job.dedupeKey as string,saved.matchAnalysis!.contextHash,scope)} />}
+            {saved.analysisCurrent !== false && saved.matchAnalysis && <MatchAnalysisPanel jobTitle={`Saved: ${job.title} at ${job.company}`} analysis={saved.matchAnalysis} isPro={accountIsPro} onViewPro={onViewPro} onClarify={(id, value) => void clarify(id, value, { savedJobId: saved.id })} onEvidenceReviewed={scope=>recordEvidenceReview(job.dedupeKey as string,saved.matchAnalysis!.contextHash,scope)} fullAnalysisInitiallyOpen={false} />}
 	            <JobWorkflowPanel value={workflow} busy={workflowBusyId === saved.id} available={jobWorkflowsAvailable} conflict={workflowConflictId === saved.id} onReload={()=>setAccountLoadRevision(value=>value+1)} onSave={next => saveWorkflow(saved.id, next)} />
 	            <OutcomeReportPanel reports={outcomeReports.filter(item=>item.savedJobId===saved.id)} busy={outcomeBusyId===saved.id} available={outcomeReportsAvailable} onReport={report=>saveOutcome(saved.id,report)}/>
 	            {!jobResumeVersions.some(version => version.savedJobId === saved.id) && workflow.decision !== 'pursue' && <p className="field-hint">Choose Pursue and save your decision before creating a separate job-specific resume.</p>}

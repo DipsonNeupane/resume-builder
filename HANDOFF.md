@@ -1,3 +1,24 @@
+## October 1 — final rendered visual/UI audit (no cutover)
+
+Completed a separate visual-design audit of the isolated APWICO candidate: 26 logical
+pages/sections/states across 78 rendered captures at representative 320/390/768/1366/1440/
+1920 widths. Fixed five objective hierarchy/responsive issues: the dense/inconsistent home
+template showcase, placeholder-feeling customer-proof heading, default-expanded saved-job
+evidence depth, phone preview-control occlusion, and offscreen active journey stage. An
+independent second pass inspected all captures and found no remaining release-blocking visual
+issue after recapture. Detailed coverage and evidence are in
+`docs/redesign/FINAL_VISUAL_UI_AUDIT_2026-10-01.md`; the one-session physical acceptance
+checklist is consolidated in `PRE_RELEASE_BLOCKER_CLEARANCE_2026-10-01.md`.
+
+The complete recurring release gate passed all 13 stages, and the complete paid browser
+suite passed 82/82 after the visual fixes. Static performance budgets, generated SEO parity,
+axe/keyboard/overflow checks, saved-object ownership, cloud recovery and export smoke checks
+all remain green.
+
+No production deployment, provider configuration, DNS/redirect change, push, merge, or
+cutover occurred. Human/physical acceptance and the separately authorized controlled cutover
+remain outstanding.
+
 ## October 1 — APWICO pre-release blocker clearance (no cutover)
 
 Completed the remaining agent-executable clearance work on `redesign/shared-route-state`.

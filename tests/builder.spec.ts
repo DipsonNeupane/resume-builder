@@ -370,12 +370,16 @@ test('320px width stays usable and key icon-only controls are labeled for screen
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.getByRole('button',{name:'Toggle navigation'}).click();
  await expect(page.getByRole('link',{name:'Resume Builder'})).toBeVisible();
- await page.getByRole('button',{name:'Build my master resume',exact:true}).last().click();
+ await page.goto('/workspace/resume');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Small Screen');
  await page.keyboard.press('Tab');
  expect(await page.evaluate(()=>document.activeElement?.tagName)).toBeTruthy();
- await expect(page.getByRole('button',{name:'Preview resume',exact:true})).toBeVisible();
+ const previewToggle=page.getByRole('button',{name:'Preview resume',exact:true});
+ await expect(previewToggle).toBeVisible();
+ const [toggleBox,fieldBox]=await Promise.all([previewToggle.boundingBox(),page.getByRole('textbox',{name:'Full name',exact:true}).boundingBox()]);
+ expect(toggleBox).not.toBeNull();expect(fieldBox).not.toBeNull();
+ expect(toggleBox!.y+toggleBox!.height,'mobile preview control must not cover the editor').toBeLessThanOrEqual(fieldBox!.y);
 });
 
 test('the sidebar sample opens without replacing the current draft',async({page})=>{

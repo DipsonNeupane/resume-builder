@@ -40,9 +40,22 @@ Cross-origin browser-only data is intentionally **not copied**. The safe transit
 - `npm run quality:gate`: **PASS** on the final candidate.
 - `npm run test:server`, `npm run test:db`, `npm run brand:check`, production dependency audit and diff validation: **PASS** on the final candidate.
 
-## One physical/human acceptance script
+## One physical/human acceptance checklist
 
-Use one phone and one desktop screen reader/keyboard session against the frozen, protected APWICO candidate during the authorized window. With fictional data only: (1) start by import, build, and pasted job; (2) use browser Back/Forward through Builder → Jobs → saved Match → job-specific resume and reload each saved state; (3) confirm focus, labels, zoom/reflow and reduced motion; (4) confirm the master stays unchanged after a separate tailored-version edit; (5) open a real synthetic confirmation and recovery link in a new tab; (6) cancel a test Checkout and return to the correct workspace. **PASS** only if no content crosses accounts, no critical control is unreachable or obscured, and every return/reload lands on the expected state. Any severe ownership, data-loss, auth, payment-return or accessibility defect stops release.
+Use fictional data on the frozen, protected candidate. Record only PASS or FAIL for each row.
+
+| Device/check | Do | Expected result | Result |
+| --- | --- | --- | --- |
+| Phone | Complete import-first, build-first, and pasted-job starts; rotate once and use Back/Forward. | Each reaches the same usable workspace; state survives; nothing clips, overlaps, or scrolls sideways. | PASS / FAIL |
+| Desktop/laptop | Run matcher → save job → Match → choose pursue → job-specific resume → application status. | Evidence stays scannable; the user's decision is distinct; the master remains unchanged. | PASS / FAIL |
+| Keyboard only | Repeat the core path with Tab, Shift+Tab, Enter, Space, and Escape. | Focus is always visible and ordered; every control/modal is reachable and dismissible; focus returns logically. | PASS / FAIL |
+| Screen reader | With VoiceOver, NVDA, or JAWS, traverse headings/landmarks and one evidence row, form error, modal, and saved-job action. | Names, roles, state, errors, source wording, resume evidence, and master/job-version identity are announced meaningfully. | PASS / FAIL |
+| 200% zoom | At desktop width, zoom to 200% on home, matcher result, workspace, pricing, and checkout-return page. | Content reflows without lost controls, overlap, horizontal page scroll, or unreadable evidence rows. | PASS / FAIL |
+| Reduced motion | Enable the OS/browser reduced-motion setting and reload home/workspace. | Meaning remains intact; no essential content waits on animation and no distracting motion remains. | PASS / FAIL |
+| Auth/payment return | Open a real synthetic confirmation/recovery link in a new tab; cancel a test Checkout. | Auth returns to the intended content-free continuation; cancellation returns to the correct workspace without granting access. | PASS / FAIL |
+| Storage/export/brand | Confirm local vs account-saved labels and master vs job-specific names; export PDF and DOCX; scan all touched pages. | Labels are understandable; exports contain the intended document; APWICO branding is consistent; no obvious loading/error/focus/layout defect appears. | PASS / FAIL |
+
+Any ownership leak, data loss, wrong paid access, unreachable critical control, failed return, or master-resume mutation is an immediate FAIL and stops release.
 
 ## Remaining classification
 

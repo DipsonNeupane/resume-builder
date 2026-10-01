@@ -7,6 +7,8 @@ import { MatchShowcase } from './MatchShowcase';
 import './landing.css';
 
 const sample = example();
+const featuredTemplateIds: Resume['template'][] = ['modern', 'compact', 'boardroom', 'stackline', 'scholar', 'primer'];
+const featuredTemplates = templates.filter(template => featuredTemplateIds.includes(template.id));
 // The suggestion reworks the sample's own summary using only experience it already lists.
 const suggested = 'Customer experience specialist who supports customers across email, phone and live chat, simplifies everyday support processes, and helps new team members build confidence.';
 const connected = ['Your resume', 'Find or save a role', 'See the evidence', 'You decide', 'A separate version', 'Review each change', 'PDF or Word', 'Apply on the employer’s site'];
@@ -83,9 +85,9 @@ export function HomePage({ onBuild, onUpload, onJobs, onCompare, onPro, onTempla
    <div className="landing-connected-actions"><button className="text-button" onClick={onBuild}>Build my master resume<ArrowRight size={16} aria-hidden="true"/></button><button className="text-button" onClick={onJobs}>Find opportunities<ArrowRight size={16} aria-hidden="true"/></button></div>
   </section>
   <section className="landing-templates" id="templates">
-   <div className="section-introduction"><p className="section-label">Documents</p><h2>7 layouts.<br/>PDF + Word.</h2><p>All seven templates are Free, with A4, US Letter and right-to-left support.</p></div>
+   <div className="section-introduction"><p className="section-label">Documents</p><h2>6 picks.<br/>27 designs.</h2><p>Start with six distinct structures, then browse the full library. Seven designs are Free and 20 are Premium. Every design supports A4, US Letter and right-to-left text.</p><a className="text-button" href="/templates/">Browse all 27 templates<ArrowRight size={16} aria-hidden="true"/></a></div>
    <div className="template-specimen" aria-label={`Fictional sample in the ${previewTemplate} template`}><ResumePreview resume={{...sample,template:previewTemplate}}/></div>
-   <div className="template-gallery" aria-label="Choose a free resume template">{templates.map(t=><button className="template-choice" data-previewing={previewTemplate===t.id} onFocus={()=>setPreviewTemplate(t.id)} onMouseEnter={()=>setPreviewTemplate(t.id)} key={t.id} onClick={()=>onTemplate(t.id)}><span><strong>{t.label}</strong><small>{t.tagline}</small></span><ArrowRight size={16} aria-hidden="true"/></button>)}</div>
+   <div className="template-gallery" aria-label="Preview a curated selection of resume templates">{featuredTemplates.map(t=><button className="template-choice" data-previewing={previewTemplate===t.id} onFocus={()=>setPreviewTemplate(t.id)} onMouseEnter={()=>setPreviewTemplate(t.id)} key={t.id} onClick={()=>onTemplate(t.id)}><span><strong>{t.label}</strong><small>{t.tagline}</small></span><ArrowRight size={16} aria-hidden="true"/></button>)}</div>
   </section>
   </div>
   <section className="landing-pricing" id="pricing">
