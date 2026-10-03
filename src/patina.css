@@ -7,12 +7,12 @@
    here may target .resume-paper internals. */
 
 :root {
- --pt-carbon:#0b0a09; --pt-carbon-2:#131210; --pt-carbon-3:#1b1917;
- --pt-bone:#f4efe8; --pt-bone-2:#f4efe8b8; --pt-bone-3:#f4efe894; --pt-line-d:#f4efe81a;
- --pt-copper:#de8044; --pt-copper-hi:#f7ae74; --pt-copper-hover:#ea9259; --pt-rust:#8a3a1c; --pt-on-copper:#160b04;
- --pt-petrol:#0b3c43; --pt-petrol-2:#082d33; --pt-petrol-3:#0f4b53;
- --pt-mint:#6ccfb6; --pt-mint-ink:#0e6a5b; --pt-mint-tint:#e6f3ef;
- --pt-paper:#ffffff; --pt-desk:#e9e7e3;
+ --pt-carbon:#18060f; --pt-carbon-2:#2d0c1b; --pt-carbon-3:#3a1024;
+ --pt-bone:#fff8fa; --pt-bone-2:#fff8fabd; --pt-bone-3:#fff8fa91; --pt-line-d:#ffd0df24;
+ --pt-copper:#b72f45; --pt-copper-hi:#ffd0df; --pt-copper-hover:#cb4258; --pt-rust:#7a1b34; --pt-on-copper:#fff8fa;
+ --pt-petrol:#4d1630; --pt-petrol-2:#351020; --pt-petrol-3:#6d1d41;
+ --pt-mint:#f2a8bc; --pt-mint-ink:#8a1d43; --pt-mint-tint:#fbeaf0;
+ --pt-paper:#ffffff; --pt-desk:#f0e8e9;
  --pt-display:'APWICO Sans',system-ui,sans-serif;
  --pt-serif:'APWICO Serif',Georgia,serif;
  --pt-mono:'APWICO Mono',ui-monospace,monospace;
@@ -360,3 +360,8 @@ dialog.modal-backdrop::backdrop,.sample-modal-backdrop,.upgrade-modal-backdrop {
 /* Only the document label carries the divider, not the save status inside the note. */
 .document-identity p span { border:0; padding:0; font:400 12px/1.4 var(--rs-font-body); letter-spacing:0; text-transform:none; color:var(--rs-slate); }
 .text-button:disabled,.back-link:disabled { background:transparent; color:#8c867f; }
+.sample-skeleton { display:grid; gap:12px; width:min(560px,calc(100% - 40px)); margin:20vh auto 24px; }
+.sample-skeleton span { display:block; height:18px; border-radius:8px; background:var(--rs-surface); }
+.sample-skeleton span:nth-child(1) { width:62%; height:34px; }
+.sample-skeleton span:nth-child(2) { width:100%; }
+.sample-skeleton span:nth-child(3) { width:78%; }

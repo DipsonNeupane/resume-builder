@@ -40,7 +40,13 @@ export function validateToolText(value: unknown, label: string, maximum: number,
   if (typeof value !== 'string') throw new Error(`${label} must be text.`);
   if (value.length > maximum) throw new Error(`${label} must be ${maximum.toLocaleString('en-US')} characters or fewer.`);
   const safe = value.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').trim();
-  if (clean(safe).length < minimum) throw new Error(`${label} needs a little more detail before it can be reviewed.`);
+  if (clean(safe).length < minimum) {
+    const message = label === 'Job description' ? 'Paste more of the job description to continue.'
+      : label === 'Resume' ? 'Paste more of your resume to continue.'
+        : label === 'Resume bullet' ? 'Add more detail to the bullet to continue.'
+          : `${label} needs a little more detail before it can be reviewed.`;
+    throw new Error(message);
+  }
   return safe;
 }
 
@@ -65,6 +71,9 @@ function categoryFor(text: string, heading: RequirementCategory | null): Require
   if (/\b(?:nice to have|nice-to-have|desirable|bonus points?|would be a plus|is a plus)\b/i.test(text)) return 'preferred';
   if (/\b(?:preferred|ideally|preference|desired)\b/i.test(text)) return 'preferred';
   if (/\b(?:required|must|mandatory|minimum|essential|need(?:ed)?|license[ds]?|certification|certified|work authori[sz]ation|eligible to work|\d+\+?\s+years?)\b/i.test(text)) return 'required';
+  // Work-arrangement details are useful, explicit posting signals even when the
+  // sentence is not phrased as a conventional qualification.
+  if (/\b(?:remote|hybrid|on[- ]?site|in[- ]?office|relocat|travel|located|location|time zone|timezone)\b/i.test(text)) return 'other';
   if (heading) return heading;
   if (/\b(?:you(?:'|’)ll|you will|responsib(?:le|ilities)|duties include|successful candidate|we are looking for)\b/i.test(text)) return 'other';
   return null;
@@ -148,7 +157,8 @@ export function compareResumeToJob(resumeInput: string, jobInput: string): Evide
 
 function startsWithAction(value: string): boolean {
   const first = tokens(value)[0] ?? '';
-  return ACTION_VERBS.has(first) || /(?:ed|ized|ised|ated|ated|led|built|wrote|ran|drove|grew|cut|set)$/i.test(first);
+  const gerundAsPast = first.endsWith('ing') ? `${first.slice(0, -3)}ed` : '';
+  return ACTION_VERBS.has(first) || ACTION_VERBS.has(gerundAsPast) || /(?:ed|ized|ised|ated|led|built|wrote|ran|drove|grew|cut|set)$/i.test(first);
 }
 
 function removeFiller(value: string): string {
@@ -160,23 +170,29 @@ export function analyzeResumeBullet(input: string): BulletAnalysis {
   const bullet = validateToolText(input, 'Resume bullet', TOOL_LIMITS.bullet, 8);
   const wordCount = bullet.split(/\s+/).length;
   const action = startsWithAction(bullet);
-  const specific = /\b\d+(?:[.,]\d+)?%?\b/.test(bullet) || /\b[A-Z][A-Za-z0-9+#.-]{2,}\b/.test(bullet.slice(1)) || tokens(bullet).some(token => ['customers','clients','patients','students','projects','orders','reports','campaigns','systems','sites','regions','accounts','teams'].includes(token));
+  const vagueAudienceOnly = /^(?:helped|assisted|supported)\s+(?:customers|clients|patients|students|users|teams)\.?$/i.test(clean(bullet));
+  const specific = !vagueAudienceOnly && (/\b\d+(?:[.,]\d+)?%?\b/.test(bullet) || /\b[A-Z][A-Za-z0-9+#.-]{2,}\b/.test(bullet.slice(1)) || tokens(bullet).some(token => ['projects','orders','reports','campaigns','systems','sites','regions','accounts'].includes(token)));
   const context = CONTEXT_LANGUAGE.test(bullet);
   const result = RESULT_LANGUAGE.test(bullet) || /\b\d+(?:[.,]\d+)?%?\b/.test(bullet);
   const fillerMatches = [...bullet.matchAll(VAGUE)].map(match => match[0]);
   const readable = wordCount >= 8 && wordCount <= 35 && !/[;:]{2,}|\.{2,}/.test(bullet);
   const dimensions: BulletDimension[] = [
     { id: 'action', label: 'Clear action', state: action ? 'clear' : 'missing', explanation: action ? 'The bullet opens with a concrete action.' : 'Start with what you did, using the most accurate verb you can support.' },
-    { id: 'specificity', label: 'Specificity', state: specific ? 'clear' : 'review', explanation: specific ? 'The bullet names a concrete subject, scope, tool, audience or quantity.' : 'Name the work, audience, tool or scope if the source facts support it.' },
+    { id: 'specificity', label: 'Specificity', state: specific ? 'clear' : 'review', explanation: specific ? 'The bullet names a concrete subject, scope, tool, audience or quantity.' : 'Name the customer type, channel, product, process, or scope if you can.' },
     { id: 'context', label: 'Scope or context', state: context ? 'clear' : 'review', explanation: context ? 'The reader gets some context for how or where the work happened.' : 'Add who, what, where or how if that context is known and useful.' },
     { id: 'result', label: 'Evidence or result', state: result ? 'clear' : 'missing', explanation: result ? 'The bullet includes an outcome or concrete evidence.' : 'Add the result if you can support it. A truthful qualitative outcome is useful when no verified number exists.' },
     { id: 'readability', label: 'Readability', state: readable ? 'clear' : 'review', explanation: readable ? 'The length and sentence shape are easy to scan.' : wordCount < 8 ? 'This is very short; add enough context to make the action meaningful.' : 'Trim or split the line so its central action is easy to find.' },
     { id: 'filler', label: 'Unnecessary filler', state: fillerMatches.length ? 'review' : 'clear', explanation: fillerMatches.length ? `Review vague wording such as “${fillerMatches.slice(0, 2).join('” and “')}.”` : 'No common filler phrase is obscuring the claim.' },
   ];
   const stronger = removeFiller(bullet);
+  // Removing a vague lead-in must never leave a noun fragment that looks like
+  // a recommended resume bullet (for example, “Customers with billing
+  // requests”). When a truthful action cannot be preserved, ask for it rather
+  // than manufacturing one.
+  const enoughForRewrite = !vagueAudienceOnly && startsWithAction(stronger) && stronger.split(/\s+/).length >= 4;
   const prompts: string[] = [];
   if (!specific) prompts.push('What exactly did you work on, and for whom?');
   if (!context) prompts.push('What tool, process, team, audience or scale can you name truthfully?');
   if (!result) prompts.push('What changed because of the work? Add the result only if you can support it.');
-  return { dimensions, strongerStructure: stronger !== clean(bullet) ? stronger : null, prompts };
+  return { dimensions, strongerStructure: stronger !== clean(bullet) && enoughForRewrite ? stronger : null, prompts };
 }

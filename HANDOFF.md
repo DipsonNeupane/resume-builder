@@ -1,3 +1,14 @@
+## October 2 — approved landing hero exploration (local preview only)
+
+The owner selected Cobalt & Citron from the temporary landing colour study. The homepage
+hero now uses that direction only: its previous layered role/resume/evidence/decision scene
+is replaced by one compact fictional requirement → resume evidence → user decision story.
+The approved headline and primary/secondary journeys remain. The WebGL/parallax hero work
+was removed, mobile recomposes the same three-step story into one bounded panel, and the
+rest of the landing page plus every other route retains the existing Patina tokens. Desktop
+and mobile rendered review pass with no console warning or horizontal overflow. This work
+is local-preview-only; no deployment, provider, DNS, redirect or production change occurred.
+
 ## October 1 — final rendered visual/UI audit (no cutover)
 
 Completed a separate visual-design audit of the isolated APWICO candidate: 26 logical
@@ -4151,3 +4162,10 @@ closed-vocabulary diagnostic omission for account-master deletion. The remaining
 - Added the single ordered owner/provider checklist and rollback runbook in `docs/redesign/APWICO_PRODUCTION_CUTOVER_RUNBOOK.md`; audit/evidence and A/B/C classification are in `docs/redesign/FINAL_PRE_RELEASE_REHEARSAL_2026-10-01.md`.
 - The redirect remains default-off. Authorized rollout must use the no-store 307 stage before the separately gated bounded-cache 301. Old-tab API writes are not redirected; only exact legacy origins are accepted by the existing strict mutation guard during coexistence.
 - Independent review findings were resolved: API-method redirect safety, explicit browser-only state transition UX, realistic cached-301 rollback limits, and explicit missing-original-blueprint evidence limitation.
+# 2026-10-02 — Final pre-deployment UX/UI correction batch
+
+- Locked Wine + Blush as the release palette while preserving the approved simplified landing composition.
+- Corrected the public bullet checker, counters, work-arrangement extraction, evidence vocabulary, sample entry, public navigation, and task-first copy.
+- Replaced all 27 template gallery/detail abstractions with fictional resumes rendered by the real builder template components and retained preview-before-purchase behavior.
+- Closed independent-review findings for noun-fragment rewrites, canonical evidence vocabulary, public navigation, task-first public hierarchy, mobile workspace density, Wine + Blush leakage, and public stylesheet routing.
+- Detailed implementation, verification, and the 12-item deferred P2 backlog are in `docs/final-correction-batch.md`.

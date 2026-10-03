@@ -144,7 +144,7 @@ export function requestSeo(url: URL, production: boolean, domainMigrationEnabled
   };
  }
  if (url.pathname === '/index.html') return { status: 308, headers: { ...headers, Location: `/${url.search}` }, body: '' };
- const asset = ['/robots.txt', '/sitemap.xml', '/favicon.ico', '/favicon.svg', '/favicon.png', '/favicon-192.png', '/favicon-512.png', '/apple-touch-icon.png', '/social-card.png', '/site.webmanifest', '/seo-guard.js', '/resources.css', '/content-analytics.js', '/tools.css', '/tools/analysis.js', '/tools/public-tools.js', '/tools/tool-analytics.js', '/templates.css', '/templates-filter.js', '/features.css', '/fonts.css'].includes(url.pathname) || /^\/(?:fonts|social)\/[a-z0-9._-]+$/.test(url.pathname);
+ const asset = ['/robots.txt', '/sitemap.xml', '/favicon.ico', '/favicon.svg', '/favicon.png', '/favicon-192.png', '/favicon-512.png', '/apple-touch-icon.png', '/social-card.png', '/site.webmanifest', '/seo-guard.js', '/resources.css', '/apwico-theme.css', '/content-analytics.js', '/tools.css', '/tools/analysis.js', '/tools/public-tools.js', '/tools/tool-analytics.js', '/templates.css', '/template-preview-renderers.css', '/templates-filter.js', '/features.css', '/fonts.css'].includes(url.pathname) || /^\/(?:fonts|social)\/[a-z0-9._-]+$/.test(url.pathname);
  // The extension fixture remains reachable for local installed-extension tests,
  // but must never be an indexable job page.
  const fixture = url.pathname.startsWith('/extension-fixture/');

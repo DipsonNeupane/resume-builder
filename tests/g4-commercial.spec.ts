@@ -3,7 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 
 test('public pricing presents all access paths, cancellation and export policy before purchase', async ({ page }) => {
  await page.goto('/pricing/');
- await expect(page.getByRole('heading', { level: 1 })).toContainText('Preview first');
+ await expect(page.getByRole('heading', { level: 1 })).toHaveText('Plans and pricing');
  const plans = page.locator('.pricing-grid article');
  await expect(plans).toHaveCount(3);
  await expect(plans.nth(0)).toContainText('No subscription');

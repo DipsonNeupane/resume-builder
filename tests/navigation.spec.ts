@@ -6,18 +6,18 @@ test('meaningful workspace navigation uses stable URLs and browser history', asy
  await page.goto('/');
  await page.locator('.site-header-actions').getByRole('button', { name: 'Build my resume' }).click();
  await expect(page).toHaveURL(/\/start\/build$/);
- await expect(page.getByRole('heading', { level: 1, name: 'Start with your story, not a design.' })).toBeVisible();
+ await expect(page.getByRole('heading', { level: 1, name: 'Start your master resume' })).toBeVisible();
 
- await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Jobs & Match' }).click();
+ await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Jobs', exact: true }).click();
  await expect(page).toHaveURL(/\/start\/job$/);
  await expect(page.getByRole('heading', { level: 1, name: 'Start with the role you are considering.' })).toBeVisible();
 
  await page.goBack();
  await expect(page).toHaveURL(/\/start\/build$/);
- await expect(page.getByRole('heading', { level: 1, name: 'Start with your story, not a design.' })).toBeVisible();
+ await expect(page.getByRole('heading', { level: 1, name: 'Start your master resume' })).toBeVisible();
  await page.reload();
  await expect(page).toHaveURL(/\/start\/build$/);
- await expect(page.getByRole('heading', { level: 1, name: 'Start with your story, not a design.' })).toBeVisible();
+ await expect(page.getByRole('heading', { level: 1, name: 'Start your master resume' })).toBeVisible();
 });
 
 test('private entries are served as noindex/no-store application states', async ({ request }) => {
@@ -48,23 +48,23 @@ test('journey routes explain the right start while sharing one safe workspace mo
  await page.addInitScript(value => sessionStorage.setItem('resumestride.resume.v1', JSON.stringify(value)), draft);
 
  await page.goto('/start/import');
- await expect(page.getByRole('heading', { name: 'Bring in the resume you already have.' })).toBeVisible();
- await expect(page.getByText(/Parsing happens in this browser/)).toBeVisible();
+ await expect(page.getByRole('heading', { name: 'Upload your resume' })).toBeVisible();
+ await expect(page.getByText(/file is read in your browser/)).toBeVisible();
  await expect(page.getByRole('region', { name: 'Active document' })).toHaveCount(0);
 
  await page.goto('/start/build');
- await expect(page.getByRole('heading', { name: 'Start with your story, not a design.' })).toBeVisible();
- await expect(page.getByText(/Templates and formatting wait/)).toBeVisible();
+ await expect(page.getByRole('heading', { name: 'Start your master resume' })).toBeVisible();
+ await expect(page.getByText(/Choose a template after adding your essentials/)).toBeVisible();
  await page.getByRole('button', { name: 'Start building' }).click();
  await expect(page.getByLabel('Full name')).toHaveValue(draft.name);
 
  await page.goto('/start/job');
  await expect(page.getByRole('heading', { name: 'Start with the role you are considering.' })).toBeVisible();
- await expect(page.getByText(/never enters the URL or analytics/)).toBeVisible();
+ await expect(page.getByText(/not sent to analytics/)).toBeVisible();
 
  await page.goto('/start/sample');
- await expect(page.getByRole('heading', { name: 'See evidence, make the decision, and protect the master.' })).toBeVisible();
- await expect(page.getByText(/Everything on this page is fictional/)).toBeVisible();
+ await expect(page.getByRole('heading', { name: 'See how evidence becomes a decision' })).toBeVisible();
+ await expect(page.getByText(/This example is fictional/)).toBeVisible();
  await expect(page.getByRole('group', { name: 'What does Jordan decide?' })).toBeVisible();
  await expect(page.getByRole('region', { name: 'Active document' })).toHaveCount(0);
  await expect(page.getByRole('heading', { name: /Find jobs/i })).toHaveCount(0);

@@ -16,15 +16,15 @@ test('fictional sample is complete, resettable, accessible and isolated from a r
   }));
  }, real);
  await page.goto('/start/sample', { waitUntil: 'domcontentloaded' });
- await expect(page.getByText('Everything on this page is fictional.')).toBeVisible();
- await expect(page.getByText('Direct evidence', { exact: true })).toBeVisible();
- await expect(page.getByText('Adjacent — worth reviewing', { exact: true })).toBeVisible();
- await expect(page.getByText('Unknown — not demonstrated', { exact: true })).toBeVisible();
+ await expect(page.getByText('This example is fictional')).toBeVisible();
+ await expect(page.getByText('Clearly demonstrated', { exact: true })).toBeVisible();
+ await expect(page.getByText('Worth reviewing', { exact: true })).toBeVisible();
+ await expect(page.getByText('Not demonstrated', { exact: true })).toBeVisible();
  expect(page.url()).not.toContain('Jordan');
  expect(page.url()).not.toContain('Northstar');
 
  await page.getByLabel('Worth pursuing — create a separate version').check();
- await page.getByRole('button', { name: 'Create fictional job-specific version' }).click();
+ await page.getByRole('button', { name: 'Create a separate version' }).click();
  await expect(page.getByRole('heading', { name: 'Separate fictional job-specific version' })).toBeFocused();
  await expect(page.getByText('Master resume')).toBeVisible();
  await expect(page.getByText('Unchanged · 3 original evidence points')).toBeVisible();
@@ -36,15 +36,15 @@ test('fictional sample is complete, resettable, accessible and isolated from a r
  await page.getByLabel('Keep looking').check();
  await expect(page.getByText('Separate fictional job-specific version')).toHaveCount(0);
  await page.getByLabel('Worth pursuing — create a separate version').check();
- await expect(page.getByRole('button', { name: 'Create fictional job-specific version' })).toBeVisible();
+ await expect(page.getByRole('button', { name: 'Create a separate version' })).toBeVisible();
 
  const axe = await new AxeBuilder({ page }).analyze();
  expect(axe.violations).toEqual([]);
 
  await page.getByRole('button', { name: 'Reset fictional sample' }).click();
- await expect(page.getByRole('button', { name: 'Create fictional job-specific version' })).toHaveCount(0);
+ await expect(page.getByRole('button', { name: 'Create a separate version' })).toHaveCount(0);
  await expect(page.getByText('Separate fictional job-specific version')).toHaveCount(0);
- await page.getByRole('button', { name: 'Use my resume', exact: true }).click();
+ await page.getByRole('button', { name: 'Start with my resume', exact: true }).click();
  await expect(page).toHaveURL(/\/start\/import$/);
  expect(await page.evaluate(() => sessionStorage.getItem('resumestride.resume.v1'))).toBe(JSON.stringify(real));
  await page.goBack();
@@ -54,7 +54,7 @@ test('fictional sample is complete, resettable, accessible and isolated from a r
 
 test('sample offers a direct transition to the real browser-only matcher', async ({ page }) => {
  await page.goto('/start/sample', { waitUntil: 'domcontentloaded' });
- await page.getByRole('button', { name: 'Use my job description' }).click();
+ await page.getByRole('button', { name: 'Start with a job description' }).click();
  await expect(page).toHaveURL(/\/tools\/resume-job-match\/$/);
  await expect(page.getByRole('heading', { level: 1 })).toContainText(/resume.*job/i);
 });

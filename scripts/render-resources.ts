@@ -4,6 +4,25 @@ import { clusterByGuideSlug, contentClusters, guideBySlug, guides, resourcesPath
 const check = process.argv.includes('--check');
 const escape = (value: string) => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 const withoutSeo = (text: string) => text.replace(/<!-- seo:start -->[\s\S]*?<!-- seo:end -->/, '<!-- seo:block -->');
+const unifiedNav = '<nav aria-label="Main navigation"><a href="/workspace/resume">Resume Builder</a><a href="/start/job">Jobs</a><a href="/features/">How It Works</a><a href="/tools/">Free Tools</a><a href="/templates/">Templates</a><a href="/resources/">Resources</a><a href="/pricing/">Pricing</a></nav>';
+const releaseChrome = (html: string) => html
+ .replace('<link rel="stylesheet" href="/resources.css">', '<link rel="stylesheet" href="/resources.css"><link rel="stylesheet" href="/apwico-theme.css">')
+ .replace(/<nav aria-label="Main navigation">[\s\S]*?<\/nav>/, unifiedNav)
+ .replaceAll('Jobs &amp; Match', 'Jobs')
+ .replaceAll('Free tools', 'Free Tools')
+ .replaceAll('Make the evidence<br><em>easy to see.</em>', 'Job search and resume guides')
+ .replaceAll('Practical guides for understanding a role, deciding whether it fits and making your resume relevant—without turning your experience into a score or a set of copied keywords.', 'Practical guides for understanding jobs, comparing your experience, and tailoring your resume truthfully.')
+ .replaceAll('<div class="hub-principle"><span>Am I qualified?</span><i aria-hidden="true">→</i><span>What do I demonstrate?</span><i aria-hidden="true">→</i><span>How should I tailor?</span></div>', '')
+ .replaceAll('<p class="section-label">Seven intentional clusters</p>', '')
+ .replaceAll('Start with the problem slowing down your application.', 'Choose the question you need to answer')
+ .replaceAll('The path is not always linear. Keep unknowns visible, make your own pursue decision and return to the master before creating a job-specific version.', 'Browse by the question you are trying to answer.')
+ .replaceAll('A practical next step', 'Ready to start?')
+ .replaceAll('Give your experience a reliable home before you decide what each application needs.', 'Build your master resume, then tailor separate versions for the roles you choose.')
+ .replaceAll('Put the method into practice', 'Try it')
+ .replaceAll('Keep going', 'Related guides')
+ .replaceAll('<p class="eyebrow">A practical, evidence-first method</p>', '')
+ .replaceAll('<p class="eyebrow">Change relevance, not identity</p>', '')
+ .replaceAll('<p class="eyebrow">Worldwide scope without universal rules</p>', '');
 
 function shell(title: string, description: string, path: string, main: string, slug = 'resources') {
  const canonical = `https://apwico.com${path}`;
@@ -77,6 +96,7 @@ function hub() {
 }
 
 function output(file: string, html: string) {
+ html = releaseChrome(html);
  mkdirSync(file.slice(0, file.lastIndexOf('/')), { recursive: true });
  if (check) {
   if (withoutSeo(readFileSync(file, 'utf8')) !== withoutSeo(html)) throw new Error(`Resource output stale: ${file}. Run npm run resources:generate.`);

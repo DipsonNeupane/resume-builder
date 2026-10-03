@@ -86,9 +86,11 @@ type Props = {
  slope?: number;
  lift?: number;
  intensity?: number;
+ /** Landing-only art direction. The default preserves the approved Patina render. */
+ colorway?: 'a' | 'b' | 'c' | 'd';
 };
 
-export function Silk({ className, offset = 0, slope = -0.6, lift = 0.08, intensity = 1 }: Props) {
+export function Silk({ className, offset = 0, slope = -0.6, lift = 0.08, intensity = 1, colorway = 'a' }: Props) {
  const ref = useRef<HTMLCanvasElement>(null);
  const [activation, setActivation] = useState<'waiting' | 'static-low-power' | 'ready'>('waiting');
 
@@ -141,7 +143,13 @@ export function Silk({ className, offset = 0, slope = -0.6, lift = 0.08, intensi
   const uC = [0, 1, 2, 3, 4].map((i) => gl.getUniformLocation(prog, `u_c${i}`));
   const uA = gl.getUniformLocation(prog, 'u_amt');
   // The approved Patina silk: carbon base, petrol shadow folds, rust, copper, ember sheen.
-  const tone = [[0x0b, 0x0a, 0x09], [0x04, 0x1b, 0x1e], [0x66, 0x21, 0x0d], [0xe2, 0x7d, 0x3c], [0xff, 0xd2, 0x9a]];
+  const tones = {
+   a: [[0x0b, 0x0a, 0x09], [0x04, 0x1b, 0x1e], [0x66, 0x21, 0x0d], [0xe2, 0x7d, 0x3c], [0xff, 0xd2, 0x9a]],
+   b: [[0x31, 0x0d, 0x1e], [0x1b, 0x08, 0x12], [0x69, 0x1d, 0x3b], [0xa7, 0x3a, 0x63], [0xff, 0xcf, 0xde]],
+   c: [[0x09, 0x16, 0x38], [0x04, 0x0b, 0x21], [0x16, 0x36, 0x98], [0x36, 0x67, 0xd6], [0xdd, 0xf3, 0x63]],
+   d: [[0x2e, 0x35, 0x12], [0x14, 0x19, 0x08], [0x65, 0x66, 0x18], [0xa5, 0xae, 0x39], [0xff, 0xf1, 0x9b]],
+  } as const;
+  const tone = tones[colorway];
   tone.forEach(([r, g, b], i) => gl.uniform3f(uC[i], r / 255, g / 255, b / 255));
   gl.uniform1f(uA, 0.55);
 
@@ -205,7 +213,7 @@ export function Silk({ className, offset = 0, slope = -0.6, lift = 0.08, intensi
    gl.deleteProgram(prog);
    pendingRelease.set(canvas, window.setTimeout(() => { pendingRelease.delete(canvas); gl.getExtension('WEBGL_lose_context')?.loseContext(); }, 0));
   };
- }, [offset, slope, lift, intensity, activation]);
+ }, [offset, slope, lift, intensity, activation, colorway]);
 
  return <canvas ref={ref} className={className} data-silk-mode={activation} aria-hidden="true" />;
 }

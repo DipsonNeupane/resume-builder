@@ -36,7 +36,7 @@ test('requirement extractor handles empty, huge and hostile input without networ
   page.on('request', request => { if (request.method() !== 'GET') outbound.push(`${request.method()} ${request.url()} ${request.postData() ?? ''}`); });
   await page.goto('/tools/job-requirement-extractor/');
   await page.getByRole('button', { name: 'Extract requirements' }).click();
-  await expect(page.getByRole('alert')).toContainText('more detail');
+  await expect(page.getByRole('alert')).toContainText('Paste more');
 
   await page.locator('#job-description').evaluate((field, value) => { (field as HTMLTextAreaElement).value = value as string; }, 'x'.repeat(20_001));
   await page.getByRole('button', { name: 'Extract requirements' }).click();
@@ -108,4 +108,14 @@ test('bullet checker keeps rewrites grounded and clears private state', async ({
   await page.getByRole('button', { name: 'Clear private text' }).click();
   await expect(page.locator('#resume-bullet')).toHaveValue('');
   await expect(page.locator('[data-tool-results]')).toBeHidden();
+});
+
+test('bullet checker does not turn vague input into a noun fragment and counters update', async ({ page }) => {
+  await page.goto('/tools/resume-bullet-checker/');
+  await page.locator('#resume-bullet').fill('Helped customers.');
+  await expect(page.locator('[data-count-for="resume-bullet"]')).toContainText('17 / 600');
+  await page.getByRole('button', { name: 'Review this bullet' }).click();
+  await expect(page.locator('.dimension-card').filter({ hasText: 'Specificity' })).toContainText('Review');
+  await expect(page.locator('.structure-card')).toContainText('There is not enough detail to suggest a stronger version yet.');
+  await expect(page.locator('[data-tool-output]')).not.toContainText(/^Customers\.?$/);
 });

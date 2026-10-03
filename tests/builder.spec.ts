@@ -546,7 +546,7 @@ test('unconfigured account screen preserves access to the local draft',async({pa
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Keep my local draft');
  await expectStoredName(page,'Keep my local draft');
  await page.goto('/?account=1');
- await expect(page.getByRole('heading',{name:'Make room for your next move.'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Create your account'})).toBeVisible();
  await expect(page.getByText('Account access is not available',{exact:false})).toBeVisible();
  await page.getByRole('button',{name:'Back to home',exact:true}).click();
  await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();

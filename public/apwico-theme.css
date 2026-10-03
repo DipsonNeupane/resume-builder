@@ -1,0 +1,30 @@
+/* APWICO Wine + Blush release palette for statically rendered public routes. */
+:root {
+ --carbon:#18060f; --carbon-2:#2d0c1b;
+ --bone:#fff8fa; --bone-2:#fff8fabd;
+ --copper:#b72f45; --copper-hi:#ffd0df;
+ --petrol:#4d1630; --mint:#f2a8bc; --mint-ink:#8a1d43; --mint-tint:#fbeaf0;
+ --canvas:#faf7f5; --surface:#f2eceb; --line:#e5d8dc; --line-strong:#9b858d;
+ --heading:#23161b; --text:#38282f; --slate:#66565d; --rust:#7a1b34; --action:#922036;
+}
+.resource-header .header-action,.primary-action { color:#fff8fa; }
+.resource-header .header-action:hover,.primary-action:hover { background:#cb4258; color:#fff8fa; }
+.article-hero,.hub-hero,.tools-hub-hero,.template-hero,.template-detail-hero { background-color:var(--petrol); }
+/* The final public palette is deliberately Wine + Blush. Page-specific legacy
+   CSS may still define layout, but not a competing copper/teal atmosphere. */
+.resource-header,.resource-footer { background:#18060f; color:#fff8fa; }
+.article-hero,.hub-hero,.tools-hub-hero,.tool-hero,.template-hero,.template-detail-hero,.capability-hero,.capability-detail-hero,.template-boundary,.capability-principles,.capability-action,.article-cta { background:#4d1630; background-image:radial-gradient(65% 95% at 100% 0%,#f2a8bc24,transparent 68%); color:#fff8fa; }
+.template-main,.tool-index,.cluster-index,.problem-path { background:#faf7f5; color:#38282f; }
+.template-card,.pricing-grid article,.commercial-detail,.trust-grid,.evidence-grid>div,.comparison>div { background:#fff8fa; border-color:#e5d8dc; }
+.tools-hub-hero,.capability-hero,.template-hero { min-height:0; padding-block:clamp(38px,5vw,64px); }
+.tools-hub-hero h1,.capability-hero h1,.template-hero h1 { font-size:clamp(38px,5.2vw,68px); line-height:1; }
+.template-main section { padding-block:clamp(2.2rem,5vw,4.5rem); }
+.stride-mark i,.primary-action { background:#922036; }.stride-mark i+i { background:#f2a8bc; }
+@media (max-width:680px) {
+ .resource-header { display:block; padding:12px 16px; }
+ .resource-header nav { display:flex; width:100%; margin-top:10px; overflow-x:auto; flex-wrap:nowrap; justify-content:flex-start; scrollbar-width:thin; }
+ .resource-header nav a:not(.header-action):not([aria-current=page]) { display:flex; }
+ .resource-header nav a { flex:0 0 auto; }
+ .tools-hub-hero,.capability-hero,.template-hero { padding:30px 18px; }
+}
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto!important; animation-duration:.01ms!important; animation-iteration-count:1!important; } }

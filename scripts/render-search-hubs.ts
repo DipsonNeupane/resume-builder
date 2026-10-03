@@ -7,6 +7,20 @@ import { searchHubs, type SearchHub } from '../src/content/searchHubs';
 const check = process.argv.includes('--check');
 const escape = (value: string) => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 const withoutSeo = (text: string) => text.replace(/<!-- seo:start -->[\s\S]*?<!-- seo:end -->/, '<!-- seo:block -->');
+const unifiedNav = '<nav aria-label="Main navigation"><a href="/workspace/resume">Resume Builder</a><a href="/start/job">Jobs</a><a href="/features/">How It Works</a><a href="/tools/">Free Tools</a><a href="/templates/">Templates</a><a href="/resources/">Resources</a><a href="/pricing/">Pricing</a></nav>';
+const releaseChrome = (html: string) => html
+  .replace('<link rel="stylesheet" href="/resources.css">', '<link rel="stylesheet" href="/resources.css"><link rel="stylesheet" href="/apwico-theme.css">')
+  .replace(/<nav aria-label="Main navigation">[\s\S]*?<\/nav>/, unifiedNav)
+  .replaceAll('Jobs &amp; Match', 'Jobs')
+  .replaceAll('Free tools', 'Free Tools')
+  .replaceAll('How to compare resume and job-search tools', 'Compare resume and job-search tools')
+  .replaceAll('Initial sourced resume and CV regional guidance', 'Resume and CV guidance by region')
+  .replaceAll('Occupation research for evidence-first resumes', 'Resume evidence by occupation')
+  .replaceAll('Editorial review: APWICO evidence review; reviewed 2026-09-30; next source review 2026-12-29. This is source-scope review, not professional credential or regulator approval.', 'Sources reviewed September 30, 2026; next review December 29, 2026. This is not professional or regulatory approval.')
+  .replaceAll('Map requirement to evidence—without a verdict', 'Map requirements to evidence')
+  .replaceAll('Template to inspect—not a hiring promise', 'Suggested template')
+  .replaceAll('APWICO facts and boundaries', 'About APWICO')
+  .replaceAll('This page compares current, vendor-described public facts with APWICO’s published boundaries. Verify the purchase screen before paying.', 'This comparison uses current public information from each vendor. Verify the purchase screen before paying.');
 
 function page(hub: SearchHub): string {
   const canonical = `https://apwico.com${hub.path}`;
@@ -69,7 +83,7 @@ for (const hub of searchHubs) {
   if (hub.path === '/regions/' && !evidenceIsCurrent(regionalNextReviewAt)) throw new Error(`Regional evidence expired on ${regionalNextReviewAt}; recheck before generation.`);
   const file = `public${hub.path}index.html`;
   mkdirSync(file.slice(0, file.lastIndexOf('/')), { recursive: true });
-  const html = page(hub);
+  const html = releaseChrome(page(hub));
   if (check) {
     if (withoutSeo(readFileSync(file, 'utf8')) !== withoutSeo(html)) throw new Error(`Search hub output stale: ${file}. Run npm run search:generate.`);
   } else writeFileSync(file, html);
@@ -77,12 +91,12 @@ for (const hub of searchHubs) {
 for (const occupation of occupations) {
   if (!evidenceIsCurrent(occupationNextReviewAt)) throw new Error(`Occupation evidence expired on ${occupationNextReviewAt}; recheck before generation.`);
   const file = `public/occupations/${occupation.slug}/index.html`; mkdirSync(file.slice(0, file.lastIndexOf('/')), { recursive: true });
-  const html = occupationPage(occupation); if (check) { if (withoutSeo(readFileSync(file, 'utf8')) !== withoutSeo(html)) throw new Error(`Occupation output stale: ${file}.`); } else writeFileSync(file, html);
+  const html = releaseChrome(occupationPage(occupation)); if (check) { if (withoutSeo(readFileSync(file, 'utf8')) !== withoutSeo(html)) throw new Error(`Occupation output stale: ${file}.`); } else writeFileSync(file, html);
 }
 for (const comparison of comparisons) {
   const expired = comparison.sources.find(source => !evidenceIsCurrent(source.nextReviewAt));
   if (expired) throw new Error(`${comparison.vendor} evidence expired on ${expired.nextReviewAt}; recheck or remove the claim before generation.`);
   const file = `public/compare/${comparison.slug}/index.html`; mkdirSync(file.slice(0, file.lastIndexOf('/')), { recursive: true });
-  const html = comparisonPage(comparison); if (check) { if (withoutSeo(readFileSync(file, 'utf8')) !== withoutSeo(html)) throw new Error(`Comparison output stale: ${file}.`); } else writeFileSync(file, html);
+  const html = releaseChrome(comparisonPage(comparison)); if (check) { if (withoutSeo(readFileSync(file, 'utf8')) !== withoutSeo(html)) throw new Error(`Comparison output stale: ${file}.`); } else writeFileSync(file, html);
 }
 console.log(check ? 'Search pages match their content sources.' : `Generated ${searchHubs.length} hubs, ${occupations.length} occupations and ${comparisons.length} comparisons.`);

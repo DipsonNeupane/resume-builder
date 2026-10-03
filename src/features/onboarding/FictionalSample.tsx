@@ -21,14 +21,14 @@ export function FictionalSample({ onUseResume, onUseJobDescription }: Props) {
  const reset = () => { setDecision(null); setCreated(false); setAccepted([]); };
  return <main id="main-content" className="journey-start sample-journey fictional-sample" aria-labelledby="sample-start-title">
   <div className="journey-start-icon"><FileText aria-hidden="true" /></div><div>
-   <span className="section-label">Fictional walkthrough · No account · Nothing is saved</span>
-   <h1 id="sample-start-title">See evidence, make the decision, and protect the master.</h1>
-   <p><strong>Everything on this page is fictional.</strong> Jordan Lee, Northstar Commons, the role, resume, and job description exist only in this example. This sandbox never reads or changes your resume.</p>
+   <span className="section-label">Fictional sample</span>
+   <h1 id="sample-start-title">See how evidence becomes a decision</h1>
+   <p><strong>This example is fictional</strong> and does not read or change your resume.</p>
    <section className="sample-source" aria-labelledby="sample-source-heading"><h2 id="sample-source-heading">Fictional source resume</h2><p><strong>Jordan Lee · Community Program Coordinator</strong></p><ul><li>Coordinated weekly community programs and volunteer schedules for 25 volunteers.</li><li>Tracked attendance in spreadsheets and prepared monthly summaries.</li><li>Responded to participant questions and resolved schedule conflicts.</li></ul></section>
    <section aria-labelledby="sample-evidence-heading"><h2 id="sample-evidence-heading">Requirement-level evidence</h2><div className="sample-evidence">
-    <p><strong>Direct evidence</strong><span>Requirement: coordinate schedules. Resume evidence: weekly programs and volunteer schedules for 25 volunteers.</span></p>
-    <p><strong>Adjacent — worth reviewing</strong><span>Requirement: prepare operational reports. The resume shows attendance spreadsheets and monthly summaries, but not the full reporting scope.</span></p>
-    <p><strong>Unknown — not demonstrated</strong><span>Requirement: manage procurement. No procurement evidence appears in the fictional resume. That is not proof Jordan lacks the experience.</span></p>
+    <p><strong>Clearly demonstrated</strong><span>Requirement: coordinate schedules. Resume evidence: weekly programs and volunteer schedules for 25 volunteers.</span></p>
+    <p><strong>Worth reviewing</strong><span>Requirement: prepare operational reports. The resume shows attendance spreadsheets and monthly summaries, but not the full reporting scope.</span></p>
+    <p><strong>Not demonstrated</strong><span>Requirement: manage procurement. No procurement evidence appears in the fictional resume. That is not proof Jordan lacks the experience.</span></p>
    </div></section>
    <fieldset className="sample-decision-choices"><legend>What does Jordan decide?</legend>
     <label><input type="radio" name="sample-decision" checked={decision === 'tailor'} onChange={() => setDecision('tailor')} />Worth pursuing — create a separate version</label>
@@ -36,14 +36,14 @@ export function FictionalSample({ onUseResume, onUseJobDescription }: Props) {
     <label><input type="radio" name="sample-decision" checked={decision === 'pass'} onChange={() => setDecision('pass')} />Keep looking</label>
    </fieldset>
    <p className={`sample-decision ${decision ? '' : 'visually-hidden'}`} role="status" aria-live="polite">{decision && <><ShieldCheck aria-hidden="true" />This is Jordan’s decision—not a hiring prediction or a system “apply” verdict.</>}</p>
-   {decision === 'tailor' && !created && <button className="button" onClick={() => setCreated(true)}>Create fictional job-specific version</button>}
+   {decision === 'tailor' && !created && <button className="button" onClick={() => setCreated(true)}>Create a separate version</button>}
    {created && <section className="sample-version" aria-labelledby="sample-version-heading"><h2 ref={versionHeading} tabIndex={-1} id="sample-version-heading">Separate fictional job-specific version</h2>
     <div className="sample-version-state"><p><strong>Master resume</strong><span>Unchanged · 3 original evidence points</span></p><p><strong>Northstar Commons version</strong><span>Separate · suggestions require Jordan’s choice</span></p></div>
-    <h3>Grounded wording suggestions</h3><p>Each suggestion is limited to facts already present in the fictional source resume. Jordan can accept or reject each one.</p>
+    <h3>Suggestions</h3><p>Each suggestion is limited to facts already present in the fictional source resume. Jordan can accept or reject each one.</p>
     <ul className="sample-suggestions">{suggestions.map(item => <li key={item.id}><p>{item.text}</p><small>{item.source}</small><button className="button outline" aria-pressed={accepted.includes(item.id)} onClick={() => setAccepted(current => current.includes(item.id) ? current.filter(id => id !== item.id) : [...current, item.id])}>{accepted.includes(item.id) ? <><CheckCircle2 size={15} />Accepted in separate version</> : 'Accept in separate version'}</button></li>)}</ul>
     <p className="field-hint" role="status">{accepted.length} of {suggestions.length} suggestions accepted in the fictional job-specific version. The fictional master remains unchanged.</p>
    </section>}
-   <div className="journey-start-actions sample-actions"><button className="button" onClick={onUseResume}>Use my resume</button><button className="button outline" onClick={onUseJobDescription}><Search size={15} />Use my job description</button><button className="text-button" onClick={reset}><RotateCcw size={15} />Reset fictional sample</button></div>
+   <div className="journey-start-actions sample-actions"><button className="button" onClick={onUseResume}>Start with my resume</button><button className="button outline" onClick={onUseJobDescription}><Search size={15} />Start with a job description</button><button className="text-button" onClick={reset}><RotateCcw size={15} />Reset fictional sample</button></div>
   </div>
  </main>;
 }

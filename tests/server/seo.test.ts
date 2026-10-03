@@ -248,7 +248,7 @@ test('favicon, app and social metadata refer to real assets without claiming an 
   assert.equal(policy(details.socialImage).status, 0);
  }
  assert.equal(hashes.size, Object.keys(publicPages).length, 'each route receives a genuinely distinct social image');
- for (const asset of ['/favicon.ico', '/favicon.svg', '/favicon-192.png', '/favicon-512.png', '/seo-guard.js', '/content-analytics.js', '/resources.css', '/features.css', '/fonts.css', '/fonts/brand-sans.woff2', '/tools.css', '/tools/analysis.js', '/tools/public-tools.js', '/tools/tool-analytics.js', '/templates.css', '/templates-filter.js', '/robots.txt', '/sitemap.xml']) assert.equal(policy(asset).status, 0);
+ for (const asset of ['/favicon.ico', '/favicon.svg', '/favicon-192.png', '/favicon-512.png', '/seo-guard.js', '/content-analytics.js', '/resources.css', '/apwico-theme.css', '/features.css', '/fonts.css', '/fonts/brand-sans.woff2', '/tools.css', '/tools/analysis.js', '/tools/public-tools.js', '/tools/tool-analytics.js', '/templates.css', '/template-preview-renderers.css', '/templates-filter.js', '/robots.txt', '/sitemap.xml']) assert.equal(policy(asset).status, 0);
 });
 
 test('capability pages are permanent, useful and limited to implemented behavior', () => {
@@ -292,8 +292,10 @@ test('template routes mirror the verified registry and separate preview from pur
   const path=`/templates/${item.id}/`;assert.ok(detailPaths.includes(path));
   const html=read(publicHtmlFile(path));
   assert.match(html,new RegExp(`>${item.tier==='free'?'Free':'Premium'}<`));
+  assert.ok(html.includes(`template-preview-${item.id}`));
+  assert.ok(html.includes(`Fictional Alex Morgan resume rendered in the ${item.name} template`));
   assert.ok(html.includes(`href="/start/build?template=${item.id}"`));
-  assert.match(html,/Preview first|Preview with my resume/);assert.doesNotMatch(html,/<button[^>]*>[^<]*(?:Buy|Purchase|Checkout)/i);
+  assert.match(html,/Preview before you pay|Preview this template/);assert.doesNotMatch(html,/<button[^>]*>[^<]*(?:Buy|Purchase|Checkout)/i);
  }
  assert.equal(library.filter(item=>item.tier==='free').length,7);assert.equal(library.filter(item=>item.tier==='premium').length,20);
 });
@@ -304,11 +306,11 @@ test('free tools are complete, private-by-design and distinct from paid Match', 
  for (const tool of publicTools) {
   const html = read(publicHtmlFile(tool.path));
   assert.equal((html.match(/<h1>/g) || []).length, 1);
-  assert.match(html, /No signup/); assert.match(html, /Processed only in this browser/);
+  assert.match(html, /No signup/); assert.match(html, /Your text stays in this tab/);
   if (tool.id === 'resume-job-match') {
-   assert.match(html, /not uploaded, placed in the URL or sent to analytics/i);
-   assert.match(html, /only the job description—not your resume text—is kept/i);
-  } else assert.match(html, /not uploaded, saved, placed in the URL or sent to analytics/i);
+   assert.match(html, /not sent to APWICO or analytics/i);
+   assert.match(html, /job description is kept in this tab.*resume is not kept/i);
+  } else assert.match(html, /not uploaded or sent to analytics/i);
   assert.match(html, /data-tool-form/); assert.match(html, /data-tool-cta=/);
   assert.doesNotMatch(html, /(?:score|match)\s*(?:out of 100|\d+\s*%|percentage)|<meter|class="[^"]*score/i);
  }
@@ -366,7 +368,7 @@ test('public pages have crawlable links connecting all three surfaces', () => {
 });
 
 test('every internal link, script, stylesheet and image in public HTML resolves', () => {
- const runtimePaths = new Set(['/src/main.tsx', '/_vercel/insights/script.js', '/start/sample', '/start/build', '/start/job', '/workspace/pro']);
+ const runtimePaths = new Set(['/src/main.tsx', '/_vercel/insights/script.js', '/start/sample', '/start/build', '/start/job', '/workspace/resume', '/workspace/pro']);
  for (const publicPath of Object.keys(publicPages)) {
   const html = read(publicHtmlFile(publicPath));
   const references = [...html.matchAll(/\b(?:href|src)="([^"]+)"/g)].map(match => match[1]);

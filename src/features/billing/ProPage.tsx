@@ -9,7 +9,7 @@ export function ProPage({ ownerId, onBack, onSignIn }: Props) {
   <div className="pro-page-grid">
    <div className="pro-page-intro">
     <span className="price-tag">PRO MONTHLY</span>
-    <h1>A promising role. A considered application.</h1>
+    <h1>Get APWICO Pro</h1>
     <p>Get APWICO Pro for US$19.99/month. It renews automatically until you cancel; access continues through the paid billing period.</p>
     <ul>
      <li><Check size={18}/>Full Match Analysis, requirement by requirement</li>

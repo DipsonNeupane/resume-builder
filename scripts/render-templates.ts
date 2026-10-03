@@ -1,6 +1,10 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { library, type TemplateMeta } from '../template-library/registry';
 import { commercialPlans, commercialPolicy, customerProof, publishableCustomerProof } from '../src/content/commercial';
+import { ResumePreview } from '../src/components/ResumePreview';
+import { example } from '../src/model';
 
 const check=process.argv.includes('--check');
 const escape=(text:string)=>text.replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;');
@@ -18,11 +22,42 @@ const output=(file:string,text:string)=>{
   writeFileSync(file,text);
  }
 };
-const nav=(path:string)=>`<header class="resource-header"><a class="resource-brand" href="/" aria-label="APWICO home"><span class="stride-mark" aria-hidden="true"><i></i><i></i></span><span>APWICO</span></a><nav aria-label="Main navigation"><a href="/tools/">Free tools</a><a href="/templates/"${path==='/templates/'?' aria-current="page"':''}>Templates</a><a href="/resources/">Resources</a><a href="/pricing/"${path==='/pricing/'?' aria-current="page"':''}>Pricing</a><a href="/trust/"${path==='/trust/'?' aria-current="page"':''}>Trust</a><a href="/start/job">Jobs &amp; Match</a><a class="header-action" href="/start/build">Build your resume</a></nav></header>`;
+const nav=(path:string)=>`<header class="resource-header"><a class="resource-brand" href="/" aria-label="APWICO home"><span class="stride-mark" aria-hidden="true"><i></i><i></i></span><span>APWICO</span></a><nav aria-label="Main navigation"><a href="/workspace/resume">Resume Builder</a><a href="/start/job">Jobs</a><a href="/features/">How It Works</a><a href="/tools/">Free Tools</a><a href="/templates/"${path==='/templates/'?' aria-current="page"':''}>Templates</a><a href="/resources/">Resources</a><a href="/pricing/"${path==='/pricing/'?' aria-current="page"':''}>Pricing</a></nav></header>`;
 const footer=`<footer class="resource-footer"><div><a class="resource-brand" href="/"><span class="stride-mark" aria-hidden="true"><i></i><i></i></span><span>APWICO</span></a><p>Your experience is the starting point.</p></div><nav aria-label="Footer navigation"><a href="/tools/">Free tools</a><a href="/templates/">Templates</a><a href="/resources/">Resources</a><a href="/pricing/">Pricing</a><a href="/trust/">Trust</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms &amp; refunds</a></nav></footer>`;
-function shell(path:string,title:string,description:string,main:string,script=''){return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><!-- seo:start --><title>${escape(title)}</title><meta name="description" content="${escape(description)}"><meta name="robots" content="index, follow"><link rel="canonical" href="https://apwico.com${path}"><!-- seo:end --><link rel="stylesheet" href="/resources.css"><link rel="stylesheet" href="/templates.css"><script src="/seo-guard.js"></script>${script}</head><body><a class="skip-link" href="#main-content">Skip to content</a>${nav(path)}${main}${footer}</body></html>\n`;}
-function cue(item:TemplateMeta){return `<div class="template-cue template-cue-${item.family}" aria-hidden="true"><i></i><b></b><span></span><span></span><span></span></div>`;}
-function card(item:TemplateMeta){return `<li data-template-card data-tier="${item.tier}" data-family="${item.family}" data-density="${item.density}"><a class="template-card" href="/templates/${item.id}/">${cue(item)}<span class="template-card-copy"><span class="template-badges"><small>${item.tier==='free'?'Free':'Premium'}</small><small>${titleCase(item.density)}</small></span><strong>${escape(item.name)}</strong><span>${escape(item.useCase)}</span><span class="template-link">Review details <span aria-hidden="true">→</span></span></span></a></li>`;}
+const refineCopy=(value:string)=>value
+ .replaceAll('Choose the structure after your story.','Browse resume templates.')
+ .replaceAll('Browse every live APWICO design by verified structure, density and access tier. Any design can be previewed with your own resume before you choose access.','Filter 27 templates by access, purpose, and density. Preview any design before you pay.')
+ .replaceAll('Six distinct structures to compare','Popular starting points')
+ .replaceAll('These examples span general, compact, executive, technical, academic and early-career needs. They are not rankings or outcome claims.','Explore six templates for different content and career needs.')
+ .replaceAll('Filters use only verified library metadata. “Premium” describes access, not quality or hiring outcomes.','Premium describes access, not quality or hiring outcomes.')
+ .replaceAll('Template guidance based on the document you need.','Choose a template for your content')
+ .replaceAll('Test a design before choosing access.','Preview before you pay')
+ .replaceAll('Preview first. Choose access only when it fits.','Plans and pricing')
+ .replaceAll('Compare Free, one selected Premium template and Pro before opening checkout.','Compare Free, one Premium template, and Pro.')
+ .replaceAll('Illustrative layout cue—not a resume preview','Fictional resume preview')
+ .replaceAll('Preview with my resume','Preview this template')
+ .replaceAll('Review access separately','View pricing')
+ .replaceAll('Verified library metadata','Template details')
+ .replaceAll('How this design is organized','Template structure')
+ .replaceAll('Verified characteristics','Features')
+ .replaceAll('Preview first. Choose access only if it fits.','Preview before you pay.')
+ .replaceAll('Know what APWICO does before you rely on it.','How APWICO handles your data and decisions')
+ .replaceAll('Claims you can check in the product','Product and data boundaries')
+ .replaceAll('Policies that do not hide behind checkout','Policies and support');
+function shell(path:string,title:string,description:string,main:string,script=''){return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><!-- seo:start --><title>${escape(title)}</title><meta name="description" content="${escape(description)}"><meta name="robots" content="index, follow"><link rel="canonical" href="https://apwico.com${path}"><!-- seo:end --><link rel="stylesheet" href="/resources.css"><link rel="stylesheet" href="/templates.css"><link rel="stylesheet" href="/template-preview-renderers.css"><link rel="stylesheet" href="/apwico-theme.css"><script src="/seo-guard.js"></script>${script}</head><body><a class="skip-link" href="#main-content">Skip to content</a>${nav(path)}${refineCopy(main)}${footer}</body></html>\n`;}
+const fictionalResume=example();
+function resumePreview(item:TemplateMeta,large=false){
+ const resume={...fictionalResume,template:item.id,paper:item.facts.includes('multi-page-friendly')?'A4' as const:'Letter' as const,direction:'ltr' as const,accent:'#922036'};
+ // The rendered resume is a visual preview inside an interactive template card,
+ // not a second interactive document. Strip nested anchors and hide its internal
+ // document semantics while preserving one useful accessible label on the figure.
+ const markup=renderToStaticMarkup(React.createElement(ResumePreview,{resume}))
+  .replace(/<a\b[^>]*>/g,'<span>')
+  .replaceAll('</a>','</span>');
+ return `<figure class="template-resume-preview template-preview-${item.id} template-family-${item.family}${large?' is-large':''}" aria-label="Fictional Alex Morgan resume rendered in the ${escape(item.name)} template"><div class="preview-page" aria-hidden="true">${markup}</div><figcaption>Fictional sample · ${resume.paper}${item.facts.includes('multi-page-friendly')?' · Multi-page friendly':''}</figcaption></figure>`;
+}
+const cue=(item:TemplateMeta)=>resumePreview(item,true);
+function card(item:TemplateMeta){return `<li data-template-card data-tier="${item.tier}" data-family="${item.family}" data-density="${item.density}"><a class="template-card" href="/templates/${item.id}/">${resumePreview(item)}<span class="template-card-copy"><span class="template-badges"><small>${item.tier==='free'?'Free':'Premium'}</small><small>${titleCase(item.density)}</small></span><strong>${escape(item.name)}</strong><span>${escape(item.useCase)}</span><span class="template-link">Review details <span aria-hidden="true">→</span></span></span></a></li>`;}
 const curatedIds=['modern','compact','boardroom','stackline','scholar','primer'];
 const curated=curatedIds.map(id=>library.find(item=>item.id===id)!).map(card).join('');
 const families=[...new Set(library.map(item=>item.family))].sort();
@@ -44,4 +79,20 @@ output('public/pricing/index.html',shell('/pricing/','APWICO pricing and templat
 const proofSection=publishableProof.length?`<section class="customer-proof" aria-labelledby="customer-proof-title"><p class="section-label">Customer evidence</p><h2 id="customer-proof-title">Published with permission and context</h2><ul>${publishableProof.map(item=>`<li><blockquote>${escape(item.quote)}</blockquote><p>${escape(item.context)}</p></li>`).join('')}</ul></section>`:`<section class="customer-proof" aria-labelledby="customer-proof-title"><p class="section-label">Customer evidence</p><h2 id="customer-proof-title">Customer evidence will stay specific and consented.</h2><p>APWICO does not publish customer stories until each quote or case study has explicit, scoped consent and factual review. A customer can ask support to withdraw future public display. Collection must exclude resume text, job text and contact details that are not necessary for the agreed story. We do not substitute anonymous counters, invented names or outcome claims.</p></section>`;
 const trust=`<main id="main-content" class="template-main"><section class="template-hero"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><span>Trust</span></nav><p class="eyebrow">Product facts, not borrowed credibility</p><h1>Know what APWICO does before you rely on it.</h1><p class="deck">This page records implemented boundaries. It does not use seals, testimonials, hiring promises or ATS claims to make the product look more proven than it is.</p></section><section class="trust-grid" aria-labelledby="trust-facts-title"><div><p class="section-label">Factual trust record</p><h2 id="trust-facts-title">Claims you can check in the product</h2></div><article><h3>Your decision stays yours.</h3><p>Match connects each job requirement to source wording and resume evidence. “Not demonstrated” means the resume did not show evidence; it does not claim you lack the qualification. APWICO does not decide whether you should apply.</p></article><article><h3>Your master stays separate.</h3><p>Tailoring starts a separate job-specific version. Accepting, rejecting or editing a suggestion does not rewrite the master resume.</p></article><article><h3>Preview is separate from purchase.</h3><p>Every template can be previewed. Checkout starts only after a paid option is selected and recurring consent is checked.</p></article><article><h3>Export formats have different jobs.</h3><p>${escape(commercialPolicy.pdf)} ${escape(commercialPolicy.docx)}</p></article><article><h3>Imports stay in the browser.</h3><p>Word and text-based PDF files selected through the builder are parsed locally. Server generation and optional AI processing occur only when the user requests those separate features.</p></article><article><h3>Public claims have limits.</h3><p>${escape(commercialPolicy.outcomes)} Extension and provider capabilities are described only where the corresponding behavior is released and verified.</p></article></section>${proofSection}<section class="commercial-detail" aria-labelledby="trust-links-title"><div><p class="section-label">Read the operating details</p><h2 id="trust-links-title">Policies that do not hide behind checkout</h2></div><ul><li><a href="/pricing/">Pricing, renewal, cancellation and export boundaries</a></li><li><a href="/privacy.html">Privacy and provider processing</a></li><li><a href="/terms.html">Terms, refunds and fair use</a></li><li><a href="mailto:support@apwico.com">Contact support</a></li></ul></section></main>`;
 output('public/trust/index.html',shell('/trust/','How APWICO earns trust','Review factual APWICO boundaries for Match evidence, master-resume safety, template preview, exports, privacy and customer proof.',trust.replace('<main id="main-content"','<main id="main-content" tabindex="-1"')));
+
+const premiumCss=['base',...library.filter(item=>item.tier==='premium').map(item=>item.id)]
+ .map(name=>readFileSync(`template-library/templates/${name}.css`,'utf8'))
+ .join('\n');
+const freeCss=`
+.resume-paper{background:#fff;color:#30262a;font-family:Arial,sans-serif;line-height:1.5;overflow-wrap:anywhere;text-align:start}
+.resume-paper :where(h1,h2,h3,p,ul){margin:0}.resume-paper h1{font-size:2.5em;line-height:1.1;color:var(--resume-accent)}
+.resume-headline{font-size:1.12em;margin-top:.35em}.resume-contact{display:flex;flex-wrap:wrap;gap:.2em .8em;font-size:.74em;margin-top:.8em;color:#65575e}
+.resume-header{border-bottom:.18em solid var(--resume-accent);padding-bottom:1.1em;margin-bottom:1.2em}.resume-paper section{margin-top:1.15em}
+.resume-paper h2{font-size:.85em;letter-spacing:.12em;text-transform:uppercase;color:var(--resume-accent);border-bottom:1px solid #ddd;padding-bottom:.35em;margin-bottom:.55em}
+.resume-paper h3{font-size:.95em}.entry-heading{display:flex;justify-content:space-between;gap:.7em}.entry-heading span,.entry-company{font-size:.75em;color:#65575e}
+.resume-entry+.resume-entry{margin-top:.75em}.resume-paper ul{padding-inline-start:1.15em;margin-top:.35em}.classic{text-align:left;font-family:Georgia,serif}.classic .resume-header{text-align:center}
+.minimal .resume-header{border:0}.compact{line-height:1.3}.compact section{margin-top:.75em}.bold .resume-header{background:var(--resume-accent);color:#fff;padding:1.2em}.bold .resume-header h1,.bold .resume-header .resume-headline,.bold .resume-header .resume-contact{color:#fff}
+.executive .resume-header{border-block:.18em double var(--resume-accent);padding-block:1em}.ledger h2{background:#f2e9ec;padding:.4em .65em;border:0}
+`;
+output('public/template-preview-renderers.css',`${freeCss}\n${premiumCss.trimEnd()}\n`);
 console.log(check?'Template, pricing and trust artifacts match their source data.':`Generated ${library.length} template detail pages, gallery, pricing and trust pages.`);

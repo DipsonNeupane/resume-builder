@@ -92,6 +92,10 @@ function renderBullet(value: string, container: HTMLElement): void {
     const structure = node('section', 'structure-card');
     structure.append(node('span', '', 'Stronger structure using only what you provided'), node('p', '', analysis.strongerStructure));
     container.append(structure);
+  } else if (analysis.prompts.length) {
+    const structure = node('section', 'structure-card');
+    structure.append(node('span', '', 'Stronger structure'), node('p', '', 'There is not enough detail to suggest a stronger version yet.'));
+    container.append(structure);
   }
   if (analysis.prompts.length) {
     const prompts = node('section', 'prompt-card');

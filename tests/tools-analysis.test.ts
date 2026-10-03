@@ -38,7 +38,7 @@ We value curiosity and welcome many backgrounds.`);
 });
 
 test('bounds tool inputs and rejects empty or oversized content', () => {
-  assert.throws(() => validateToolText('', 'Job description', TOOL_LIMITS.job, 40), /more detail/);
+  assert.throws(() => validateToolText('', 'Job description', TOOL_LIMITS.job, 40), /Paste more/);
   assert.throws(() => validateToolText('x'.repeat(TOOL_LIMITS.job + 1), 'Job description', TOOL_LIMITS.job, 40), /20,000/);
   assert.doesNotThrow(() => validateToolText('x'.repeat(40), 'Job description', TOOL_LIMITS.job, 40));
 });
@@ -76,6 +76,29 @@ test('bullet feedback is dimensional and never manufactures facts', () => {
   assert.ok(result.prompts.some(prompt => /result only if you can support it/i.test(prompt)));
   const serialized = JSON.stringify(result);
   assert.doesNotMatch(serialized, /\d+%|increased by|reduced by/i);
+});
+
+test('bullet checker asks for evidence instead of degrading vague input', () => {
+  for (const source of [
+    'Helped customers.',
+    'Supported clients.',
+    'Assisted users.',
+    'Helped customers with billing requests.',
+    'Various administrative duties for the regional office.',
+    'Was responsible for customer account records.',
+  ]) {
+    const result = analyzeResumeBullet(source);
+    assert.equal(result.dimensions.find(item => item.id === 'specificity')?.state, 'review');
+    assert.equal(result.strongerStructure, null);
+    assert.ok(result.prompts.length > 0);
+  }
+  const quantified = analyzeResumeBullet('Resolved 24 customer cases each week using Zendesk');
+  assert.equal(quantified.dimensions.find(item => item.id === 'specificity')?.state, 'clear');
+  const contextual = analyzeResumeBullet('Coordinated onboarding with sales and support');
+  assert.equal(contextual.dimensions.find(item => item.id === 'context')?.state, 'clear');
+  assert.equal(contextual.strongerStructure, null);
+  const contextRich = analyzeResumeBullet('Responsible for coordinating onboarding across three regions using Salesforce');
+  assert.equal(contextRich.strongerStructure, 'Coordinating onboarding across three regions using Salesforce');
 });
 
 test('hostile HTML remains inert source text in deterministic results', () => {

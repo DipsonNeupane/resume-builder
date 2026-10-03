@@ -45,7 +45,7 @@ export function PublicNavigation({ authAvailable, signedIn, profileName, resumeR
   <button ref={toggle} className="icon-button mobile-menu" aria-label="Toggle navigation" aria-controls="main-navigation" aria-expanded={open} onClick={() => setOpen(current => !current)}><Menu aria-hidden="true"/></button>
   <nav id="main-navigation" aria-label="Main navigation" className={open ? 'nav public-nav open' : 'nav public-nav'}>
    <a href="/workspace/resume" onClick={event => routeClick(event, onContinue)}>Resume Builder</a>
-   <a href="/start/job" onClick={event => routeClick(event, onJobs)}>Jobs &amp; Match</a>
+   <a href="/start/job" onClick={event => routeClick(event, onJobs)}>Jobs</a>
    <a href={publicDestinations.features}>How It Works</a>
    <a href={publicDestinations.tools}>Free Tools</a>
    <a href={publicDestinations.templates} onClick={() => setOpen(false)}>Templates</a>

@@ -6,7 +6,7 @@ declare global {
 
 test.setTimeout(120_000);
 
-test('homepage lab budgets cover LCP, layout shift, interaction response and deferred decoration', async ({ page }) => {
+test('homepage lab budgets cover LCP, layout shift, interaction response and a GPU-free hero', async ({ page }) => {
  await page.addInitScript(() => {
   window.__rsPerf = { lcp: 0, cls: 0, webglAt: 0, fcp: 0, idleAt: 0 };
   new PerformanceObserver(list => { for (const entry of list.getEntries()) window.__rsPerf.lcp = entry.startTime; }).observe({ type: 'largest-contentful-paint', buffered: true });
@@ -26,16 +26,15 @@ test('homepage lab budgets cover LCP, layout shift, interaction response and def
  await page.goto('/', { waitUntil: 'domcontentloaded' });
  await expect(page.locator('.pt-hero-title')).toBeVisible();
  await page.waitForLoadState('networkidle');
- await page.waitForTimeout(2200);
- await expect(page.locator('canvas[data-silk-mode="ready"]').first()).toBeAttached();
+ await page.waitForTimeout(500);
+ await expect(page.locator('.pt-story')).toBeVisible();
+ await expect(page.locator('canvas[data-silk-mode]')).toHaveCount(0);
  const metrics = await page.evaluate(() => window.__rsPerf);
  expect(metrics.fcp, 'first contentful paint must be observed').toBeGreaterThan(0);
  expect(metrics.lcp, 'local lab LCP').toBeGreaterThan(0);
  expect(metrics.lcp, 'local lab LCP').toBeLessThanOrEqual(3000);
  expect(metrics.cls, 'local lab CLS').toBeLessThanOrEqual(0.1);
- expect(metrics.idleAt, 'idle callback must run before decoration').toBeGreaterThan(0);
- expect(metrics.webglAt, 'WebGL decoration must initialize in the normal lab profile').toBeGreaterThan(0);
- expect(metrics.webglAt, 'WebGL begins only after the idle callback').toBeGreaterThanOrEqual(metrics.idleAt);
+ expect(metrics.webglAt, 'the approved hero must not initialize WebGL').toBe(0);
 
  const start = Date.now();
  await page.getByRole('link', { name: 'Compare my resume with a job', exact: true }).first().click();
@@ -56,7 +55,8 @@ test('data-saver devices retain a complete homepage without initializing WebGL',
  });
  await page.goto('/', { waitUntil: 'domcontentloaded' });
  await expect(page.locator('.pt-hero-title')).toBeVisible();
- await expect(page.locator('canvas[data-silk-mode="static-low-power"]').first()).toBeAttached();
+ await expect(page.locator('.pt-story')).toBeVisible();
+ await expect(page.locator('canvas[data-silk-mode]')).toHaveCount(0);
  expect(await page.evaluate(() => (window as typeof window & { __webglCalls?: number }).__webglCalls)).toBe(0);
  await expect(page.getByRole('link', { name: 'Compare my resume with a job', exact: true }).first()).toBeVisible();
 });
@@ -77,14 +77,15 @@ test('low-core devices retain complete content without decorative GPU work or re
  });
  await page.goto('/', { waitUntil: 'networkidle' });
  await expect(page.locator('.pt-hero-title')).toBeVisible();
- await expect(page.locator('canvas[data-silk-mode="static-low-power"]').first()).toBeAttached();
+ await expect(page.locator('.pt-story')).toBeVisible();
+ await expect(page.locator('canvas[data-silk-mode]')).toHaveCount(0);
  expect(await page.evaluate(() => (window as typeof window & { __webglCalls?: number }).__webglCalls)).toBe(0);
  expect(remoteFonts).toEqual([]);
  const preload = page.locator('link[rel="preload"][as="font"][href="/fonts/brand-sans.woff2"]');
  await expect(preload).toHaveCount(1);
 });
 
-test('reduced motion renders decoration without leaving an animation loop running', async ({ page }) => {
+test('reduced motion renders the evidence story without animation or GPU work', async ({ page }) => {
  await page.emulateMedia({ reducedMotion: 'reduce' });
  await page.addInitScript(() => {
   (window as typeof window & { __draws?: number }).__draws = 0;
@@ -95,11 +96,9 @@ test('reduced motion renders decoration without leaving an animation loop runnin
   };
  });
  await page.goto('/', { waitUntil: 'domcontentloaded' });
- await expect(page.locator('canvas[data-silk-mode="ready"]').first()).toBeAttached({ timeout: 10_000 });
- await page.waitForTimeout(500);
- const before = await page.evaluate(() => (window as typeof window & { __draws?: number }).__draws ?? 0);
- await page.waitForTimeout(1000);
- const after = await page.evaluate(() => (window as typeof window & { __draws?: number }).__draws ?? 0);
- expect(before).toBeGreaterThan(0);
- expect(after).toBe(before);
+ const story = page.locator('.pt-story');
+ await expect(story).toBeVisible();
+ await expect(page.locator('canvas[data-silk-mode]')).toHaveCount(0);
+ expect(await story.evaluate(element => getComputedStyle(element).animationName)).toBe('none');
+ expect(await page.evaluate(() => (window as typeof window & { __draws?: number }).__draws ?? 0)).toBe(0);
 });

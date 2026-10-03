@@ -29,7 +29,7 @@ test('mobile navigation has sequential keyboard access, Escape, and destination 
  await expect(page.getByRole('link', { name: 'Templates', exact: true })).toBeFocused();
  await page.keyboard.press('Enter');
  await expect(page).toHaveURL(/\/templates\/$/);
- await expect(page.getByRole('heading', { level: 1, name: 'Choose the structure after your story.' })).toBeVisible();
+ await expect(page.getByRole('heading', { level: 1, name: 'Browse resume templates.' })).toBeVisible();
  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
@@ -77,17 +77,17 @@ test('builder fields expose input purpose and a visible keyboard focus ring', as
  });
  expect(outline.width).toBeGreaterThanOrEqual(2);
  expect(outline.style).toBe('solid');
- // The Patina action colour (#ad521b): the ring must stay the brand's visible action colour.
- expect(outline.color).toBe('rgb(173, 82, 27)');
+ // The approved Wine action colour (#922036): the ring stays visibly on-brand.
+ expect(outline.color).toBe('rgb(146, 32, 54)');
  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
 test('lazy route transitions focus the destination heading', async ({ page }) => {
  await page.goto('/');
  await page.getByRole('button', { name: 'View Pro options', exact: true }).click();
- await expect(page.getByRole('heading', { level: 1, name: 'A promising role. A considered application.' })).toBeFocused();
+ await expect(page.getByRole('heading', { level: 1, name: 'Get APWICO Pro' })).toBeFocused();
  await page.getByRole('button', { name: 'Sign in or create account' }).click();
- await expect(page.getByRole('heading', { level: 1, name: 'Make room for your next move.' })).toBeFocused();
+ await expect(page.getByRole('heading', { level: 1, name: 'Create your account' })).toBeFocused();
 });
 
 test('delayed lazy route focuses only its loaded heading and cached routes still receive focus', async ({ page }) => {
@@ -100,14 +100,14 @@ test('delayed lazy route focuses only its loaded heading and cached routes still
  try {
   await page.goto('/');
   await page.getByRole('button', { name: 'View Pro options', exact: true }).click();
-  const proHeading = page.getByRole('heading', { level: 1, name: 'A promising role. A considered application.' });
+  const proHeading = page.getByRole('heading', { level: 1, name: 'Get APWICO Pro' });
   await expect(proHeading).toBeFocused();
   await page.getByRole('button', { name: 'Sign in or create account' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Loading…' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 1, name: 'Loading…' })).not.toBeFocused();
   await expect(proHeading).toBeHidden();
   releaseAccount();
-  await expect(page.getByRole('heading', { level: 1, name: 'Make room for your next move.' })).toBeFocused();
+  await expect(page.getByRole('heading', { level: 1, name: 'Create your account' })).toBeFocused();
   await page.getByRole('button', { name: 'Back to home', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Find the roles worth your effort.', exact: true })).toBeFocused();
   await page.getByRole('button', { name: 'Find opportunities', exact: true }).click();
@@ -119,7 +119,7 @@ test('delayed lazy route focuses only its loaded heading and cached routes still
   await page.getByRole('button', { name: 'View Pro options', exact: true }).click();
   await expect(proHeading).toBeFocused();
   await page.getByRole('button', { name: 'Sign in or create account' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Make room for your next move.' })).toBeFocused();
+  await expect(page.getByRole('heading', { level: 1, name: 'Create your account' })).toBeFocused();
  } finally {
   releaseAccount();
  }

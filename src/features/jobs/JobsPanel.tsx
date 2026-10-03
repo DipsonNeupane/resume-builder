@@ -101,7 +101,10 @@ const TIME_SAVED_VALUES = ['under_15_minutes','15_to_30_minutes','31_to_60_minut
 
 const WORKPLACE_LABELS: Record<Workplace | 'unknown', string> = { remote: 'Remote', hybrid: 'Hybrid', onsite: 'Onsite', field: 'Field-based', unknown: 'Workplace not listed' };
 const EMPLOYMENT_LABELS: Record<EmploymentType | 'unknown', string> = { full_time: 'Full-time', part_time: 'Part-time', contract: 'Contract', temporary: 'Temporary', internship: 'Internship', unknown: 'Employment type not listed' };
-const MATCH_LABELS: Record<MatchLabel, string> = { strong: 'Strong match', good: 'Good match', stretch: 'Stretch' };
+// These ranking buckets order source jobs; they are not hiring verdicts or
+// requirement-level evidence states. Keep the visible label neutral and let
+// the canonical evidence rows explain what is or is not demonstrated.
+const MATCH_LABELS: Record<MatchLabel, string> = { strong: 'Review evidence', good: 'Review evidence', stretch: 'Review evidence' };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -299,7 +302,7 @@ function parseJobCards(body: unknown): { jobs: JobCard[]; isPro: boolean; availa
 }
 
 const CATEGORY_LABELS = { required: 'Required', preferred: 'Preferred', nice_to_have: 'Nice to have' } as const;
-const STATUS_LABELS = { demonstrated: 'Clearly demonstrated', partially_demonstrated: 'Partially demonstrated', not_demonstrated: 'Not demonstrated', confirmed_incompatible: 'Confirmed incompatibility' } as const;
+const STATUS_LABELS = { demonstrated: 'Clearly demonstrated', partially_demonstrated: 'Worth reviewing', not_demonstrated: 'Not demonstrated', confirmed_incompatible: 'Confirmed incompatibility' } as const;
 
 function RequirementLedger({ requirements, scope, onReviewed }: { requirements: Requirement[]; scope: 'limited'|'full'; onReviewed: (scope: 'limited'|'full') => Promise<boolean> }) {
   const ledger = useRef<HTMLDivElement>(null);
