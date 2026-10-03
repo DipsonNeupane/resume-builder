@@ -47,19 +47,19 @@ export const capabilities: Capability[] = [
     boundaries: [
       '“Not demonstrated” means the reviewed resume did not show evidence; it does not mean you lack the qualification.',
       'Job descriptions can be incomplete or ambiguous, so extracted requirements require review.',
-      'The public evidence check is intentionally limited; saved Match analyses provide the fuller workflow.',
+      'The free check reviews up to 12 requirements. Saved Match lets you review more requirements and keep your clarifications.',
     ],
     action: { href: '/tools/resume-job-match/', label: 'Try the private evidence check', note: 'The public check runs in the browser without signup and does not place pasted content in URLs or analytics.' },
   },
   {
     slug: 'match-methodology',
-    title: 'How Match reaches an evidence view',
+    title: 'How Match compares a job and resume',
     seoTitle: 'APWICO Match methodology: requirements and resume evidence',
     description: 'Read how APWICO extracts job requirements, classifies evidence, uses clarifications and separates Match from AI tailoring and hiring predictions.',
     eyebrow: 'Match methodology',
     promise: 'Match compares a job description with your resume. It supports your decision; it does not predict hiring, assign an ATS score, or tell you to apply.',
     facts: [
-      { title: 'Requirements come from the posting', body: 'APWICO reviews bounded job-description text for explicit qualification language and section context. It keeps the source wording visible, groups signals as required, preferred or nice to have, and limits the result rather than pretending every sentence is a requirement.' },
+      { title: 'Requirements come from the posting', body: 'APWICO looks for explicit qualifications in the job description, keeps each item linked to its source wording, and groups it as required, preferred, or nice to have.' },
       { title: 'Direct evidence stays traceable', body: 'Clearly demonstrated means wording in the reviewed resume directly supports the requirement. The product shows the connected resume wording so the user can check whether the connection is meaningful.' },
       { title: 'Worth reviewing is not a pass', body: 'Worth reviewing means the resume contains related wording, but the evidence may be incomplete or indirect. It is presented for review, not upgraded into direct evidence automatically.' },
       { title: 'Not demonstrated remains unknown', body: 'Not demonstrated means the reviewed resume did not show supporting evidence. It does not mean the person lacks the skill, credential or experience, and it does not become a rejection recommendation.' },
@@ -89,7 +89,7 @@ export const capabilities: Capability[] = [
     ],
     boundaries: [
       'Suggestions must be supported by the resume; they cannot add unprovided experience or outcomes.',
-      'Starting and using a persistent job-specific resume requires the applicable account access shown in the product.',
+      'Saving a job-specific resume requires a signed-in account and the plan shown in the product.',
       'APWICO does not submit the application or infer that you applied.',
     ],
     action: { href: '/start/job', label: 'Start with a job', note: 'Paste or review the role first, then bring in the master resume without losing the job context.' },
@@ -98,8 +98,8 @@ export const capabilities: Capability[] = [
     slug: 'resume-exports',
     title: 'PDF and editable Word exports',
     seoTitle: 'Resume PDF and editable Word export policy | APWICO',
-    description: 'Understand what APWICO PDF and Word exports preserve, the account boundary, and the documented download allowance.',
-    eyebrow: 'Concrete format policy',
+    description: 'See how PDF and Word exports differ, when sign-in is required, and what each plan includes.',
+    eyebrow: '',
     promise: 'Choose PDF to preserve the design or Word for editable content.',
     facts: [
       { title: 'PDF preserves the design', body: 'Server-generated PDF uses the selected APWICO template, content direction and A4 or Letter page size.' },
@@ -109,7 +109,7 @@ export const capabilities: Capability[] = [
     boundaries: [
       'Sign-in and explicit upload consent are required before resume content is sent for document generation.',
       'Free accounts share three successful PDF or Word downloads per fixed 30-day period from signup.',
-      'Paid downloads are subject to the documented reasonable-human-use policy; access and recurring terms are shown before checkout.',
+      'Paid downloads are subject to fair-use limits. Renewal and cancellation terms are shown before checkout.',
     ],
     action: { href: '/pricing/', label: 'Review export and access terms', note: 'Previewing a template is separate from purchase. Pricing shows renewal and cancellation terms beside paid actions.' },
   },

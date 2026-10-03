@@ -174,7 +174,7 @@ test('persists a manual owner-scoped application workflow with revision protecti
   const workflow = {
     savedJobId, decision: 'pursue', applicationStatus: 'applied', notes: 'Follow up next week.',
     contactName: 'Hiring team', contactDetails: 'Recruiting inbox', reminderEnabled: true,
-    reminderAt: '2026-10-02T15:00:00.000Z', revision: 2, updatedAt: '2026-09-30T15:00:00.000Z',
+    reminderAt: '2099-10-02T15:00:00.000Z', revision: 2, updatedAt: '2026-09-30T15:00:00.000Z',
     history: [{ decision: 'pursue', applicationStatus: 'applied', changedAt: '2026-09-30T15:00:00.000Z' }],
   }
   const { deps, calls } = fixture(async name => name === 'jobs_workflow_upsert'

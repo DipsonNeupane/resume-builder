@@ -56,7 +56,7 @@ export function MatchShowcase() {
      <span className="pt-board-meaning"><b><span className="pt-state" data-state={row.state}/>{row.label}</b>{row.meaning}</span>
     </div>)}
     <div className="pt-board-decide">
-     <p>Your call<small>An example of what you might decide</small></p>
+     <p>Possible next steps</p>
      <ul>{choices.map(choice => <li key={choice.title} className={choice.chosen ? 'is-chosen' : undefined}><strong>{choice.title}</strong><small>{choice.detail}</small></li>)}</ul>
     </div>
    </div>

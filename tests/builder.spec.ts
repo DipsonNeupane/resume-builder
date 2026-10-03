@@ -254,7 +254,7 @@ test('builder uses Next through every step, Confirm unlocks downloads, and the h
  await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await expect(page.locator('.site-header').getByRole('button',{name:'Download',exact:true})).toBeVisible();
  await expect(page.locator('.site-header').getByRole('button',{name:'Upload',exact:true})).toHaveCount(0);
- for(const expected of ['Tell your story.','Experience','Education','Make it your own.']){
+ for(const expected of ['Profile and skills','Experience','Education','Choose your design and format']){
   await page.getByRole('button',{name:'Next',exact:true}).click();
   await expect(page.locator('.editor-panel').getByRole('heading',{name:expected,exact:true})).toBeVisible();
  }
@@ -557,7 +557,7 @@ test('Personal details requires a name, title, and one contact method before con
  await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Only Name');
  await page.getByRole('button',{name:'Next',exact:true}).click();
- await expect(page.getByRole('heading',{name:'Let’s start with you.'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Personal details'})).toBeVisible();
  await expect(page.getByRole('alert').filter({hasText:'Add a professional title'})).toBeVisible();
  await expect(page.getByRole('textbox',{name:'Professional title',exact:true})).toBeFocused();
  await page.getByRole('textbox',{name:'Professional title',exact:true}).fill('Analyst');
@@ -566,7 +566,7 @@ test('Personal details requires a name, title, and one contact method before con
  await expect(page.getByRole('textbox',{name:'Email',exact:true})).toBeFocused();
  await page.getByRole('textbox',{name:'Email',exact:true}).fill('only@name.example');
  await page.getByRole('button',{name:'Next',exact:true}).click();
- await expect(page.getByRole('heading',{name:'Tell your story.'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Profile and skills'})).toBeVisible();
 });
 
 test('a mononym name and international phone satisfy Personal details; location alone is insufficient',async({page})=>{
@@ -575,28 +575,28 @@ test('a mononym name and international phone satisfy Personal details; location 
  await page.getByRole('textbox',{name:'Professional title',exact:true}).fill('Performer');
  await page.getByRole('textbox',{name:'Location',exact:true}).fill('Lagos, Nigeria');
  await page.getByRole('button',{name:'Next',exact:true}).click();
- await expect(page.getByRole('heading',{name:'Let’s start with you.'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Personal details'})).toBeVisible();
  await page.getByRole('textbox',{name:'Phone',exact:true}).fill('+234 803 123 4567');
  await page.getByRole('button',{name:'Next',exact:true}).click();
- await expect(page.getByRole('heading',{name:'Tell your story.'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Profile and skills'})).toBeVisible();
 });
 
 test('forward sidebar navigation and creating a new section cannot bypass Personal details completion, but backward navigation and local saving always work',async({page})=>{
  await page.goto('/');await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
  await page.getByRole('button',{name:'Design & format'}).click();
- await expect(page.getByRole('heading',{name:'Let’s start with you.'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Personal details'})).toBeVisible();
  await expect(page.getByRole('alert').filter({hasText:'Add your name.'})).toBeVisible();
  await page.getByRole('textbox',{name:'Full name',exact:true}).fill('Blocked Add Section');
  await page.getByRole('button',{name:'Add a section',exact:true}).click();
- await expect(page.getByRole('heading',{name:'Let’s start with you.'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Personal details'})).toBeVisible();
  await expect(page.getByRole('alert').filter({hasText:'Add a professional title'})).toBeVisible();
  await expectStoredName(page,'Blocked Add Section');
  await page.getByRole('textbox',{name:'Professional title',exact:true}).fill('Engineer');
  await page.getByRole('textbox',{name:'Email',exact:true}).fill('nav@example.com');
  await page.getByRole('button',{name:'Profile & skills'}).click();
- await expect(page.getByRole('heading',{name:'Tell your story.'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Profile and skills'})).toBeVisible();
  await page.getByRole('button',{name:'Personal details'}).click();
- await expect(page.getByRole('heading',{name:'Let’s start with you.'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Personal details'})).toBeVisible();
  await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toHaveValue('Blocked Add Section');
  await page.reload();
  await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();

@@ -6,4 +6,5 @@
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 .tool-hero h1{margin:10px 0 16px;font-size:clamp(40px,5vw,68px)}
 .tool-hero .tool-promises{margin-top:18px}
-@media(max-width:680px){.tool-hero{padding:28px 18px 32px}.tool-hero h1{font-size:clamp(36px,11vw,48px)}.tool-hero .deck{font-size:16px}.tool-hero .tool-promises{margin-top:14px}.tool-workbench{padding-top:34px}}
+.tool-privacy-line{max-width:790px;margin:14px 0 0;color:var(--mint);font-size:13px;line-height:1.55}.tool-supporting-copy{max-width:760px;margin-top:24px;color:var(--slate);font-size:13px}.tool-supporting-copy p{margin:0}.tool-supporting-copy .tool-sample-link{margin-top:8px}.tool-explainer>section{grid-template-columns:1fr}.tool-explainer>section>div{max-width:760px}
+@media(max-width:680px){.tool-hero{padding:28px 18px 24px}.tool-hero h1{font-size:clamp(36px,11vw,48px)}.tool-hero .deck{font-size:16px}.tool-workbench{padding-top:24px}.tool-privacy-line{font-size:12px}.tool-field textarea{min-height:240px}.tool-supporting-copy{margin-top:18px}}

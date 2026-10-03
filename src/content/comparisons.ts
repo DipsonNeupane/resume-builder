@@ -19,12 +19,7 @@ const source = (label: string, url: string, kind: 'pricing' | 'feature', locale 
 export const comparisonReviewedOn = '2026-09-30' as const;
 export const comparisonReviewer = 'APWICO evidence review' as const;
 export const evidenceIsCurrent = (nextReviewAt: string, today = new Date().toISOString().slice(0, 10)) => nextReviewAt >= today;
-export const resumeStrideComparisonBoundaries = [
-  'The public interface reviewed here is English-only; Unicode and right-to-left document support are not full interface localization.',
-  'The browser extension is unpublished, so APWICO makes no public extension-availability claim.',
-  'No testimonial, hiring outcome, ATS acceptance or interview-rate claim is established.',
-  'Account cloud saving and paid access remain subject to the published privacy, terms and entitlement boundaries.',
-] as const;
+export const resumeStrideComparisonBoundaries = [] as const;
 
 // Vendor-described public facts only. These pages do not test private behavior,
 // rank vendors or repeat outcome claims. Locale-dependent prices are omitted

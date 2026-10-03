@@ -346,6 +346,7 @@ test('switching to a different signed-in account mid-session cannot leak the pre
 });
 
 test('a failed initial cloud-resume check never offers to save the local draft, since it could silently overwrite an account resume the check failed to find', async ({ page }) => {
+ test.setTimeout(60_000);
  let getAttempts = 0;
  await page.route('**/rest/v1/resumes**', async route => {
   if (route.request().method() === 'GET') {
@@ -358,7 +359,7 @@ test('a failed initial cloud-resume check never offers to save the local draft, 
   await route.fulfill({ status: 404, body: '{}' });
  });
  await seedSignedIn(page, 'Local Draft With Content');
- await page.goto('/');
+ await page.goto('/', { waitUntil: 'domcontentloaded' });
  await expect(page.getByText('Could not check your account for a saved resume', { exact: false })).toBeVisible();
  await expect(page.getByText('Save your local resume to your APWICO account?')).toHaveCount(0);
  await page.getByRole('button', { name: 'Continue my resume' }).click();

@@ -11,7 +11,6 @@ const featuredTemplateIds: Resume['template'][] = ['modern', 'compact', 'boardro
 const featuredTemplates = templates.filter(template => featuredTemplateIds.includes(template.id));
 // The suggestion reworks the sample's own summary using only experience it already lists.
 const suggested = 'Customer experience specialist who supports customers across email, phone and live chat, simplifies everyday support processes, and helps new team members build confidence.';
-const connected = ['Resume', 'Job', 'Evidence', 'Your decision', 'Tailored version', 'Export and apply'];
 type Props = { onBuild: () => void; onUpload: () => void; onJobs: () => void; onCompare: () => void; onPro: () => void; onTemplate: (template: Resume['template']) => void };
 
 export function HomePage({ onBuild, onUpload, onJobs, onCompare, onPro, onTemplate }: Props) {
@@ -53,7 +52,7 @@ export function HomePage({ onBuild, onUpload, onJobs, onCompare, onPro, onTempla
    </ul>
   </section>
   <section className="evidence-story landing-match" id="how-it-works">
-   <div><p className="section-label">Match Analysis · requirement by requirement</p><h2>Evidence<br/>before effort.</h2><p>See each job requirement beside supporting resume evidence—or a clear note when none is shown. You decide whether the role deserves more effort.</p><a className="button outline" href="/tools/resume-job-match/" onClick={onCompare}>Compare my resume with a job<ArrowRight size={16} aria-hidden="true"/></a></div>
+   <div><p className="section-label">Match Analysis · requirement by requirement</p><p>See each job requirement beside supporting resume evidence—or a clear note when none is shown. You decide whether the role deserves more effort.</p><a className="button outline" href="/tools/resume-job-match/" onClick={onCompare}>Compare my resume with a job<ArrowRight size={16} aria-hidden="true"/></a></div>
    <p className="landing-sources">Search <strong>190+ job portals</strong> and employer career sites using your resume or your own criteria.</p>
    <MatchShowcase/>
    <dl className="evidence-key">
@@ -65,7 +64,7 @@ export function HomePage({ onBuild, onUpload, onJobs, onCompare, onPro, onTempla
   </section>
   <div className="landing-sheet" ref={sheet}>
   <section className="landing-tailor">
-   <div className="section-introduction"><p className="section-label">Only after you decide</p><h2>Worth it?<br/><em>Then tailor it.</em></h2><p>Pro creates a separate resume for the job and suggests changes grounded in your existing content. Accept, reject, or edit each suggestion. Your master stays unchanged.</p><button className="text-button" onClick={onPro}>Tailor a saved job with Pro<ArrowRight size={16} aria-hidden="true"/></button></div>
+   <div className="section-introduction"><h2>Tailor a separate resume for the roles you choose.</h2><p>Pro creates a separate resume for the job and suggests changes grounded in your existing content. Accept, reject, or edit each suggestion. Your master stays unchanged.</p><button className="text-button" onClick={onPro}>Tailor a saved job with Pro<ArrowRight size={16} aria-hidden="true"/></button></div>
    <div className="tailor-proof" aria-hidden="true">
     <div className="tailor-master"><span className="tailor-tag">Your original resume · unchanged</span><p>{sample.summary}</p></div>
     <div className="tailor-version">
@@ -79,7 +78,6 @@ export function HomePage({ onBuild, onUpload, onJobs, onCompare, onPro, onTempla
   </section>
   <section className="landing-connected">
    <h2>Resume → Job → Evidence → Your decision → Tailored version → Export and apply</h2>
-   <ol>{connected.map((step, i) => <li key={step} data-decide={step === 'You decide' || undefined}><span>0{i + 1}</span>{step}</li>)}</ol>
    <div className="landing-connected-actions"><button className="text-button" onClick={onBuild}>Build my master resume<ArrowRight size={16} aria-hidden="true"/></button><button className="text-button" onClick={onJobs}>Find opportunities<ArrowRight size={16} aria-hidden="true"/></button></div>
   </section>
   <section className="landing-templates" id="templates">
@@ -91,7 +89,7 @@ export function HomePage({ onBuild, onUpload, onJobs, onCompare, onPro, onTempla
   <section className="landing-pricing" id="pricing">
    <div className="section-introduction"><h2>Choose the access<br/><em>you need.</em></h2></div>
    <div className="plan-comparison"><article><span className="section-label">Free</span><h3>Build, preview, and compare.</h3><p className="plan-price"><strong>$0</strong><span>no subscription</span></p><ul><li><Check aria-hidden="true"/>The complete builder and all 7 Free templates</li><li><Check aria-hidden="true"/>3 PDF or Word downloads per fixed 30-day period</li><li><Check aria-hidden="true"/>1 job search every 24 hours, up to 5 results</li><li><Check aria-hidden="true"/>Save up to 3 jobs, with a Match Analysis preview</li></ul><p className="plan-note">A free account is required for downloads and jobs. PDF and Word share the same allowance.</p><button className="button outline" onClick={onBuild}>Build my master resume<ArrowRight size={16} aria-hidden="true"/></button></article>
-   <article><span className="section-label">One Premium template</span><h3>Unlock one Premium template.</h3><p className="plan-price"><strong>US$1.99</strong><span>/month</span></p><ul><li><Check aria-hidden="true"/>One selected Premium template</li><li><Check aria-hidden="true"/>Full preview before checkout</li><li><Check aria-hidden="true"/>PDF in that design and editable Word export</li><li><Check aria-hidden="true"/>Reasonable-human-use downloads when exporting that selected design</li></ul><p className="plan-note">Recurring subscription, not a one-time purchase. Renews until cancelled; access continues through the paid period. New subscriptions are US-only.</p><a className="button outline" href="/templates/">Preview Premium templates<ArrowRight size={16} aria-hidden="true"/></a></article>
+   <article><span className="section-label">One Premium template</span><h3>Unlock one Premium template.</h3><p className="plan-price"><strong>US$1.99</strong><span>/month</span></p><ul><li><Check aria-hidden="true"/>One selected Premium template</li><li><Check aria-hidden="true"/>Full preview before checkout</li><li><Check aria-hidden="true"/>PDF in that design and editable Word export</li><li><Check aria-hidden="true"/>Fair-use downloads for that selected design</li></ul><p className="plan-note">Recurring subscription, not a one-time purchase. Renews until cancelled; access continues through the paid period. New subscriptions are US-only.</p><a className="button outline" href="/templates/">Preview Premium templates<ArrowRight size={16} aria-hidden="true"/></a></article>
    <article className="plan-pro"><span className="section-label">Pro</span><h3>Full Match Analysis and job-specific resumes.</h3><p className="plan-price"><strong>US$19.99</strong><span>/month</span></p><ul><li><Check aria-hidden="true"/>All 20 Premium templates</li><li><Check aria-hidden="true"/>Full requirement-level Match Analysis</li><li><Check aria-hidden="true"/>A separate resume for each saved job</li><li><Check aria-hidden="true"/>Suggestions you accept, reject or rewrite</li></ul><p className="plan-note">Renews until cancelled; paid access continues through the billing period. New subscriptions are US-only. Fair-use limits apply.</p><button className="button" onClick={onPro}>View Pro options<ArrowRight size={16} aria-hidden="true"/></button></article></div>
   </section>
   <footer className="landing-footer"><div><strong>APWICO</strong><p>Evidence before effort.</p></div><div><a href="mailto:support@apwico.com">support@apwico.com</a><nav aria-label="Site links"><a href="/features/">How it works</a><a href="/tools/">Free tools</a><a href="/resources/">Resources</a><a href="/pricing/">Pricing</a><a href="/trust/">Trust</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms &amp; refunds</a></nav></div></footer>

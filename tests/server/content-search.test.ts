@@ -38,12 +38,14 @@ test('occupation, regional and comparison research has bounded, substantive publ
     assert.match(html, /data-content-cta=/);
   }
   const occupationHub = read('public/occupations/index.html');
-  assert.match(occupationHub, /not a private-demand ranking/i);
+  assert.match(occupationHub, /What each guide includes/i);
+  assert.match(occupationHub, /Check local requirements/i);
+  assert.doesNotMatch(occupationHub, /private-demand ranking|publishing gate/i);
   assert.doesNotMatch(occupationHub, /guarantee|best occupation|global demand/i);
   const comparison = read('public/compare/index.html');
-  assert.match(comparison, /30 days/);
-  assert.match(comparison, /90 days/);
-  assert.match(comparison, /Named comparisons that passed/i);
+  assert.match(comparison, /Compare APWICO with other tools/i);
+  assert.match(comparison, /When a fact cannot be verified/i);
+  assert.doesNotMatch(comparison, /quality gate|Named comparisons that passed/i);
   for (const item of comparisons) {
     assert.match(comparison, new RegExp(item.vendor.replace('.', '\\.'), 'i'));
     assert.ok(Object.hasOwn(publicPages, `/compare/${item.slug}/`));

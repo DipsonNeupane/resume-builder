@@ -28,13 +28,13 @@ export const commercialPlans: readonly CommercialPlan[] = [
  {
   id: 'premium_template', name: 'One Premium template', price: 'US$1.99', cadence: 'per month', recurring: true,
   summary: 'Unlock only the Premium design selected in the builder. This is a subscription, not a one-time template purchase.',
-  includes: ['One selected Premium template', 'Full preview before checkout', 'PDF in the selected design', 'Editable Word export with clean content', 'Reasonable-human-use document downloads when exporting that selected design while access is active'],
+  includes: ['One selected Premium template', 'Full preview before checkout', 'PDF in the selected design', 'Editable Word export with clean content', 'Fair-use document downloads for that selected design while access is active'],
   action: { label: 'Preview Premium templates', href: '/templates/' },
  },
  {
   id: 'pro', name: 'Pro', price: 'US$19.99', cadence: 'per month', recurring: true,
-  summary: 'Unlock every Premium template plus the implemented Pro job-search, full Match Analysis and tailoring features.',
-  includes: [`All ${premiumTemplates.length} Premium templates`, 'Full requirement-level Match Analysis', 'Up to 20 job results per search without the Free daily search limit', 'A separate resume for each saved job', 'AI suggestions you accept, reject or edit', 'Reasonable-human-use PDF and editable Word downloads while access is active'],
+  summary: 'Unlock every Premium template, expanded job search, full Match Analysis, and job-specific tailoring.',
+  includes: [`All ${premiumTemplates.length} Premium templates`, 'Full requirement-level Match Analysis', 'Up to 20 job results per search without the Free daily search limit', 'A separate resume for each saved job', 'AI suggestions you accept, reject or edit', 'Fair-use PDF and editable Word downloads while access is active'],
   action: { label: 'Review Pro in workspace', href: '/workspace/pro' },
  },
 ] as const;
@@ -43,7 +43,7 @@ export const commercialPolicy = {
  territory: 'New paid subscriptions are currently available only in the United States.',
  currency: 'All current subscription prices are presented and charged in United States dollars (USD). No local-currency price is promised.',
  paymentMethods: 'Stripe Checkout shows only payment methods enabled for the configured account and compatible with the buyer, device, USD price and subscription. APWICO does not promise a particular method before checkout displays it.',
- taxesAndInvoices: 'Tax calculation, tax-inclusive pricing and invoice availability are not promised. Any tax, conversion or receipt detail must be reviewed in Stripe Checkout before payment; provider configuration requires release validation.',
+ taxesAndInvoices: 'Review any taxes, currency conversion, invoice, and receipt details in Stripe Checkout before paying.',
  refunds: 'Purchases are generally non-refundable except where mandatory consumer, unauthorized-charge, duplicate-charge or non-supply rights apply. The terms and refund policy control.',
  renewal: 'Paid subscriptions renew monthly until cancelled.',
  cancellation: 'Cancellation stops future renewal. Paid access continues through the current billing period.',
@@ -52,9 +52,9 @@ export const commercialPolicy = {
  pdf: 'PDF preserves the selected resume design.',
  docx: 'Word (.docx) is a clean, editable content document; it does not promise visual parity with the PDF template.',
  freeDownloads: 'Free includes 3 successful PDF or Word downloads in each fixed 30-day period starting at signup. Both formats share the allowance and unused downloads do not roll over.',
- paidDownloads: 'Pro uses the paid reasonable-human-use policy for every template. An individual Premium-template subscription uses it only when exporting that selected design; other designs follow their own entitlement or the Free allowance. Server-side size and abuse protections apply. No unlimited-download claim is made.',
+ paidDownloads: 'Pro includes fair-use downloads for every template. A one-template subscription includes fair-use downloads for that selected design; other designs use their normal entitlement. Server size and abuse limits apply.',
  exportBoundary: 'Downloads require a signed-in account and explicit consent to send the current resume to APWICO for server generation. The export routes do not intentionally keep the resume or generated file as a separate permanent server copy.',
- outcomes: 'No plan or template promises ATS passage, interviews, job offers or hiring outcomes.',
+ outcomes: 'No plan or template promises ATS passage, interviews, job offers, or hiring outcomes.',
  checkout: 'Previewing a template does not start checkout. A recurring paid action requires an explicit consent checkbox before Stripe checkout opens.',
 } as const;
 

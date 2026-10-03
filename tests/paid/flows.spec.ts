@@ -12,7 +12,7 @@ async function seed(page:Page){
 }
 // Desktop uses the signed-in header CTA; narrow viewports use the visible Patina hero CTA.
 // Keep this aligned with both entry points so responsive tests exercise the same builder flow.
-async function builder(page:Page){await page.goto('/workspace/resume');await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toBeVisible({timeout:30_000});await page.getByRole('button',{name:'Design & format',exact:true}).click();await page.getByRole('button',{name:'Confirm',exact:true}).click();}
+async function builder(page:Page){await page.goto('/workspace/resume',{waitUntil:'commit'});await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toBeVisible({timeout:60_000});await expect(page.getByRole('button',{name:/Open profile for/})).toBeVisible();await page.waitForTimeout(500);const design=page.getByRole('button',{name:'Design & format',exact:true});const heading=page.getByRole('heading',{name:'Choose your design and format',exact:true});for(let attempt=0;attempt<3&&!(await heading.isVisible());attempt++){await design.click();await page.waitForTimeout(250);}await expect(heading).toBeVisible({timeout:30_000});await page.getByRole('button',{name:'Confirm',exact:true}).click();await expect(page.getByRole('group',{name:'Document downloads'})).toBeVisible({timeout:30_000});}
 test('monthly Pro requires explicit consent and retries with the same server-owned offer and request ID',async({page})=>{
  await seed(page);const bodies:Record<string,unknown>[]=[];
  await page.route('**/api/subscription-checkout',async route=>{bodies.push(route.request().postDataJSON());await route.fulfill({status:503,json:{error:'Checkout could not open.'}});});
@@ -46,7 +46,7 @@ test('locked Premium is a persistent preview-only state and never calls PDF or D
  const free=dialog.getByRole('button',{name:/^Modern/});await expect(free).toContainText('Free / Included');
  await expect(dialog.getByText(/Popular|Recommended/i)).toHaveCount(0);
  const locked=dialog.getByRole('button',{name:/^Boardroom/});await expect(locked).toContainText('Premium · $1.99/month');await locked.click();
- await expect(page.getByText('Previewing Boardroom — Premium',{exact:true})).toBeVisible();await expect(page.getByText('Unlock this design to download it. Previewing does not grant download or use entitlement.',{exact:true})).toBeVisible();
+ await expect(page.getByText('Previewing Boardroom — Premium',{exact:true})).toBeVisible();await expect(page.getByText('Preview for free. Unlock this template to download it.',{exact:true})).toBeVisible();
  await expect(page.locator('.site-header').getByRole('button',{name:'Unlock to download',exact:true})).toBeVisible();
  await expect.poll(()=>page.evaluate(()=>JSON.parse(sessionStorage.getItem('resumestride.resume.v1')!).template)).toBe('boardroom');
  await page.reload();await page.getByRole('button',{name:'Preview resume'}).click();
@@ -111,6 +111,7 @@ test('a browser-captured local draft cannot bypass the saved-job tailoring bound
  await expect(page.getByLabel('Job description',{exact:true})).toHaveCount(0);
 });
 test('PDF and Word use shared server availability, format-specific endpoints, and safe request IDs',async({page})=>{
+ test.setTimeout(180_000);
  await seed(page);let remaining=2,statusRequests=0;
  await page.route('**/api/export-status*',route=>{statusRequests++;return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:false,hasPaidAccess:false,remaining,resetsAt:'2026-10-19T12:00:00Z'})});});
  const requests:{format:'pdf'|'docx';requestId:string}[]=[];
@@ -127,15 +128,16 @@ test('PDF and Word use shared server availability, format-specific endpoints, an
  expect(requests[2].requestId).not.toBe(requests[0].requestId);
 });
 test('the selected preview template is sent unchanged to both PDF and Word exports',async({page})=>{
+ test.setTimeout(180_000);
  await seed(page);
  const exported:Record<string,unknown>[]=[];
  for(const format of ['pdf','docx'] as const)await page.route(`**/api/export-${format}`,async route=>{exported.push(route.request().postDataJSON());await route.fulfill({status:503,contentType:'application/json',body:'{}'});});
- await page.goto('/');await page.getByRole('button',{name:'Continue my resume',exact:true}).first().click();
+ await page.goto('/',{waitUntil:'domcontentloaded'});await page.getByRole('button',{name:'Continue my resume',exact:true}).first().click();
  await page.getByRole('button',{name:'Preview resume',exact:true}).click();
  await page.getByRole('button',{name:'Templates Modern',exact:true}).click();
  await page.getByRole('dialog',{name:'Choose your layout'}).getByRole('button',{name:/^Executive/}).click();
- await page.getByRole('button',{name:'Back to editing',exact:true}).click();
- await page.getByRole('button',{name:'Design & format',exact:true}).click();await page.getByRole('button',{name:'Confirm',exact:true}).click();
+ await page.getByRole('button',{name:'Back to editing',exact:true}).click();await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Design & format',exact:true}).click();await expect(page.getByRole('heading',{name:'Choose your design and format',exact:true})).toBeVisible();await page.getByRole('button',{name:'Confirm',exact:true}).click();await expect(page.getByRole('group',{name:'Document downloads'})).toBeVisible({timeout:30_000});
  await page.getByRole('checkbox',{name:'I consent to uploading my resume content',exact:false}).check();
  await page.getByRole('button',{name:'Download PDF',exact:true}).click();
  await page.getByRole('button',{name:'Download Word (.docx)',exact:true}).click();

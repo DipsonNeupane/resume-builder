@@ -123,7 +123,7 @@ export const guides: Guide[] = [
   seoTitle: 'How much should your resume change for each job? | APWICO',
   description: 'Learn what to change, what to keep fixed and when a resume needs a light edit versus a deeper job-specific version.',
   eyebrow: 'Change relevance, not identity',
-  deck: 'There is no honest percentage. The amount should follow how different the role is from your current resume’s focus.',
+  deck: 'The amount depends on how different the role is from your current resume’s focus.',
   directAnswer: '<p>Change only what improves relevance or clarity. For a similar role, that may mean reordering a few bullets and adjusting the summary. For a career shift, you may select different projects and substantially change the emphasis. Keep factual identity, dates, credentials, employers and outcomes fixed.</p>',
   sections: [
    { id: 'layers', title: 'Think in three layers', html: `<div class="decision-table"><div><strong>Fixed facts</strong><span>Do not tailor</span><p>Contact details, employers, dates, credentials, job level and verified outcomes.</p></div><div><strong>Selected evidence</strong><span>Tailor most often</span><p>Bullets, projects, skills, ordering and the space each experience receives.</p></div><div><strong>Framing</strong><span>Tailor carefully</span><p>Headline and summary, using language that remains accurate and natural.</p></div></div>` },
@@ -197,7 +197,7 @@ export const guides: Guide[] = [
   seoTitle: 'How to choose a resume template | APWICO',
   description: 'Choose a resume template by content density, hierarchy, paper size and direction—not by unsupported claims about hiring or ATS success.',
   eyebrow: 'Let the evidence choose the layout',
-  deck: 'A useful template makes your strongest real evidence easier to scan without forcing your career into the wrong structure.',
+  deck: 'A useful template makes your strongest evidence easy to scan and fits the amount of content you need to show.',
   directAnswer: '<p>Choose a template after you know what the resume must contain. Compare the amount of experience, section hierarchy, reading direction, paper size and the employer’s requested format. Preview your own content before paying. No design determines hiring outcomes or proves that every hiring system will parse a document the same way.</p>',
   directAnswerTitle: 'Let your content choose the structure.',
   sections: [
@@ -208,7 +208,7 @@ export const guides: Guide[] = [
    { id: 'access', title: '5. Preview before choosing access', html: `<p>Free, individual Premium-template and Pro access are different purchase paths. The template page should show the verified tier and let you preview first; payment is a later explicit action. Read the current <a href="/pricing/">pricing and renewal terms</a> beside any paid choice.</p><aside class="callout warning"><strong>Avoid template mythology</strong><p>“ATS-proof,” “guaranteed,” and “best for every role” are not verifiable template properties. Judge the actual structure and output instead.</p></aside>` },
   ],
   related: ['a4-vs-letter-resume', 'master-resume-vs-tailored-resume', 'resume-or-cv-by-country'],
-  cta: { label: 'Compare verified template details', href: '/templates/', destination: 'templates', note: 'Filter by structure, density and access, then preview with your own content.' },
+  cta: { label: 'Browse resume templates', href: '/templates/', destination: 'templates', note: 'Filter by structure, density and access, then preview with your own content.' },
  },
  {
   slug: 'a4-vs-letter-resume',

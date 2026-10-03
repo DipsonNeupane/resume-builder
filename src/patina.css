@@ -267,7 +267,7 @@ button:disabled { color:#6f6962; background:#eeece8; border-color:#dcd8d2; }
 
 /* ---------- account ---------- */
 
-.account-page { background:var(--rs-canvas); align-items:stretch; }
+.account-page { background:var(--rs-canvas); align-items:stretch; grid-template-columns:minmax(340px,560px); justify-content:center; }
 .account-context { background:var(--pt-petrol); color:var(--pt-bone); border:0; border-radius:20px; padding:40px; position:relative; overflow:hidden; isolation:isolate; }
 .account-context::after { content:''; position:absolute; inset:0; z-index:-1; background:radial-gradient(70% 60% at 100% 0%,#de804433,transparent 70%); }
 .account-context .section-label { color:var(--pt-mint); }

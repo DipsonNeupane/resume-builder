@@ -12,7 +12,7 @@ test('public Match methodology covers actual evidence states, clarifications, li
  assert.ok(methodology);
  const copy=JSON.stringify(methodology);
  for(const phrase of ['required','preferred','Clearly demonstrated','Worth reviewing','Not demonstrated','confirmed incompatibility','deterministic','AI']) assert.match(copy,new RegExp(phrase,'i'));
- for(const phrase of ['hiring prediction','applicant-tracking-system score','decision']) assert.match(copy,new RegExp(phrase,'i'));
+ for(const phrase of ['hiring prediction','ATS score','decision']) assert.match(copy,new RegExp(phrase,'i'));
  const engine=read('server/jobs/match.ts');
  for(const token of ["'required'","'preferred'","'nice_to_have'","'demonstrated'","'partially_demonstrated'","'not_demonstrated'","'confirmed_incompatible'"]) assert.match(engine,new RegExp(token));
  assert.match(read('middleware.ts'),/\/features\/match-methodology\//);
@@ -32,7 +32,7 @@ test('commercial launch contract stays US-only, USD-only and refuses unverified 
  assert.match(commercialPolicy.territory,/only in the United States/i);
  assert.match(commercialPolicy.currency,/USD/);
  assert.match(commercialPolicy.paymentMethods,/does not promise a particular method/i);
- assert.match(commercialPolicy.taxesAndInvoices,/not promised/i);
+ assert.match(commercialPolicy.taxesAndInvoices,/Review any taxes, currency conversion, invoice, and receipt details in Stripe Checkout before paying/i);
  assert.match(commercialPolicy.refunds,/mandatory consumer/i);
  const territory=read('server/billing/catalog.ts');
  assert.match(territory,/country !== 'US'/);
@@ -49,7 +49,7 @@ test('localization contract defaults to an explicit supported locale without cou
  const source=read('src/i18n/locale.ts');
  assert.doesNotMatch(source,/x-vercel-ip-country|geoip|navigator\.language/);
  const builder=read('src/main.tsx');
- assert.match(builder,/Resume language code/);assert.match(builder,/Writing direction/);assert.match(builder,/currently English/);
+ assert.match(builder,/Resume language code/);assert.match(builder,/Writing direction/);assert.match(builder,/does not translate the English interface/);
 });
 
 test('cloud lifecycle has explicit consent, conflict handling, account switching and self-service deletion',()=>{

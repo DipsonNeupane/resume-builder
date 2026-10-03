@@ -828,11 +828,11 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
   if (!ownerId) {
     return <section className="field jobs-panel" aria-label="Job search">
       <div className="jobs-panel-heading">
-        <div><span className="section-label">{target.kind === 'jobs' ? 'Your opportunity workspace' : 'Private opportunity workspace'}</span><h1>{privateHeading}</h1><p>{target.kind === 'jobs' ? 'Sign in to search for opportunities based on the evidence in your resume.' : 'Sign in to restore this workspace state. APWICO verifies ownership before showing any saved job, evidence, or job-specific document.'}</p></div>
+        <div>{target.kind !== 'jobs'&&<span className="section-label">Private opportunity workspace</span>}<h1>{privateHeading}</h1><p>{target.kind === 'jobs' ? 'Sign in to search for jobs and save opportunities.' : 'Sign in to restore this workspace state. APWICO verifies ownership before showing any saved job, evidence, or job-specific document.'}</p></div>
         <button className="back-link" onClick={onBack}>Back</button>
       </div>
       <div className="notice" role="status">
-        Sign in to search for jobs based on your resume. Save opportunities, understand the match, and return when you’re ready to apply. A free account includes one search every 24 hours, with up to 5 results.
+        Sign in to search and save jobs. Free includes one search every 24 hours with up to 5 results.
         <button className="text-button" onClick={onSignIn}>Sign in or create account</button>
       </div>
     </section>;

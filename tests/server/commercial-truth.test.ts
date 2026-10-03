@@ -19,7 +19,8 @@ test('the commercial contract exposes all three paths and only verified recurrin
  assert.match(commercialPolicy.templateAfterCancellation, /not deleted/);
  assert.match(commercialPolicy.docx, /does not promise visual parity/);
  assert.match(commercialPolicy.freeDownloads, /3 successful PDF or Word downloads/);
- assert.match(commercialPolicy.paidDownloads, /No unlimited-download claim/);
+ assert.match(commercialPolicy.paidDownloads, /fair-use downloads/i);
+ assert.doesNotMatch(commercialPolicy.paidDownloads, /No unlimited-download claim/);
 });
 
 test('customer proof is unpublished by default and its future shape requires scoped consent and withdrawal', () => {
@@ -30,8 +31,7 @@ test('customer proof is unpublished by default and its future shape requires sco
  assert.match(source, /factsVerifiedAt: string/);
  assert.match(source, /withdrawalContact: string/);
  const trust = read('public/trust/index.html');
- assert.match(trust, /No customer stories are published yet/);
- assert.match(trust, /withdraw future public display/);
+ assert.doesNotMatch(trust, /No customer stories are published yet|withdraw future public display|customer proof/i);
  assert.doesNotMatch(trust, /<blockquote>/);
  const valid: CustomerProof = { id: 'story-one', quote: 'The requirement view helped me decide.', context: 'A customer describing the decision workflow.', consentRecordedAt: '2026-01-01', factsVerifiedAt: '2026-01-02', consentScope: 'public_quote', consentReference: 'proof-consent-story-one', moderatedAt: '2026-01-03', publishedAt: '2026-01-04', withdrawnAt: null, withdrawalContact: 'support@apwico.com' };
  assert.deepEqual(publishableCustomerProof([valid], new Date('2026-09-30T00:00:00Z')), [valid]);
@@ -45,7 +45,7 @@ test('pricing and trust are stable public pages with truthful policy links', () 
  assert.ok(publicPages['/pricing/']);
  assert.ok(publicPages['/trust/']);
  const pricing = read('public/pricing/index.html');
- for (const phrase of ['Every access path, together', 'One Premium template', 'US$1.99', 'US$19.99', 'renew monthly until cancelled', 'After an individual Premium-template subscription expires', 'PDF preserves the selected resume design', 'Word (.docx) is a clean, editable content document']) assert.match(pricing, new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+ for (const phrase of ['Plans and pricing', 'One Premium template', 'US$1.99', 'US$19.99', 'renew monthly until cancelled', 'After an individual Premium-template subscription expires', 'PDF preserves the selected resume design', 'Word (.docx) is a clean, editable content document']) assert.match(pricing, new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
  assert.match(pricing, /href="\/trust\/"/);
  assert.match(pricing, /href="\/terms.html"/);
 });

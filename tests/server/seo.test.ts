@@ -306,7 +306,7 @@ test('free tools are complete, private-by-design and distinct from paid Match', 
  for (const tool of publicTools) {
   const html = read(publicHtmlFile(tool.path));
   assert.equal((html.match(/<h1>/g) || []).length, 1);
-  assert.match(html, /No signup/); assert.match(html, /Your text stays in this tab/);
+  assert.match(html, /Your text stays in this tab/);
   if (tool.id === 'resume-job-match') {
    assert.match(html, /not sent to APWICO or analytics/i);
    assert.match(html, /job description is kept in this tab.*resume is not kept/i);

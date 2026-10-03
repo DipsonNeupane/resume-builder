@@ -201,12 +201,7 @@ export function TailoringPanel({ resume, ownerId, onSignIn, onViewPro, versionId
   trackProductEvent('suggestion_reviewed', { surface: 'tailoring', user_state: 'authenticated', plan: 'Pro' });
   trackProductEvent('suggestion_rejected', { surface: 'tailoring', user_state: 'authenticated', plan: 'Pro' });
  }
- if (!ownerId) {
-  return <div className="notice" role="status">
-   Sign in to get AI tailoring suggestions for a saved job. Requires Pro.
-   <button className="text-button" onClick={onSignIn}>Sign in</button>
-  </div>;
- }
+ if (!ownerId) return null;
  if (!versionId || !savedJobId) {
   return <div className="notice" role="status">
    AI suggestions are available only from a saved job-specific resume. Save a job and choose “Tailor my resume for this job” to begin.

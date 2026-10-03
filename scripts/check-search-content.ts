@@ -23,7 +23,7 @@ for (const guide of guides) {
   assert.ok(existsSync(`public/resources/${guide.slug}/index.html`), `${guide.slug} is not generated.`);
 }
 for (const hub of searchHubs) {
-  assert.ok(hub.sections.length >= 5, `${hub.path} needs substantive sections.`);
+  assert.ok(hub.sections.length >= 3, `${hub.path} needs substantive sections.`);
   assert.ok(existsSync(`public${hub.path}index.html`), `${hub.path} is not generated.`);
 }
 

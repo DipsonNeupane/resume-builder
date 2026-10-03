@@ -7,14 +7,14 @@ const job='The program coordinator must organize weekly community workshops and 
 test('template gallery is static, filterable and keeps preview separate from purchase',async({page})=>{
  await page.goto('/templates/');
  await expect(page.getByRole('heading',{level:1,name:'Browse resume templates.'})).toBeVisible();
- await expect(page.locator('[data-template-card]')).toHaveCount(33); // six curated previews plus the complete 27-item library
+ await expect(page.locator('[data-template-card]')).toHaveCount(27); // the complete library, with no duplicate showcase
  await expect(page.locator('[data-template-grid] .template-resume-preview')).toHaveCount(27);
  await page.locator('select[name="tier"]').selectOption('free');
  await expect(page.locator('[data-template-grid] [data-template-card]:visible')).toHaveCount(7);
  await expect(page.getByRole('status')).toHaveText('Showing 7 of 27 templates.');
  await page.getByRole('link',{name:/Modern/}).first().click();
  await expect(page).toHaveURL('/templates/modern/');
- await expect(page.getByText('Template details')).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Template structure'})).toBeVisible();
  await expect(page.getByLabel('Fictional Alex Morgan resume rendered in the Modern template')).toBeVisible();
  const preview=page.getByRole('link',{name:'Preview this template'});
  await expect(preview).toHaveAttribute('href','/start/build?template=modern');

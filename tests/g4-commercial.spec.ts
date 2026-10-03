@@ -21,7 +21,8 @@ test('trust page publishes factual boundaries and no fabricated customer proof',
  await page.goto('/trust/');
  await expect(page).toHaveTitle('How APWICO earns trust');
  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://apwico.com/trust/');
- await expect(page.getByRole('heading', { name: 'Customer evidence will stay specific and consented.' })).toBeVisible();
+ await expect(page.getByRole('heading', { name: 'Product and data boundaries' })).toBeVisible();
+ await expect(page.getByText(/Customer evidence will stay specific and consented/)).toHaveCount(0);
  await expect(page.locator('blockquote')).toHaveCount(0);
  await expect(page.getByText(/does not decide whether you should apply/)).toBeVisible();
  await expect(page.getByText(/does not rewrite the master resume/)).toBeVisible();
@@ -35,7 +36,7 @@ test('Premium template choice keeps preview separate for a signed-out visitor', 
  const premium = page.locator('.template-picker-card').filter({ hasText: 'Boardroom' });
  await premium.getByRole('button', { name: 'Unlock for $1.99/month' }).click();
  const dialog = page.getByRole('dialog');
- await expect(dialog).toContainText('recurring subscription, not a one-time purchase');
+ await expect(dialog).toContainText('renews until cancelled');
  await expect(dialog).toContainText('Free');
  await expect(dialog).toContainText('One design');
  await expect(dialog).toContainText('Pro');

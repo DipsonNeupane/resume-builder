@@ -64,7 +64,7 @@ test('contact checks reject arbitrary phone text and executable website schemes'
  await expect(page.getByRole('textbox',{name:'Website or professional profile',exact:true})).toBeFocused();
  await page.getByRole('textbox',{name:'Website or professional profile',exact:true}).fill('example.com/profile');
  await page.getByRole('button',{name:'Next',exact:true}).click();
- await expect(page.getByRole('heading',{name:'Tell your story.'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Profile and skills'})).toBeVisible();
 });
 
 test('rejected extension payloads stay in bounded local diagnostics without content or telemetry',async({page})=>{
