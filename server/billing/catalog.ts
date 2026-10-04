@@ -17,6 +17,39 @@ export type Offer = {
 
 export type OfferCatalogConfig = BillingConfig & { offers: ReadonlyMap<string, Offer> }
 
+export type PaidTerritoryMode = 'us' | 'international'
+
+/**
+ * International selling is deliberately fail-closed. Setting the territory
+ * flag alone is not enough: the deployment must also explicitly confirm that
+ * Stripe automatic tax is enabled after the required registrations and
+ * commercial review have been completed. Production currently leaves both
+ * flags unset and therefore remains US-only.
+ */
+export function paidTerritoryMode(env: NodeJS.ProcessEnv): PaidTerritoryMode {
+  const mode = env.PAID_TERRITORY_MODE || 'us'
+  if (mode === 'us') return mode
+  if (mode === 'international' && env.STRIPE_AUTOMATIC_TAX_ENABLED === 'true') return mode
+  throw new HttpError(503, 'International subscriptions are not configured', 'configuration')
+}
+
+type PaidCheckoutTaxOptions = {
+  automatic_tax: { enabled: true }
+  billing_address_collection: 'required'
+  customer_update: { address: 'auto'; name: 'auto' }
+  tax_id_collection: { enabled: true }
+}
+
+export function paidCheckoutTaxOptions(env: NodeJS.ProcessEnv): PaidCheckoutTaxOptions | Record<string, never> {
+  if (paidTerritoryMode(env) === 'us') return {}
+  return {
+    automatic_tax: { enabled: true },
+    billing_address_collection: 'required',
+    customer_update: { address: 'auto', name: 'auto' },
+    tax_id_collection: { enabled: true },
+  }
+}
+
 function priceMap(raw: string | undefined): Record<string, string> {
   if (!raw) return {}
   let value: unknown
@@ -58,6 +91,7 @@ export function offerFor(config: OfferCatalogConfig, key: unknown): Offer {
 }
 
 export function assertPaidTerritory(request: Request, env: NodeJS.ProcessEnv): void {
+  if (paidTerritoryMode(env) === 'international') return
   const trustedCountry = request.headers.get('x-vercel-ip-country')
   // The legacy header is accepted only by local/test requests during migration.
   const localCountry = env.VERCEL_ENV ? null : request.headers.get('x-apwico-country') || request.headers.get('x-resumestride-country')

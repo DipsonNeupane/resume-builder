@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import type Stripe from 'stripe'
-import { assertPaidTerritory, offerCatalogConfig, offerFor, validateOffer } from '../../server/billing/catalog.ts'
+import { assertPaidTerritory, offerCatalogConfig, offerFor, paidCheckoutTaxOptions, paidTerritoryMode, validateOffer } from '../../server/billing/catalog.ts'
 import { premiumTemplateIds } from '../../src/model.ts'
 import { billingConfig, recurringConfig } from '../../server/billing/stripe.ts'
 
@@ -28,6 +28,17 @@ test('enabling the new catalog disables both historical checkout products',()=>{
 test('paid territory accepts trusted US and rejects unsupported countries',()=>{
  assert.doesNotThrow(()=>assertPaidTerritory(new Request('https://apwico.com',{headers:{'x-vercel-ip-country':'US'}}),{VERCEL_ENV:'preview'}))
  assert.throws(()=>assertPaidTerritory(new Request('https://apwico.com',{headers:{'x-vercel-ip-country':'CA'}}),{VERCEL_ENV:'production'}))
+})
+
+test('international selling is fail-closed until tax handling is explicitly enabled',()=>{
+ assert.equal(paidTerritoryMode({}), 'us')
+ assert.throws(()=>paidTerritoryMode({PAID_TERRITORY_MODE:'international'}))
+ assert.throws(()=>paidTerritoryMode({PAID_TERRITORY_MODE:'worldwide'}))
+ assert.doesNotThrow(()=>assertPaidTerritory(new Request('https://apwico.com',{headers:{'x-vercel-ip-country':'CA'}}),{PAID_TERRITORY_MODE:'international',STRIPE_AUTOMATIC_TAX_ENABLED:'true',VERCEL_ENV:'production'}))
+ assert.deepEqual(paidCheckoutTaxOptions({}), {})
+ assert.deepEqual(paidCheckoutTaxOptions({PAID_TERRITORY_MODE:'international',STRIPE_AUTOMATIC_TAX_ENABLED:'true'}),{
+  automatic_tax:{enabled:true},billing_address_collection:'required',customer_update:{address:'auto',name:'auto'},tax_id_collection:{enabled:true},
+ })
 })
 
 test('Stripe offer validation requires active matching product metadata and monthly cadence',async()=>{

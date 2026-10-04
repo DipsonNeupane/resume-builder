@@ -2,7 +2,7 @@ import type Stripe from 'stripe'
 import { authenticate, HttpError, json, jsonBody, requirePost } from '../http/security.js'
 import { databaseConfig, serviceDatabase } from '../database.js'
 import { billingError, stripeClient } from './stripe.js'
-import { assertPaidTerritory, offerCatalogConfig, offerFor, validateOffer, type Offer } from './catalog.js'
+import { assertPaidTerritory, offerCatalogConfig, offerFor, paidCheckoutTaxOptions, validateOffer, type Offer } from './catalog.js'
 
 const dependencies = { authenticate, serviceDatabase, stripeClient, validateOffer }
 type Dependencies = typeof dependencies
@@ -60,6 +60,7 @@ export async function offerCheckout(request: Request, env: NodeJS.ProcessEnv = p
       subscription_data: { metadata: { offer_key: offer.key } },
       success_url: `${config.origin}/?account=1&checkout=success`, cancel_url: `${config.origin}${offer.kind === 'template' ? '/workspace/resume' : '/workspace/pro'}?checkout=cancelled`,
       allow_promotion_codes: false,
+      ...paidCheckoutTaxOptions(env),
     }, { idempotencyKey: `offer:${owner}:${body.requestId}` })
     if (!session.url || session.livemode !== config.live || new URL(session.url).origin !== 'https://checkout.stripe.com') throw new Error('Unexpected checkout response')
     const bound = await db.rpc('billing_bind_offer_checkout', { p_id: body.requestId, p_owner: owner, p_session: session.id })
