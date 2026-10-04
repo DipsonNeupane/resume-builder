@@ -1,3 +1,44 @@
+## October 4 — backlog closure and first production measurement review
+
+Reconciled all original 65 blueprint tasks and Group 9 against repository and
+live-provider evidence. The canonical count is 51 Complete / 9 Validation Pending /
+4 Partial / 0 Not Started / 1 Blocked. Group 9 is complete for the APWICO web
+product/provider migration; ResumeStride redirects remain intentionally disabled.
+Details and current task boundaries are in `docs/redesign/BLUEPRINT_STATUS.md`.
+
+Production measurement was corrected without a deployment or destructive change.
+Four already-tested additive migrations for evidence/conversion measurement,
+application workflow, voluntary outcomes, and APWICO support identity were applied
+in order to the existing Supabase project and recorded in migration history. The
+required tables/RPCs exist and each new outcome table has an honest zero-row
+baseline. Seven-day Vercel analytics, available Speed Insights, Search Console's
+processing/no-data state, and the absence of Vercel error logs are recorded in
+`docs/redesign/PRODUCTION_VALIDATION_2026-10-04.md`; no content or raw owner IDs
+were read.
+
+Prepared a fail-closed international billing mode, but production remains U.S.-only:
+international mode cannot activate unless automatic tax is explicitly enabled, and
+Checkout then requires billing address collection, customer address/name update and
+tax-ID collection. Tax registrations, qualified jurisdiction review, provider setup
+and separately authorized acceptance remain external gates. See
+`docs/redesign/INTERNATIONAL_PAYMENTS_READINESS_2026-10-04.md`.
+
+Prepared the unpublished APWICO Job Capture 0.2.0 store candidate with APWICO visual
+identity, padded icons, a real controlled-fixture screenshot, promo tile, factual
+listing/privacy copy, a reviewed ZIP allowlist and store-asset/package checks. Store
+enrollment/payment, 2FA, policy certification, real-site acceptance and explicit
+submission/publication remain owner/external gates; no public install URL is claimed.
+Tasks 58–61 now have bounded privacy-safe operating foundations in
+`docs/redesign/G8_POST_LAUNCH_OPERATING_FOUNDATIONS_2026-10-04.md`; real people,
+agreements, pilots, samples and findings remain post-launch external work.
+
+Verification for this closure batch: international billing catalog 6/6; server
+TypeScript PASS; extension controlled/installed suite 42/42; extension package
+and store-asset checks 3/3; production schema/RPC and aggregate-zero checks PASS;
+required `graphify update .` PASS. The first parallel extension run exposed only
+cold synchronized-filesystem timeouts; the bounded serial rerun passed completely
+after raising the extension gate's cold-start budget without changing behavior.
+
 ## October 2 — approved landing hero exploration (local preview only)
 
 The owner selected Cobalt & Citron from the temporary landing colour study. The homepage

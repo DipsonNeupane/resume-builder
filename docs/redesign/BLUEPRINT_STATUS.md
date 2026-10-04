@@ -1,6 +1,6 @@
 # APWICO redesign blueprint status
 
-Status date: 2026-10-01. This ledger describes only the isolated redesign branch. It does not claim that undeployed work is live.
+Status date: 2026-10-04. This ledger reconciles repository evidence with the live APWICO production validation performed after release.
 
 ## Status model
 
@@ -14,26 +14,26 @@ Status date: 2026-10-01. This ledger describes only the isolated redesign branch
 
 Every task is included exactly once:
 
-- **COMPLETE (47):** 1–4, 6–18, 23–36, 38–44, 47–50, 54, 55, 57, 62, 65.
-- **VALIDATION PENDING (13):** 5, 19–22, 45, 46, 51–53, 56, 63, 64.
-- **PARTIAL (0):** none.
-- **NOT STARTED (4):** 58–61.
+- **COMPLETE (51):** 1–18, 23–36, 38–44, 46–50, 54–57, 62, 64, 65.
+- **VALIDATION PENDING (9):** 19–22, 45, 51–53, 63.
+- **PARTIAL (4):** 58–61.
+- **NOT STARTED (0):** none.
 - **BLOCKED (1):** 37.
 
-Production analytics, human/device checks and post-release field evidence are represented as **VALIDATION PENDING**, not Partial or Blocked. Task 37 alone is blocked because repository truth says the extension is unpublished and contains no verified public install URL/version. The first occupation and regional sets are implementation-complete but await internal-demand and qualified local validation. Group 8 pre-launch foundations are implemented; Tasks 58–61 remain deliberate post-launch work.
+Tasks 5, 46, 56 and 64 closed after the first live analytics/search/provider review, repeated production release validation, and verification of the current U.S.-only Stripe boundary. Tasks 58–61 are now Partial: operating structures and materials exist, but real advisors, agreements, institutional pilots, samples and research results do not. Task 37 remains Blocked only on Chrome Web Store owner/publication action; the candidate, privacy disclosure, assets, package and controlled acceptance are repository-ready.
 
 ## Group summary
 
 | Group | Status | Current truth |
 | --- | --- | --- |
-| 1. Product strategy and measurement | Validation pending | Tasks 1–4 are complete: positioning is rolled out, journeys converge, north-star records are durable/content-free and the full content-free funnel is instrumented. Task 5 awaits production field denominators. |
+| 1. Product strategy and measurement | COMPLETE | The first production review observed content-free funnel traffic and an honest zero durable numerator/denominator after applying the missing additive production measurement migration. No rate was invented. |
 | 2. Homepage and navigation UI | COMPLETE | Tasks 6–14 meet current automatable Done When conditions: evidence-led homepage, permanent navigation, curated showcase, complete truthful template discovery and indexable detail/pricing routes. |
 | 3. Onboarding and workspace | Mixed | Tasks 15–18 are complete. Tasks 19–22 are implementation-complete with automated coverage; real email-provider, human/device, assistive-technology and post-release validation remain. |
 | 4. Trust, pricing and monetization | COMPLETE | Tasks 23–30 meet current automatable conditions with verified pricing/cancellation/export terms, factual trust, unpublished-by-default proof architecture and permanent commercial routes. |
-| 5. Jobs, Match and application workflow | Mixed | Tasks 31–36 are complete with server/database and public/private browser coverage. Task 37 is blocked on verified public extension publication facts. |
-| 6. Technical SEO, accessibility and performance | Validation pending | Tasks 38–44 are complete. Tasks 45–46 are implementation-complete and automatically checked; physical low-powered devices, assistive technology and post-release field data remain. |
-| 7. Content and search acquisition | Validation pending | Tasks 47–50, 54 and 55 are complete. Tasks 51–53 and 56 are implementation-complete; internal-demand, qualified local and post-release search validation remain. |
-| 8. Growth, research and global expansion | Pre-launch ready; validation pending | Tasks 57, 62 and 65 are complete. Cloud and U.S.-only paid readiness (63–64) are implementation-complete and await hosted/provider release validation. Tasks 58–61 are explicitly post-launch and contain no fabricated validation. |
+| 5. Jobs, Match and application workflow | Mixed | Tasks 31–36 are complete in production after the application-workflow schema correction. Task 37 is blocked on Chrome Web Store owner/publication action, not repository implementation. |
+| 6. Technical SEO, accessibility and performance | Validation pending | Tasks 38–44 and recurring gate Task 46 are complete. Task 45 retains physical low-power/device and metric-level field validation; available Vercel desktop/mobile real-experience scores are recorded without inventing unavailable CWV values. |
+| 7. Content and search acquisition | Validation pending | Tasks 47–50 and 54–56 are complete. Task 56's first live review correctly recorded Search Console processing/no-data. Tasks 51–53 still require internal-demand maturity and qualified occupation/region review. |
+| 8. Growth, research and global expansion | Mixed | Tasks 57, 62, 64 and 65 are complete for the current U.S.-only release; Task 63 remains validation pending while cloud saving is disabled. Tasks 58–61 have complete operating foundations but remain Partial until real-world participation/outcomes occur. |
 
 ## Current G2/G3/G6 task truth
 
@@ -55,19 +55,23 @@ Production analytics, human/device checks and post-release field evidence are re
 | 32. Requirement-level Match | COMPLETE | Grouped source wording/evidence/status and stale-analysis handling pass server/database and private-route browser checks. |
 | 33. Free evidence continuation | COMPLETE | The explicitly reviewed job text—not resume text—is kept in bounded session storage and re-enters the shared review path before account save. |
 | 34–36. Decision and application workflow | COMPLETE | Owner-scoped decisions, manual application history, notes/contact and opt-in workspace follow-up dates pass database/unit and private-route browser coverage. |
-| 37. Public extension experience | BLOCKED | The repository identifies the extension as unpublished and supplies no verified public store/install URL or released version; no release page or claim was invented. |
+| 37. Public extension experience | BLOCKED | APWICO-branded MV3 candidate 0.2.0, minimal permissions, privacy notice/dashboard copy, padded icons, promo image, real controlled-fixture screenshot, secure ZIP and controlled tests are ready. Developer enrollment/2FA, policy certification, real-site acceptance and explicit store submission/publication remain owner gates; no public URL exists. |
 | 38–44. Public technical foundations | COMPLETE | Permanent capability/template URLs, narrow visible-content schema, explicit sitemap dates, per-route social cards, local fonts and cache/bundle contracts pass generation, source and route-policy checks. |
-| 45–46. Performance and recurring quality | VALIDATION PENDING | Lab budgets, low-power/data-saver/reduced-motion behavior and the recurring quality gate are implemented; physical-device, assistive-technology and production field validation remain. |
+| 45. Performance | VALIDATION PENDING | Lab budgets and low-power/data-saver/reduced-motion behavior pass. Vercel reports a 100 real-experience score for the available desktop and mobile samples, but metric-level LCP/INP/CLS and physical low-power validation remain unavailable. |
+| 46. Recurring quality | COMPLETE | The integrated quality gate has run repeatedly before and after release, including production smoke/error/provider checks; it remains the recurring release contract. |
 | 47–50. Evidence-first content and product intent | COMPLETE | Twelve substantive guides, seven problem-led clusters, working high-intent tools and practical template resources lead into the evidence workflow without thin pages. |
 | 51–53. Occupation and regional evidence | VALIDATION PENDING | Nine evidence-shape-diverse occupation pages and a bounded five-source regional matrix are implemented and automatically checked. Production/internal demand ranking and qualified local occupation/region review remain unavailable and are not fabricated. |
 | 54. Internal linking | COMPLETE | Cluster membership, related-guide edges, contextual CTAs and research-hub links are source-driven and automatically checked for orphans. |
 | 55. Factual comparisons | COMPLETE | Five named comparisons use dated official sources, visible locale/currency or explicit unknowns, balanced strengths/boundaries, symmetric APWICO facts and build/quality-gate expiry enforcement. |
-| 56. Search review process | VALIDATION PENDING | The privacy-safe review process and zero-data dry run are complete; meaningful Search Console, index, field-performance and conversion results require a future release. |
+| 56. Search review process | COMPLETE | The repeatable process and first live review are complete. Search Console reports processing/no data, which is recorded as the valid result; future reviews continue on cadence rather than holding implementation open. |
 | 57. Match methodology | COMPLETE | Permanent public methodology matches deterministic Match behavior, clarification semantics, limitations, AI boundaries and user decision authority. |
-| 58–61. Advisory, partnership, distribution and original research | NOT STARTED | Explicit post-launch growth/validation work; no participants, partners, distribution programs, samples or findings were invented. |
+| 58. Advisory group | PARTIAL | Charter, representative recruitment matrix, screener boundaries, review cadence/rubric and outreach draft exist. Real recruitment, compensation, consent and participation require owner action and real people. |
+| 59. Partnerships | PARTIAL | Evidence-backed target types/examples, qualification, outreach, tracking and privacy-safe pilot structure exist. No outreach, agreement or partnership is claimed. |
+| 60. Organizational distribution | PARTIAL | Bounded institutional pilot, participant privacy, aggregate suppression, readiness packet and success rubric exist. No institution, contract or pilot participant is claimed. |
+| 61. Original research | PARTIAL | Preregistration, privacy-safe data requirements, minimum samples, missingness and publication standards exist. Samples, analysis, external review and findings require post-launch evidence. |
 | 62. Voluntary outcomes | COMPLETE | Explicit-consent, owner-scoped, content-free self-reports remain distinct from observed conversions and retain provenance/methodology/sample capability without causal claims. |
 | 63. Cloud-saving validation | VALIDATION PENDING | Consent, ownership, revision conflicts, account switching, interrupted saves, limits, local/cloud state, backup and self-service master deletion are implemented; hosted/provider recovery and isolation remain. |
-| 64. Paid availability | VALIDATION PENDING | New subscriptions are accurately limited to U.S./USD with renewal/refund/method/tax/invoice boundaries; live Stripe settings require G9/release validation. |
+| 64. Paid availability | COMPLETE | Current production availability is truthfully U.S.-only/USD; live Stripe account, Checkout, Prices, webhooks, renewal/cancellation/refund/invoice boundaries and the server country gate were validated. International expansion is a separate gated workstream, not a defect in the current release. |
 | 65. Localization readiness | COMPLETE | English-only explicit locale architecture, locale formatting helpers, no IP inference, protected identifiers and existing Unicode/RTL/text-expansion foundations are in place; actual translated journeys remain post-launch. |
 
 Detailed evidence, architecture, commands and review findings are recorded in `G8_PRELAUNCH_2026-09-30.md`, `G6_COMPLETION_2026-09-30.md`, `G7_CONTENT_SEARCH_2026-09-30.md`, `G7_EVIDENCE_CLOSURE_2026-09-30.md`, `G6_G7_INTEGRATION_2026-09-30.md`, `SEARCH_PERFORMANCE_REVIEW.md` and the earlier batch records.
@@ -77,7 +81,8 @@ Detailed evidence, architecture, commands and review findings are recorded in `G
 | Scope | Status | Current truth |
 | --- | --- | --- |
 | Repository/product brand migration | COMPLETE | APWICO product identity, public origin/support address, SEO assets, legal/product copy and compatibility guards are implemented and automatically checked on the isolated redesign branch. |
-| Production/provider migration | VALIDATION PENDING | DNS/hosting, Auth/email, Stripe, analytics/search, extension listing and dual-domain browser-state rehearsal require authenticated production validation and explicit release approval. Redirects remain disabled by default. |
+| Production/provider migration | COMPLETE | APWICO DNS/hosting, Auth callbacks, transactional email, Stripe, analytics, Search Console and production smoke validation are complete. ResumeStride remains live and redirects remain intentionally disabled; extension publication is separately tracked by Task 37. |
 
-The exhaustive original 65-task count is unchanged. Group 9 inventory, state protections,
-cutover order, rollback and owner checklist are in `G9_APWICO_BRAND_MIGRATION_2026-09-30.md`.
+The original 65-task universe remains exhaustive; its statuses above are the current
+reconciliation. Group 9 inventory, state protections, cutover order, rollback and owner
+checklist are in `G9_APWICO_BRAND_MIGRATION_2026-09-30.md`.
