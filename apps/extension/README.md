@@ -1,4 +1,4 @@
-# APWICO Job Capture — V1 candidate 0.2.0
+# APWICO Job Capture — V1 candidate 0.2.2
 
 Unpublished integration candidate. **No deployment or Chrome Web Store submission.**
 The app, API and migration in this change must be released together in a later authorized

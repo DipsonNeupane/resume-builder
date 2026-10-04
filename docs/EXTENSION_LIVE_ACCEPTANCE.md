@@ -32,7 +32,7 @@ and any site-specific limit. Missing public examples are BLOCKED, never presumed
 
 | ID | Later owner action | Required observation | Result |
 | --- | --- | --- | --- |
-| L01 | Inspect extracted production manifest and Chrome grants | MV3 0.2.0; APWICO plus staged legacy ResumeStride destination; activeTab/scripting/storage/alarms; correct icons/name; no local/all-sites/job-site grant | PENDING |
+| L01 | Inspect extracted production manifest and Chrome grants | MV3 0.2.2; APWICO plus staged legacy ResumeStride destination; activeTab/scripting/storage/alarms; correct icons/name; no local/all-sites/job-site grant | PENDING |
 | L02 | Invoke actual toolbar on public Greenhouse numeric job path | Accurate title/employer/description; no permission workaround; where JSON-LD is absent, anonymous bounded API fallback works under real CORS | PENDING |
 | L03 | Repeat both Greenhouse supported domains where real public examples exist | Record each domain separately and any redirect; no blanket inference from one fixture/domain | PENDING |
 | L04 | Invoke on stable UUID Lever job pages, including EU if available | Correct scoped job fields, no application form/footer text; capture failure remains manual entry; record each host independently | PENDING |

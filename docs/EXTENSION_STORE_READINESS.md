@@ -1,4 +1,4 @@
-# Chrome Web Store readiness — APWICO Job Capture 0.2.0
+# Chrome Web Store readiness — APWICO Job Capture 0.2.2
 
 Updated 2026-10-04. This is an unpublished release candidate. Nothing in this
 document authorizes upload, submission, publication, or a claim that the
