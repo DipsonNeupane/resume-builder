@@ -697,6 +697,10 @@ body:has(.landing-approved-c) .site-header .header-cta:hover { background:#efffa
 .landing-approved-wine .pt-story-number { border-color:#e28aaa66; color:#e8c6d2; }
 .landing-approved-wine .pt-story-step:not(:last-child)::after { background:#3a1024; }
 .landing-approved-wine .pt-story-evidence { background:linear-gradient(90deg,#72204445,transparent); }
+.landing-approved-wine .pt-story-decision { color:#18060f; }
+.landing-approved-wine .pt-story-decision small,
+.landing-approved-wine .pt-story-decision>div>span:last-child { color:#18060f; }
+.landing-approved-wine .pt-story-decision .pt-story-number { border-color:#18060f; color:#18060f; }
 .landing-approved-wine .pt-story-foot { background:#18060f; color:#e8c6d2; }
 body:has(.landing-approved-wine) .site-header { background:#2d0c1b; border-bottom-color:#ffd0df24; }
 body:has(.landing-approved-wine) .site-header .stride-mark i:first-child { background:#ffd0df; }
