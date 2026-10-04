@@ -1,3 +1,21 @@
+## October 4 — APWICO Chrome Web Store submission
+
+Submitted APWICO Job Capture 0.2.2 to the existing Chrome Web Store item
+`hkingihhmkmhnikmcoeeamceoelcbhjn`. The dashboard now reports **Pending review**
+and automatic publication after approval is selected. The existing public 0.2.0
+version is not claimed as the APWICO release; Task 37 is **Validation Pending /
+External Review** until Google approves and the public listing/version is
+verified.
+
+Before submission, the exact hashed ZIP was rebuilt and package-checked, and the
+complete serial extension suite passed 42/42 without retries. Dashboard listing,
+privacy justifications, verified APWICO site/home/support links and reviewer
+instructions were reconciled to actual behavior. With owner approval, the five
+stale ResumeStride screenshots and stale small/marquee promo assets were removed;
+the verified APWICO screenshot and small promo tile were uploaded. Artifact:
+`dist/apwico-extension.zip`, SHA-256
+`68aed591fc416092b138fc2dee0dfe9036679d7a8465e6776a1ae410d633bafe`.
+
 ## October 4 — backlog closure and first production measurement review
 
 Reconciled all original 65 blueprint tasks and Group 9 against repository and

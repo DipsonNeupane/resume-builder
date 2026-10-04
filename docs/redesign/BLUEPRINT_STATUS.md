@@ -15,12 +15,12 @@ Status date: 2026-10-04. This ledger reconciles repository evidence with the liv
 Every task is included exactly once:
 
 - **COMPLETE (51):** 1–18, 23–36, 38–44, 46–50, 54–57, 62, 64, 65.
-- **VALIDATION PENDING (9):** 19–22, 45, 51–53, 63.
+- **VALIDATION PENDING (10):** 19–22, 37, 45, 51–53, 63.
 - **PARTIAL (4):** 58–61.
 - **NOT STARTED (0):** none.
-- **BLOCKED (1):** 37.
+- **BLOCKED (0):** none.
 
-Tasks 5, 46, 56 and 64 closed after the first live analytics/search/provider review, repeated production release validation, and verification of the current U.S.-only Stripe boundary. Tasks 58–61 are now Partial: operating structures and materials exist, but real advisors, agreements, institutional pilots, samples and research results do not. Task 37 remains Blocked only on Chrome Web Store owner/publication action; the candidate, privacy disclosure, assets, package and controlled acceptance are repository-ready.
+Tasks 5, 46, 56 and 64 closed after the first live analytics/search/provider review, repeated production release validation, and verification of the current U.S.-only Stripe boundary. Tasks 58–61 are now Partial: operating structures and materials exist, but real advisors, agreements, institutional pilots, samples and research results do not. Task 37 is Validation Pending / External Review: APWICO Job Capture 0.2.2 was submitted to Google on 2026-10-04 with automatic publication selected after approval. The existing public 0.2.0 listing is not evidence that 0.2.2 has published.
 
 ## Group summary
 
@@ -30,7 +30,7 @@ Tasks 5, 46, 56 and 64 closed after the first live analytics/search/provider rev
 | 2. Homepage and navigation UI | COMPLETE | Tasks 6–14 meet current automatable Done When conditions: evidence-led homepage, permanent navigation, curated showcase, complete truthful template discovery and indexable detail/pricing routes. |
 | 3. Onboarding and workspace | Mixed | Tasks 15–18 are complete. Tasks 19–22 are implementation-complete with automated coverage; real email-provider, human/device, assistive-technology and post-release validation remain. |
 | 4. Trust, pricing and monetization | COMPLETE | Tasks 23–30 meet current automatable conditions with verified pricing/cancellation/export terms, factual trust, unpublished-by-default proof architecture and permanent commercial routes. |
-| 5. Jobs, Match and application workflow | Mixed | Tasks 31–36 are complete in production after the application-workflow schema correction. Task 37 is blocked on Chrome Web Store owner/publication action, not repository implementation. |
+| 5. Jobs, Match and application workflow | Validation pending | Tasks 31–36 are complete in production after the application-workflow schema correction. Task 37's APWICO 0.2.2 package and listing are submitted; Google review and verification of the published APWICO version remain external validation. |
 | 6. Technical SEO, accessibility and performance | Validation pending | Tasks 38–44 and recurring gate Task 46 are complete. Task 45 retains physical low-power/device and metric-level field validation; available Vercel desktop/mobile real-experience scores are recorded without inventing unavailable CWV values. |
 | 7. Content and search acquisition | Validation pending | Tasks 47–50 and 54–56 are complete. Task 56's first live review correctly recorded Search Console processing/no-data. Tasks 51–53 still require internal-demand maturity and qualified occupation/region review. |
 | 8. Growth, research and global expansion | Mixed | Tasks 57, 62, 64 and 65 are complete for the current U.S.-only release; Task 63 remains validation pending while cloud saving is disabled. Tasks 58–61 have complete operating foundations but remain Partial until real-world participation/outcomes occur. |
@@ -55,7 +55,7 @@ Tasks 5, 46, 56 and 64 closed after the first live analytics/search/provider rev
 | 32. Requirement-level Match | COMPLETE | Grouped source wording/evidence/status and stale-analysis handling pass server/database and private-route browser checks. |
 | 33. Free evidence continuation | COMPLETE | The explicitly reviewed job text—not resume text—is kept in bounded session storage and re-enters the shared review path before account save. |
 | 34–36. Decision and application workflow | COMPLETE | Owner-scoped decisions, manual application history, notes/contact and opt-in workspace follow-up dates pass database/unit and private-route browser coverage. |
-| 37. Public extension experience | BLOCKED | APWICO-branded MV3 candidate 0.2.0, minimal permissions, privacy notice/dashboard copy, padded icons, promo image, real controlled-fixture screenshot, secure ZIP and controlled tests are ready. Developer enrollment/2FA, policy certification, real-site acceptance and explicit store submission/publication remain owner gates; no public URL exists. |
+| 37. Public extension experience | VALIDATION PENDING | APWICO-branded MV3 version 0.2.2, minimal permissions, privacy disclosures, verified APWICO screenshot/promo asset, reviewer instructions and exact hashed ZIP were submitted to Chrome Web Store review on 2026-10-04. Automatic publication after approval is selected. Completion requires Google approval and verification that the public listing serves APWICO 0.2.2; the currently published 0.2.0 must not be reported as the new release. |
 | 38–44. Public technical foundations | COMPLETE | Permanent capability/template URLs, narrow visible-content schema, explicit sitemap dates, per-route social cards, local fonts and cache/bundle contracts pass generation, source and route-policy checks. |
 | 45. Performance | VALIDATION PENDING | Lab budgets and low-power/data-saver/reduced-motion behavior pass. Vercel reports a 100 real-experience score for the available desktop and mobile samples, but metric-level LCP/INP/CLS and physical low-power validation remain unavailable. |
 | 46. Recurring quality | COMPLETE | The integrated quality gate has run repeatedly before and after release, including production smoke/error/provider checks; it remains the recurring release contract. |

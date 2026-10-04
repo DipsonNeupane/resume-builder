@@ -1,8 +1,10 @@
 # Chrome Web Store readiness — APWICO Job Capture 0.2.2
 
-Updated 2026-10-04. This is an unpublished release candidate. Nothing in this
-document authorizes upload, submission, publication, or a claim that the
-extension is available.
+Updated 2026-10-04. Version 0.2.2 was submitted to Chrome Web Store review on
+2026-10-04 with automatic publication selected after approval. Google review is
+pending. The existing published 0.2.0 listing is not evidence that APWICO 0.2.2
+is available; do not advertise the new release until its public version and
+listing are verified.
 
 ## Candidate and single purpose
 
@@ -123,3 +125,25 @@ actions are intentionally owner/external:
 
 No new permissions, production configuration, or public claims are justified as
 a workaround for a store-review or real-site failure.
+
+## 2026-10-04 submission record
+
+- Chrome Web Store item ID: `hkingihhmkmhnikmcoeeamceoelcbhjn`.
+- Submitted package: APWICO Job Capture `0.2.2`, 16 files, 46,284 unpacked
+  bytes; ZIP SHA-256
+  `68aed591fc416092b138fc2dee0dfe9036679d7a8465e6776a1ae410d633bafe`.
+- Dashboard single-purpose, permission, data-use and privacy answers were
+  reconciled to the shipped manifest and `https://apwico.com/privacy.html`.
+- Official site is the verified `apwico.com` property; homepage and support
+  links use APWICO URLs.
+- Five stale ResumeStride screenshots and the stale small/marquee promo assets
+  were removed with owner approval. The verified APWICO controlled-fixture
+  screenshot and small promo tile were uploaded; the optional marquee remains
+  empty.
+- Reviewer instructions identify supported Greenhouse, Lever, Workday/JSON-LD
+  paths, no-login capture/review, account-required save, and unsupported
+  LinkedIn/Indeed behavior without supplying credentials.
+- Dashboard confirmation: `Your extension was submitted for review`; current
+  status: `Pending review`. Automatic publication after approval was selected.
+- Task 37 remains **VALIDATION PENDING / EXTERNAL REVIEW** until Google approves
+  and the public listing is verified as APWICO version 0.2.2.
