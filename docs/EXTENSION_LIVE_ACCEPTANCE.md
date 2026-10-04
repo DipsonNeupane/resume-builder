@@ -1,6 +1,6 @@
-# LIVE ACCEPTANCE — ResumeStride Job Capture (owner run, pending)
+# LIVE ACCEPTANCE — APWICO Job Capture (owner run, pending)
 
-Task #61 prepared this checklist on September 25, 2026. **No row has been executed for
+Updated October 4, 2026. **No row has been executed for
 this candidate on real sites.** This file is a later owner test plan, not authorization
 to install, deploy, change production services, send credentials or submit to the store.
 The controlled installed-extension passes in HANDOFF are separate historical evidence.
@@ -32,7 +32,7 @@ and any site-specific limit. Missing public examples are BLOCKED, never presumed
 
 | ID | Later owner action | Required observation | Result |
 | --- | --- | --- | --- |
-| L01 | Inspect extracted production manifest and Chrome grants | MV3 0.2.0; exact ResumeStride host only; activeTab/scripting/storage/alarms; correct icons/name; no local/all-sites/job-site grant | PENDING |
+| L01 | Inspect extracted production manifest and Chrome grants | MV3 0.2.0; APWICO plus staged legacy ResumeStride destination; activeTab/scripting/storage/alarms; correct icons/name; no local/all-sites/job-site grant | PENDING |
 | L02 | Invoke actual toolbar on public Greenhouse numeric job path | Accurate title/employer/description; no permission workaround; where JSON-LD is absent, anonymous bounded API fallback works under real CORS | PENDING |
 | L03 | Repeat both Greenhouse supported domains where real public examples exist | Record each domain separately and any redirect; no blanket inference from one fixture/domain | PENDING |
 | L04 | Invoke on stable UUID Lever job pages, including EU if available | Correct scoped job fields, no application form/footer text; capture failure remains manual entry; record each host independently | PENDING |
@@ -42,7 +42,7 @@ and any site-specific limit. Missing public examples are BLOCKED, never presumed
 | L08 | Invoke on LinkedIn and Indeed; then chrome:// and Chrome Web Store | No automated job capture; truthful manual-entry guidance; no bypass of restricted-page injection | PENDING |
 | L09 | Capture a long posting, Unicode job text and explicit salary/location | Description max 12,000 with truncation warning; original and edited values remain bounded; no fabricated salary/workplace | PENDING |
 | L10 | Review Source & connection and edit fields before Send | Source query/fragment removed; source path preserved; reject invalid inputs; no content in app URL/logs; only reviewed data plus bounded original retained | PENDING |
-| L11 | Send to official root; try localhost, www/lookalike host, credentials, port, subpath, query and fragment | Only https://resumestride.com/ accepted; receipt shown only after acknowledgment; no job content in URL | PENDING |
+| L11 | Send to official root; try localhost, www/lookalike host, credentials, port, subpath, query and fragment | Only exact https://apwico.com/ and staged exact https://resumestride.com/ roots accepted; receipt shown only after acknowledgment; no job content in URL | PENDING |
 | L12 | Navigate chosen job tab within origin, then to another origin and close it | activeTab may persist on same origin; old grant ends on cross-origin navigation/closure; capture never starts on navigation by itself | PENDING |
 | L13 | Observe network and storage before invocation, during capture and after Send | No background scraping, remote code or extension analytics; Greenhouse fallback only exact anonymous GETs; no cookies/referrer/redirects; session capture only, no local/sync store | PENDING |
 | L14 | Close popup during accepted Send; then simulate a failed delivery and reopen | Worker may finish; failure keeps one edited capture for explicit retry; max three attempts, no endless queue; receipt does not claim account save | PENDING |

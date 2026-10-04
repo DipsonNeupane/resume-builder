@@ -106,5 +106,7 @@ retain their normal authorization; this switch is an operational capture-entry d
 not a revocation of users' ordinary save capability. Users can disable/remove the extension
 or discard the pending capture in the popup. No remote extension configuration/tracking.
 
-Icons at 16/32/48/128, versioned production manifest and production packaging are included.
+APWICO icons at 16/32/48/128, a padded 128px store source, required 440×280
+promotional tile, real installed-candidate 1280×800 fictional-fixture screenshot,
+versioned production manifest and production packaging are included.
 See `docs/EXTENSION_STORE_READINESS.md` for accurate draft disclosures and release gates.

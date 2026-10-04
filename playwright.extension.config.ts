@@ -7,6 +7,11 @@ import { defineConfig } from '@playwright/test';
 // suite) and 5174 (auth suite).
 export default defineConfig({
   testDir: './tests/extension',
+  // The synced development checkout can need a cold Vite transform before the
+  // first app-backed extension test. Keep the functional assertions bounded,
+  // while avoiding false failures caused by filesystem hydration.
+  timeout: 90_000,
+  expect: { timeout: 15_000 },
   retries: 0,
   use: { baseURL: 'http://127.0.0.1:5185', headless: true },
   projects: [
@@ -28,6 +33,7 @@ export default defineConfig({
     command: 'npm run dev -- --port 5185 --strictPort',
     url: 'http://127.0.0.1:5185',
     reuseExistingServer: false,
+    timeout: 180_000,
     env: { VITE_SUPABASE_URL: '', VITE_SUPABASE_PUBLISHABLE_KEY: '' },
   },
   reporter: 'list',

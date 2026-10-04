@@ -86,8 +86,29 @@ export async function inspectPackage(root) {
   return { name: manifest.name, version: manifest.version, files, totalBytes: files.reduce((sum, file) => sum + file.bytes, 0) };
 }
 
+export async function inspectStoreAssets(repositoryRoot) {
+  const expected = new Map([
+    ['apps/extension/store-assets/small-promo-440x280.png', [440, 280]],
+    ['apps/extension/store-assets/capture-review-1280x800.png', [1280, 800]],
+  ]);
+  const assets = [];
+  for (const [path, [width, height]] of expected) {
+    const data = await readFile(resolve(repositoryRoot, path));
+    assert.equal(data.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', `Expected PNG: ${path}`);
+    assert.equal(data.readUInt32BE(16), width, `Unexpected width: ${path}`);
+    assert.equal(data.readUInt32BE(20), height, `Unexpected height: ${path}`);
+    assert(data.length > 4_000, `Store asset appears empty: ${path}`);
+    assets.push({ path, width, height, bytes: data.length, sha256: createHash('sha256').update(data).digest('hex') });
+  }
+  const source = await readFile(resolve(repositoryRoot, 'apps/extension/store-assets/icon-128-source.svg'), 'utf8');
+  assert(source.includes('x="16"') && source.includes('width="96"'), '128px icon source must preserve 16px padding around 96px artwork');
+  return assets;
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const root = resolve(dirname(fileURLToPath(import.meta.url)), '../dist/extension');
+  const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+  const root = resolve(repositoryRoot, 'dist/extension');
   const result = await inspectPackage(root);
-  console.log(`PASS: ${result.name} ${result.version}; ${result.files.length} reviewed files, ${result.totalBytes} bytes; package security checks passed.`);
+  const assets = await inspectStoreAssets(repositoryRoot);
+  console.log(`PASS: ${result.name} ${result.version}; ${result.files.length} reviewed files, ${result.totalBytes} bytes; ${assets.length} store assets; package security checks passed.`);
 }
