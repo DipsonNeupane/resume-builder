@@ -1,6 +1,6 @@
 # APWICO redesign blueprint status
 
-Status date: 2026-10-04. This ledger reconciles repository evidence with the live APWICO production validation performed after release.
+Status date: 2026-10-05. This ledger reconciles repository evidence with the live APWICO production validation performed after release and the task-by-task validation review in `VALIDATION_PENDING_RECONCILIATION_2026-10-05.md`.
 
 ## Status model
 
@@ -21,6 +21,8 @@ Every task is included exactly once:
 - **BLOCKED (0):** none.
 
 Tasks 5, 46, 56 and 64 closed after the first live analytics/search/provider review, repeated production release validation, and verification of the current U.S.-only Stripe boundary. Tasks 58–61 are now Partial: operating structures and materials exist, but real advisors, agreements, institutional pilots, samples and research results do not. Task 37 is Validation Pending / External Review: APWICO Job Capture 0.2.2 was submitted to Google on 2026-10-04 with automatic publication selected after approval. The existing public 0.2.0 listing is not evidence that 0.2.2 has published.
+
+The 2026-10-05 reconciliation changed no counts. It reconfirmed Tasks 1 and 4 as Complete from their live positioning, content-free funnel instrumentation and durable north-star evidence; neither is newly counted because both were already Complete in this canonical ledger. Each remaining pending task still lacks a criterion that automation or low-volume production data cannot honestly replace.
 
 ## Group summary
 
@@ -74,7 +76,7 @@ Tasks 5, 46, 56 and 64 closed after the first live analytics/search/provider rev
 | 64. Paid availability | COMPLETE | Current production availability is truthfully U.S.-only/USD; live Stripe account, Checkout, Prices, webhooks, renewal/cancellation/refund/invoice boundaries and the server country gate were validated. International expansion is a separate gated workstream, not a defect in the current release. |
 | 65. Localization readiness | COMPLETE | English-only explicit locale architecture, locale formatting helpers, no IP inference, protected identifiers and existing Unicode/RTL/text-expansion foundations are in place; actual translated journeys remain post-launch. |
 
-Detailed evidence, architecture, commands and review findings are recorded in `G8_PRELAUNCH_2026-09-30.md`, `G6_COMPLETION_2026-09-30.md`, `G7_CONTENT_SEARCH_2026-09-30.md`, `G7_EVIDENCE_CLOSURE_2026-09-30.md`, `G6_G7_INTEGRATION_2026-09-30.md`, `SEARCH_PERFORMANCE_REVIEW.md` and the earlier batch records.
+Detailed evidence, architecture, commands and review findings are recorded in `VALIDATION_PENDING_RECONCILIATION_2026-10-05.md`, `G8_PRELAUNCH_2026-09-30.md`, `G6_COMPLETION_2026-09-30.md`, `G7_CONTENT_SEARCH_2026-09-30.md`, `G7_EVIDENCE_CLOSURE_2026-09-30.md`, `G6_G7_INTEGRATION_2026-09-30.md`, `SEARCH_PERFORMANCE_REVIEW.md` and the earlier batch records.
 
 ## Group 9 — APWICO rebrand and migration (outside the original 65 tasks)
 

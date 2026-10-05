@@ -1,6 +1,6 @@
 # Group 1 — product strategy and measurement
 
-Status on 2026-10-01: Tasks 1–4 are implementation-complete on the isolated redesign candidate. Task 5 remains validation pending only because production denominators and post-release field data cannot exist before release.
+Status on 2026-10-05: Tasks 1–5 are complete. Tasks 1 and 4 were reconfirmed against the live APWICO release and production instrumentation; Task 5 closed after the first privacy-safe live measurement review established the honest production baseline without treating unavailable or zero data as success or failure.
 
 ## 1. Primary product position — completed for redesign
 
@@ -103,11 +103,13 @@ The canonical path is:
 
 See `ANALYTICS_EVENT_SPEC.md` for event definitions, deduplication, properties, current mappings, and gaps.
 
-## 5. Baseline — captured where evidence exists
+## 5. Baseline — completed and reviewed in production
 
 The dated production snapshot, capability inventory, current event counts, test coverage, privacy boundary, and known denominators are recorded in `PRODUCTION_BASELINE_2026-09-29.md`.
 
-The baseline is intentionally incomplete where the current product has no event or product state. Zero must not be substituted for “not instrumented.”
+The first live review is recorded in `PRODUCTION_VALIDATION_2026-10-04.md`. It confirmed content-free funnel ingestion and the durable review/conversion schema. The qualifying-review denominator and conversion numerator were both honestly zero, so no rate was calculated. Search and field-performance providers likewise retained processing, low-sample or unavailable states instead of converting them to invented values.
+
+The baseline remains explicit where the product has no event or where provider data is unavailable. Zero is never substituted for “not instrumented,” and low traffic is not treated as failed validation.
 
 ## Deliberately deferred, not Group 1 blockers
 
@@ -123,4 +125,4 @@ The baseline is intentionally incomplete where the current product has no event 
 | 2. Define the three primary entry journeys | [x] | Journey contracts and shared route/onboarding implementation are complete. |
 | 3. Define the north-star outcome | [x] | Durable owner-scoped review/conversion records, behavior-based limited/full qualification, committed-export deduplication and privacy tests exist. |
 | 4. Define the complete product funnel | [x] | The canonical content-free event path now covers landing through manual application status; server-authoritative review/conversion records remain the north-star source. |
-| 5. Establish baseline product measurements | [validation pending] | Dated production snapshot is complete; unavailable denominators remain labeled “not instrumented” rather than zero and require post-release field validation. |
+| 5. Establish baseline product measurements | [x] | The dated pre-release snapshot and first live aggregate review are complete; production ingestion and durable zero-row north-star tables were verified without reading content or raw owner identifiers, and unavailable provider metrics remain explicitly unavailable. |
