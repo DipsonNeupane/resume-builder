@@ -15,10 +15,19 @@ for (const width of [320, 390, 768, 1440, 1920]) test(`premium public and docume
  if(width<560){
   await page.getByRole('button',{name:'Toggle navigation'}).click();
   await page.getByRole('link',{name:'Templates',exact:true}).click();
-  await expect(page.getByRole('button',{name:'Toggle navigation'})).toHaveAttribute('aria-expanded','false');
+  await expect(page).toHaveURL(/\/templates\/$/);
+  await page.goBack();
+  await expect(page.getByRole('heading',{name:'Find the roles worth your effort.'})).toBeVisible();
  }
- await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
- await expect(page.getByRole('region',{name:'Active document'})).toContainText('Master resume');
+ await page.goto('/workspace/resume');
+ const activeDocument=page.getByRole('region',{name:'Active document'});
+ await expect(activeDocument).toContainText('Master resume');
+ if(width<560){
+  const identity=await activeDocument.locator(':scope > div').boundingBox();
+  const explanation=await activeDocument.locator(':scope > p').boundingBox();
+  expect(identity).not.toBeNull();expect(explanation).not.toBeNull();
+  expect(identity!.y+identity!.height).toBeLessThanOrEqual(explanation!.y);
+ }
  expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
  await page.screenshot({path:`/tmp/rs-premium-builder-${width}.png`});
  await page.getByRole('button',{name:'Preview resume',exact:true}).click();

@@ -1,3 +1,21 @@
+## October 5 — Tasks 19–22 consolidated real-world validation
+
+Task 19 is COMPLETE after live desktop and owner-performed physical mobile Back/Forward
+passed across public matcher and master/jobs workspace transitions. A real production
+password-recovery email also opened APWICO in a new Chrome tab and established the
+recovery session. The session found three bounded issues: the consumed recovery code
+remained in the production URL, the provider email sender display name remained
+ResumeStride, and the active-document/storage panel overlapped on a physical phone so
+the owner could not identify the document being edited.
+
+The isolated branch now removes the consumed recovery code once the session exists and
+stacks the mobile document identity in one readable flow. Focused recovery checks pass
+3/3 and the 320/390/768/1440/1920 responsive/axe matrix passes 5/5; the 320px capture was
+visually inspected. Production/provider configuration was not changed. Tasks 20–22 stay
+VALIDATION PENDING until the code fixes are deployed, the sender display name is corrected,
+and production comprehension plus one real screen-reader path pass. Canonical evidence:
+`docs/redesign/TASKS_19_22_REAL_WORLD_VALIDATION_2026-10-05.md`.
+
 ## October 4 — APWICO Chrome Web Store submission
 
 Submitted APWICO Job Capture 0.2.2 to the existing Chrome Web Store item

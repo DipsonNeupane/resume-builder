@@ -39,6 +39,14 @@ export function AuthPanel({ onBack, onRecoveryComplete }: { onBack: () => void; 
   return()=>subscription.unsubscribe();
  },[]);
 
+ useEffect(()=>{
+  if(!recovery||loading||!user)return;
+  const url=new URL(window.location.href);
+  if(!url.searchParams.has('code'))return;
+  url.searchParams.delete('code');
+  window.history.replaceState(null,'',`${url.pathname}${url.search}${url.hash}`);
+ },[recovery,loading,user]);
+
  function resetFeedback(){setError('');setStatus('');setInvalidPassword(null);}
  function switchMode(next:'signup'|'signin'){setMode(next);setForgotPassword(false);setPassword('');setConfirmPassword('');resetFeedback();}
 

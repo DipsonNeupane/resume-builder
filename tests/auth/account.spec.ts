@@ -123,6 +123,18 @@ test('a recovery link lets the authenticated user choose and confirm a new passw
  await expect(page).toHaveURL('http://127.0.0.1:5174/workspace/account');
 });
 
+test('a consumed recovery code is removed before the new-password form remains visible',async({page})=>{
+ const now=Math.floor(Date.now()/1000);
+ await page.addInitScript(session=>localStorage.setItem('sb-auth-test-auth-token',JSON.stringify(session)),{
+  access_token:'recovery-token',refresh_token:'recovery-refresh',token_type:'bearer',expires_in:3600,expires_at:now+3600,
+  user:{id:'u1',aud:'authenticated',role:'authenticated',email:'test@example.com',created_at:new Date().toISOString(),app_metadata:{provider:'email',providers:['email']},user_metadata:{}},
+ });
+ await page.route('https://auth-test.supabase.co/auth/v1/user**',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({id:'u1',email:'test@example.com'})}));
+ await page.goto('/workspace/account?reset=1&code=private-recovery-code');
+ await expect(page.getByRole('button',{name:'Update password'})).toBeVisible();
+ await expect(page).toHaveURL('http://127.0.0.1:5174/workspace/account?reset=1');
+});
+
 test('customer-facing copy never names Supabase or an email delivery provider',async({page})=>{
  await page.goto('/?account=1');
  const bodyText=await page.locator('.account-card').innerText();

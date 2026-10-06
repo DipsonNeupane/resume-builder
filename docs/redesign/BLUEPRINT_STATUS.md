@@ -14,15 +14,15 @@ Status date: 2026-10-05. This ledger reconciles repository evidence with the liv
 
 Every task is included exactly once:
 
-- **COMPLETE (51):** 1–18, 23–36, 38–44, 46–50, 54–57, 62, 64, 65.
-- **VALIDATION PENDING (10):** 19–22, 37, 45, 51–53, 63.
+- **COMPLETE (52):** 1–19, 23–36, 38–44, 46–50, 54–57, 62, 64, 65.
+- **VALIDATION PENDING (9):** 20–22, 37, 45, 51–53, 63.
 - **PARTIAL (4):** 58–61.
 - **NOT STARTED (0):** none.
 - **BLOCKED (0):** none.
 
 Tasks 5, 46, 56 and 64 closed after the first live analytics/search/provider review, repeated production release validation, and verification of the current U.S.-only Stripe boundary. Tasks 58–61 are now Partial: operating structures and materials exist, but real advisors, agreements, institutional pilots, samples and research results do not. Task 37 is Validation Pending / External Review: APWICO Job Capture 0.2.2 was submitted to Google on 2026-10-04 with automatic publication selected after approval. The existing public 0.2.0 listing is not evidence that 0.2.2 has published.
 
-The 2026-10-05 reconciliation changed no counts. It reconfirmed Tasks 1 and 4 as Complete from their live positioning, content-free funnel instrumentation and durable north-star evidence; neither is newly counted because both were already Complete in this canonical ledger. Each remaining pending task still lacks a criterion that automation or low-volume production data cannot honestly replace.
+The first 2026-10-05 reconciliation changed no counts and reconfirmed Tasks 1 and 4 as Complete. The subsequent consolidated real-world session closed Task 19 after physical mobile Back/Forward passed. It found three genuine Task 20–22 issues: a consumed recovery code retained in the URL, a legacy recovery-email sender name, and an overlapping mobile document-identity panel. The two code defects are corrected only on the isolated branch; production/provider and human/assistive-technology revalidation remain.
 
 ## Group summary
 
@@ -30,7 +30,7 @@ The 2026-10-05 reconciliation changed no counts. It reconfirmed Tasks 1 and 4 as
 | --- | --- | --- |
 | 1. Product strategy and measurement | COMPLETE | The first production review observed content-free funnel traffic and an honest zero durable numerator/denominator after applying the missing additive production measurement migration. No rate was invented. |
 | 2. Homepage and navigation UI | COMPLETE | Tasks 6–14 meet current automatable Done When conditions: evidence-led homepage, permanent navigation, curated showcase, complete truthful template discovery and indexable detail/pricing routes. |
-| 3. Onboarding and workspace | Mixed | Tasks 15–18 are complete. Tasks 19–22 are implementation-complete with automated coverage; real email-provider, human/device, assistive-technology and post-release validation remain. |
+| 3. Onboarding and workspace | Mixed | Tasks 15–19 are complete. Tasks 20–22 retain production/provider, comprehension and assistive-technology validation after the real-world session found bounded defects. |
 | 4. Trust, pricing and monetization | COMPLETE | Tasks 23–30 meet current automatable conditions with verified pricing/cancellation/export terms, factual trust, unpublished-by-default proof architecture and permanent commercial routes. |
 | 5. Jobs, Match and application workflow | Validation pending | Tasks 31–36 are complete in production after the application-workflow schema correction. Task 37's APWICO 0.2.2 package and listing are submitted; Google review and verification of the published APWICO version remain external validation. |
 | 6. Technical SEO, accessibility and performance | Validation pending | Tasks 38–44 and recurring gate Task 46 are complete. Task 45 retains physical low-power/device and metric-level field validation; available Vercel desktop/mobile real-experience scores are recorded without inventing unavailable CWV values. |
@@ -48,10 +48,10 @@ The 2026-10-05 reconciliation changed no counts. It reconfirmed Tasks 1 and 4 as
 | 16. No-signup evidence moment | COMPLETE | Public requirement-level review remains behavior-qualified and content-free. |
 | 17. Guided fictional sample | COMPLETE | Fictional/real state isolation, master safety, grounded suggestions and reset are automated and independently reviewed. |
 | 18. Permanent workspace URLs | COMPLETE | Owner-scoped saved objects restore safely; invalid/missing/unauthorized objects fail closed. |
-| 19. Browser navigation | VALIDATION PENDING | Automated meaningful history, mobile Back, public-to-auth return, checkout-cancel return and object-route behavior are complete; physical-device confirmation remains. |
-| 20. Sign-in/recovery context | VALIDATION PENDING | Same-tab and content-free new-tab return keys, recovery completion, owner switching and local/cloud precedence are implemented; real provider-link acceptance remains. |
-| 21. Document/storage concepts | VALIDATION PENDING | UI implementation is complete; comprehension testing with people remains. |
-| 22. Responsive/accessibility workflow | VALIDATION PENDING | Automated narrow/desktop overflow, keyboard, focus and axe checks are complete; physical-device and assistive-technology matrix remains. |
+| 19. Browser navigation | COMPLETE | Live desktop and owner-performed physical mobile Back/Forward passed across the public matcher and master/jobs workspace transitions; reload restoration, checkout-cancel return and object routes retain automated coverage. |
+| 20. Sign-in/recovery context | VALIDATION PENDING | The real provider email and new-tab APWICO return succeeded, but the consumed code remained in the production URL and the sender display name remained ResumeStride. Local code cleanup passes; production/provider revalidation remains. |
+| 21. Document/storage concepts | VALIDATION PENDING | Uncoached physical-phone comprehension failed because the active document/storage wording visibly overlapped. The isolated responsive fix passes; production human comprehension must be repeated. |
+| 22. Responsive/accessibility workflow | VALIDATION PENDING | Automated accessibility plus live error/focus semantics pass, but physical review found the same mobile identity overlap. The local fix passes the viewport/axe matrix; production physical and real screen-reader validation remain. |
 | 23–30. Trust, pricing and conversion | COMPLETE | All three purchase paths, individual-template terms, paid-through cancellation behavior, concrete export policy, adjacent recurring terms, factual trust, consent-gated proof architecture and permanent commercial pages are implemented and automatically checked. |
 | 31. Public matcher positioning | COMPLETE | Permanent browser-local matcher centers evidence without ATS scores, hiring predictions or signup. |
 | 32. Requirement-level Match | COMPLETE | Grouped source wording/evidence/status and stale-analysis handling pass server/database and private-route browser checks. |
@@ -76,7 +76,7 @@ The 2026-10-05 reconciliation changed no counts. It reconfirmed Tasks 1 and 4 as
 | 64. Paid availability | COMPLETE | Current production availability is truthfully U.S.-only/USD; live Stripe account, Checkout, Prices, webhooks, renewal/cancellation/refund/invoice boundaries and the server country gate were validated. International expansion is a separate gated workstream, not a defect in the current release. |
 | 65. Localization readiness | COMPLETE | English-only explicit locale architecture, locale formatting helpers, no IP inference, protected identifiers and existing Unicode/RTL/text-expansion foundations are in place; actual translated journeys remain post-launch. |
 
-Detailed evidence, architecture, commands and review findings are recorded in `VALIDATION_PENDING_RECONCILIATION_2026-10-05.md`, `G8_PRELAUNCH_2026-09-30.md`, `G6_COMPLETION_2026-09-30.md`, `G7_CONTENT_SEARCH_2026-09-30.md`, `G7_EVIDENCE_CLOSURE_2026-09-30.md`, `G6_G7_INTEGRATION_2026-09-30.md`, `SEARCH_PERFORMANCE_REVIEW.md` and the earlier batch records.
+Detailed evidence, architecture, commands and review findings are recorded in `TASKS_19_22_REAL_WORLD_VALIDATION_2026-10-05.md`, `VALIDATION_PENDING_RECONCILIATION_2026-10-05.md`, `G8_PRELAUNCH_2026-09-30.md`, `G6_COMPLETION_2026-09-30.md`, `G7_CONTENT_SEARCH_2026-09-30.md`, `G7_EVIDENCE_CLOSURE_2026-09-30.md`, `G6_G7_INTEGRATION_2026-09-30.md`, `SEARCH_PERFORMANCE_REVIEW.md` and the earlier batch records.
 
 ## Group 9 — APWICO rebrand and migration (outside the original 65 tasks)
 
