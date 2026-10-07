@@ -1,17 +1,18 @@
 # Tasks 19–22 real-world validation — 2026-10-05
 
 Scope: live APWICO production validation plus isolated-branch corrections directly
-required by the observed results. No production deployment or provider mutation was
-performed.
+required by the observed results. The original 2026-10-05 session performed no production
+deployment or provider mutation; the 2026-10-07 closure below records the subsequently
+authorized deployment, SMTP sender correction and physical human validation.
 
 ## Result
 
 | Task | Status | Real-world evidence | Remaining boundary |
 | --- | --- | --- | --- |
 | 19. Browser navigation | COMPLETE | Live desktop Back/Forward and reload restored the public matcher, master workspace and jobs workspace without a history trap or content-bearing URL. The owner then passed the same public/workspace Back/Forward sequence in a physical mobile browser. | None for the Done When boundary. |
-| 20. Sign-in/recovery context | VALIDATION PENDING | A real production reset request delivered through the configured provider; the message opened APWICO in a genuinely new Chrome tab, established the recovery session and presented the new-password form. Mismatched-password validation focused the correct field and exposed an alert relationship. | The consumed one-time authorization code remained in the address bar until password completion, and the email sender display name remained ResumeStride. The code-cleanup defect is fixed and tested only on the isolated branch; provider identity and production revalidation remain. |
-| 21. Document/storage concepts | VALIDATION PENDING | The owner was asked, without coaching, what document they believed they were editing on a physical phone. They could not determine it because the active-document name, explanation and storage scope visibly overlapped. | The responsive identity layout is fixed and tested only on the isolated branch. Normal-person comprehension must be repeated after deployment. |
-| 22. Responsive/accessibility workflow | VALIDATION PENDING | Existing axe, keyboard, focus, zoom, narrow-screen and reduced-motion evidence remains valid. Live recovery validation confirmed a visible keyboard focus target plus `role=alert`, `aria-invalid` and `aria-describedby` on the correct field. Physical mobile review exposed the active-document overlap. | The local responsive fix passes 320/390/768/1440/1920 checks and axe, but production physical revalidation and one real screen-reader pass remain. |
+| 20. Sign-in/recovery context | COMPLETE | A fresh production reset email displayed APWICO, opened the new-password flow in a real new tab and left no consumed `code` in the address bar. Supabase SMTP sender name was changed from ResumeStride to APWICO and verified after reload. Existing continuation/account-switch isolation evidence remains green. | None. |
+| 21. Document/storage concepts | COMPLETE | After deployment, the owner identified the active master and local browser-session storage without coaching on a physical iPhone. The isolated fictional sample then made clear that the job-specific version is separate and its master remains unchanged. | None. |
+| 22. Responsive/accessibility workflow | COMPLETE | Existing axe, keyboard, focus, error/status, zoom, narrow-screen and reduced-motion evidence remains valid. The owner passed the corrected layout on a physical iPhone and used real VoiceOver to traverse the active-document state and primary editing controls in usable order without a trap. | None. |
 
 Human validation outcome: **FAIL overall**. Task 19 passed; the Task 21 answer
 identified a real mobile layout failure, so the session stopped before asking the
@@ -45,7 +46,8 @@ identity correction and was deliberately not changed during this validation sess
 
 ## Closure path
 
-Deploy the bounded code corrections through the normal tested release process, update
-the production auth sender display name to APWICO, repeat the plain-language document
-and storage questions on a phone, and complete one real VoiceOver/TalkBack/NVDA critical
-path. No new product design or feature work is required.
+Completed 2026-10-07. The bounded code corrections are live through the current APWICO
+production release; the SMTP sender name reloads as APWICO; the real recovery, physical
+document/storage comprehension and VoiceOver checks all pass. The three issues above are
+resolved with no Chrome extension, international-payment, design, copy or unrelated
+product change.

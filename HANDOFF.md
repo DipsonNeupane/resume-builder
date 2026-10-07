@@ -1,3 +1,20 @@
+## October 7 — Tasks 20–22 real-world validation closed
+
+Closed the three findings from the October 5 physical validation without reopening Task
+19 or unrelated work. The already-prepared URL-cleanup and mobile document-identity fixes
+are live in the current APWICO production release. Supabase custom SMTP now reloads with
+sender name **APWICO** instead of ResumeStride. A fresh real recovery email displayed the
+APWICO sender, opened the production new-password flow in a new tab and left no consumed
+`code` in the visible URL.
+
+On a physical iPhone, the owner identified the active master and local browser-session
+storage without coaching, then correctly understood from the isolated fictional sample
+that tailoring creates a separate version while the master remains unchanged. A real
+VoiceOver traversal announced the active-document state and primary editing controls in
+usable order without trapping. Tasks 20, 21 and 22 are now COMPLETE; all three previous
+issues are resolved. No Chrome extension, international-payment, UI/copy/design or
+unrelated production behavior changed.
+
 ## October 7 — Wine + Blush website brand assets
 
 Aligned the APWICO website's shared brand assets with the approved production Wine +

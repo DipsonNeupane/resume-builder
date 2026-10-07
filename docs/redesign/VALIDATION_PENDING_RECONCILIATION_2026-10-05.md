@@ -3,19 +3,20 @@
 Scope: the original 65-task blueprint only. This review reconciles the task-level
 Done When boundaries against the repository, release-gate, production, provider,
 accessibility, visual, analytics, search, payment and extension evidence available
-through 2026-10-05. It changes no product or provider behavior.
+through the 2026-10-07 Task 20–22 closure. The reconciliation itself changes no product behavior; its closure addendum records the approved sender-name correction and real production/human evidence.
 
 ## Result
 
-- **COMPLETE (52):** 1–19, 23–36, 38–44, 46–50, 54–57, 62, 64, 65.
-- **VALIDATION PENDING (9):** 20–22, 37, 45, 51–53, 63.
+- **COMPLETE (55):** 1–36, 38–44, 46–50, 54–57, 62, 64, 65.
+- **VALIDATION PENDING (6):** 37, 45, 51–53, 63.
 - **PARTIAL (4):** 58–61.
 - **NOT STARTED (0):** none.
 - **BLOCKED (0):** none.
 
-Task 19 closed after the subsequent consolidated session recorded a physical mobile
-Back/Forward pass in addition to the existing live desktop and automated evidence.
-The remaining Validation Pending tasks cannot honestly close from current evidence.
+Tasks 19–22 closed after the subsequent consolidated sessions recorded physical mobile
+navigation, real recovery/provider return, document/storage comprehension and VoiceOver
+evidence in addition to the existing live desktop and automated evidence. The remaining
+Validation Pending tasks cannot honestly close from current evidence.
 Low/no traffic is retained as valid observed evidence, but is not substituted for a
 criterion that requires a real person, physical device, qualified reviewer, sufficient
 field sample, hosted cloud exercise or external store approval.
@@ -33,9 +34,9 @@ not failed validation.
 | 1. Primary product position | One primary position, promise and vocabulary are defined and consistently used; unsupported claims are excluded. | `GROUP_1_STRATEGY_AND_MEASUREMENT.md`; live APWICO release; brand/content and post-deployment copy gates. | **COMPLETE.** The evidence-before-effort position and canonical evidence/master/job-version language are live and checked. |
 | 4. Complete product funnel | The full journey is named, each meaningful transition is measurable without content leakage, and outcome measurement has an authoritative boundary. | `ANALYTICS_EVENT_SPEC.md`; durable evidence-review/conversion records; production ingestion and zero-row aggregate review in `PRODUCTION_VALIDATION_2026-10-04.md`. | **COMPLETE.** The landing-to-manual-application-status funnel and server-authoritative north-star boundary are implemented and observed in production. |
 | 19. Browser navigation | Meaningful workspace transitions restore on reload and Back/Forward; minor state does not pollute history; mobile Back works through critical transitions. | Route/state suites, live desktop Back/Forward/reload and owner-performed physical mobile Back/Forward all pass across the public matcher and master/jobs workspace. | **COMPLETE.** The remaining Done When evidence is now recorded. |
-| 20. Sign-in/recovery continuation | Content-free continuation survives sign-in/recovery, including a genuine new-tab provider link; account changes fail closed and cannot restore another owner's object. | Real production recovery delivery and new-tab APWICO session return succeeded; owner-switch and continuation automation remains green. | **VALIDATION PENDING.** Production retained the consumed code in the URL and the provider sender name remained legacy; local cleanup is not deployed. |
-| 21. Document/storage concepts | People can distinguish master versus job-specific documents and local versus account-saved state, including naming and active-state cues. | An uncoached owner answered from a physical phone that they could not determine the active document because its identity/storage copy overlapped. | **VALIDATION PENDING.** The local responsive fix passes, but production comprehension failed and must be repeated after deployment. |
-| 22. Responsive/accessibility workflow | Critical workflows are keyboard, focus, zoom, reduced-motion, narrow-screen and assistive-technology usable without obscured or overflowing controls. | Existing automation and live recovery error/focus semantics pass; physical phone review exposed the active-document overlap. | **VALIDATION PENDING.** Local viewport/axe checks pass after the fix; production physical and real screen-reader validation remain. |
+| 20. Sign-in/recovery continuation | Content-free continuation survives sign-in/recovery, including a genuine new-tab provider link; account changes fail closed and cannot restore another owner's object. | The bounded cleanup is live. A fresh real recovery email displayed APWICO, opened the production new-password flow in a new tab and left no consumed `code` in the visible URL. Supabase SMTP reloaded with sender name APWICO; owner-switch and continuation automation remains green. | **COMPLETE.** Provider identity, real new-tab return and URL cleanup are now verified. |
+| 21. Document/storage concepts | People can distinguish master versus job-specific documents and local versus account-saved state, including naming and active-state cues. | On a physical iPhone after deployment, the owner identified the active master and browser-session storage without coaching. The isolated sample then demonstrated—and the owner understood—that tailoring creates a separate fictional version while its master remains unchanged. | **COMPLETE.** The corrected production state passes normal-person comprehension. |
+| 22. Responsive/accessibility workflow | Critical workflows are keyboard, focus, zoom, reduced-motion, narrow-screen and assistive-technology usable without obscured or overflowing controls. | Existing keyboard, focus, error/status, zoom, reduced-motion, viewport and axe evidence remains valid. Physical iPhone layout passed, and real VoiceOver announced the active master, browser-session storage and primary editing controls in usable order without trapping. | **COMPLETE.** Physical and assistive-technology evidence now supplements the automated gates. |
 | 37. Public extension experience | The APWICO extension package/listing accurately describes published behavior and a verified public install URL/version is available. | The public listing reached APWICO 0.2.2. A real Chrome side-panel defect was then corrected in 0.2.3; its permissions/privacy remain unchanged, its 160–360px layout and 43/43 suite pass, and its refreshed Wine + Blush listing assets and exact package were submitted on 2026-10-06. | **VALIDATION PENDING / EXTERNAL REVIEW.** Google approval and verification that the public listing serves corrected version 0.2.3 remain. |
 | 45. Performance | Public entry routes meet the established lab budgets and protections; representative field and low-powered-device behavior is validated without invented metrics. | Lab budgets, deferred loading, data-saver/reduced-motion and responsive gates pass. Vercel reports desktop 100/295 events and mobile 100/17 events. | **VALIDATION PENDING.** Metric-level LCP/INP/CLS and physical low-powered-device evidence remain unavailable; the small sample is not treated as failure. |
 | 51. First occupation set | The first portfolio is selected from defensible demand/product evidence, spans relevant work types and geographies, and records why each occupation was chosen. | Nine-category portfolio and dated official external evidence are documented in `G7_EVIDENCE_CLOSURE_2026-09-30.md`; Search Console is verified but still processing/no-data. | **VALIDATION PENDING.** Meaningful internal/Search Console demand evidence has not matured; no ranking is invented. |
@@ -70,6 +71,6 @@ is complete and Google review is in progress.
 
 ## Next actionable validation
 
-Deploy and production-verify the two bounded Task 20–22 code corrections, correct the
-provider sender display name, then repeat the document/storage comprehension questions
-and one real screen-reader critical path. No broader UI or feature work is required.
+Task 37 is the next directly actionable validation: monitor Google review and verify that
+the public Chrome Web Store listing serves corrected APWICO version 0.2.3. Do not claim
+completion while the external review or public-version verification remains outstanding.
