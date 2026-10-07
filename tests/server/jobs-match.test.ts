@@ -1,10 +1,11 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { analysisView, analyzeJob, matchJob, parseResumeEvidence, parseSkills } from '../../server/jobs/match.ts'
+import { analysisView, analyzeJob, matchJob, parseResumeEvidence, parseSkills, type ResumeEvidence } from '../../server/jobs/match.ts'
 import { applyDiversity } from '../../server/jobs/diversity.ts'
 import { normalizeEmploymentType } from '../../server/jobs/employment.ts'
 import { parseSearchCriteria } from '../../server/jobs/criteria.ts'
 import { matchesEmploymentType, matchesSalaryPreference } from '../../server/jobs/filter.ts'
+import { assessRoleRelevance } from '../../server/jobs/relevance.ts'
 import type { NormalizedJob } from '../../server/jobs/types.ts'
 
 function job(overrides: Partial<NormalizedJob> = {}): NormalizedJob {
@@ -127,6 +128,7 @@ test('parseSearchCriteria validates explicit criteria and rejects unknown/invali
   assert.throws(() => parseSearchCriteria({ title: 'Engineer', salary: { period: 'week', currency: 'USD', min: 1 } }), { status: 400 })
   const ok = parseSearchCriteria({ title: ' engineer ', countryCode: 'us', workplace: 'remote', employmentType: 'full_time', salary: { period: 'year', currency: 'usd', min: 100000 } })
   assert.deepEqual(ok, { title: 'engineer', countryCode: 'US', workplace: 'remote', employmentType: 'full_time', salary: { period: 'year', currency: 'USD', min: 100000, max: null } })
+  assert.equal(parseSearchCriteria({ title: 'Java Full StackDeveloper' }).title, 'Java Full Stack Developer')
 })
 
 test('matchesEmploymentType keeps unknown-employment-type jobs eligible', () => {
@@ -184,6 +186,56 @@ test('seniority is neutral and never blocks analysis', () => {
   const result = analyzeJob({ headline: 'Software Engineer', skills: 'TypeScript', roles: [] }, job({ title: 'Principal Software Engineer' }))
   assert.equal(result.analysis.seniorityMessage, 'This role appears more senior than the experience currently demonstrated in your resume.')
   assert.ok(result.analysis.observations.length > 0)
+})
+
+test('Java full-stack title relationships reject retail, facilities, and culinary roles', () => {
+  const evidence = { headline: 'Java Full StackDeveloper', skills: 'Java, Spring Boot, React, SQL', roles: [] }
+  const criteria = { title: 'Java Full Stack Developer' }
+  const relevant = analyzeJob(evidence, job({ title: 'Senior Application Developer – Securitized Products (Java & .NET)', descriptionText: 'Build Java services and web applications.' }), criteria)
+  assert.equal(relevant.searchEligible, true)
+  for (const title of ['Keyholder Full Time', 'Maintenance Tech / Facilities Engineer', 'Sous Chef']) {
+    const result = analyzeJob(evidence, job({ title, descriptionText: `Responsibilities for the ${title} position.` }), criteria)
+    assert.equal(result.searchEligible, false, title)
+    assert.equal(result.analysis.observations.some(item => /relates directly/i.test(item)), false, title)
+    assert.equal(result.analysis.seniorityMessage, null, title)
+  }
+})
+
+test('requirement extraction removes formatting headings and does not promote ordinary duties', () => {
+  const result = analyzeJob({ headline: 'Facilities Technician', skills: '', roles: [] }, job({
+    title: 'Facilities Technician',
+    descriptionText: `**ESSENTIAL FUNCTIONS/DUTIES**\nNotifies supervisor if major repairs are required.\n**Essential Duties and Responsibilities:**\nInspect equipment each morning.\n**Required:**\nMust hold an active electrician license.`,
+  }))
+  assert.deepEqual(result.analysis.requirements.map(item => item.text), ['Must hold an active electrician license.'])
+  assert.doesNotMatch(JSON.stringify(result.analysis.requirements), /ESSENTIAL FUNCTIONS|Essential Duties|Required:\*\*|Notifies supervisor/i)
+})
+
+test('common words cannot establish evidence for a security-clearance requirement', () => {
+  const posting = job({ title: 'Cleared Software Engineer', descriptionText: 'Required: Active security clearance and authorization to access classified systems.' })
+  const weak = analyzeJob({ headline: 'Software Engineer', summary: 'An ability to work securely with a team.', skills: 'Application security', roles: [] }, posting)
+  assert.equal(weak.analysis.requirements[0].status, 'not_demonstrated')
+  assert.deepEqual(weak.analysis.requirements[0].evidence, [])
+  const meaningful = analyzeJob({ headline: 'Software Engineer', summary: 'Active Secret security clearance.', skills: 'Java', roles: [] }, posting)
+  assert.notEqual(meaningful.analysis.requirements[0].status, 'not_demonstrated')
+})
+
+test('occupational relevance works across healthcare, education, operations, creative, and trades without cross-family leakage', () => {
+  const cases: Array<[ResumeEvidence, string, boolean]> = [
+    [{ headline: 'Registered Nurse', skills: 'Patient care', roles: [] }, 'Clinical Nurse', true],
+    [{ headline: 'High School Teacher', skills: 'Curriculum development', roles: [] }, 'Curriculum Specialist', true],
+    [{ headline: 'Warehouse Operations Manager', skills: 'Inventory, Logistics', roles: [] }, 'Supply Chain Operations Lead', true],
+    [{ headline: 'Graphic Designer', skills: 'Illustration, Typography', roles: [] }, 'Visual Designer', true],
+    [{ headline: 'Electrician', skills: 'Wiring, Electrical repair', roles: [] }, 'Maintenance Electrician', true],
+    [{ headline: 'Registered Nurse', skills: 'Patient care', roles: [] }, 'Sous Chef', false],
+    [{ headline: 'High School Teacher', skills: 'Curriculum development', roles: [] }, 'Maintenance Electrician', false],
+    [{ headline: 'Graphic Designer', skills: 'Illustration', roles: [] }, 'Warehouse Supervisor', false],
+    [{ headline: 'Java Software Engineer', skills: 'Java', roles: [] }, 'Software Sales Manager', false],
+    [{ headline: 'Backend Developer', skills: 'Python', roles: [] }, 'Technical Recruiter', false],
+  ]
+  for (const [evidence, title, expected] of cases) {
+    const result = assessRoleRelevance(evidence, job({ title, descriptionText: `${title} responsibilities.` }), { title: evidence.headline })
+    assert.equal(result.eligible, expected, `${evidence.headline} -> ${title}`)
+  }
 })
 
 test('salary, location, workplace and employment constraints appear only from explicit compatible facts', () => {

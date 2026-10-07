@@ -247,7 +247,7 @@ test('recomputes versioned saved analysis server-side and persists explicit clar
   assert.equal(response.status, 200)
   const persisted = calls.find(call => call.name === 'jobs_save_v2')
   assert.equal(persisted?.args.p_owner, owner)
-  assert.equal((persisted?.args.p_analysis as { version: number }).version, 1)
+  assert.equal((persisted?.args.p_analysis as { version: number }).version, 2)
   assert.equal(JSON.stringify(persisted?.args.p_analysis).includes('fabricated'), false)
   assert.doesNotMatch(JSON.stringify(persisted?.args.p_analysis), /\d+%|probability/i)
 

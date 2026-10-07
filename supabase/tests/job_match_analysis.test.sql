@@ -10,7 +10,7 @@ insert into public.billing_entitlements(owner_id,paid_through) values
 create temporary table match_fixture(job jsonb, analysis jsonb);
 insert into match_fixture values (
  '{"id":"techmap:match-one","provider":"techmap","providerJobId":"match-one","dedupeKey":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","title":"Engineer","company":"Example","location":{"value":{"city":"Nairobi","region":null,"country":"KE"},"source":"provider","confidence":"medium"},"workplace":{"value":"remote","source":"provider","confidence":"high"},"employmentType":{"value":"full_time","source":"provider","confidence":"high"},"salary":null,"descriptionText":"Required: TypeScript.","postedAt":null,"expiry":{"expiresAt":null,"isLikelyExpired":false,"source":"unknown","confidence":"low"},"sourceUrl":"https://jobs.example/match-one","portal":"example","source":"employer","retrievedAt":"2026-09-24T00:00:00.000Z","matchLabel":"good","matchReasons":["Relevant title."]}'::jsonb,
- ('{"version":1,"label":"good","resumeHash":"'||repeat('a',64)||'","jobHash":"'||repeat('b',64)||'","contextHash":"'||repeat('c',64)||'","whyPromising":"Evidence aligns.","observations":[],"importantWarning":null,"seniorityMessage":null,"requirements":[],"strengths":[],"buriedEvidence":[],"areasWorthStrengthening":[],"constraints":[],"deeperExplanation":"Evidence only."}')::jsonb
+ ('{"version":2,"label":"good","resumeHash":"'||repeat('a',64)||'","jobHash":"'||repeat('b',64)||'","contextHash":"'||repeat('c',64)||'","whyPromising":"Evidence aligns.","observations":[],"importantWarning":null,"seniorityMessage":null,"requirements":[],"strengths":[],"buriedEvidence":[],"areasWorthStrengthening":[],"constraints":[],"deeperExplanation":"Evidence only."}')::jsonb
 );
 grant select on match_fixture to service_role;
 
@@ -26,7 +26,7 @@ reset role;
 set local role service_role;
 select throws_ok($$select public.jobs_save_v2('dddddddd-dddd-dddd-dddd-dddddddddddd',job,analysis-'version') from match_fixture$$,'P0001','Invalid match analysis','missing analysis version is rejected rather than passing through SQL null semantics');
 select lives_ok($$select public.jobs_save_v2('dddddddd-dddd-dddd-dddd-dddddddddddd',job,analysis) from match_fixture$$,'server can save a bounded versioned analysis');
-select is((select match_analysis_version from public.saved_jobs where owner_id='dddddddd-dddd-dddd-dddd-dddddddddddd'),1,'analysis version is persisted');
+select is((select match_analysis_version from public.saved_jobs where owner_id='dddddddd-dddd-dddd-dddd-dddddddddddd'),2,'analysis version is persisted');
 select is((public.jobs_account_snapshot_v2('dddddddd-dddd-dddd-dddd-dddddddddddd',repeat('a',64))#>>'{savedJobs,0,analysisCurrent}')::boolean,true,'matching resume hash keeps analysis current');
 select is(public.jobs_account_snapshot_v2('dddddddd-dddd-dddd-dddd-dddddddddddd',repeat('a',64))#>>'{savedJobs,0,matchAnalysis}',null,'Free account does not receive the persisted full analysis payload');
 select is((public.jobs_account_snapshot_v2('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',repeat('a',64))#>>'{savedJobs,0,id}')::text,null,'another account cannot receive the saved analysis');

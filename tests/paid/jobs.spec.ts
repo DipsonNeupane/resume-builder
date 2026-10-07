@@ -101,7 +101,7 @@ const sampleResponse = {
 };
 
 const sampleMatchAnalysis = {
-  version: 1 as const, label: 'good' as const, resumeHash: 'a'.repeat(64), jobHash: 'b'.repeat(64), contextHash: 'c'.repeat(64),
+  version: 2 as const, label: 'good' as const, resumeHash: 'a'.repeat(64), jobHash: 'b'.repeat(64), contextHash: 'c'.repeat(64),
   whyPromising: 'Your resume shows relevant evidence, with some areas still worth reviewing.',
   observations: ['Customer support is demonstrated in your resume.'],
   importantWarning: 'Important required qualification not demonstrated: Must hold an active support certification.',

@@ -172,6 +172,10 @@ export async function searchJobs(request: Request, env: NodeJS.ProcessEnv = proc
     )
     const ranked = filtered
       .map(job => ({ job, match: analyzeJob(evidence, job, criteria, clarifications) }))
+      // The account allowance is a ceiling, never a quota. Provider candidates without
+      // a defensible occupational/title relationship are rejected instead of padding
+      // the response with unrelated jobs.
+      .filter(entry => entry.match.searchEligible)
       .sort((a, b) => LABEL_ORDER[a.match.label] - LABEL_ORDER[b.match.label] || b.match.rank - a.match.rank)
     const diverseJobs = new Set(applyDiversity(ranked.map(entry => entry.job), PRO_JOB_LIMIT))
     const diverseRanked = ranked.filter(entry => diverseJobs.has(entry.job))

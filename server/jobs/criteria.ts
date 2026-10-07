@@ -43,7 +43,11 @@ export function parseSearchCriteria(value: unknown): SearchCriteria {
   if (typeof title !== 'string' || !title.trim() || title.length > MAX_TITLE_CHARS) {
     throw new HttpError(400, 'A job title or role is required')
   }
-  const criteria: SearchCriteria = { title: title.trim() }
+  // Resume imports occasionally collapse a word boundary (for example,
+  // "Full StackDeveloper"). Restore obvious camel-case boundaries before constructing
+  // the provider query and cache signature.
+  const normalizedTitle = title.trim().replace(/([\p{Ll}\d])([\p{Lu}])/gu, '$1 $2').replace(/\s+/g, ' ')
+  const criteria: SearchCriteria = { title: normalizedTitle }
 
   if (value.countryCode !== undefined) {
     if (typeof value.countryCode !== 'string' || !COUNTRY_CODE_PATTERN.test(value.countryCode)) {

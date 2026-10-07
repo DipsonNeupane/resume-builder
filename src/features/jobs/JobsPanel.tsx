@@ -25,7 +25,7 @@ type MatchLabel = 'strong' | 'good' | 'stretch';
 type SalaryPeriod = 'hour' | 'year';
 type Requirement = { id: string; text: string; category: 'required' | 'preferred' | 'nice_to_have'; status: 'demonstrated' | 'partially_demonstrated' | 'not_demonstrated' | 'confirmed_incompatible'; evidence: string[] };
 type MatchAnalysis = {
-  version: 1; label: MatchLabel; resumeHash: string; jobHash: string; contextHash: string;
+  version: 2; label: MatchLabel; resumeHash: string; jobHash: string; contextHash: string;
   whyPromising: string; observations: string[]; importantWarning: string | null; seniorityMessage: string | null;
   additionalAreasAnalyzed: number; clarification?: { requirementId: string; text: string };
   limitedAnalysis?: { requirements: Requirement[] };
@@ -172,7 +172,7 @@ function isSafeCount(value: unknown): value is number {
 }
 
 function parseMatchAnalysis(value: unknown): MatchAnalysis | null {
-  if (!record(value) || value.version !== 1 || typeof value.label !== 'string' || !MATCH_VALUES.includes(value.label as MatchLabel)
+  if (!record(value) || value.version !== 2 || typeof value.label !== 'string' || !MATCH_VALUES.includes(value.label as MatchLabel)
     || typeof value.resumeHash !== 'string' || !/^[0-9a-f]{64}$/.test(value.resumeHash)
     || typeof value.jobHash !== 'string' || !/^[0-9a-f]{64}$/.test(value.jobHash)
     || typeof value.contextHash !== 'string' || !/^[0-9a-f]{64}$/.test(value.contextHash)

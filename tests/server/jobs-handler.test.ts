@@ -95,6 +95,24 @@ test('Free accounts see at most FREE_JOB_LIMIT real jobs, with an honest availab
   assert.equal(body.availableCount, 12)
 })
 
+test('Free search returns fewer than five rather than padding Java results with unrelated jobs', async () => {
+  const candidates = [
+    job({ id: 'techmap:java', title: 'Senior Java Software Engineer', company: 'Software One', descriptionText: 'Build Java and Spring services.' }),
+    job({ id: 'techmap:application', title: 'Senior Application Developer – Securitized Products (Java & .NET)', company: 'Finance Tech', descriptionText: 'Develop Java and .NET applications.' }),
+    job({ id: 'techmap:keyholder', title: 'Keyholder Full Time', company: 'Retail Co', descriptionText: 'Open and close the retail store.' }),
+    job({ id: 'techmap:maintenance', title: 'Maintenance Tech / Facilities Engineer', company: 'Facilities Co', descriptionText: 'Repair building equipment and HVAC systems.' }),
+    job({ id: 'techmap:chef', title: 'Sous Chef', company: 'Restaurant Co', descriptionText: 'Prepare food and lead kitchen service.' }),
+  ]
+  const javaEvidence = { headline: 'Java Full StackDeveloper', skills: 'Java, Spring Boot, React, SQL', roles: [] }
+  const { deps } = fixture({ isPro: false, page1: candidates })
+  const response = await searchJobs(request({ criteria: { title: `Java Full Stack Developer ${uniqueTitle()}` }, evidence: javaEvidence }), env, deps)
+  assert.equal(response.status, 200)
+  const body = await response.json()
+  assert.equal(body.availableCount, 2)
+  assert.deepEqual(body.jobs.map((item: { id: string }) => item.id).sort(), ['techmap:application', 'techmap:java'])
+  assert.equal(body.jobs.some((item: { matchReasons: string[] }) => item.matchReasons.some(reason => /Keyholder|Maintenance|Sous Chef/.test(reason))), false)
+})
+
 test('bounded resume evidence stays server-side and is never forwarded to Techmap', async () => {
   const { deps, calls } = fixture()
   const privateEvidence = {

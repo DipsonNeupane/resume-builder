@@ -4296,3 +4296,19 @@ closed-vocabulary diagnostic omission for account-master deletion. The remaining
 - Replaced all 27 template gallery/detail abstractions with fictional resumes rendered by the real builder template components and retained preview-before-purchase behavior.
 - Closed independent-review findings for noun-fragment rewrites, canonical evidence vocabulary, public navigation, task-first public hierarchy, mobile workspace density, Wine + Blush leakage, and public stylesheet routing.
 - Detailed implementation, verification, and the 12-item deferred P2 backlog are in `docs/final-correction-batch.md`.
+
+# 2026-10-07 — Job search and Match quality correction
+
+- Added a server-side occupational relevance gate before result limiting: Free/Pro
+  allowances are maxima and unrelated provider candidates no longer fill empty seats.
+- Replaced shared-token title claims with concrete title/occupation evidence, normalized
+  collapsed camel-case role text, and gated seniority observations on an established
+  occupational relationship.
+- Corrected requirement extraction for responsibility headings, markdown residue,
+  heading-only labels and ordinary duties; strengthened evidence matching so common
+  words and plain `security` cannot establish security-clearance evidence.
+- Bumped saved Match analysis to version 2 with explicit database invalidation of stale
+  analyses. User clarification remains the only path to confirmed incompatibility.
+- Added six regression groups with 23 explicit cases covering the reported Java results plus healthcare,
+  education, operations, creative and trades. See
+  `docs/job-match-quality-audit-2026-10-07.md` for evidence. Production was not changed.
