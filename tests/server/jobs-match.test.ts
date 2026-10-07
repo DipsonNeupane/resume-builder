@@ -204,10 +204,10 @@ test('Java full-stack title relationships reject retail, facilities, and culinar
 test('requirement extraction removes formatting headings and does not promote ordinary duties', () => {
   const result = analyzeJob({ headline: 'Facilities Technician', skills: '', roles: [] }, job({
     title: 'Facilities Technician',
-    descriptionText: `**ESSENTIAL FUNCTIONS/DUTIES**\nNotifies supervisor if major repairs are required.\n**Essential Duties and Responsibilities:**\nInspect equipment each morning.\n**Required:**\nMust hold an active electrician license.`,
+    descriptionText: `**ESSENTIAL FUNCTIONS/DUTIES**\nNotifies supervisor if major repairs are required.\n**Essential Duties and Responsibilities:**\nInspect equipment each morning.\nServe customers and operate register.\n**Required:**\nMust hold an active electrician license.\nQualifications\n2+ years of facilities maintenance experience required.`,
   }))
-  assert.deepEqual(result.analysis.requirements.map(item => item.text), ['Must hold an active electrician license.'])
-  assert.doesNotMatch(JSON.stringify(result.analysis.requirements), /ESSENTIAL FUNCTIONS|Essential Duties|Required:\*\*|Notifies supervisor/i)
+  assert.deepEqual(result.analysis.requirements.map(item => item.text), ['Must hold an active electrician license.', '2+ years of facilities maintenance experience required.'])
+  assert.doesNotMatch(JSON.stringify(result.analysis.requirements), /ESSENTIAL FUNCTIONS|Essential Duties|Required:\*\*|Qualifications|Notifies supervisor|Serve customers/i)
 })
 
 test('common words cannot establish evidence for a security-clearance requirement', () => {

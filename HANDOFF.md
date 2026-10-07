@@ -4312,3 +4312,18 @@ closed-vocabulary diagnostic omission for account-master deletion. The remaining
 - Added six regression groups with 23 explicit cases covering the reported Java results plus healthcare,
   education, operations, creative and trades. See
   `docs/job-match-quality-audit-2026-10-07.md` for evidence. Production was not changed.
+
+# 2026-10-07 — Public matcher corrective patch
+
+- Production verification exposed that the anonymous matcher uses the separate
+  generated browser analyzer and had not inherited the authenticated Match fixes.
+- Aligned public heading cleanup, qualification classification, substantive
+  evidence thresholds and security-clearance handling with the authenticated
+  safety boundary. Added exact fixtures in unit, rendered-browser and server tests.
+- Real-provider relevance verification remains pending until the legitimate Free
+  refresh allowance resets; no quota or customer limit was bypassed.
+- Rollback is not recommended because the preceding deployment has the same public
+  defect and lacks the authenticated corrections. No corrective deployment was
+  performed. See `docs/public-matcher-corrective-patch-2026-10-07.md`.
+- Verification: public tool unit/browser 18/18; focused matcher 34/34; full server
+  457/457; complete release gate 13/13; Graphify rebuilt 3,410 nodes / 7,091 edges.

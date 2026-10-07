@@ -62,6 +62,31 @@ test('evidence check separates supported, review and unknown evidence without a 
   await expect(page.locator('[data-tool-results]')).not.toContainText(/ATS score|hiring probability|interview likelihood/i);
 });
 
+test('public matcher does not turn headings, duties, or generic security overlap into qualification evidence', async ({ page }) => {
+  await page.goto('/tools/resume-job-match/');
+  await page.locator('#resume-text').fill(`Java Full Stack Developer
+Built Java and Spring Boot services for secure financial applications.
+Implemented application security controls and REST APIs with React.`);
+  await page.locator('#job-description').fill(`Keyholder Full Time
+**ESSENTIAL FUNCTIONS/DUTIES**
+Notifies supervisor if major repairs are required.
+**Essential Duties and Responsibilities:**
+Serve customers and operate register.
+**Required:**
+Security clearance required.
+Qualifications
+2+ years of retail supervisory experience required.`);
+  await page.getByRole('button', { name: 'Check the evidence' }).click();
+  const output = page.locator('[data-tool-output]');
+  await expect(output).not.toContainText(/ESSENTIAL FUNCTIONS|Essential Duties and Responsibilities|Required:\*\*|Qualifications/);
+  await expect(output.locator('.evidence-result').filter({ hasText: 'Notifies supervisor' })).toContainText('Other signals');
+  await expect(output.locator('.evidence-result').filter({ hasText: 'Serve customers' })).toContainText('Other signals');
+  const clearance = output.locator('.evidence-result').filter({ hasText: 'Security clearance required' });
+  await expect(clearance).toContainText('Required');
+  await expect(clearance).toContainText('Not demonstrated');
+  await expect(clearance).not.toContainText('Resume evidence to review');
+});
+
 test('evidence review qualifies only after a requirement result is genuinely viewed', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 500 });
   await page.addInitScript(() => {

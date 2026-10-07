@@ -84,6 +84,7 @@ function headingFor(text:string):RequirementSection|undefined{
  if(/^(preferred|preferred qualifications?)$/.test(heading))return'preferred'
  if(/^(nice to have|nice-to-have|desirable|bonus qualifications?)$/.test(heading))return'nice_to_have'
  if(/^(essential functions?(?:\/duties)?|essential duties(?: and responsibilities)?|duties(?: and responsibilities)?|responsibilities|what you(?:'|’)ll do|the role)$/.test(heading))return'responsibilities'
+ if(/^qualifications$/.test(heading))return null
  if(text.length<=80&&/[:;]$/.test(text))return null
  return undefined
 }

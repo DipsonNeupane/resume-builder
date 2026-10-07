@@ -21,8 +21,8 @@ export type BulletDimension = { id: 'action' | 'specificity' | 'context' | 'resu
 export type BulletAnalysis = { dimensions: BulletDimension[]; strongerStructure: string | null; prompts: string[] };
 
 const STOPWORDS = new Set([
-  'a','an','and','are','as','at','be','by','for','from','has','have','in','is','it','of','on','or','our','that','the','their','this','to','we','will','with','you','your',
-  'ability','candidate','experience','including','job','knowledge','position','role','skills','strong','work','working','years','year',
+  'a','an','and','are','as','at','be','been','being','but','by','can','for','from','had','has','have','he','her','his','if','in','is','it','more','not','of','on','or','our','per','she','so','such','than','that','the','their','them','they','this','through','to','we','were','who','will','with','within','you','your',
+  'abilities','ability','able','candidate','duties','excellent','experience','function','functions','good','including','job','knowledge','language','position','proficiency','proficient','responsibilities','responsible','role','skill','skills','strong','successful','work','working','years','year',
 ]);
 const REQUIREMENT_MARKERS = new Set(['required','requirement','requirements','preferred','prefer','ideally','nice','must','mandatory','minimum','essential','need','needed']);
 const ACTION_VERBS = new Set([
@@ -34,6 +34,14 @@ const CONTEXT_LANGUAGE = /\b(?:across|alongside|among|for|in support of|serving|
 
 function clean(value: string): string {
   return value.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function cleanPostingChunk(value: string): string {
+  return value
+    .replace(/^[\s\u2022*#_\-–—▪◦]+/, '')
+    .replace(/[\s*_#]+$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 export function validateToolText(value: unknown, label: string, maximum: number, minimum: number): string {
@@ -57,12 +65,21 @@ function hash(value: string): string {
 }
 
 function headingCategory(line: string): RequirementCategory | null | undefined {
-  const value = clean(line).replace(/:$/, '');
+  const value = cleanPostingChunk(line).replace(/[:;]+$/, '').trim();
   if (value.length > 80) return undefined;
-  if (/^(?:required|requirements|minimum qualifications?|what you (?:need|bring)|must have|essentials?)$/i.test(value)) return 'required';
+  if (/^(?:required(?: qualifications?)?|requirements|minimum qualifications?|what (?:you|we) (?:need|bring|require)|must have|essentials?)$/i.test(value)) return 'required';
   if (/^(?:preferred|preferred qualifications?|desired|nice to have|nice-to-have|bonus|additional qualifications?)$/i.test(value)) return 'preferred';
-  if (/^(?:responsibilities|what you(?:'|’)ll do|the work|duties|about the role|tools|technologies|location|work arrangement)$/i.test(value)) return 'other';
+  if (/^(?:essential functions(?:\s*\/\s*duties)?|essential duties(?: and responsibilities)?|duties(?: and responsibilities)?|responsibilities|key responsibilities|what you(?:'|’)ll do|the work|about the role|tools|technologies|location|work arrangement)$/i.test(value)) return 'other';
+  if (/^qualifications$/i.test(value)) return null;
   return undefined;
+}
+
+function isExplicitRequired(text: string): boolean {
+  return /^(?:required|minimum):\s*\S/i.test(text)
+    || /\b(?:must|mandatory)\b/i.test(text)
+    || /\b(?:security clearance|work authori[sz]ation|eligible to work|license[ds]?|certification|certified|degree)\b/i.test(text)
+    || /\b\d+\+?\s+years?(?:\s+of)?\s+experience\b/i.test(text)
+    || /\b(?:experience|degree|license|certification|clearance|authorization)\b[^.]{0,80}\b(?:is\s+)?required\b/i.test(text);
 }
 
 function categoryFor(text: string, heading: RequirementCategory | null): RequirementCategory | null {
@@ -70,7 +87,7 @@ function categoryFor(text: string, heading: RequirementCategory | null): Require
   if (/\b(?:not required|no [^.]{0,45} required|do(?:es)? not require|do(?:es)?n['’]t require)\b/i.test(text)) return null;
   if (/\b(?:nice to have|nice-to-have|desirable|bonus points?|would be a plus|is a plus)\b/i.test(text)) return 'preferred';
   if (/\b(?:preferred|ideally|preference|desired)\b/i.test(text)) return 'preferred';
-  if (/\b(?:required|must|mandatory|minimum|essential|need(?:ed)?|license[ds]?|certification|certified|work authori[sz]ation|eligible to work|\d+\+?\s+years?)\b/i.test(text)) return 'required';
+  if (isExplicitRequired(text)) return 'required';
   // Work-arrangement details are useful, explicit posting signals even when the
   // sentence is not phrased as a conventional qualification.
   if (/\b(?:remote|hybrid|on[- ]?site|in[- ]?office|relocat|travel|located|location|time zone|timezone)\b/i.test(text)) return 'other';
@@ -91,7 +108,7 @@ function kindFor(text: string): RequirementKind {
 function sourceChunks(input: string): string[] {
   const chunks: string[] = [];
   for (const rawLine of input.replace(/\r/g, '').split('\n')) {
-    const line = rawLine.replace(/^[\s\u2022*\-–—▪◦]+/, '').trim();
+    const line = cleanPostingChunk(rawLine);
     if (!line) continue;
     if (headingCategory(line) !== undefined) { chunks.push(line); continue; }
     const pieces = line.split(/(?<=[.!?;])\s+(?=[A-Z0-9])/u);
@@ -139,6 +156,12 @@ export function compareResumeToJob(resumeInput: string, jobInput: string): Evide
   const requirements = extractJobRequirements(jobInput).slice(0, TOOL_LIMITS.comparisonRequirements);
   const chunks = resumeChunks(resume);
   return requirements.map(requirement => {
+    if (/\bsecurity clearance\b/i.test(requirement.text)) {
+      const explicitClearance = chunks.find(chunk => /\b(?:active\s+)?(?:top secret|secret|ts\/?sci)?\s*security clearance\b|\b(?:top secret|secret|ts\/?sci)\s+clearance\b|\bcleared\s+(?:professional|engineer|candidate|worker)\b/i.test(chunk));
+      if (!explicitClearance) return { ...requirement, status: 'not_demonstrated' as const, resumeEvidence: null };
+      const confirmedLevel = /\b(?:active|top secret|secret|ts\/?sci)\b/i.test(explicitClearance);
+      return { ...requirement, status: confirmedLevel ? 'demonstrated' as const : 'partial' as const, resumeEvidence: explicitClearance };
+    }
     const wanted = [...new Set(tokens(requirement.text))];
     let best: { chunk: string; matched: number; coverage: number } | null = null;
     for (const chunk of chunks) {
@@ -147,10 +170,10 @@ export function compareResumeToJob(resumeInput: string, jobInput: string): Evide
       const coverage = wanted.length ? matched / wanted.length : 0;
       if (!best || coverage > best.coverage || (coverage === best.coverage && matched > best.matched)) best = { chunk, matched, coverage };
     }
-    if (best && best.matched >= 1 && ((wanted.length <= 2 && best.coverage === 1) || (best.matched >= 2 && best.coverage >= 0.55))) {
+    if (best && ((wanted.length === 1 && best.matched === 1) || (best.matched >= 3 && best.coverage >= 0.6) || (best.matched >= 2 && best.coverage >= 0.65))) {
       return { ...requirement, status: 'demonstrated' as const, resumeEvidence: best.chunk };
     }
-    if (best && best.matched >= 1 && best.coverage >= 0.2) return { ...requirement, status: 'partial' as const, resumeEvidence: best.chunk };
+    if (best && best.matched >= 2 && best.coverage >= 0.35) return { ...requirement, status: 'partial' as const, resumeEvidence: best.chunk };
     return { ...requirement, status: 'not_demonstrated' as const, resumeEvidence: null };
   });
 }
