@@ -1,3 +1,19 @@
+## October 6 — APWICO extension 0.2.3 submitted
+
+Submitted APWICO Job Capture 0.2.3 to the existing Chrome Web Store item after a
+real Chrome side-panel defect exposed the old fixed-width layout. The correction
+uses a fluid single-column panel and passes the 43/43 serial installed-extension
+suite at 160–360px, including overflow, input/button width, keyboard focus and
+axe checks. LinkedIn remains intentionally unsupported, matching the published
+scope.
+
+With owner approval, the listing's prior icon, screenshot and small promo tile
+were replaced with verified Wine + Blush APWICO assets; the optional marquee
+remains empty. The dashboard confirmed `Your extension was submitted for review`
+with automatic publication selected. Task 37 remains **Validation Pending /
+External Review** until Google approves 0.2.3 and the public version is verified.
+Artifact SHA-256: `0d6ef646ba6bcb0d58d01d2ed47ebfc7f5dbd31f3b657e634150037d7e7f2019`.
+
 ## October 5 — Tasks 19–22 consolidated real-world validation
 
 Task 19 is COMPLETE after live desktop and owner-performed physical mobile Back/Forward

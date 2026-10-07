@@ -1,6 +1,49 @@
 import {test,expect,chromium} from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import {resolve} from 'node:path';
 import type {ExtractResult} from '../../apps/extension/src/lib/types';
+
+test('popup remains usable at realistic narrow Chrome side-panel widths',async()=>{
+ const extensionPath=resolve('apps/extension');
+ const context=await chromium.launchPersistentContext('',{channel:'chromium',headless:true,args:[`--disable-extensions-except=${extensionPath}`,`--load-extension=${extensionPath}`]});
+ try {
+  const worker=context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
+  const id=new URL(worker.url()).host;
+  const popup=await context.newPage();
+  await popup.goto(`chrome-extension://${id}/popup.html`);
+  for(const width of [160,180,220,260,320,360]){
+   await popup.setViewportSize({width,height:720});
+   await expect(popup.getByRole('heading',{name:'APWICO job capture'})).toBeVisible();
+   await expect(popup.locator('.notice')).toBeVisible();
+   await expect(popup.getByLabel('Job title',{exact:true})).toBeVisible();
+   await expect(popup.getByRole('button',{name:'Send reviewed details to APWICO'})).toBeVisible();
+   const layout=await popup.evaluate(()=>{
+    const root=document.documentElement;
+    const title=document.querySelector('h1')!;
+    const input=document.querySelector('input')!;
+    const button=document.querySelector('button[type="submit"]')!;
+    return {
+     viewport:root.clientWidth,
+     scrollWidth:root.scrollWidth,
+     headingHeight:title.getBoundingClientRect().height,
+     inputWidth:input.getBoundingClientRect().width,
+     buttonWidth:button.getBoundingClientRect().width,
+     buttonHeight:button.getBoundingClientRect().height,
+    };
+   });
+   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.viewport);
+   expect(layout.headingHeight).toBeLessThan(60);
+   expect(layout.inputWidth).toBeGreaterThanOrEqual(width-40);
+   expect(layout.buttonWidth).toBeGreaterThanOrEqual(width-40);
+   expect(layout.buttonHeight).toBeGreaterThanOrEqual(44);
+   if(width===160) await popup.screenshot({path:'/tmp/apwico-extension-side-panel-160.png',fullPage:true});
+   if(width===320) await popup.screenshot({path:'/tmp/apwico-extension-side-panel-320.png',fullPage:true});
+  }
+  await popup.getByLabel('Job title',{exact:true}).focus();
+  await expect(popup.getByLabel('Job title',{exact:true})).toBeFocused();
+  expect((await new AxeBuilder({page:popup}).analyze()).violations).toEqual([]);
+ } finally {await context.close();}
+});
 
 for (const closePopup of [false,true]) test(`unpacked extension delivers reviewed text${closePopup ? ' after popup closes' : ' through real Chrome APIs'}`,async()=>{
  const extensionPath=resolve('apps/extension');
