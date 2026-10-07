@@ -20,7 +20,7 @@ for (const [path, details] of publicEntries) {
 <link rel="preload" href="/fonts/brand-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/fonts.css">
 <meta name="application-name" content="APWICO">
-<meta name="theme-color" content="#0b0a09">
+<meta name="theme-color" content="#2d0c1b">
 <link rel="icon" href="/favicon.ico" sizes="64x64">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any">
 <link rel="icon" href="/favicon-192.png" type="image/png" sizes="192x192">
@@ -34,12 +34,12 @@ for (const [path, details] of publicEntries) {
 <meta property="og:image" content="${productionOrigin}${details.socialImage}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Abstract APWICO route card in copper, mint and dark green">
+<meta property="og:image:alt" content="Abstract APWICO route card in wine, blush and gold">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${escape(details.title)}">
 <meta name="twitter:description" content="${escape(details.description)}">
 <meta name="twitter:image" content="${productionOrigin}${details.socialImage}">
-<meta name="twitter:image:alt" content="Abstract APWICO route card in copper, mint and dark green">
+<meta name="twitter:image:alt" content="Abstract APWICO route card in wine, blush and gold">
 <script type="application/ld+json" data-seo-schema>${JSON.stringify(schema)}</script>
 <script src="/seo-guard.js"></script>
 <!-- seo:end -->`;

@@ -33,7 +33,7 @@ function shell(title: string, description: string, path: string, main: string, s
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="${canonical}">
 <meta name="application-name" content="APWICO">
-<meta name="theme-color" content="#0b0a09">
+<meta name="theme-color" content="#2d0c1b">
 <link rel="icon" href="/favicon.ico" sizes="64x64">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any">
 <link rel="icon" href="/favicon-192.png" type="image/png" sizes="192x192">

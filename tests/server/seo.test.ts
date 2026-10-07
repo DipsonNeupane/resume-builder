@@ -136,7 +136,7 @@ test('all public source HTML has unique, consistent metadata before JavaScript',
   assert.match(html, /name="twitter:card" content="summary_large_image"/);
   assert.ok(html.includes(`property="og:image" content="${productionOrigin}${publicPages[path as keyof typeof publicPages].socialImage}"`));
   assert.ok(html.includes(`name="twitter:image" content="${productionOrigin}${publicPages[path as keyof typeof publicPages].socialImage}"`));
-  assert.match(html, /property="og:image:alt" content="Abstract APWICO route card in copper, mint and dark green"/);
+ assert.match(html, /property="og:image:alt" content="Abstract APWICO route card in wine, blush and gold"/);
   assert.match(html, /rel="preload" href="\/fonts\/brand-sans\.woff2" as="font" type="font\/woff2" crossorigin/);
   assert.match(html, /rel="stylesheet" href="\/fonts\.css"/);
   assert.match(html, /<script src="\/seo-guard.js"><\/script>/);
@@ -236,6 +236,10 @@ test('domain migration redirects only behind the launch gate and preserves paths
 test('favicon, app and social metadata refer to real assets without claiming an offline app', () => {
  const manifest = JSON.parse(read('public/site.webmanifest'));
  assert.equal(manifest.name, 'APWICO'); assert.equal(manifest.display, 'browser'); assert.equal(manifest.start_url, '/');
+ assert.equal(manifest.theme_color, '#2d0c1b'); assert.equal(manifest.background_color, '#faf7f5');
+ const faviconSource = read('public/favicon.svg');
+ for (const color of ['#2d0c1b', '#ffd0df', '#f2c84b']) assert.ok(faviconSource.includes(color));
+ assert.doesNotMatch(faviconSource, /#0b0a09|#de8044|#6ccfb6/i);
  for (const [file, width, height] of [['favicon.png', 32, 32], ['favicon-192.png', 192, 192], ['favicon-512.png', 512, 512], ['apple-touch-icon.png', 180, 180]] as const) {
   const png = readFileSync(`public/${file}`); assert.equal(png.toString('ascii', 1, 4), 'PNG');
   assert.equal(png.readUInt32BE(16), width); assert.equal(png.readUInt32BE(20), height);
@@ -248,6 +252,7 @@ test('favicon, app and social metadata refer to real assets without claiming an 
   assert.equal(policy(details.socialImage).status, 0);
  }
  assert.equal(hashes.size, Object.keys(publicPages).length, 'each route receives a genuinely distinct social image');
+ assert.deepEqual(readFileSync('public/social-card.png'), readFileSync('public/social/home.png'), 'the default social card uses the current APWICO brand asset');
  for (const asset of ['/favicon.ico', '/favicon.svg', '/favicon-192.png', '/favicon-512.png', '/seo-guard.js', '/content-analytics.js', '/resources.css', '/apwico-theme.css', '/features.css', '/fonts.css', '/fonts/brand-sans.woff2', '/tools.css', '/tools/analysis.js', '/tools/public-tools.js', '/tools/tool-analytics.js', '/templates.css', '/template-preview-renderers.css', '/templates-filter.js', '/robots.txt', '/sitemap.xml']) assert.equal(policy(asset).status, 0);
 });
 

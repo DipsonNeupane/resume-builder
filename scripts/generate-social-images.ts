@@ -31,15 +31,15 @@ function hash(value: string): number {
 function render(source: string): Buffer {
   const seed = hash(source);
   const pixels = Buffer.alloc((width * 4 + 1) * height);
-  const accent = [[222, 128, 68], [108, 207, 182], [247, 174, 116]][seed % 3];
-  const secondary = [[11, 60, 67], [19, 18, 16], [33, 70, 65]][(seed >>> 3) % 3];
+  const accent = [[183, 47, 69], [242, 168, 188], [242, 200, 75]][seed % 3];
+  const secondary = [[45, 12, 27], [58, 16, 36], [77, 22, 48]][(seed >>> 3) % 3];
   for (let y = 0; y < height; y += 1) {
     const row = y * (width * 4 + 1); pixels[row] = 0;
     for (let x = 0; x < width; x += 1) {
       const offset = row + 1 + x * 4;
       const band = x > 760 + (seed % 120) || y > 500 - (seed % 80);
       const stripe = ((x + y + (seed % 97)) % (150 + seed % 90)) < 12;
-      const color = stripe ? accent : band ? secondary : [11, 10, 9];
+      const color = stripe ? accent : band ? secondary : [24, 6, 15];
       pixels[offset] = color[0]; pixels[offset + 1] = color[1]; pixels[offset + 2] = color[2]; pixels[offset + 3] = 255;
     }
   }
@@ -48,7 +48,7 @@ function render(source: string): Buffer {
   const originX = 90 + (seed % 180); const originY = 120 + ((seed >>> 8) % 130);
   for (let y = originY; y < originY + 280; y += 1) for (let x = originX; x < originX + 58; x += 1) {
     const shifted = x - Math.floor((y - originY) * .24);
-    for (const [dx, color] of [[0, accent], [105, [108, 207, 182]] as const]) {
+    for (const [dx, color] of [[0, [255, 208, 223]], [105, [242, 200, 75]]] as const) {
       const px = shifted + dx; if (px >= width) continue;
       const offset = y * (width * 4 + 1) + 1 + px * 4;
       pixels[offset] = color[0]; pixels[offset + 1] = color[1]; pixels[offset + 2] = color[2]; pixels[offset + 3] = 255;
@@ -70,4 +70,8 @@ for (const [path, details] of Object.entries(publicPages)) {
     writeFileSync(file, image);
   }
 }
+const defaultCard = readFileSync('public/social/home.png');
+if (check) {
+  if (!readFileSync('public/social-card.png').equals(defaultCard)) throw new Error('Default social image stale: public/social-card.png. Run npm run social:generate.');
+} else writeFileSync('public/social-card.png', defaultCard);
 console.log(check ? 'Social images match the public route registry.' : `Generated ${Object.keys(publicPages).length} route-specific social images.`);

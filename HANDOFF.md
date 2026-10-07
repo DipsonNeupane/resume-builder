@@ -1,3 +1,20 @@
+## October 7 — Wine + Blush website brand assets
+
+Aligned the APWICO website's shared brand assets with the approved production Wine +
+Blush identity while preserving the logo geometry. Rebuilt and visually checked the
+SVG/PNG/ICO favicon suite, Apple touch icon, PWA icons, manifest colours, default social
+card and all generated route social cards. The stale ResumeStride default social card and
+all targeted orange/teal shared web-asset colours were removed; the Chrome extension and
+its store submission were not changed.
+
+Verification: production build PASS; SEO suite 22/22; brand, social-image parity and static
+performance budgets PASS; 32/64/180/192/512px icon dimensions and 1200x630 social images
+verified; the 32px favicon and default social image were inspected at rendered size. The
+bounded source deployment `dpl_8DK9pwZiWpaLSic1ha9ttcT9Wwtq` is READY and aliased to
+`apwico.com`; apex and `www` return 200, and every deployed icon/manifest/default-social
+asset is byte-identical to the verified local artifact. No provider, DNS, page UI/copy,
+redirect, ResumeStride environment or Chrome extension/store setting was changed.
+
 ## October 6 — APWICO extension 0.2.3 submitted
 
 Submitted APWICO Job Capture 0.2.3 to the existing Chrome Web Store item after a
