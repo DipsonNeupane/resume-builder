@@ -1,3 +1,17 @@
+## October 7 — Task 63 hosted cloud validation
+
+Ran the non-destructive Task 63 matrix against production Supabase with two dedicated
+fictional accounts while public cloud saving remained disabled. The guarded direct-hosted
+suite passed 14/14 and the three-context real-browser exercise passed 8/8, covering explicit
+save, fresh-session recovery, two-account RLS isolation, account switching, revision
+conflicts, interrupted-save retry, browser/cloud separation, deletion and fixture cleanup.
+The authenticated dashboard confirms daily physical backups and a non-destructive
+restore-to-new-project route. Task 63 remains **Validation Pending** only because the
+established cloud acceptance gate requires a populated backup restore into an isolated
+hosted project with verified ownership/content and measured recovery objectives; that
+provider operation was not performed. Detailed evidence:
+`docs/redesign/TASK_63_HOSTED_CLOUD_VALIDATION_2026-10-07.md`.
+
 ## October 7 — Tasks 20–22 real-world validation closed
 
 Closed the three findings from the October 5 physical validation without reopening Task

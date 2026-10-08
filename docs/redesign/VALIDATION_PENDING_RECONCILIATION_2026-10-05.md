@@ -42,7 +42,7 @@ not failed validation.
 | 51. First occupation set | The first portfolio is selected from defensible demand/product evidence, spans relevant work types and geographies, and records why each occupation was chosen. | Nine-category portfolio and dated official external evidence are documented in `G7_EVIDENCE_CLOSURE_2026-09-30.md`; Search Console is verified but still processing/no-data. | **VALIDATION PENDING.** Meaningful internal/Search Console demand evidence has not matured; no ranking is invented. |
 | 52. Occupation hubs | Initial hubs provide reviewed, occupation-specific evidence guidance, examples, templates and product entry without invented requirements or credentials. | Nine substantive sourced/indexable hubs pass content, route, expiry, accessibility and responsive checks. | **VALIDATION PENDING.** Qualified occupation/regulator review is not recorded. |
 | 53. Regional guidance | Regional differences are jurisdiction-scoped, sourced and reviewed; unsupported regions are not generalized. | Five-source regional matrix, explicit exclusions, no-IP behavior, checked dates and publication gates pass. | **VALIDATION PENDING.** Qualified local/regional human review is not recorded. |
-| 63. Cloud-saving validation | Consent, ownership, conflict, switching, deletion, limits, recovery, interruption and local/cloud boundaries are validated in the hosted operating environment before promotion. | Implementation, database/RLS replay, local-retention rehearsal, conflict/interruption simulation, account switching, JSON backup and self-service deletion pass. Production remains cloud-off. | **VALIDATION PENDING.** Hosted two-account isolation, provider backup/recovery and real multi-device/interrupted-save validation remain. |
+| 63. Cloud-saving validation | Consent, ownership, conflict, switching, deletion, limits, recovery, interruption and local/cloud boundaries are validated in the hosted operating environment before promotion. | Production Supabase direct checks pass 14/14 and a three-context real-browser exercise passes 8/8 for save, fresh-session recovery, two-account isolation, conflict choices, switching, browser-draft separation, interrupted-save retry and deletion. RLS policies are present and effective. Daily physical backups and the restore-to-new-project route are verified. Production remains cloud-off. See `TASK_63_HOSTED_CLOUD_VALIDATION_2026-10-07.md`. | **VALIDATION PENDING.** The established populated provider-backup restore drill into an isolated project, including content/ownership verification and measured recovery objectives, remains. |
 
 ## Partial and post-launch boundary
 
@@ -61,6 +61,7 @@ is complete and Google review is in progress.
 - `PRE_RELEASE_BLOCKER_CLEARANCE_2026-10-01.md`
 - `FINAL_VISUAL_UI_AUDIT_2026-10-01.md`
 - `TASKS_19_22_REAL_WORLD_VALIDATION_2026-10-05.md`
+- `TASK_63_HOSTED_CLOUD_VALIDATION_2026-10-07.md`
 - `PRODUCTION_VALIDATION_2026-10-04.md`
 - `G6_G7_INTEGRATION_2026-09-30.md`
 - `G7_EVIDENCE_CLOSURE_2026-09-30.md`
