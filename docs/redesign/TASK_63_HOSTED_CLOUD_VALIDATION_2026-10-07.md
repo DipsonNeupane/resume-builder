@@ -58,6 +58,42 @@ measured recovery objectives recorded before cloud saving is promoted. Performin
 provider operation now could create billable infrastructure and has not been authorized as
 part of this non-destructive validation.
 
+## Final managed-restore attempt
+
+The source project's actual plan-backed mechanism was rechecked in the authenticated
+Supabase dashboard:
+
+- physical database backup approximately daily around midnight in the project's region;
+- seven daily snapshots visible (the current effective retention window);
+- restores can be in-place or **Restore to new project**;
+- the new-project flow transfers database schema, data, indexes, roles, permissions and
+  database users;
+- Storage objects/settings, Edge Functions, Auth settings/API keys, database extension
+  settings and read replicas require manual reconfiguration; and
+- the provider explicitly excludes deleted Storage API objects from database backups.
+
+The existing isolated `ResumeStride Recovery Drill` project is itself a completed restore
+from the production backup flow. It contains a retained fictional master-resume canary with
+revision 2 and two recorded canonical SHA-256 expectations. Its current daily snapshots are
+all later than the canary creation time, so a suitable populated source backup exists. The
+source also has the later Jobs/version schema required for the complete integrity matrix.
+The non-secret comparison manifest is retained at `docs/verification/backup-canary.json`.
+
+The latest suitable snapshot's **Restore to new project** flow was opened and inspected up
+to, but not through, its financial action. Supabase quoted **US$9.68 additional monthly
+compute** and **US$0 additional monthly disk** for the isolated destination. The next
+button would provision billable infrastructure. The owner explicitly prohibited purchasing
+additional infrastructure without authorization, so no project was created and no restore
+was started.
+
+The safest provider-native completion is to approve that temporary US$9.68/month project,
+restore the latest post-canary snapshot, compare the canary master/current/history hashes,
+saved-job and job-version ownership/counts, test cross-owner denial, record snapshot age and
+end-to-end recovery time, and then obtain separate destructive authorization before deleting
+the temporary project. A no-cost logical `pg_dump` into local PostgreSQL is the safest
+available alternative, but it is not evidence that Supabase's managed physical backup can be
+restored and therefore cannot close Task 63.
+
 ## Criterion result
 
 | Blueprint boundary | Result |
@@ -71,7 +107,7 @@ part of this non-destructive validation.
 | Limits and permanent-failure handling | PASS — existing isolated/database and browser evidence retained |
 | Supabase policies and effective server access | PASS |
 | Provider backup schedule and recovery route | PASS |
-| Populated restore into an isolated hosted project | VALIDATION PENDING |
+| Populated restore into an isolated hosted project | BLOCKED — provider requires a new US$9.68/month project |
 
 ## Production impact
 

@@ -1,3 +1,15 @@
+## October 7 — Task 63 final backup drill paused at provider cost boundary
+
+The authenticated Supabase flow confirms the actual plan mechanism: daily physical
+database backups, seven visible daily snapshots, and managed restore to a new project.
+The existing isolated recovery project has post-canary snapshots suitable for the populated
+drill. Opening the latest snapshot's restore flow showed a required new isolated project at
+US$9.68/month compute plus US$0 disk. No financial authorization was provided, so the flow
+was stopped before Continue; no project, restore, production mutation or customer-data
+access occurred. Task 63 remains Validation Pending. The exact transferred/manual scopes,
+limitations, completion procedure and no-cost logical-dump alternative are recorded in
+`docs/redesign/TASK_63_HOSTED_CLOUD_VALIDATION_2026-10-07.md`.
+
 ## October 7 — Task 63 hosted cloud validation
 
 Ran the non-destructive Task 63 matrix against production Supabase with two dedicated
