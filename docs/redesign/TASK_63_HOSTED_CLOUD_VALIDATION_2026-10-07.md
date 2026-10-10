@@ -94,6 +94,33 @@ the temporary project. A no-cost logical `pg_dump` into local PostgreSQL is the 
 available alternative, but it is not evidence that Supabase's managed physical backup can be
 restored and therefore cannot close Task 63.
 
+## No-cost restore assessment — 2026-10-10
+
+The no-cost alternatives were checked against Supabase's current official documentation and
+the exact Task 63 acceptance boundary:
+
+| Option | Cost/safety | Acceptance result |
+| --- | --- | --- |
+| Download the existing daily physical backup and restore it locally | Not available. Supabase states that physical backups are not directly downloadable. | Cannot execute. |
+| `supabase db dump` / `pg_dump` and restore to local PostgreSQL | No provider compute charge, but creates a new logical backup of current state rather than recovering the retained managed daily physical snapshot. Supabase documents this as a separate logical-backup path. | Useful operational fallback, but does not prove the configured managed backup can recover the canary; insufficient for Task 63. |
+| Local Supabase `db start --from-backup` | Production-compatible for a downloadable Supabase physical backup, but the active physical backup is unavailable for download. The local CLI and Docker runtime are also not installed on this workstation. | No usable source artifact; cannot execute without substituting a new logical export. |
+| Supabase preview branch | Separate hosted environment, but branching compute is usage-billed and not covered by the Spend Cap. Include-data branching also depends on PITR. | Not a no-cost option and does not exercise the retained daily backup selected for this drill. |
+| Restore over the existing recovery project | Avoids another project but destroys the populated source/canary and its retained backup chain. | Rejected as destructive and incapable of source-versus-target comparison. |
+| Restore over production | Would interrupt/overwrite production. | Prohibited. |
+
+Authoritative references checked 2026-10-10:
+
+- <https://supabase.com/docs/guides/platform/backups>
+- <https://supabase.com/docs/guides/platform/clone-project>
+- <https://supabase.com/docs/guides/troubleshooting/download-logical-backups>
+- <https://supabase.com/docs/guides/local-development/restoring-downloaded-backup>
+- <https://supabase.com/docs/guides/platform/manage-your-usage/branching>
+
+Conclusion: no no-cost method tests recovery from the actual configured physical backup
+while preserving both production and the populated source. The paid isolated destination is
+necessary for the remaining provider-native recovery evidence. Task 63 remains Validation
+Pending; this is an external validation boundary, not an implementation defect.
+
 ## Criterion result
 
 | Blueprint boundary | Result |

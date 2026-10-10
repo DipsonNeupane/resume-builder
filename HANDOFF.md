@@ -1,3 +1,16 @@
+## October 10 — Task 63 no-cost restore assessment
+
+Rechecked the remaining recovery gate against the live plan and current official Supabase
+documentation. The source uses daily physical backups, which Supabase does not make directly
+downloadable. A local `db dump`/`pg_dump` restore would create and test a different logical
+backup, not recover the retained post-canary physical snapshot; local `--from-backup` has no
+downloadable source artifact. Preview branches incur usage-billed compute, restoring over
+the recovery project would destroy the comparison source, and production restore is
+prohibited. No paid resource, subscription change, restore, fixture write or production
+mutation occurred. Task 63 remains Validation Pending on the already-identified temporary
+US$9.68/month isolated restore destination. Full evidence is in
+`docs/redesign/TASK_63_HOSTED_CLOUD_VALIDATION_2026-10-07.md`.
+
 ## October 7 — Task 63 final backup drill paused at provider cost boundary
 
 The authenticated Supabase flow confirms the actual plan mechanism: daily physical
