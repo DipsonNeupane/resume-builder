@@ -34,7 +34,7 @@ try {
   const worker = context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
   const id = new URL(worker.url()).host;
   const popup = await context.newPage();
-  await popup.setViewportSize({ width: 260, height: 800 });
+  await popup.setViewportSize({ width: 375, height: 800 });
   await popup.goto(`chrome-extension://${id}/popup.html`);
   await popup.evaluate(async capture => {
     await chrome.storage.session.set({ pendingCapture: { payload: capture, expiresAt: Date.now() + 30 * 60 * 1000 } });
@@ -47,11 +47,11 @@ try {
   const panel = await popup.screenshot();
   const storeShot = await context.newPage();
   await storeShot.setViewportSize({ width: 1280, height: 800 });
-  await storeShot.setContent(`<style>html,body{margin:0;width:1280px;height:800px;overflow:hidden;background:#2d0c1b}body{display:grid;place-items:start center;background:radial-gradient(circle at 85% 10%,#722044 0,transparent 38%),linear-gradient(118deg,#2d0c1b,#18060f)}img{display:block;width:260px;height:800px;box-shadow:0 28px 80px #12030acc}</style><img alt="APWICO Job Capture narrow side-panel interface" src="data:image/png;base64,${panel.toString('base64')}">`);
+  await storeShot.setContent(`<style>html,body{margin:0;width:1280px;height:800px;overflow:hidden;background:#2d0c1b}body{display:grid;place-items:start center;background:radial-gradient(circle at 85% 10%,#722044 0,transparent 38%),linear-gradient(118deg,#2d0c1b,#18060f)}img{display:block;width:375px;height:800px;box-shadow:0 28px 80px #12030acc}</style><img alt="APWICO Job Capture toolbar popup interface" src="data:image/png;base64,${panel.toString('base64')}">`);
   await storeShot.screenshot({ path: resolve(assetRoot, 'capture-review-1280x800.png') });
 } finally {
   await context.close();
   await rm(profile, { recursive: true, force: true });
 }
 
-console.log('Generated Wine + Blush extension store icon, promo tile, and narrow-panel screenshot.');
+console.log('Generated Wine + Blush extension store icon, promo tile, and toolbar-popup screenshot.');

@@ -1,8 +1,8 @@
-# APWICO Job Capture — V1 candidate 0.2.2
+# APWICO Job Capture — prepared candidate 0.2.4
 
-Unpublished integration candidate. **No deployment or Chrome Web Store submission.**
-The app, API and migration in this change must be released together in a later authorized
-release. A package pointing at production does not make this source available there.
+Version 0.2.3 is published in the Chrome Web Store. Candidate 0.2.4 corrects the
+real-Chrome toolbar-popup intrinsic-width collapse and is packaged locally, but has not
+been uploaded or submitted. A separately authorized Store submission is still required.
 
 Click the extension on a public job page → review/edit the fields → send to APWICO
 → sign in there if necessary → **Save job and see how I match** → normal Saved Jobs /

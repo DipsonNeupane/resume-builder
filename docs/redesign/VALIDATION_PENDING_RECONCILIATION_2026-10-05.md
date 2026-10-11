@@ -37,7 +37,7 @@ not failed validation.
 | 20. Sign-in/recovery continuation | Content-free continuation survives sign-in/recovery, including a genuine new-tab provider link; account changes fail closed and cannot restore another owner's object. | The bounded cleanup is live. A fresh real recovery email displayed APWICO, opened the production new-password flow in a new tab and left no consumed `code` in the visible URL. Supabase SMTP reloaded with sender name APWICO; owner-switch and continuation automation remains green. | **COMPLETE.** Provider identity, real new-tab return and URL cleanup are now verified. |
 | 21. Document/storage concepts | People can distinguish master versus job-specific documents and local versus account-saved state, including naming and active-state cues. | On a physical iPhone after deployment, the owner identified the active master and browser-session storage without coaching. The isolated sample then demonstrated—and the owner understood—that tailoring creates a separate fictional version while its master remains unchanged. | **COMPLETE.** The corrected production state passes normal-person comprehension. |
 | 22. Responsive/accessibility workflow | Critical workflows are keyboard, focus, zoom, reduced-motion, narrow-screen and assistive-technology usable without obscured or overflowing controls. | Existing keyboard, focus, error/status, zoom, reduced-motion, viewport and axe evidence remains valid. Physical iPhone layout passed, and real VoiceOver announced the active master, browser-session storage and primary editing controls in usable order without trapping. | **COMPLETE.** Physical and assistive-technology evidence now supplements the automated gates. |
-| 37. Public extension experience | The APWICO extension package/listing accurately describes published behavior and a verified public install URL/version is available. | Google approved and publicly serves 0.2.3 with the verified APWICO Wine + Blush listing assets. The Store installation is enabled, permissions/privacy match, and supported Greenhouse capture populated title, company and description. A real 2026-10-10 Chrome check nevertheless reproduced pathological wrapping in the actual narrow action panel, including the unsupported-site state. | **VALIDATION PENDING.** Publication is complete, but the real installed narrow-panel experience still fails production-quality validation. |
+| 37. Public extension experience | The APWICO extension package/listing accurately describes published behavior and a verified public install URL/version is available. | Google publicly serves 0.2.3. The reproduced toolbar-popup collapse is fixed and real-Chrome verified in packaged 0.2.4 with unchanged permissions/privacy, supported capture and a readable unsupported state. The Store's verified individual-trader address and phone disclosure was traced to Google Payments. | **VALIDATION PENDING.** 0.2.4 is not submitted or published, and truthful non-residential trader contacts still require owner establishment and reverification. |
 | 45. Performance | Public entry routes meet the established lab budgets and protections; representative field and low-powered-device behavior is validated without invented metrics. | Lab budgets, deferred loading, data-saver/reduced-motion and responsive gates pass. Vercel reports desktop 100/295 events and mobile 100/17 events. | **VALIDATION PENDING.** Metric-level LCP/INP/CLS and physical low-powered-device evidence remain unavailable; the small sample is not treated as failure. |
 | 51. First occupation set | The first portfolio is selected from defensible demand/product evidence, spans relevant work types and geographies, and records why each occupation was chosen. | Nine-category portfolio and dated official external evidence are documented in `G7_EVIDENCE_CLOSURE_2026-09-30.md`; Search Console is verified but still processing/no-data. | **VALIDATION PENDING.** Meaningful internal/Search Console demand evidence has not matured; no ranking is invented. |
 | 52. Occupation hubs | Initial hubs provide reviewed, occupation-specific evidence guidance, examples, templates and product entry without invented requirements or credentials. | Nine substantive sourced/indexable hubs pass content, route, expiry, accessibility and responsive checks. | **VALIDATION PENDING.** Qualified occupation/regulator review is not recorded. |
@@ -51,7 +51,8 @@ the blueprint work itself requires real advisors, partner agreements, an institu
 pilot and a preregistered adequately sampled research result. Those are legitimate
 post-launch programs and are not release blockers. There is no current **BLOCKED** task;
 Task 37 is no longer awaiting external review. It remains validation pending because
-the approved public 0.2.3 package still fails the real installed narrow-panel check.
+the verified 0.2.4 correction is not submitted/published and the public trader-contact
+privacy issue requires truthful owner-controlled replacement contact details.
 
 ## Evidence index
 
@@ -72,5 +73,6 @@ the approved public 0.2.3 package still fails the real installed narrow-panel ch
 
 ## Next actionable validation
 
-Task 37 is the next directly actionable item: correct the reproduced real-Chrome narrow
-action-panel layout, publish a verified patch, and repeat the installed public-version check.
+Task 37 is the next directly actionable item: establish truthful non-residential trader
+contacts, update/reverify them, submit 0.2.4 when authorized, and repeat the installed
+public-version check after Google approval.

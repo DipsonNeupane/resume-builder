@@ -4366,3 +4366,20 @@ closed-vocabulary diagnostic omission for account-master deletion. The remaining
   performed. See `docs/public-matcher-corrective-patch-2026-10-07.md`.
 - Verification: public tool unit/browser 18/18; focused matcher 34/34; full server
   457/457; complete release gate 13/13; Graphify rebuilt 3,410 nodes / 7,091 edges.
+## October 10 — Task 37 version 0.2.4 prepared; public trader contacts need owner action
+
+The Chrome Web Store listing and publisher settings were audited read-only. The public
+listing exposes the verified individual trader's legal name, residential address and phone;
+the dashboard confirms these values come from the Google Payments verification profile.
+Chrome requires trader address and phone disclosures. No legal/trader/profile value was
+changed. A truthful non-residential business/service address and owner-controlled SMS-capable
+business phone are required before the owner authorizes Payments-profile/reverification work.
+
+The 0.2.3 layout regression was traced to percentage-only root sizing on a toolbar action
+popup, which gave Chrome no intrinsic width and collapsed to min-content. Candidate 0.2.4
+uses a bounded 360px preferred popup width with fluid internal controls. The packaged real
+Chrome toolbar path measured a 375px viewport/360px body with no horizontal overflow and
+322.5px inputs/actions. Targeted layout/accessibility 3/3, capture/boundary 21/21 and package
+security/assets 4/4 pass. The refreshed Store screenshot reflects the real popup width.
+Nothing was uploaded or submitted; 0.2.3 remains public and Task 37 remains Validation
+Pending. Full evidence: `docs/redesign/TASK_37_EXTENSION_024_CORRECTION_2026-10-10.md`.

@@ -1,9 +1,10 @@
 import {test,expect,chromium} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import {writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import type {ExtractResult} from '../../apps/extension/src/lib/types';
 
-test('popup remains usable at realistic narrow Chrome side-panel widths',async()=>{
+test('popup remains usable at its bounded Chrome action width',async()=>{
  const extensionPath=resolve('apps/extension');
  const context=await chromium.launchPersistentContext('',{channel:'chromium',headless:true,args:[`--disable-extensions-except=${extensionPath}`,`--load-extension=${extensionPath}`]});
  try {
@@ -11,7 +12,7 @@ test('popup remains usable at realistic narrow Chrome side-panel widths',async()
   const id=new URL(worker.url()).host;
   const popup=await context.newPage();
   await popup.goto(`chrome-extension://${id}/popup.html`);
-  for(const width of [160,180,220,260,320,360]){
+  for(const width of [360,400]){
    await popup.setViewportSize({width,height:720});
    await expect(popup.getByRole('heading',{name:'APWICO job capture'})).toBeVisible();
    await expect(popup.locator('.notice')).toBeVisible();
@@ -33,15 +34,92 @@ test('popup remains usable at realistic narrow Chrome side-panel widths',async()
    });
    expect(layout.scrollWidth).toBeLessThanOrEqual(layout.viewport);
    expect(layout.headingHeight).toBeLessThan(60);
-   expect(layout.inputWidth).toBeGreaterThanOrEqual(width-40);
-   expect(layout.buttonWidth).toBeGreaterThanOrEqual(width-40);
+   expect(layout.inputWidth).toBeGreaterThanOrEqual(320);
+   expect(layout.buttonWidth).toBeGreaterThanOrEqual(320);
    expect(layout.buttonHeight).toBeGreaterThanOrEqual(44);
-   if(width===160) await popup.screenshot({path:'/tmp/apwico-extension-side-panel-160.png',fullPage:true});
-   if(width===320) await popup.screenshot({path:'/tmp/apwico-extension-side-panel-320.png',fullPage:true});
+   if(width===360) await popup.screenshot({path:'/tmp/apwico-extension-popup-360.png',fullPage:true});
   }
   await popup.getByLabel('Job title',{exact:true}).focus();
   await expect(popup.getByLabel('Job title',{exact:true})).toBeFocused();
   expect((await new AxeBuilder({page:popup}).analyze()).violations).toEqual([]);
+ } finally {await context.close();}
+});
+
+test('toolbar popup declares a usable intrinsic Chrome action width', async () => {
+ const extensionPath=resolve('apps/extension');
+ const context=await chromium.launchPersistentContext('',{channel:'chromium',headless:true,args:[`--disable-extensions-except=${extensionPath}`,`--load-extension=${extensionPath}`]});
+ try {
+  const worker=context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
+  const id=new URL(worker.url()).host;
+  const popup=await context.newPage();
+  await popup.goto(`chrome-extension://${id}/popup.html`);
+  const intrinsic=await popup.evaluate(()=>{
+   const html=getComputedStyle(document.documentElement);
+   const body=document.body.getBoundingClientRect();
+   return {declaredWidth:html.width,bodyWidth:body.width};
+  });
+  expect(intrinsic.declaredWidth).toBe('360px');
+  expect(intrinsic.bodyWidth).toBe(360);
+  await expect(popup.locator('input').first()).toHaveCSS('min-width','0px');
+  await expect(popup.locator('button').last()).toHaveCSS('min-width','0px');
+ } finally {await context.close();}
+});
+
+test('real Chrome toolbar action opens a readable popup instead of min-content collapse', async () => {
+ const extensionPath=resolve('apps/extension');
+ const context=await chromium.launchPersistentContext('',{channel:'chromium',headless:true,args:['--enable-unsafe-extension-debugging',`--disable-extensions-except=${extensionPath}`,`--load-extension=${extensionPath}`]});
+ try {
+  const worker=context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
+  const id=new URL(worker.url()).host;
+  const url='https://job-boards.greenhouse.io/example/jobs/123';
+  await context.route(url,route=>route.fulfill({contentType:'text/html',body:'<h1>Controlled job</h1>'}));
+  await context.route('https://boards-api.greenhouse.io/**',route=>route.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(route.request().url().includes('/jobs/')?{id:123,title:'Toolbar support role',content:'<p>Support customers.</p>'}:{name:'Example'})}));
+  const fixture=await context.newPage(); await fixture.goto(url); await fixture.bringToFront();
+  const browser=context.browser(); if(!browser) throw new Error('Expected a browser for toolbar verification');
+  const cdp=await browser.newBrowserCDPSession();
+  const tabs=(await cdp.send('Target.getTargets',{filter:[{type:'tab'}]})).targetInfos;
+  const tab=tabs.find(target=>target.url===url); if(!tab) throw new Error('Expected controlled job tab');
+  await cdp.send('Extensions.triggerAction',{id,targetId:tab.targetId});
+  let popupTarget;
+  for(let attempt=0;attempt<50&&!popupTarget;attempt++){
+   popupTarget=(await cdp.send('Target.getTargets')).targetInfos.find(target=>target.url===`chrome-extension://${id}/popup.html`);
+   if(!popupTarget) await new Promise(resolve=>setTimeout(resolve,100));
+  }
+  if(!popupTarget) throw new Error('Expected the real Chrome action popup target');
+  const {sessionId}=await cdp.send('Target.attachToTarget',{targetId:popupTarget.targetId,flatten:false});
+  let commandId=0;
+  const send=async<T>(method:string,params:Record<string,unknown>={}):Promise<T>=>{
+   const id=++commandId;
+   const response=new Promise<T>((resolve,reject)=>{
+    const listener=(event:{sessionId:string;message:string})=>{
+     if(event.sessionId!==sessionId)return;
+     const message=JSON.parse(event.message);
+     if(message.id!==id)return;
+     cdp.off('Target.receivedMessageFromTarget',listener);
+     if(message.error)reject(new Error(message.error.message)); else resolve(message.result as T);
+    };
+    cdp.on('Target.receivedMessageFromTarget',listener);
+   });
+   await cdp.send('Target.sendMessageToTarget',{sessionId,message:JSON.stringify({id,method,params})});
+   return response;
+  };
+  type PopupLayout={title?:string;innerWidth:number;outerWidth:number;scrollWidth:number;headingHeight?:number;inputWidth?:number;buttonWidth?:number};
+  let layout:PopupLayout|undefined;
+  for(let attempt=0;attempt<50&&!layout?.title;attempt++){
+   const evaluated=await send<{result:{value:PopupLayout}}>('Runtime.evaluate',{expression:`(()=>{const input=document.querySelector('input');const submit=document.querySelector('button[type="submit"]');return{title:input?.value,innerWidth,outerWidth,scrollWidth:document.documentElement.scrollWidth,headingHeight:document.querySelector('h1')?.getBoundingClientRect().height,inputWidth:input?.getBoundingClientRect().width,buttonWidth:submit?.getBoundingClientRect().width}})()`,returnByValue:true});
+   layout=evaluated.result.value;
+   if(!layout?.title)await new Promise(resolve=>setTimeout(resolve,100));
+  }
+  expect(layout?.title).toBe('Toolbar support role');
+  if(!layout)throw new Error('Expected popup layout');
+  expect(layout.innerWidth).toBeGreaterThanOrEqual(320);
+  expect(layout.innerWidth).toBeLessThanOrEqual(400);
+  expect(layout.scrollWidth).toBeLessThanOrEqual(layout.innerWidth);
+  expect(layout.headingHeight).toBeLessThan(60);
+  expect(layout.inputWidth).toBeGreaterThanOrEqual(280);
+  expect(layout.buttonWidth).toBeGreaterThanOrEqual(280);
+  const screenshot=await send<{data:string}>('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
+  await writeFile('/tmp/apwico-extension-024-real-toolbar-popup.png',Buffer.from(screenshot.data,'base64'));
  } finally {await context.close();}
 });
 

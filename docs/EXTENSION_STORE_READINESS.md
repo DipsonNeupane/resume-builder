@@ -1,5 +1,13 @@
 # Chrome Web Store readiness — APWICO Job Capture 0.2.3
 
+> **2026-10-10 correction:** Google published 0.2.3, but real Chrome verification
+> reproduced the collapsed toolbar-action popup. Candidate 0.2.4 fixes the actual
+> percentage-only intrinsic-width cause, passes real packaged-Chrome verification and
+> is ready for a separately authorized upload/submission. It has not been submitted.
+> The public verified-trader address and phone originate in Google Payments and require
+> truthful owner-controlled replacement contacts plus reverification; see
+> `redesign/TASK_37_EXTENSION_024_CORRECTION_2026-10-10.md`.
+
 Updated 2026-10-06. Version 0.2.3 was submitted to Chrome Web Store review on
 2026-10-06 with automatic publication selected after approval. Google review is
 pending. The existing published 0.2.2 listing remains available, but is not
