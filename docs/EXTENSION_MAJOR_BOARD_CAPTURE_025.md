@@ -38,6 +38,20 @@ The popup follows Capture → Review → Send, keeps title/company/description p
 - Final preview-backed extension regression on 2026-10-13 passed **54/54** runnable checks with one explicitly gated manual-Chrome check skipped; that same check passed **1/1** separately in official Google Chrome. Package verification passed **3/3** checks for the 16-file 0.2.5 archive.
 - The release build and package audit verify version 0.2.5, reviewed package contents, minimal permissions, and no source maps or forbidden files.
 
+## Final packaged-candidate verification — 2026-10-13
+
+- The exact 16-file production package was loaded unpacked in a disposable official Google Chrome profile, not the developer source folder.
+- Live Greenhouse capture returned the current job title, employer, location, canonical URL and a 5,716-character complete description.
+- The first live Lever check found a current-markup regression. The scoped adapter was corrected to accept exactly one `data-qa="job-description"` section, remove only a literal ` logo` suffix from the employer image label, and exclude adjacent apply/disclaimer content. The rebuilt package then captured the live title, employer, location, canonical URL and job description successfully.
+- The live Workday page tested did not expose a qualifying URL-correlated `JobPosting` record, so the package correctly failed closed; Workday remains metadata-dependent and partial by design.
+- At 360 CSS pixels the packaged popup had no horizontal overflow, a 324-pixel input, a 44.8-pixel primary action, normal vertical scrolling and visible keyboard focus. The rendered Wine + Blush popup was visually inspected.
+- A fictional paste/review/send journey opened production APWICO with title, employer, location, source and description intact; no job content appeared in the destination URL and nothing was saved to an account.
+- Final regression after the Lever correction passed **55/55** runnable browser checks (one separately exercised real-Chrome check is environment-gated) and the package gate passed **3/3**.
+
+## Google support case 9-7216000040956
+
+Google replied on 2026-10-12 that public listing details must match the information used during trader verification and referred APWICO to the Trader Disclosure Policy. Google did not authorize separate public contact fields or hiding the verified address/phone. No developer identity, trader status, Payments profile, or legal verification data was changed. Residential address and personal phone removal therefore remain pending a compliant reverification path or clearer Google instruction.
+
 ## Independent review
 
 The adversarial review identified stale SPA identity, query-ID loss, ambiguous JSON-LD, incomplete-description acknowledgment, auth/reload continuity, look-alike hosts, narrow-layout risks, a selected-card transition race, the single Unicode ellipsis truncation case, and missing-source send continuity. Each confirmed issue was addressed. The final compliance pass then removed direct LinkedIn and Indeed DOM adapters in favor of policy-safe paste fallbacks. No additional confirmed blockers remain in Greenhouse, Lever, Workday, permissions/privacy, authentication continuity, or the narrow popup layout.

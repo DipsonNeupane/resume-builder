@@ -38,3 +38,13 @@ test('Lever scoped adapter captures only posting sections and rejects a lookalik
     expect(JSON.stringify(result)).not.toContain('PRIVATE');
   }
 });
+
+test('Lever current public markup strips the logo suffix and ignores adjacent content', async ({ page }) => {
+  const url = 'https://jobs.eu.lever.co/example/1d11cd8d-1491-4f7e-839a-a294578755f7';
+  await page.route(url, route => route.fulfill({ contentType: 'text/html', body: '<a class="main-header-logo"><img alt="Example Company logo"></a><div class="posting-headline"><h2>Senior Software Engineer</h2><div class="posting-categories"><div class="location">Lisbon</div></div></div><div class="section" data-qa="job-description"><p>Build secure customer software.</p><ul><li>Five years of engineering experience.</li></ul></div><div class="section" data-qa="ai-disclaimer">PRIVATE DISCLAIMER</div><a data-qa="show-page-apply">Apply</a>' }));
+  await page.goto(url);
+  const result = await page.evaluate<ExtractResult>(await readFile('apps/extension/dist/inject/extract-job.js','utf8'));
+  expect(result.supported).toBe(true);
+  if (result.supported) expect(result.capture).toMatchObject({ title: 'Senior Software Engineer', company: 'Example Company', description: 'Build secure customer software.\nFive years of engineering experience.', location: 'Lisbon', site: 'lever' });
+  expect(JSON.stringify(result)).not.toContain('PRIVATE DISCLAIMER');
+});
