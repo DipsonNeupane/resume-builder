@@ -31,7 +31,7 @@ function defaultDelay(ms: number): Promise<void> {
 export const dependencies = { authenticate, serviceDatabase, techmapSearch, delay: defaultDelay }
 type Dependencies = typeof dependencies
 
-export const FREE_JOB_LIMIT = 5
+export const FREE_JOB_LIMIT = 10
 export const PRO_JOB_LIMIT = 20
 const MAX_BODY_BYTES = 200000
 const LABEL_ORDER: Record<MatchLabel, number> = { strong: 0, good: 1, stretch: 2 }
@@ -143,15 +143,16 @@ export async function searchJobs(request: Request, env: NodeJS.ProcessEnv = proc
     // the Techmap request itself: they are applied as a local filter below, never sent
     // upstream, so requests differing only in those fields can still share one provider
     // fetch. Also deliberately excludes the owner: cached jobs carry no resume/account
-    // data, so an identical normalized public query is reused across accounts, and
-    // getOrFetchJobs coalesces simultaneous identical misses onto one provider fetch.
-    const signature = JSON.stringify({ title: criteria.title.toLowerCase(), countryCode: criteria.countryCode ?? null, workplace: criteria.workplace ?? null })
+    // data. The public-query cache is separated only by one-page/two-page depth so a
+    // Free page-one entry can never reduce Pro coverage; accounts at the same depth can
+    // still reuse and coalesce identical provider requests.
+    const signature = JSON.stringify({ title: criteria.title.toLowerCase(), countryCode: criteria.countryCode ?? null, workplace: criteria.workplace ?? null, depth: isPro ? 2 : 1 })
     const key = cacheKey(signature)
     const searchParams = { title: criteria.title, countryCode: criteria.countryCode, workPlace: criteria.workplace }
     const jobs = await getOrFetchJobs(key, async () => {
       const page1 = await deps.techmapSearch(config, { ...searchParams, page: 1 })
       let combined = page1.jobs
-      if (page1.hasMore) {
+      if (isPro && page1.hasMore) {
         await deps.delay(SECOND_PAGE_DELAY_MS)
         try {
           const page2 = await deps.techmapSearch(config, { ...searchParams, page: 2 })

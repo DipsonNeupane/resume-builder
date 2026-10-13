@@ -28,7 +28,7 @@ async function openBuilder(page: Page) {
 }
 
 async function openJobs(page: Page) {
-  await page.goto('/workspace/jobs');
+  await page.goto('/workspace/jobs', { waitUntil: 'commit' });
   await expect(page.getByRole('heading', { level: 1, name: 'Find jobs', exact: true })).toBeVisible({ timeout: 30_000 });
 }
 
@@ -422,7 +422,7 @@ test('Free saved analysis reload renders only the bounded preview and never Pro 
   await expect(savedCard.getByRole('button', { name: 'View the full evidence analysis with Pro' })).toBeVisible();
   // A Free account is told up front that tailoring is a Pro step, rather than being redirected unexpectedly.
   await expect(savedCard.getByRole('button', { name: 'Tailor my resume with Pro' })).toBeVisible();
-  await expect(page.getByText('Free accounts get one search every 24 hours, with up to 5 results.', { exact: false })).toBeVisible();
+  await expect(page.getByText('Free accounts get one search every 24 hours, with up to 10 relevant results.', { exact: false })).toBeVisible();
 });
 
 test('stale saved analysis has a manual deterministic refresh path with zero provider searches', async ({ page }) => {
@@ -563,7 +563,7 @@ test('a response with an invalid availableCount/proLimit (negative, fractional, 
   await expect(page.locator('.job-card')).toHaveCount(0);
 });
 
-test('Free accounts see an honest available-count summary, a five-item limit, and a Pro upgrade path', async ({ page }) => {
+test('Free accounts see an honest available-count summary, a ten-item limit, and a Pro upgrade path', async ({ page }) => {
   await seed(page);
   await page.route('**/api/jobs-search', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(sampleResponse) }));
   await openJobs(page);
@@ -574,16 +574,16 @@ test('Free accounts see an honest available-count summary, a five-item limit, an
   await expect(page.getByRole('heading', { name: 'A promising role. A considered application.' })).toBeVisible();
 });
 
-test('a Free account never sees more than five real job cards even when more are available', async ({ page }) => {
+test('a Free account never sees more than ten real job cards even when more are available', async ({ page }) => {
   await seed(page);
-  const jobs = Array.from({ length: 5 }, (_, i) => ({ ...sampleResponse.jobs[0], id: `techmap:${i}`, title: `Role ${i}`, sourceUrl: `https://jobs.acme.example/${i}` }));
+  const jobs = Array.from({ length: 10 }, (_, i) => ({ ...sampleResponse.jobs[0], id: `techmap:${i}`, title: `Role ${i}`, sourceUrl: `https://jobs.acme.example/${i}` }));
   const response = { jobs, isPro: false, availableCount: 30, proLimit: 20 };
   await page.route('**/api/jobs-search', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(response) }));
   await openJobs(page);
   await page.getByRole('button', { name: 'Search jobs' }).click();
-  await expect(page.locator('.job-card')).toHaveCount(5);
+  await expect(page.locator('.job-card')).toHaveCount(10);
   await expect(page.getByRole('heading', { level: 2, name: 'Role 0', exact: true })).toBeVisible();
-  await expect(page.getByText('Showing 5 of 30 matching jobs.')).toBeVisible();
+  await expect(page.getByText('Showing 10 of 30 matching jobs.')).toBeVisible();
 });
 
 test('a Pro account sees its full available set up to the Pro limit, with no upgrade prompt', async ({ page }) => {

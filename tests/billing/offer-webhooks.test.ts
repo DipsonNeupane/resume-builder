@@ -1,14 +1,33 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import type Stripe from 'stripe'
-import { applyOfferInvoice, applyOfferSubscriptionStatus } from '../../server/billing/offer-handlers.ts'
+import { applyOfferCheckoutSession, applyOfferInvoice, applyOfferSubscriptionStatus } from '../../server/billing/offer-handlers.ts'
 
 const env={BILLING_ENABLED:'true',STRIPE_SECRET_KEY:'sk_test_fixture',STRIPE_WEBHOOK_SECRET:'whsec_fixture',STRIPE_ACCOUNT_ID:'acct_fixture',STRIPE_PASS_PRICE_ID:'price_pass',STRIPE_MODE:'test',APP_ORIGIN:'https://apwico.com',STRIPE_PRO_MONTHLY_PRICE_ID:'price_pro',STRIPE_TEMPLATE_PRICE_MAP:'{}'}
-const trusted={owner_id:'abababab-abab-abab-abab-abababababab',subscription_id:'sub_pro',offer_key:'pro:monthly',cancel_at_period_end:false,current_period_end:'2026-11-01T00:00:00.000Z'}
+const trusted={owner_id:'abababab-abab-abab-abab-abababababab',subscription_id:'sub_pro',offer_key:'pro:monthly',price_id:'price_pro',cancel_at_period_end:false,current_period_end:'2026-11-01T00:00:00.000Z'}
 
 function paidInvoice(): Stripe.Invoice {
- return {id:'in_pro',livemode:false,status:'paid',currency:'usd',amount_paid:1999,billing_reason:'subscription_create',parent:{subscription_details:{subscription:'sub_pro'}},lines:{has_more:false,data:[{pricing:{price_details:{price:'price_pro'}},quantity:1,amount:1999,period:{start:1790812800,end:1793491200}}]},payments:{has_more:false,data:[{status:'paid',payment:{type:'payment_intent',payment_intent:'pi_pro'}}]}} as unknown as Stripe.Invoice
+ return {id:'in_pro',livemode:false,status:'paid',currency:'usd',amount_paid:1499,billing_reason:'subscription_create',parent:{subscription_details:{subscription:'sub_pro'}},lines:{has_more:false,data:[{pricing:{price_details:{price:'price_pro'}},quantity:1,amount:1499,period:{start:1790812800,end:1793491200}}]},payments:{has_more:false,data:[{status:'paid',payment:{type:'payment_intent',payment_intent:'pi_pro'}}]}} as unknown as Stripe.Invoice
 }
+
+test('a paid Pro checkout opened before the price cutover records its trusted legacy price',async()=>{
+ const calls:Array<{name:string;args?:Record<string,unknown>}> = []
+ const db={rpc:async(name:string,args?:Record<string,unknown>)=>{calls.push({name,args});if(name==='billing_lookup_offer_checkout')return{error:null,data:{owner_id:trusted.owner_id,offer_key:'pro:monthly',price_id:'price_legacypro'}};return{error:null,data:true}}} as never
+ const stripe={subscriptions:{retrieve:async()=>({id:'sub_legacy',livemode:false,status:'active',cancel_at_period_end:false,items:{has_more:false,data:[{quantity:1,price:{id:'price_legacypro'},current_period_start:1790812800,current_period_end:1793491200}]}})}} as unknown as Stripe
+ const session={id:'cs_legacy',status:'complete',livemode:false,subscription:'sub_legacy'} as Stripe.Checkout.Session
+ const response=await applyOfferCheckoutSession(session,stripe,db,env)
+ assert.equal(response?.status,200)
+ assert.ok(calls.some(call=>call.name==='billing_record_offer_subscription'&&call.args?.p_price==='price_legacypro'))
+})
+
+test('a trusted legacy $19.99 Pro subscription keeps reconciling at its stored price',async()=>{
+ const calls:Array<{name:string;args:Record<string,unknown>}> = []
+ const db={rpc:async(name:string,args:Record<string,unknown>)=>{calls.push({name,args});if(name==='billing_owner_subscription_summary')return{error:null,data:[]};return{error:null,data:null}}} as never
+ const invoice={...paidInvoice(),amount_paid:1999,lines:{has_more:false,data:[{pricing:{price_details:{price:'price_legacypro'}},quantity:1,amount:1999,period:{start:1790812800,end:1793491200}}]}} as unknown as Stripe.Invoice
+ const response=await applyOfferInvoice(invoice,1790812800,'invoice.paid',{} as Stripe,db,{...trusted,price_id:'price_legacypro'},env)
+ assert.equal(response.status,200)
+ assert.ok(calls.some(call=>call.name==='billing_apply_offer_invoice'&&call.args.p_price==='price_legacypro'&&call.args.p_amount===1999))
+})
 
 test('verified first Pro invoice grants access before stopping individual-template renewals',async()=>{
  const calls:Array<{name:string;args:Record<string,unknown>}>=[]

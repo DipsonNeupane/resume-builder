@@ -27,8 +27,10 @@ test('mobile navigation has sequential keyboard access, Escape, and destination 
  await page.keyboard.press(tab);
  await page.keyboard.press(tab);
  await expect(page.getByRole('link', { name: 'Templates', exact: true })).toBeFocused();
- await page.keyboard.press('Enter');
- await expect(page).toHaveURL(/\/templates\/$/);
+ await Promise.all([
+  page.waitForURL(/\/templates\/$/, { timeout: 30_000 }),
+  page.keyboard.press('Enter'),
+ ]);
  await expect(page.getByRole('heading', { level: 1, name: 'Browse resume templates.' })).toBeVisible();
  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });

@@ -18,12 +18,12 @@ The builder includes seven Free templates and twenty Premium templates, flexible
 
 ## Current boundaries
 
-The application provides the Free resume builder, account access, individual Premium-template subscriptions at US$1.99/month, Pro at US$19.99/month, AI suggestions requiring review, and server-generated PDF and Word documents. New paid subscriptions are limited to the United States and renew monthly until cancelled with explicit consent. Cancellation stops future renewal while preserving access through the paid billing period. Sign-in and explicit upload consent are required for document downloads. Resume drafts remain in the current browser; cloud saving is disabled and the browser extension is not publicly released. See HANDOFF.md for the exact deployment and verification limits.
+The V2 release candidate provides Free and Pro. New individual Premium-template subscriptions are retired; existing subscribers retain their original access and renewal terms. New Pro subscriptions are prepared at US$14.99/month and include all 27 templates, full Match Analysis, advanced job search, and AI-assisted tailoring that requires user review. New paid subscriptions remain limited to the United States and renew monthly until cancelled with explicit consent. Cancellation stops future renewal while preserving access through the paid billing period. This branch does not change the live Stripe price or production deployment. See HANDOFF.md for the exact deployment and verification limits.
 
 The source includes backend routes and database migrations for payments, AI, shared document-download allowances and cloud storage. Their presence in source or a successful local test does not mean they are available to customers. Normal JSON backup download/import has been removed; only internal corrupt-draft recovery may emit raw recovery data to prevent data loss. Support: support@apwico.com. Production: https://apwico.com.
 
-The source also includes the authenticated V1 jobs account layer. Free accounts may save
-up to three normalized job snapshots; active Pro accounts may save up to a documented
+The source also includes the authenticated jobs account layer. Free accounts may save and application-track
+up to ten normalized job snapshots; active Pro accounts may save up to a documented
 10,000-record abuse/storage safety ceiling. Duplicate provider IDs, canonical job
 fingerprints, and source URLs do not consume another slot. Existing records are never
 deleted when Pro expires or a provider listing becomes unavailable; only new saves are

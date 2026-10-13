@@ -9,7 +9,7 @@ export function ProPage({ ownerId, onBack, onSignIn }: Props) {
   <div className="pro-page-grid">
    <div className="pro-page-intro">
     <h1>Get APWICO Pro</h1>
-    <p>APWICO Pro is US$19.99/month and renews until cancelled. Access continues through the paid billing period.</p>
+    <p>APWICO Pro is US$14.99/month and renews until cancelled. Access continues through the paid billing period.</p>
     <ul>
      <li><Check size={18}/>Full Match Analysis, requirement by requirement</li>
      <li><Check size={18}/>Up to 20 job results per search, with no once-a-day limit</li>
@@ -20,7 +20,7 @@ export function ProPage({ ownerId, onBack, onSignIn }: Props) {
     <p className="field-hint"><a href="/pricing/">Compare plans</a> or review <a href="/trust/">Trust and privacy</a>.</p>
    </div>
    <aside className="pro-checkout-card" aria-label="Pro purchase options">
-    <div className="pro-checkout-price"><strong>US$19.99</strong><span>/month</span></div>
+    <div className="pro-checkout-price"><strong>US$14.99</strong><span>/month</span></div>
     {ownerId?<BillingPanel key={ownerId} ownerId={ownerId} surface="purchase"/>:<><h2>Sign in to continue</h2><p>Sign in to connect Pro to your account. Signing in does not start checkout.</p><button className="button" onClick={onSignIn}>Sign in or create account</button></>}
    </aside>
   </div>

@@ -7,14 +7,14 @@ import { freeTemplates, premiumTemplates } from '../../src/model.ts';
 
 const read = (path: string) => readFileSync(path, 'utf8');
 
-test('the commercial contract exposes all three paths and only verified recurring prices', () => {
- assert.deepEqual(commercialPlans.map(plan => plan.id), ['free', 'premium_template', 'pro']);
- assert.deepEqual(commercialPlans.map(plan => plan.price), ['$0', 'US$1.99', 'US$19.99']);
+test('the commercial contract exposes Free and Pro with the prepared V2 price', () => {
+ assert.deepEqual(commercialPlans.map(plan => plan.id), ['free', 'pro']);
+ assert.deepEqual(commercialPlans.map(plan => plan.price), ['$0', 'US$14.99']);
  assert.equal(commercialPlans[0].recurring, false);
  assert.equal(commercialPlans[1].recurring, true);
- assert.equal(commercialPlans[2].recurring, true);
+ assert.equal(commercialPlans[1].recurring, true);
  assert.ok(commercialPlans[0].includes.some(item => item.includes(`${freeTemplates.length} Free templates`)));
- assert.ok(commercialPlans[2].includes.some(item => item.includes(`${premiumTemplates.length} Premium templates`)));
+ assert.ok(commercialPlans[1].includes.some(item => item.includes(`${freeTemplates.length + premiumTemplates.length} templates`)));
  assert.match(commercialPolicy.templateAfterCancellation, /preview/);
  assert.match(commercialPolicy.templateAfterCancellation, /not deleted/);
  assert.match(commercialPolicy.docx, /does not promise visual parity/);
@@ -45,22 +45,18 @@ test('pricing and trust are stable public pages with truthful policy links', () 
  assert.ok(publicPages['/pricing/']);
  assert.ok(publicPages['/trust/']);
  const pricing = read('public/pricing/index.html');
- for (const phrase of ['Plans and pricing', 'One Premium template', 'US$1.99', 'US$19.99', 'renew monthly until cancelled', 'After an individual Premium-template subscription expires', 'PDF preserves the selected resume design', 'Word (.docx) is a clean, editable content document']) assert.match(pricing, new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+ for (const phrase of ['Plans and pricing', 'Free', 'Pro', 'US$14.99', 'renew monthly until cancelled', 'PDF preserves the selected resume design', 'Word (.docx) is a clean, editable content document']) assert.match(pricing, new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+ assert.doesNotMatch(pricing, /US\$1\.99|One Premium template/);
  assert.match(pricing, /href="\/trust\/"/);
  assert.match(pricing, /href="\/terms.html"/);
 });
 
-test('every implemented checkout trigger requires explicit recurring consent', () => {
- const template = read('src/features/billing/PremiumTemplateUnlockModal.tsx');
+test('the only new checkout trigger is Pro and it requires explicit recurring consent', () => {
  const pro = read('src/features/billing/BillingPanel.tsx');
- for (const source of [template, pro]) {
-  assert.match(source, /useState\(false\)/);
-  assert.match(source, /renewalConsent:\s*true/);
-  assert.match(source, /disabled=\{!consent/);
-  assert.match(source, /continues through the paid/);
- }
- assert.match(template, /US\$1\.99 monthly subscription/);
- assert.match(template, /available only in the United States/);
- assert.match(pro, /US\$19\.99 monthly subscription/);
+ assert.match(pro, /useState\(false\)/);
+ assert.match(pro, /renewalConsent:\s*true/);
+ assert.match(pro, /disabled=\{!consent/);
+ assert.match(pro, /continues through the paid/);
+ assert.match(pro, /US\$14\.99 monthly subscription/);
  assert.match(pro, /available only in the United States/i);
 });

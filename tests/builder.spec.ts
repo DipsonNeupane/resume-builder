@@ -276,27 +276,22 @@ test('temporary import errors disappear automatically and clear immediately when
  await expect(notice).toHaveCount(0);
 });
 
-test('Pricing presents Free, one Premium template and Pro together without a first-party Print/PDF action',async({page})=>{
+test('Pricing presents Free and Pro together without a first-party Print/PDF action',async({page})=>{
  await page.goto('/');
  const cards=page.locator('.plan-comparison article');
- await expect(cards).toHaveCount(3);
+ await expect(cards).toHaveCount(2);
  const free=cards.first();
  await expect(free).toContainText('Free');
  await expect(free).toContainText('The complete builder and all 7 Free templates');
  await expect(free).toContainText('3 PDF or Word downloads per fixed 30-day period');
- await expect(free).toContainText('Save up to 3 jobs');
+ await expect(free).toContainText('Save and track up to 10 applications');
  await expect(free).not.toContainText('3 generated PDF downloads');
  await expect(free).not.toContainText('Print');
  await expect(free.locator('li')).toHaveCount(4);
  await expect(free.getByRole('button',{name:'Build my master resume',exact:true})).toBeVisible();
- const individual=cards.nth(1);
- await expect(individual).toContainText('One Premium template');
- await expect(individual).toContainText('US$1.99');
- await expect(individual).toContainText('Recurring subscription, not a one-time purchase');
- await expect(individual.getByRole('link',{name:'Preview Premium templates',exact:false})).toHaveAttribute('href','/templates/');
  const pro=cards.last();
  await expect(pro).toContainText('Pro');
- await expect(pro).toContainText('US$19.99');
+ await expect(pro).toContainText('US$14.99');
  await expect(pro).toContainText('/month');
  await expect(pro).toContainText('Renews until cancelled');
  await expect(pro.locator('li')).toHaveCount(4);

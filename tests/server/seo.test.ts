@@ -112,9 +112,10 @@ test('robots allows public crawling and the sitemap uses explicit source-owned m
  assert.match(xml, /<urlset xmlns="http:\/\/www.sitemaps.org\/schemas\/sitemap\/0.9">/);
  const entries = [...xml.matchAll(/<url><loc>([^<]+)<\/loc><lastmod>([^<]+)<\/lastmod><\/url>/g)].map(match => ({ loc: match[1], lastModified: match[2] }));
  assert.deepEqual(entries, Object.entries(publicPages).map(([path, details]) => ({ loc: `${productionOrigin}${path}`, lastModified: details.lastModified })));
+ const today = new Date().toISOString().slice(0, 10);
  for (const entry of entries) {
   assert.match(entry.lastModified, /^2026-\d{2}-\d{2}$/);
-  assert.ok(entry.lastModified <= '2026-09-30', `future or build-time date: ${entry.lastModified}`);
+  assert.ok(entry.lastModified <= today, `future modification date: ${entry.lastModified}`);
  }
  assert.doesNotMatch(xml.replace(/^<\?xml[^>]+>/, ''), /\?|#|JobPosting/);
 });

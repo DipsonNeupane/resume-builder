@@ -3,7 +3,7 @@ import { premiumTemplateIds, type PremiumTemplateId } from '../../src/model.js'
 import { HttpError } from '../http/security.js'
 import { billingServiceConfig, type BillingConfig } from './stripe.js'
 
-export const PRO_MONTHLY_AMOUNT_CENTS = 1999
+export const PRO_MONTHLY_AMOUNT_CENTS = 1499
 export const TEMPLATE_MONTHLY_AMOUNT_CENTS = 199
 export const OFFER_CURRENCY = 'usd'
 
@@ -71,9 +71,6 @@ export function offerCatalogConfig(env: NodeJS.ProcessEnv, requireSales = true):
   const proPriceId = env.STRIPE_PRO_MONTHLY_PRICE_ID || env.STRIPE_RECURRING_PRICE_ID
   if (!proPriceId || !/^price_[A-Za-z0-9]+$/.test(proPriceId)) throw new HttpError(503, 'Subscriptions are not configured', 'configuration')
   const templates = priceMap(env.STRIPE_TEMPLATE_PRICE_MAP)
-  if (requireSales && premiumTemplateIds.some(templateId => !templates[templateId])) {
-    throw new HttpError(503, 'Subscriptions are not configured', 'configuration')
-  }
   const offers = new Map<string, Offer>()
   offers.set('pro:monthly', { key: 'pro:monthly', kind: 'pro', templateId: null, priceId: proPriceId, amount: PRO_MONTHLY_AMOUNT_CENTS })
   for (const templateId of premiumTemplateIds) {

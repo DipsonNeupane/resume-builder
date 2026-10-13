@@ -139,6 +139,7 @@ test('Pro accounts see up to PRO_JOB_LIMIT jobs, never more', async () => {
 
 test('retrieves at most two Techmap pages per search, deduping the combined result', async () => {
   const { deps, calls } = fixture({
+    isPro: true,
     page1: [job({ id: 'techmap:1' }), job({ id: 'techmap:2' })],
     hasMore: true,
     page2: [job({ id: 'techmap:2' }), job({ id: 'techmap:3' })], // job 2 duplicated across pages
@@ -147,6 +148,23 @@ test('retrieves at most two Techmap pages per search, deduping the combined resu
   const body = await response.json()
   assert.equal(calls.length, 2)
   assert.equal(body.availableCount, 3) // 1, 2, 3 -- duplicate collapsed
+})
+
+test('Free uses one provider page even when more pages exist', async () => {
+  const { deps, calls } = fixture({ isPro: false, page1: [job()], hasMore: true, page2: [job({ id: 'techmap:second' })] })
+  const response = await searchJobs(request({ criteria: { title: uniqueTitle() }, evidence }), env, deps)
+  assert.equal(response.status, 200)
+  assert.deepEqual(calls.map(call => call.page), [1])
+})
+
+test('a Free page-one cache cannot suppress the second page of a later Pro search', async () => {
+  const title = uniqueTitle()
+  const free = fixture({ isPro: false, page1: [job({ id: 'techmap:free-first' })], hasMore: true })
+  assert.equal((await searchJobs(request({ criteria: { title }, evidence }), env, free.deps)).status, 200)
+  const pro = fixture({ isPro: true, page1: [job({ id: 'techmap:pro-first' })], hasMore: true, page2: [job({ id: 'techmap:pro-second' })] })
+  const response = await searchJobs(request({ criteria: { title }, evidence }), env, pro.deps)
+  assert.equal(response.status, 200)
+  assert.deepEqual(pro.calls.map(call => call.page), [1, 2])
 })
 
 test('does not fetch a second page when the first page reports no more results', async () => {
@@ -186,7 +204,7 @@ test('registers only bounded owner-scoped identities for issued Free Match resul
 
 test('waits at least 1100ms via the injectable delay before an optional second page, and never for a single-page search', async () => {
   const delays: number[] = []
-  const { deps } = fixture({ page1: [job()], hasMore: true, page2: [job({ id: 'techmap:2' })] })
+  const { deps } = fixture({ isPro: true, page1: [job()], hasMore: true, page2: [job({ id: 'techmap:2' })] })
   deps.delay = async (ms: number) => { delays.push(ms) }
   await searchJobs(request({ criteria: { title: uniqueTitle() }, evidence }), env, deps)
   assert.deepEqual(delays, [1100])
@@ -200,7 +218,7 @@ test('waits at least 1100ms via the injectable delay before an optional second p
 
 test('a 429 on the optional second page still returns the first page results rather than failing', async () => {
   const rateLimitError = new HttpError(429, 'Job search rate limit reached. Try again later.')
-  const { deps, calls } = fixture({ page1: [job()], hasMore: true, page2Error: rateLimitError })
+  const { deps, calls } = fixture({ isPro: true, page1: [job()], hasMore: true, page2Error: rateLimitError })
   const response = await searchJobs(request({ criteria: { title: uniqueTitle() }, evidence }), env, deps)
   assert.equal(response.status, 200)
   assert.equal(calls.length, 2)

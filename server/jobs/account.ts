@@ -14,7 +14,7 @@ import type { Confidence, EmploymentType, FieldProvenance, JobLocation, Normaliz
 import { parseJobWorkflow, parseJobWorkflowInput } from './workflow.ts'
 import { OUTCOME_CONSENT_VERSION, parseOutcomeReport, parseOutcomeReportInput } from './outcomes.ts'
 
-export const FREE_SAVED_JOB_LIMIT = 3
+export const FREE_SAVED_JOB_LIMIT = 10
 /** Effectively unlimited for normal use while retaining a hard abuse/storage bound. */
 export const PRO_SAVED_JOB_SAFETY_LIMIT = 10_000
 const MAX_BODY_BYTES = 1_000_000

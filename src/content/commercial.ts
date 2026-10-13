@@ -1,6 +1,6 @@
 import { freeTemplates, premiumTemplates } from '../model';
 
-export type CommercialPlanId = 'free' | 'premium_template' | 'pro';
+export type CommercialPlanId = 'free' | 'pro';
 
 export type CommercialPlan = {
  id: CommercialPlanId;
@@ -21,20 +21,14 @@ export type CommercialPlan = {
 export const commercialPlans: readonly CommercialPlan[] = [
  {
   id: 'free', name: 'Free', price: '$0', cadence: 'No subscription', recurring: false,
-  summary: `Build with all ${freeTemplates.length} Free templates and preview every Premium design before choosing access.`,
-  includes: [`All ${freeTemplates.length} Free templates`, 'Master resume builder', 'Limited requirement-level Match evidence', '3 successful PDF or Word downloads per fixed 30-day period'],
+  summary: `Build with all ${freeTemplates.length} Free templates, review evidence, and organize a focused job search.`,
+  includes: [`All ${freeTemplates.length} Free templates`, 'Browser-only evidence checker', 'Up to 10 relevant job results once every 24 hours', 'Save and track up to 10 applications', '3 successful PDF or Word downloads per fixed 30-day period'],
   action: { label: 'Start with Free', href: '/start/build' },
  },
  {
-  id: 'premium_template', name: 'One Premium template', price: 'US$1.99', cadence: 'per month', recurring: true,
-  summary: 'Unlock only the Premium design selected in the builder. This is a subscription, not a one-time template purchase.',
-  includes: ['One selected Premium template', 'Full preview before checkout', 'PDF in the selected design', 'Editable Word export with clean content', 'Fair-use document downloads for that selected design while access is active'],
-  action: { label: 'Preview Premium templates', href: '/templates/' },
- },
- {
-  id: 'pro', name: 'Pro', price: 'US$19.99', cadence: 'per month', recurring: true,
+  id: 'pro', name: 'Pro', price: 'US$14.99', cadence: 'per month', recurring: true,
   summary: 'Unlock every Premium template, expanded job search, full Match Analysis, and job-specific tailoring.',
-  includes: [`All ${premiumTemplates.length} Premium templates`, 'Full requirement-level Match Analysis', 'Up to 20 job results per search without the Free daily search limit', 'A separate resume for each saved job', 'AI suggestions you accept, reject or edit', 'Fair-use PDF and editable Word downloads while access is active'],
+  includes: [`All ${freeTemplates.length + premiumTemplates.length} templates`, 'Full requirement-level Match Analysis', 'Up to 20 job results per search without the Free daily search limit', 'A separate resume for each saved job', 'AI suggestions you accept, reject or edit', 'Fair-use PDF and editable Word downloads while access is active'],
   action: { label: 'Review Pro in workspace', href: '/workspace/pro' },
  },
 ] as const;
@@ -52,7 +46,7 @@ export const commercialPolicy = {
  pdf: 'PDF preserves the selected resume design.',
  docx: 'Word (.docx) is a clean, editable content document; it does not promise visual parity with the PDF template.',
  freeDownloads: 'Free includes 3 successful PDF or Word downloads in each fixed 30-day period starting at signup. Both formats share the allowance and unused downloads do not roll over.',
- paidDownloads: 'Pro includes fair-use downloads for every template. A one-template subscription includes fair-use downloads for that selected design; other designs use their normal entitlement. Server size and abuse limits apply.',
+ paidDownloads: 'Pro includes fair-use downloads for every template. Server size and abuse limits apply. Existing individual-template subscriptions retain their original access while active, but are no longer sold to new customers.',
  exportBoundary: 'Downloads require a signed-in account and explicit consent to send the current resume to APWICO for server generation. The export routes do not intentionally keep the resume or generated file as a separate permanent server copy.',
  outcomes: 'No plan or template promises ATS passage, interviews, job offers, or hiring outcomes.',
  checkout: 'Previewing a template does not start checkout. A recurring paid action requires an explicit consent checkbox before Stripe checkout opens.',

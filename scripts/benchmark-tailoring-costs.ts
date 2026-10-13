@@ -28,7 +28,7 @@ import {
   reserveCost,
 } from '../server/ai/cost.ts';
 
-const PRO_PASS_USD = 19.99;
+const PRO_PASS_USD = 14.99;
 const INPUT_USD_PER_MILLION = 0.40;
 const OUTPUT_USD_PER_MILLION = 1.60;
 const liveAcknowledgement = 'I_UNDERSTAND_THIS_MAKES_ONE_PAID_CALL';

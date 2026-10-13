@@ -832,7 +832,7 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
         <button className="back-link" onClick={onBack}>Back</button>
       </div>
       <div className="notice" role="status">
-        Sign in to search and save jobs. Free includes one search every 24 hours with up to 5 results.
+        Sign in to search and save jobs. Free includes one search every 24 hours with up to 10 relevant results.
         <button className="text-button" onClick={onSignIn}>Sign in or create account</button>
       </div>
     </section>;
@@ -928,7 +928,7 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
         ? `Comparing ${salaryPeriod === 'year' ? 'annual' : 'hourly'} salary only against postings listing an amount in the exact same currency and period; jobs with an unlisted or differently formatted salary stay eligible.`
         : 'No salary preference set — jobs with any salary, or none listed, stay eligible.'}
     </p>
-    {accountLoaded && !accountIsPro && !freeRefreshBlocked && <p className="field-hint">Free accounts get one search every 24 hours, with up to 5 results. Set your criteria first.</p>}
+    {accountLoaded && !accountIsPro && !freeRefreshBlocked && <p className="field-hint">Free accounts get one search every 24 hours, with up to 10 relevant results. Set your criteria first.</p>}
     {!masterReady && <p className="field-hint" role="status">Saved jobs remain available, but search and Match updates pause until your master resume recovery or account check is resolved.</p>}
     <button className="button" disabled={busy || freeRefreshBlocked || !masterReady} onClick={search}><Search size={16} />{busy ? 'Searching…' : 'Search jobs'}</button>
     {freeRefreshBlocked && <p className="field-hint" role="status">Free recommendations can refresh again {formatRefreshTime(nextFreeRefreshAt)}. Your current results and saved jobs stay available. Pro has no once-a-day limit. <button className="text-button" onClick={onViewPro}>View Pro options</button></p>}
