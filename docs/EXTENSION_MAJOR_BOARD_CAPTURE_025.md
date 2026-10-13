@@ -1,6 +1,6 @@
 # Extension 0.2.5 major-board capture evidence
 
-Status: release candidate only. Do not submit or deploy without owner authorization.
+Status: submitted to the Chrome Web Store on 2026-10-13; Google review pending. Automatic publication after approval is enabled. Task 37 remains Validation Pending until public version 0.2.5 is approved and verified.
 
 ## Supported capture paths
 
@@ -51,6 +51,17 @@ The popup follows Capture → Review → Send, keeps title/company/description p
 ## Google support case 9-7216000040956
 
 Google replied on 2026-10-12 that public listing details must match the information used during trader verification and referred APWICO to the Trader Disclosure Policy. Google did not authorize separate public contact fields or hiding the verified address/phone. No developer identity, trader status, Payments profile, or legal verification data was changed. Residential address and personal phone removal therefore remain pending a compliant reverification path or clearer Google instruction.
+
+## Chrome Web Store submission — 2026-10-13
+
+- Submitted version: **0.2.5** from the verified 16-file production archive.
+- Package SHA-256: `418e8126092ad0856d2aef12b3264162d3bcb6cae4e472d7ac77a6f378163800`.
+- Dashboard confirmation: **Your extension was submitted for review**.
+- Publication mode: automatic publication after Google approval.
+- Store description was aligned with the shipped capture paths: automatic Greenhouse/selected Lever capture, metadata-dependent Workday capture, and explicit LinkedIn/Indeed paste-and-review fallback.
+- Existing Wine + Blush icon, screenshot, and small promo tile were retained; permissions and privacy declarations were unchanged and rechecked against the package.
+- The temporary ChatGPT browser-extension file-URL permission used to complete the authorized upload was returned to **off** immediately after submission.
+- Public 0.2.5 installation and published-version verification remain external-review follow-up work.
 
 ## Independent review
 
