@@ -17,6 +17,10 @@ test('exact production origin is allowed only at its root and rejects look-alike
  for(const url of ['http://resumestride.com/','https://apwico.com/other','https://apwico.com/?token=secret','https://apwico.com/#payload','https://user:pass@resumestride.com/','https://apwico.com.evil.test/','https://evil-resumestride.com/','https://apwico.com:8443/']) expect(isAllowedAppUrl(new URL(url)),url).toBe(false);
 });
 test('delivery retries until receiver is ready, acknowledges once and ignores wrong origin',async({page})=>{
+ await page.route('http://127.0.0.1:5185/',route=>route.fulfill({
+  contentType:'text/html',
+  body:'<!doctype html><html><body>Extension delivery receiver</body></html>'
+ }));
  await page.goto('/',{waitUntil:'domcontentloaded'});
  const source=deliverReviewedJob.toString();
  const result=await page.evaluate(async source=>{
@@ -37,6 +41,10 @@ test('delivery retries until receiver is ready, acknowledges once and ignores wr
 });
 
 test('delivery times out on unrelated acknowledgments and stops transmitting afterward',async({page})=>{
+ await page.route('http://127.0.0.1:5185/',route=>route.fulfill({
+  contentType:'text/html',
+  body:'<!doctype html><html><body>Extension delivery receiver</body></html>'
+ }));
  await page.goto('/',{waitUntil:'domcontentloaded'});
  const result=await page.evaluate(async source=>{
   const deliver=new Function('return ('+source+')')();

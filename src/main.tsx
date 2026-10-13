@@ -38,7 +38,7 @@ import { authConfigured, supabase } from './services/supabase';
 import { useSession } from './hooks/useSession';
 import { useCloudResume } from './hooks/useCloudResume';
 import { applyInterfaceLocale } from './i18n/locale';
-import { isJobCapturePayload, listenForJobImport, type JobCapturePayload } from './services/extensionImport';
+import { clearPendingJobImport, isJobCapturePayload, listenForJobImport, loadPendingJobImport, storePendingJobImport, type JobCapturePayload } from './services/extensionImport';
 import { clearPendingJob, loadPendingJob, savePendingJob } from './features/onboarding/jobFirstState';
 // docx/pdf import parsing is only needed inside uploadResume() below, so it is
 // dynamically imported there instead of shipped in the initial bundle.
@@ -200,17 +200,21 @@ function App(){
  // changed underneath it, exposing A's content to B on a later reload.
  const [jobDraftOwnerId,setJobDraftOwnerId]=useState<string|null>(null);
  const captureOwner = useRef<string|null>(session.user?.id ?? null);
+ const currentCaptureOwner = useRef<string|null>(null);
  const captureSequence = useRef(0);
  const [captureKey,setCaptureKey]=useState(0);
  const [capturedJobsRevision,setCapturedJobsRevision]=useState(0);
- useEffect(()=>listenForJobImport(capture=>{captureSequence.current++;setCaptureKey(captureSequence.current);setIncomingJobCapture(capture);}),[]);
+ useEffect(()=>listenForJobImport(capture=>{captureSequence.current++;setCaptureKey(captureSequence.current);try{storePendingJobImport(sessionStorage,capture,currentCaptureOwner.current);}catch{/* session storage optional */}setIncomingJobCapture(capture);}),[]);
  useEffect(()=>{
   if(session.loading)return;
   const next=session.user?.id??null;
-  if(captureOwner.current && captureOwner.current!==next)setIncomingJobCapture(null);
+  currentCaptureOwner.current=next;
+  if(captureOwner.current && captureOwner.current!==next){setIncomingJobCapture(null);try{clearPendingJobImport(sessionStorage);}catch{/* optional */}}
   captureOwner.current=next;
+  try{const restored=loadPendingJobImport(sessionStorage,next);if(restored&&!incomingJobCapture){captureSequence.current++;setCaptureKey(captureSequence.current);setIncomingJobCapture(restored);}}catch{/* optional */}
   try{setPendingJob(loadPendingJob(sessionStorage,next));}catch{setPendingJob(null);}
- },[session.loading,session.user?.id]);
+ },[session.loading,session.user?.id,incomingJobCapture]);
+ const dismissIncomingCapture=()=>{try{clearPendingJobImport(sessionStorage);}catch{/* optional */}setIncomingJobCapture(null);};
  // Keep cloud sync suspended while editing a local job draft, including if a
  // different tab signs in. Never silently discard edits or upload them as the base.
  const startJobDraft=()=>{
@@ -227,6 +231,7 @@ function App(){
   setPreviewMode(false);
   setPage('builder');
   setMessage(`Job-specific draft started for “${incomingJobCapture.title||'this role'}”. Your master resume is preserved separately. This draft is kept only in this browser and should recover here after a reload.`);
+  try{clearPendingJobImport(sessionStorage);}catch{/* optional */}
   setIncomingJobCapture(null);
  };
  const editJobResume=(version:JobResumeVersion,masterChanged:boolean)=>{
@@ -501,8 +506,8 @@ function App(){
  {cloud.saveBlocked&&<div className="notice" role="alert">Account storage limit reached. Keep this tab open and contact support@apwico.com before leaving this page.<button className="text-button" onClick={cloud.retryAfterStorageReview}>Retry after storage review</button></div>}
  {cloud.linked&&!jobContext&&<div className="notice cloud-storage-controls" role="note"><span>Your master resume is saved to this account. Download a JSON backup before removal if you need a separate copy.</span><button className="text-button danger" onClick={()=>{if(window.confirm('Remove the account-saved master resume and its retained revisions? Your earlier local draft on this device will reopen. Download a JSON backup first if needed.'))cloud.removeFromAccount();}}>Remove account-saved copy</button></div>}
  {hasSuspendedJobDraft&&!jobContext&&<div className="notice" role="status">A local job-specific draft is set aside in this browser. It has not been deleted or mixed into this workspace item.<button className="text-button" onClick={resumeSuspendedJobDraft}>Resume local job draft</button></div>}
- {incomingJobCapture&&(!captureOwner.current||captureOwner.current===(session.user?.id??null))&&!jobContext&&<Suspense fallback={null}><CapturedJobReview key={captureKey} capture={incomingJobCapture} resume={resume} ownerId={session.loading?null:session.user?.id??null} loading={session.loading} onSignIn={openAccount} onSaved={alreadySaved=>{setIncomingJobCapture(null);setCapturedJobsRevision(value=>value+1);setPage('jobs');setMessage(alreadySaved?'This job was already saved. Its existing snapshot and resume were kept; incoming edits did not replace them.':'Job saved to your account. Review its Match Analysis below.');}}/></Suspense>}
- {incomingJobCapture&&(!captureOwner.current||captureOwner.current===(session.user?.id??null))&&(jobContext?<div className="notice" role="status">A new job was captured, but you’re already editing a job-specific draft. Discard the current draft below first, then trigger the capture again from the extension.<button className="text-button" onClick={()=>setIncomingJobCapture(null)}>Dismiss</button></div>:(cloud.linked||cloud.loading)?<div className="notice" role="status">A job was captured from the APWICO extension, and can be saved to your account using the review above. Local drafts are unavailable while cloud saving is active.<button className="text-button" onClick={()=>setIncomingJobCapture(null)}>Dismiss</button></div>:<div className="notice" role="status">A job was captured from the APWICO extension: “{incomingJobCapture.title||'Untitled role'}”{incomingJobCapture.company?` at ${incomingJobCapture.company}`:''}. Start a job-specific draft — a separate copy of your resume that never changes your saved master resume — to work from these details? Save the job above for Match Analysis and Pro tailoring on a persistent job-specific resume. A local draft supports manual editing only.<button className="text-button" onClick={startJobDraft}>Start job-specific draft</button><button className="text-button" onClick={()=>setIncomingJobCapture(null)}>Dismiss</button></div>)}
+ {incomingJobCapture&&(!captureOwner.current||captureOwner.current===(session.user?.id??null))&&!jobContext&&<Suspense fallback={null}><CapturedJobReview key={captureKey} capture={incomingJobCapture} resume={resume} ownerId={session.loading?null:session.user?.id??null} loading={session.loading} onSignIn={openAccount} onSaved={alreadySaved=>{try{clearPendingJobImport(sessionStorage);}catch{/* optional */}setIncomingJobCapture(null);setCapturedJobsRevision(value=>value+1);setPage('jobs');setMessage(alreadySaved?'This job was already saved. Its existing snapshot and resume were kept; incoming edits did not replace them.':'Job saved to your account. Review its Match Analysis below.');}}/></Suspense>}
+ {incomingJobCapture&&(!captureOwner.current||captureOwner.current===(session.user?.id??null))&&(jobContext?<div className="notice" role="status">A new job was captured, but you’re already editing a job-specific draft. Discard the current draft below first, then trigger the capture again from the extension.<button className="text-button" onClick={dismissIncomingCapture}>Dismiss</button></div>:(cloud.linked||cloud.loading)?<div className="notice" role="status">A job was captured from the APWICO extension, and can be saved to your account using the review above. Local drafts are unavailable while cloud saving is active.<button className="text-button" onClick={dismissIncomingCapture}>Dismiss</button></div>:<div className="notice" role="status">A job was captured from the APWICO extension: “{incomingJobCapture.title||'Untitled role'}”{incomingJobCapture.company?` at ${incomingJobCapture.company}`:''}. Start a job-specific draft — a separate copy of your resume that never changes your saved master resume — to work from these details? Save the job above for Match Analysis and Pro tailoring on a persistent job-specific resume. A local draft supports manual editing only.<button className="text-button" onClick={startJobDraft}>Start job-specific draft</button><button className="text-button" onClick={dismissIncomingCapture}>Dismiss</button></div>)}
  {pendingJob&&page==='builder'&&!routeJourney&&!jobContext&&<div className="notice pending-job-notice" role="status"><span>The pasted job is preserved separately while you work on your master resume.</span><button className="text-button" onClick={resumePendingJob}>Review the job with this resume</button><button className="text-button" onClick={()=>{try{clearPendingJob(sessionStorage);}catch{/* optional */}setPendingJob(null);}}>Discard pasted job</button></div>}
  {jobContext&&<div className="notice job-draft-notice" role="status"><strong>{activeJobVersion?'Job-specific resume':'Job-specific draft'}</strong> — Tailored for {jobContext.title||'this role'}{jobContext.company?` · ${jobContext.company}`:''}. Your master resume is preserved separately. {activeJobVersion?'This version is saved to your account; accepted AI suggestions and manual edits update only this version.':'This draft is kept only in this browser and should recover here after a reload.'}{jobVersionMasterChanged&&<span> Your master resume has changed since this version was created. Keep this version, or update from master to replace its tailored/manual changes.</span>}{jobVersionMasterChanged&&<><button className="text-button" onClick={()=>setJobVersionMasterChanged(false)}>Keep this version</button><button className="text-button" onClick={()=>void resetJobResumeFromMaster()}>Update from master</button></>}<button className="text-button" onClick={discardJobDraft}>{activeJobVersion?'Return to master resume':'Discard draft & return to master resume'}</button></div>}
  {jobVersionConflict&&<div className="notice" role="alert"><strong>This job-specific resume was updated elsewhere.</strong> Your current edits were not overwritten. Choose the saved version, or explicitly keep your edits as the next revision.<button className="text-button" onClick={useOtherJobResumeVersion}>Use saved version</button><button className="text-button" onClick={keepCurrentJobResumeEdits}>Keep my edits</button></div>}

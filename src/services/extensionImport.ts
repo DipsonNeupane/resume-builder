@@ -13,13 +13,33 @@ export const jobImportMessageType = 'resumestride:job-import' as const;
 const productionOrigin = 'https://apwico.com';
 const legacyProductionOrigin = 'https://resumestride.com';
 export const isJobCapturePayload = isJobCapture;
+const pendingCaptureKey = 'apwico:extension-import:v1';
+const pendingCaptureTtlMs = 30 * 60 * 1000;
+type StoredCapture = {payload: JobCapturePayload; ownerId: string|null; expiresAt: number};
+export function storePendingJobImport(storage: Storage, payload: JobCapturePayload, ownerId: string|null): void {
+  if(!isJobCapturePayload(payload))throw new Error('Invalid capture');
+  storage.setItem(pendingCaptureKey,JSON.stringify({payload,ownerId,expiresAt:Date.now()+pendingCaptureTtlMs} satisfies StoredCapture));
+}
+export function loadPendingJobImport(storage: Storage, ownerId: string|null): JobCapturePayload|null {
+  const raw=storage.getItem(pendingCaptureKey);if(!raw)return null;
+  try {
+    const value=JSON.parse(raw) as StoredCapture;
+    if(!value||!isJobCapturePayload(value.payload)||typeof value.expiresAt!=='number'||value.expiresAt<Date.now()||value.expiresAt>Date.now()+pendingCaptureTtlMs){storage.removeItem(pendingCaptureKey);return null;}
+    if(value.ownerId&&value.ownerId!==ownerId){storage.removeItem(pendingCaptureKey);return null;}
+    if(!value.ownerId&&ownerId)storePendingJobImport(storage,value.payload,ownerId);
+    return value.payload;
+  } catch {storage.removeItem(pendingCaptureKey);return null;}
+}
+export function clearPendingJobImport(storage: Storage): void {storage.removeItem(pendingCaptureKey);}
 
 // Registers the (single) listener for incoming job captures. Returns an unsubscribe function.
 // Rejections are silent by design for anything that isn't our own message type at all (many
 // things postMessage on a page for unrelated reasons); a message that DOES claim our type but
 // fails validation records only a local category; untrusted page text is never recorded.
 export function listenForJobImport(onCapture: (payload: JobCapturePayload) => void): () => void {
-  const isDevLocal = import.meta.env.DEV && window.location.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(window.location.hostname) && ['5173','5174','5181','5183','5185'].includes(window.location.port);
+  // Local review builds use the same exact loopback origins as development. This does not
+  // widen the production boundary: a deployed APWICO page can never have a loopback origin.
+  const isDevLocal = window.location.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(window.location.hostname) && ['5173','5174','5181','5183','5185'].includes(window.location.port);
   const isProduction = [productionOrigin, legacyProductionOrigin].includes(window.location.origin);
   if (!isDevLocal && !isProduction) return () => {};
   const delivered = new Set<string>();

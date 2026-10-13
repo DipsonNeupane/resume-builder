@@ -78,10 +78,9 @@ export async function inspectPackage(root) {
     assert.equal(config.isAllowedAppUrl(new URL(url)), false, 'Unsafe destination accepted');
   }
   const popup = await readFile(resolve(root, 'dist/popup/popup.js'), 'utf8');
-  assert(popup.includes('This production package defaults to https://apwico.com/.'));
-  assert(popup.includes('Enter the official app URL: https://apwico.com/'));
-  assert(popup.includes('Use https://apwico.com/ with no credentials, query or fragment. The legacy resumestride.com root remains available only during migration.'));
-  assert(popup.includes('Could not open or reach APWICO. Check your connection and try again.'));
+  assert(popup.includes("getManifest().name.includes('Development')"), 'Developer destination must be gated by the development manifest name');
+  assert(popup.includes('Send to APWICO'));
+  assert(popup.includes('APWICO could not be reached. Check your connection and retry.'));
   assert(!/local testing|local server|localhost|127\.0\.0\.1/i.test(popup), 'Development guidance remains in production popup');
   return { name: manifest.name, version: manifest.version, files, totalBytes: files.reduce((sum, file) => sum + file.bytes, 0) };
 }

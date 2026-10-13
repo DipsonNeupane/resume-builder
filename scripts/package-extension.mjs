@@ -22,10 +22,6 @@ export async function packageExtension(source, destination) {
   }
   for (const [file, before, after] of [
     ['dist/lib/config.js', "const devPorts = ['5173', '5183', '5185'];", 'const devPorts = [];'],
-    ['dist/popup/popup.js', 'Defaults to the production APWICO site. For local testing, use http://localhost or http://127.0.0.1 on port 5173, 5183, or 5185.', 'This production package defaults to https://apwico.com/.'],
-    ['dist/popup/popup.js', 'Enter a valid app URL, e.g. http://localhost:5173/', 'Enter the official app URL: https://apwico.com/'],
-    ['dist/popup/popup.js', 'Use https://apwico.com, or for local testing http://localhost or http://127.0.0.1 on port 5173, 5183 or 5185 — with path / and no credentials, query or fragment.', 'Use https://apwico.com/ with no credentials, query or fragment. The legacy resumestride.com root remains available only during migration.'],
-    ['dist/popup/popup.js', 'Could not open or reach APWICO. Check the local server and try again.', 'Could not open or reach APWICO. Check your connection and try again.'],
   ]) {
     const path = join(destination, file);
     const text = await readFile(path, 'utf8');

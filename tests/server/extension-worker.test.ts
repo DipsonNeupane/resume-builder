@@ -16,7 +16,7 @@ Reflect.set(globalThis, 'chrome', {
     set: async (value: Record<string, unknown>) => { Object.assign(state, structuredClone(value)) },
     remove: async (key: string) => { delete state[key] },
   } },
-  tabs: { create: async () => { tabCount++; return { id: 123 } } },
+  tabs: { create: async () => { tabCount++; return { id: 123 } }, get: async () => ({ id: 123, url: 'https://apwico.com/', status: 'complete' }) },
   scripting: { executeScript: async () => { injections++; return [{ frameId: 0, result: success }] } },
 })
 await import('../../apps/extension/src/background/worker.ts')
@@ -40,7 +40,7 @@ test('worker has exactly three failed attempts and retains only one bounded sess
   success = false; injections = 0
   assert.deepEqual(await send(message), { received: false })
   assert.equal(injections, 3)
-  assert.deepEqual(await readPending(), capture)
+  assert.deepEqual(await readPending(), {capture,descriptionComplete:true,warnings:[]})
   assert.deepEqual(Object.keys(state), ['pendingCapture'])
   success = true; injections = 0
   assert.deepEqual(await send(message), { received: true })
@@ -56,6 +56,12 @@ test('expired session data is deleted rather than restored or automatically rese
   assert.equal(tabCount, initialTabs)
 })
 
+test('pending review preserves incomplete-description warnings across worker restarts', async () => {
+  state.pendingCapture = { payload: capture, descriptionComplete: false, warnings: ['Selected text may be incomplete.'], expiresAt: Date.now() + 1000 }
+  assert.deepEqual(await readPending(), { capture, descriptionComplete: false, warnings: ['Selected text may be incomplete.'] })
+  await clearPending()
+})
+
 
 test('successful receipt clears equivalent reordered storage but leaves a newer review intact', async () => {
   state.pendingCapture = { payload: Object.fromEntries(Object.entries(capture).reverse()), expiresAt: Date.now() + 1000 };
@@ -63,6 +69,6 @@ test('successful receipt clears equivalent reordered storage but leaves a newer 
   assert.equal(await readPending(), null);
   state.pendingCapture = { payload: { ...capture, description: 'New edit' }, expiresAt: Date.now() + 1000 };
   await clearPending(capture);
-  assert.equal((await readPending())?.description, 'New edit');
+  assert.equal((await readPending())?.capture.description, 'New edit');
   await clearPending();
 });

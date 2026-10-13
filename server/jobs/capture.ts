@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { isJobCapture, type JobCapture } from '../../apps/extension/src/lib/capture.ts'
+import { captureSourceUrl, isJobCapture, type JobCapture } from '../../apps/extension/src/lib/capture.ts'
 import { HttpError } from '../http/security.ts'
 import { dedupeKey } from './dedupe.ts'
 import type { NormalizedJob } from './types.ts'
@@ -8,9 +8,10 @@ export function normalizeCapture(value: unknown): NormalizedJob & { capture: Job
   if (!isJobCapture(value) || !value.title.trim() || !value.company.trim() || !value.description.trim()) throw new HttpError(400, 'Review the captured title, company, and description before saving.')
   const url = new URL(value.sourceUrl || 'http://invalid')
   if (url.protocol !== 'https:') throw new HttpError(400, 'Saving a captured job requires its public HTTPS source URL.')
-  // Tracking/query/fragment data is rejected by the shared contract. A stable page URL
-  // keeps retries and edits attached to the same identity; never pretend to be Techmap.
-  const sourceUrl = url.origin + (url.pathname === '/' ? '/' : url.pathname.replace(/\/$/, ''))
+  // The shared canonicalizer preserves only public job identity (including Indeed's `jk`)
+  // while rejecting tracking/private query state. Never collapse distinct query-identified jobs.
+  const sourceUrl = captureSourceUrl(value.sourceUrl)
+  if (!sourceUrl) throw new HttpError(400, 'Review the captured job source before saving.')
   const providerJobId = createHash('sha256').update(sourceUrl).digest('hex')
   const job: NormalizedJob & { capture: JobCapture } = {
     id: `extension:${providerJobId}`, provider: 'extension', providerJobId,

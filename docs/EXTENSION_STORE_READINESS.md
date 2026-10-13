@@ -1,9 +1,9 @@
-# Chrome Web Store readiness — APWICO Job Capture 0.2.3
+# Chrome Web Store readiness — APWICO Job Capture 0.2.5 candidate
 
-> **2026-10-10 correction:** Google published 0.2.3, but real Chrome verification
-> reproduced the collapsed toolbar-action popup. Candidate 0.2.4 fixes the actual
-> percentage-only intrinsic-width cause, passes real packaged-Chrome verification and
-> is ready for a separately authorized upload/submission. It has not been submitted.
+> **2026-10-12 candidate:** 0.2.4 remains untouched in Google review. Local-only 0.2.5
+> adds explicit-click Greenhouse and Lever capture, cautious Workday structured-data
+> support, selected-text capture on permitted public pages, and compact paste fallbacks
+> for LinkedIn and Indeed. It is not submitted.
 > The public verified-trader address and phone originate in Google Payments and require
 > truthful owner-controlled replacement contacts plus reverification; see
 > `redesign/TASK_37_EXTENSION_024_CORRECTION_2026-10-10.md`.
@@ -41,19 +41,18 @@ or analytics. It uses:
 
 Bring a public job posting into APWICO without repeatedly copying its details.
 Open a supported job page, click APWICO Job Capture, review and edit the captured
-fields, then choose **Send reviewed details to APWICO**. In APWICO, sign in if
+fields, then choose **Send to APWICO**. In APWICO, sign in if
 needed and explicitly save the job before Match Analysis begins.
 
-Capture supports public Greenhouse job pages, selected stable-URL Lever pages,
-and pages containing one reliable, unambiguous JobPosting record. Workday works
-only when that metadata is present. LinkedIn and Indeed are intentionally not
-captured. Page structures change; if capture is unavailable, enter the public
-job details manually. Long descriptions may be truncated and are marked for
-review.
+Direct capture supports public Greenhouse pages, selected stable-URL Lever pages,
+and pages containing one URL-correlated JobPosting record. Workday works only when
+that metadata is present. LinkedIn and Indeed use a compact paste/review fallback
+because their published rules do not permit APWICO to extract page content without
+permission. Long descriptions are marked incomplete and require confirmation.
 
 The extension reads a page only after you invoke it. It handles the chosen job's
 title, employer, description, optional location/workplace/employment type and
-structured salary, plus a source URL with query and fragment removed. It keeps
+structured salary, plus a canonical source URL. It keeps
 one temporary capture for review or retry and sends it only after you choose
 Send. It does not read resume drafts, passwords, cookies, payment data, or
 browsing history in the background, apply to jobs, or run job searches.
@@ -92,7 +91,9 @@ the version submitted.
 | Lever | Selected public UUID job pages; fail closed when required scoped fields are missing. |
 | Workday | Only one reliable, unambiguous JobPosting record; no Workday-specific scraper. |
 | Generic | One matching JobPosting record with title, employer, and description. |
-| LinkedIn / Indeed | Unsupported; manual entry only. |
+| LinkedIn | Compact paste/review fallback; retain only the canonical active-tab public job URL and never read page content. |
+| Indeed | Compact paste/review fallback; retain only the canonical active-tab public job URL and never read page content without written permission. |
+| Other public pages | Explicit selected-text capture or one-field paste; never arbitrary full-page text. |
 | Private/results/iframes/internal pages | Unsupported; no arbitrary page scrape. |
 
 One capture is stored in `chrome.storage.session` for 30 minutes of inactivity.

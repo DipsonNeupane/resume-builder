@@ -32,9 +32,19 @@ test('normalization preserves original/reviewed text, honest source, unknown exp
   assert.equal(normalized.expiry.source, 'unknown')
   assert.equal(normalized.workplace.value, 'unknown')
   assert.equal(normalized.salary, null)
-  assert.equal(normalized.providerJobId, normalizeCapture({ ...capture, title: 'Edited', sourceUrl: capture.sourceUrl + '/' }).providerJobId)
+  assert.equal(normalized.providerJobId, normalizeCapture({ ...capture, title: 'Edited' }).providerJobId)
+  assert.throws(() => normalizeCapture({ ...capture, sourceUrl: capture.sourceUrl + '/' }), { status: 400 })
   assert.throws(() => normalizeCapture({ ...capture, sourceUrl: 'http://localhost/job' }), { status: 400 })
   assert.throws(() => normalizeCapture({ ...capture, title: '' }), { status: 400 })
+})
+
+test('query-identified boards retain public job identity without retaining private query state', () => {
+  const indeed={...capture,site:'indeed' as const,sourceUrl:'https://www.indeed.com/viewjob?jk=abc123DEF'}
+  assert.equal(isJobCapture(indeed),true)
+  assert.equal(normalizeCapture(indeed).sourceUrl,indeed.sourceUrl)
+  assert.notEqual(normalizeCapture(indeed).providerJobId,normalizeCapture({...indeed,sourceUrl:'https://www.indeed.com/viewjob?jk=other456'}).providerJobId)
+  assert.equal(isJobCapture({...indeed,sourceUrl:'https://www.indeed.com/viewjob?jk=abc123DEF&token=private'}),false)
+  assert.equal(isJobCapture({...indeed,sourceUrl:'https://indeed.com.evil.test/viewjob?jk=abc123DEF'}),false)
 })
 
 test('capture save uses authenticated ownership, existing quota save, account context and authoritative duplicate snapshot for match', async () => {

@@ -4383,3 +4383,6 @@ Chrome toolbar path measured a 375px viewport/360px body with no horizontal over
 security/assets 4/4 pass. The refreshed Store screenshot reflects the real popup width.
 Nothing was uploaded or submitted; 0.2.3 remains public and Task 37 remains Validation
 Pending. Full evidence: `docs/redesign/TASK_37_EXTENSION_024_CORRECTION_2026-10-10.md`.
+# Extension 0.2.5 major-board capture release candidate
+
+The isolated `feat/extension-job-board-capture-0.2.5` branch adds user-initiated capture for Greenhouse, Lever, and conservative Workday/generic structured-data pages. LinkedIn and Indeed use a compact paste/review fallback after their published restrictions were rechecked; their page content is not read. The candidate also adds explicit selection on permitted public pages, Capture → Review → Send UX, bounded retry/reload continuity, and no new broad host permissions. Evidence and limitations are in `docs/EXTENSION_MAJOR_BOARD_CAPTURE_025.md`. This release candidate has not been submitted or deployed.

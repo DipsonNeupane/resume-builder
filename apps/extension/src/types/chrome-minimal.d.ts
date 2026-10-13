@@ -5,6 +5,7 @@
 declare namespace chrome {
   namespace runtime {
     const id: string;
+    function getManifest(): {name: string; version: string};
     function getURL(path: string): string;
     function sendMessage(message: unknown): Promise<{received?: boolean}>;
     const onMessage: {addListener(listener: (message: any, sender: {id?: string;url?: string}, respond: (response: {received: boolean})=>void)=>boolean): void};
@@ -19,6 +20,7 @@ declare namespace chrome {
       url?: string;
       active?: boolean;
       windowId?: number;
+      status?: 'unloaded' | 'loading' | 'complete';
     }
     interface QueryInfo {
       active?: boolean;
@@ -29,6 +31,7 @@ declare namespace chrome {
       url?: string;
     }
     function query(queryInfo: QueryInfo): Promise<Tab[]>;
+    function get(tabId: number): Promise<Tab>;
     function create(createProperties: CreateProperties): Promise<Tab>;
   }
   namespace scripting {

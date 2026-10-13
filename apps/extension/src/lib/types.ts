@@ -7,7 +7,7 @@ import type { JobCapture } from './capture.js';
 export type { JobCapture } from './capture.js';
 
 export type ExtractResult =
-  | { supported: true; capture: JobCapture }
-  | { supported: false; reason: string };
+  | { supported: true; capture: JobCapture; warnings?: string[]; descriptionComplete: boolean }
+  | { supported: false; reason: string; draft?: JobCapture };
 
 export type PendingCaptureEntry = { payload: JobCapture; storedAt: number };

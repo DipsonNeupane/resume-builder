@@ -10,9 +10,13 @@ export default defineConfig({
   // The synced development checkout can need a cold Vite transform before the
   // first app-backed extension test. Keep the functional assertions bounded,
   // while avoiding false failures caused by filesystem hydration.
-  timeout: 90_000,
+  timeout: 180_000,
   expect: { timeout: 15_000 },
   retries: 0,
+  // Extension action, session-storage and receiver tests intentionally share one
+  // local app server. Serial execution prevents concurrent persistent browser
+  // profiles from starving that server and makes the release gate deterministic.
+  workers: 1,
   use: { baseURL: 'http://127.0.0.1:5185', headless: true },
   projects: [
     { name: 'extension', grepInvert: /@toolbar/ },
@@ -20,11 +24,9 @@ export default defineConfig({
       name: 'toolbar',
       testMatch: 'installed.spec.ts',
       grep: /@toolbar/,
-      // Real Chrome action popups close on focus loss. Other workers launching or
-      // activating Chromium windows can dismiss one even in a separate profile.
-      // A per-file serial mode/worker limit alone would still overlap those workers.
-      // Keep ordinary tests parallel, then isolate the action until its extraction
-      // has persisted. The test observes session storage, not a popup Page event.
+      // Real Chrome action popups close on focus loss. Keep the action isolated
+      // until its extraction has persisted. The test observes session storage,
+      // not a popup Page event.
       dependencies: ['extension'],
       workers: 1,
     },

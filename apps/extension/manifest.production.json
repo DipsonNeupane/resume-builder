@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "APWICO Job Capture",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Capture and review a job, then save it in APWICO for Match Analysis and your job-specific resume.",
   "action": {
     "default_popup": "popup.html",
