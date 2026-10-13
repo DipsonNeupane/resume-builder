@@ -17,7 +17,7 @@ async function seed(page: Page, userId: string = owner) {
   await page.route('https://auth-test.supabase.co/rest/v1/**', route => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
   await page.route('https://auth-test.supabase.co/auth/v1/user', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(session.user) }));
   await page.route('**/api/jobs-account', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
-    isPro: false, saveLimit: 3, savedJobs: [],
+    isPro: false, saveLimit: 10, savedJobs: [],
     preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null },
   }) }));
 }
@@ -133,7 +133,7 @@ test('saved Match keeps job wording and resume evidence connected while the owne
       updates.push(body);
       return route.fulfill({ json: { workflow: { savedJobId, ...body.workflow, revision: 1, updatedAt: '2026-09-30T12:00:00.000Z', history: [{ decision: body.workflow.decision, applicationStatus: body.workflow.applicationStatus, changedAt: '2026-09-30T12:00:00.000Z' }] } } });
     }
-    return route.fulfill({ json: { isPro: false, saveLimit: 3, savedJobs: [saved], jobResumeVersions: [], jobWorkflows: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } } });
+    return route.fulfill({ json: { isPro: false, saveLimit: 10, savedJobs: [saved], jobResumeVersions: [], jobWorkflows: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } } });
   });
   await page.goto(`/workspace/jobs/${savedJobId}/match`, { waitUntil: 'domcontentloaded' });
   await expect(page.getByText('Job wording', { exact: true })).toBeVisible();
@@ -157,7 +157,7 @@ test('saved Match keeps job wording and resume evidence connected while the owne
 
 test('signed-out users see a sign-in prompt instead of the search form', async ({ page }) => {
   await openJobs(page);
-  await expect(page.getByText('Sign in to search for jobs based on your resume.')).toBeVisible();
+  await expect(page.getByText('Sign in to search for jobs and save opportunities.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Search jobs' })).toHaveCount(0);
 });
 
@@ -167,7 +167,7 @@ test('saved Match Analysis has a reload-safe URL, predictable history, and a con
   const saved = { id: savedJobId, snapshot: sampleResponse.jobs[0].savedSnapshot, providerAvailable: true,
     availabilityCheckedAt: '2026-09-29T00:00:00Z', unavailableAt: null, savedAt: '2026-09-29T00:00:00Z',
     analysisCurrent: true, matchAnalysis: { ...sampleMatchAnalysis, limitedAnalysis: { requirements: sampleFullAnalysis.requirements.slice(0, 3) } } };
-  await page.route('**/api/jobs-account', route => route.fulfill({ json: { isPro: false, saveLimit: 3, savedJobs: [saved], jobResumeVersions: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } } }));
+  await page.route('**/api/jobs-account', route => route.fulfill({ json: { isPro: false, saveLimit: 10, savedJobs: [saved], jobResumeVersions: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } } }));
 
   await page.goto(`/workspace/jobs/${savedJobId}/match`, { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { level: 1, name: 'Match Analysis' })).toBeVisible();
@@ -349,7 +349,7 @@ test('renders a job card with match label, salary, workplace, a safe View job li
   await page.getByRole('button', { name: 'Search jobs' }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Customer Experience Specialist', exact: true })).toBeVisible();
   await expect(page.getByText('Acme Support Co')).toBeVisible();
-  await expect(page.getByText('Strong match')).toBeVisible();
+  await expect(page.getByText('Review evidence')).toBeVisible();
   await expect(page.getByText('GBP 30,000–35,000 / year')).toBeVisible();
   const link = page.getByRole('link', { name: /View job/ });
   await expect(link).toHaveAttribute('href', 'https://jobs.acme.example/1');
@@ -413,7 +413,7 @@ test('Free saved analysis reload renders only the bounded preview and never Pro 
     providerAvailable: true, availabilityCheckedAt: '2026-09-24T00:00:00Z', unavailableAt: null, savedAt: '2026-09-24T00:00:00Z',
     analysisCurrent: true, analysisInvalidationReason: null, matchAnalysis: sampleMatchAnalysis }];
   await page.route('**/api/jobs-account', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
-    isPro: false, saveLimit: 3, savedJobs, preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null },
+    isPro: false, saveLimit: 10, savedJobs, preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null },
   }) }));
   await openJobs(page);
   const savedCard = page.locator('.saved-job-card');
@@ -422,7 +422,7 @@ test('Free saved analysis reload renders only the bounded preview and never Pro 
   await expect(savedCard.getByRole('button', { name: 'View the full evidence analysis with Pro' })).toBeVisible();
   // A Free account is told up front that tailoring is a Pro step, rather than being redirected unexpectedly.
   await expect(savedCard.getByRole('button', { name: 'Tailor my resume with Pro' })).toBeVisible();
-  await expect(page.getByText('Free accounts get one search every 24 hours, with up to 10 relevant results.', { exact: false })).toBeVisible();
+  await expect(page.getByText('Free accounts get three manual refreshes in a rolling 24-hour window, with up to 10 relevant results each.', { exact: false })).toBeVisible();
 });
 
 test('stale saved analysis has a manual deterministic refresh path with zero provider searches', async ({ page }) => {
@@ -435,7 +435,7 @@ test('stale saved analysis has a manual deterministic refresh path with zero pro
   await page.route('**/api/jobs-account', route => {
     const body = route.request().postDataJSON();
     if (body.action === 'reanalyze') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ refreshed: true, matchAnalysis: sampleMatchAnalysis }) });
-    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isPro: false, saveLimit: 3, savedJobs: [stale], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }) });
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isPro: false, saveLimit: 10, savedJobs: [stale], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }) });
   });
   await openJobs(page);
   await page.getByRole('button', { name: 'Refresh match analysis' }).click();
@@ -451,7 +451,7 @@ test('saving a visible clarification updates its analysis without another provid
   await page.route('**/api/jobs-account', route => {
     const body = route.request().postDataJSON();
     if (body.action === 'clarification') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ saved: true, matchAnalysis: { ...sampleMatchAnalysis, label: 'stretch', importantWarning: 'Confirmed incompatibility: Must hold an active support certification.' } }) });
-    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isPro: false, saveLimit: 3, savedJobs: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }) });
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isPro: false, saveLimit: 10, savedJobs: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }) });
   });
   await openJobs(page);
   await page.getByRole('button', { name: 'Search jobs' }).click();
@@ -472,7 +472,7 @@ test('saves a normalized job account-side and deduplicates the matching result a
       savedJobs = [{ id: '99999999-9999-9999-9999-999999999999', snapshot: body.job, providerAvailable: true, availabilityCheckedAt: '2026-09-24T00:00:00Z', unavailableAt: null, savedAt: '2026-09-24T00:00:00Z' }];
       return route.fulfill({ status: 200, contentType: 'application/json', body: '{"savedJobId":"99999999-9999-9999-9999-999999999999","alreadySaved":false}' });
     }
-    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isPro: false, saveLimit: 3, savedJobs, preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }) });
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isPro: false, saveLimit: 10, savedJobs, preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }) });
   });
   await page.route('**/api/jobs-search', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(sampleResponse) }));
   await openJobs(page);
@@ -482,7 +482,7 @@ test('saves a normalized job account-side and deduplicates the matching result a
   await expect(page.getByRole('heading', { level: 3, name: 'Customer Experience Specialist' })).toBeVisible();
   const resultCard = page.getByRole('list', { name: 'Job results' }).locator('.job-card');
   await expect(resultCard.getByRole('button', { name: 'Saved', exact: true })).toBeDisabled();
-  await expect(page.getByText('1 of 3')).toBeVisible();
+  await expect(page.getByText('1 of 10')).toBeVisible();
 });
 
 test('retains an unavailable saved job, marks it clearly, and does not render a live View job action', async ({ page }) => {
@@ -492,7 +492,7 @@ test('retains an unavailable saved job, marks it clearly, and does not render a 
     providerAvailable: false, availabilityCheckedAt: '2026-09-24T00:00:00Z', unavailableAt: '2026-09-24T00:00:00Z', savedAt: '2026-09-20T00:00:00Z',
   }];
   await page.route('**/api/jobs-account', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
-    isPro: false, saveLimit: 3, savedJobs, preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null },
+    isPro: false, saveLimit: 10, savedJobs, preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null },
   }) }));
   await openJobs(page);
   await expect(page.getByText('No longer available')).toBeVisible();
@@ -571,7 +571,7 @@ test('Free accounts see an honest available-count summary, a ten-item limit, and
   await expect(page.getByText('Showing 1 of 8 matching jobs.')).toBeVisible();
   await expect(page.getByText('Pro shows up to 20 per search.', { exact: false })).toBeVisible();
   await page.getByText('Showing 1 of 8 matching jobs.').getByRole('button', { name: 'View Pro options' }).click();
-  await expect(page.getByRole('heading', { name: 'A promising role. A considered application.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Get APWICO Pro' })).toBeVisible();
 });
 
 test('a Free account never sees more than ten real job cards even when more are available', async ({ page }) => {
@@ -676,22 +676,22 @@ test('Auto Refresh defaults off and persists an explicit opt-in, scoped to the s
   await page.route('**/api/jobs-account', route => {
     const request = route.request().postDataJSON();
     if (request.action === 'preferences') { savedPreference = request; return route.fulfill({ status: 200, contentType: 'application/json', body: '{"saved":true}' }); }
-    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isPro: false, saveLimit: 3, savedJobs: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }) });
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isPro: false, saveLimit: 10, savedJobs: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }) });
   });
   await page.route('**/api/jobs-search', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(sampleResponse) }));
   await openJobs(page);
-  const toggle = page.getByRole('checkbox', { name: 'Auto Refresh (once a day)' });
+  const toggle = page.getByRole('checkbox', { name: 'Auto Refresh (fresh listings about every 24 hours)' });
   await expect(toggle).not.toBeChecked();
   await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toHaveCount(0);
   await toggle.check();
   await expect.poll(() => savedPreference?.autoRefresh).toBe(true);
+  await expect(page.getByText(/even when this browser is closed/i)).toBeVisible();
   await page.getByRole('button', { name: 'Search jobs' }).click();
-  await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeDisabled();
-  await expect(page.getByText(/Free recommendations can refresh again/)).toBeVisible();
-  await expect(page.getByText(/current results and saved jobs stay available/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeEnabled();
+  await expect(page.getByText(/three manual refreshes in a rolling 24-hour window/i)).toBeVisible();
 });
 
-test('Pro has no Free daily manual-refresh restriction while retaining daily background refresh', async ({ page }) => {
+test('Pro has no Free manual-refresh restriction while retaining server-side background refresh', async ({ page }) => {
   await seed(page);
   await page.unroute('**/api/jobs-account');
   await page.route('**/api/jobs-account', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
@@ -699,13 +699,13 @@ test('Pro has no Free daily manual-refresh restriction while retaining daily bac
   }) }));
   await page.route('**/api/jobs-search', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...sampleResponse, isPro: true }) }));
   await openJobs(page);
-  await expect(page.getByRole('checkbox', { name: 'Auto Refresh (daily background update)' })).not.toBeChecked();
+  await expect(page.getByRole('checkbox', { name: 'Auto Refresh (fresh listings about every 24 hours)' })).not.toBeChecked();
   await page.getByRole('button', { name: 'Search jobs' }).click();
   const refresh = page.getByRole('button', { name: 'Refresh', exact: true });
   await expect(refresh).toBeEnabled();
   await refresh.click();
   await expect(refresh).toBeEnabled();
-  await expect(page.getByText(/Free recommendations can refresh again/)).toHaveCount(0);
+  await expect(page.getByText(/three Free manual refreshes are used/i)).toHaveCount(0);
 });
 
 test('a second account signing in on the same browser never inherits the first account\'s auto-refresh or saved search', async ({ page }) => {
@@ -713,7 +713,7 @@ test('a second account signing in on the same browser never inherits the first a
   await page.route('**/api/jobs-search', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(sampleResponse) }));
   await openJobs(page);
   await page.getByRole('button', { name: 'Search jobs' }).click();
-  await page.getByRole('checkbox', { name: 'Auto Refresh (once a day)' }).check();
+  await page.getByRole('checkbox', { name: 'Auto Refresh (fresh listings about every 24 hours)' }).check();
 
   // Simulate a second account signing in on the same browser: re-seed with a different
   // user id and reload so the app picks up the new session.
@@ -721,7 +721,7 @@ test('a second account signing in on the same browser never inherits the first a
   await page.reload();
   await expect(page).toHaveURL('/workspace/jobs');
   await expect(page.getByRole('heading', { level: 1, name: 'Find jobs', exact: true })).toBeVisible();
-  const toggle = page.getByRole('checkbox', { name: 'Auto Refresh (once a day)' });
+  const toggle = page.getByRole('checkbox', { name: 'Auto Refresh (fresh listings about every 24 hours)' });
   await expect(toggle).not.toBeChecked();
 });
 
@@ -735,7 +735,7 @@ test('a second account never inherits the first account saved match analysis', a
     const body = route.request().postDataJSON();
     if (body.action !== 'load') return route.fulfill({ status: 200, contentType: 'application/json', body: '{"saved":true}' });
     loadCount += 1;
-    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isPro: false, saveLimit: 3,
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isPro: false, saveLimit: 10,
       savedJobs: loadCount === 1 ? firstOwnerSaved : [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }) });
   });
   await openJobs(page);
@@ -913,7 +913,7 @@ test('an existing version detects master changes and offers non-destructive keep
   await page.route('**/api/tailor', route => { tailorCalls += 1; return route.abort(); });
   await page.route('**/api/jobs-account', route => {
     const body = route.request().postDataJSON();
-    if (body.action === 'load') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isPro: false, saveLimit: 3,
+    if (body.action === 'load') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isPro: false, saveLimit: 10,
       savedJobs: [{ id: savedJobId, snapshot, providerAvailable: false, availabilityCheckedAt: '2026-09-24T00:00:00Z', unavailableAt: '2026-09-24T00:00:00Z', savedAt: '2026-09-24T00:00:00Z' }],
       jobResumeVersions: [{ ...version, resume: undefined, savedJobExists: true }], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }) });
     if (body.action === 'get_job_resume') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ version }) });
@@ -954,11 +954,11 @@ test('captured Free save errors retain review for retry and account switch clear
   await page.route('**/api/jobs-account', route => {
     const body = route.request().postDataJSON();
     if (body.action === 'capture_save') attempts++;
-    return route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ error: 'Free accounts can save up to 3 jobs. Your existing saved jobs are kept; upgrade to Pro to save more.' }) });
+    return route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ error: 'Free accounts can save and track up to 10 jobs. Your existing saved jobs are kept; upgrade to Pro to save more.' }) });
   });
   await page.evaluate(() => window.postMessage({ type: 'resumestride:job-import', payload: { title: 'Private role', company: 'Example', description: 'Private description', sourceUrl: 'https://jobs.example/one', capturedAt: new Date().toISOString() } }, location.origin));
   await page.getByRole('button', { name: 'Save job and see how I match' }).click();
-  await expect(page.getByText(/Free accounts can save up to 3 jobs/)).toBeVisible();
+  await expect(page.getByText(/Free accounts can save and track up to 10 jobs/)).toBeVisible();
   await expect(page.getByLabel('Captured description')).toHaveValue('Private description');
   expect(attempts).toBe(1);
   await page.evaluate(next => { const channel = new BroadcastChannel('sb-auth-test-auth-token'); channel.postMessage({ event: 'SIGNED_IN', session: next }); channel.close(); }, sessionFor(otherOwner));
@@ -1071,7 +1071,7 @@ for (const width of [320, 390, 768, 1440, 1920]) test(`premium opportunity and t
     return route.fulfill({json:{saved:true}});
   });
   await page.route('**/api/jobs-search',route=>route.fulfill({json:{...sampleResponse,isPro:true,jobs:['strong','good','stretch'].map((matchLabel,i)=>({...sampleResponse.jobs[0],id:`fixture:${i}`,title:`${sampleResponse.jobs[0].title} ${i+1}`,matchLabel,matchAnalysis:{...sampleMatchAnalysis,label:matchLabel,fullAnalysis:sampleFullAnalysis}}))}}));
-  await page.route('**/api/export-status',route=>route.fulfill({json:{isPro:true,remaining:3,resetsAt:'2026-10-24T00:00:00Z'}}));
+  await page.route('**/api/export-status',route=>route.fulfill({json:{isPro:true,remaining:7,resetsAt:'2026-10-24T00:00:00Z'}}));
   await page.route('**/api/tailor',route=>route.fulfill({json:{suggestions:[
     {field:'summary',sectionId:null,entryId:null,originalText:master.summary,suggestedText:'Customer experience specialist who supports customers and documents solutions.',why:'Makes the demonstrated support experience easier to find.'},
     {field:'headline',sectionId:null,entryId:null,originalText:master.headline,suggestedText:'Customer support specialist',why:'Uses familiar wording for the existing role.'},

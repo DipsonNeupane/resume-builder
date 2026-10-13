@@ -283,7 +283,7 @@ test('Pricing presents Free and Pro together without a first-party Print/PDF act
  const free=cards.first();
  await expect(free).toContainText('Free');
  await expect(free).toContainText('The complete builder and all 7 Free templates');
- await expect(free).toContainText('3 PDF or Word downloads per fixed 30-day period');
+ await expect(free).toContainText('7 PDF or Word downloads per rolling 7 days');
  await expect(free).toContainText('Save and track up to 10 applications');
  await expect(free).not.toContainText('3 generated PDF downloads');
  await expect(free).not.toContainText('Print');

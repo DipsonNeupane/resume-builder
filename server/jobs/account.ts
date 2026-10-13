@@ -252,7 +252,9 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
       if (!outcomes.error && Array.isArray(outcomes.data)) {
         try { outcomeReports = outcomes.data.map(parseOutcomeReport) } catch { outcomeReports = null }
       }
-      return json(200, { ...shapeAccountSnapshot(result.data), jobResumeVersions: versions.data, jobWorkflows, outcomeReports })
+      const automatic = await db.rpc('jobs_auto_refresh_result', { p_owner: owner })
+      return json(200, { ...shapeAccountSnapshot(result.data), jobResumeVersions: versions.data, jobWorkflows, outcomeReports,
+        autoRefreshResult: automatic.error ? null : automatic.data })
     }
     if (action === 'report_outcome') {
       if (typeof body.savedJobId !== 'string' || !SAVED_JOB_ID.test(body.savedJobId)) throw new HttpError(400, 'Saved job is invalid')
@@ -344,7 +346,7 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
       if (!evidence && body.evidence === undefined && !captured) {
         const legacy = await db.rpc('jobs_save', { p_owner: owner, p_job: job })
         if (legacy.error) {
-          if (legacy.error.message.includes('Free saved-job limit reached')) throw new HttpError(403, 'Free accounts can save up to 3 jobs. Your existing saved jobs are kept; upgrade to Pro to save more.')
+          if (legacy.error.message.includes('Free saved-job limit reached')) throw new HttpError(403, 'Free accounts can save and track up to 10 jobs. Your existing saved jobs are kept; upgrade to Pro to save more.')
           if (legacy.error.message.includes('Saved-job safety limit reached')) throw new HttpError(409, 'Saved-job safety limit reached. Existing saved jobs are unchanged.')
           throw new HttpError(503, 'Unable to save this job')
         }
@@ -365,7 +367,7 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
         : await db.rpc('jobs_save_v2', { p_owner: owner, p_job: job, p_analysis: analysis })
       if (result.error) {
         if (result.error.message.includes('Free saved-job limit reached')) {
-          throw new HttpError(403, 'Free accounts can save up to 3 jobs. Your existing saved jobs are kept; upgrade to Pro to save more.')
+          throw new HttpError(403, 'Free accounts can save and track up to 10 jobs. Your existing saved jobs are kept; upgrade to Pro to save more.')
         }
         if (result.error.message.includes('Saved-job safety limit reached')) throw new HttpError(409, 'Saved-job safety limit reached. Existing saved jobs are unchanged.')
         throw new HttpError(503, 'Unable to save this job')
@@ -395,7 +397,9 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
       if (typeof body.autoRefresh !== 'boolean') throw new HttpError(400, 'Auto Refresh preference is invalid')
       let criteria: SearchCriteria | null = null
       if (body.criteria !== null && body.criteria !== undefined) criteria = parseSearchCriteria(body.criteria)
-      const result = await db.rpc('jobs_set_preferences', { p_owner: owner, p_criteria: criteria, p_auto_refresh: body.autoRefresh })
+      const evidence = body.autoRefresh ? parseResumeEvidence(body.evidence) : null
+      if (body.autoRefresh && !evidence) throw new HttpError(400, 'Resume evidence is required for background refresh')
+      const result = await db.rpc('jobs_set_preferences_v2', { p_owner: owner, p_criteria: criteria, p_auto_refresh: body.autoRefresh, p_evidence: evidence })
       if (result.error) throw new HttpError(503, 'Unable to save job preferences')
       return json(200, { saved: true })
     }

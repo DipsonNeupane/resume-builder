@@ -22,7 +22,7 @@ export const commercialPlans: readonly CommercialPlan[] = [
  {
   id: 'free', name: 'Free', price: '$0', cadence: 'No subscription', recurring: false,
   summary: `Build with all ${freeTemplates.length} Free templates, review evidence, and organize a focused job search.`,
-  includes: [`All ${freeTemplates.length} Free templates`, 'Browser-only evidence checker', 'Up to 10 relevant job results once every 24 hours', 'Save and track up to 10 applications', '3 successful PDF or Word downloads per fixed 30-day period'],
+  includes: [`All ${freeTemplates.length} Free templates`, 'Browser-only evidence checker', 'Up to 10 relevant results per refresh; 3 manual refreshes per rolling 24 hours', 'Optional fresh automatic refresh about every 24 hours', 'Save and track up to 10 applications', '7 successful PDF or Word downloads per rolling 7 days'],
   action: { label: 'Start with Free', href: '/start/build' },
  },
  {
@@ -45,7 +45,7 @@ export const commercialPolicy = {
  proOverlap: 'When a Pro purchase succeeds, future renewals for active individual-template subscriptions are stopped. Their already-paid access continues through each paid period.',
  pdf: 'PDF preserves the selected resume design.',
  docx: 'Word (.docx) is a clean, editable content document; it does not promise visual parity with the PDF template.',
- freeDownloads: 'Free includes 3 successful PDF or Word downloads in each fixed 30-day period starting at signup. Both formats share the allowance and unused downloads do not roll over.',
+ freeDownloads: 'Free includes 7 successful PDF or Word downloads in a rolling 7-day window. Both formats share the allowance; each successful download leaves the window seven days after it occurred.',
  paidDownloads: 'Pro includes fair-use downloads for every template. Server size and abuse limits apply. Existing individual-template subscriptions retain their original access while active, but are no longer sold to new customers.',
  exportBoundary: 'Downloads require a signed-in account and explicit consent to send the current resume to APWICO for server generation. The export routes do not intentionally keep the resume or generated file as a separate permanent server copy.',
  outcomes: 'No plan or template promises ATS passage, interviews, job offers, or hiring outcomes.',

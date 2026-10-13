@@ -18,7 +18,7 @@ test('the commercial contract exposes Free and Pro with the prepared V2 price', 
  assert.match(commercialPolicy.templateAfterCancellation, /preview/);
  assert.match(commercialPolicy.templateAfterCancellation, /not deleted/);
  assert.match(commercialPolicy.docx, /does not promise visual parity/);
- assert.match(commercialPolicy.freeDownloads, /3 successful PDF or Word downloads/);
+ assert.match(commercialPolicy.freeDownloads, /7 successful PDF or Word downloads/);
  assert.match(commercialPolicy.paidDownloads, /fair-use downloads/i);
  assert.doesNotMatch(commercialPolicy.paidDownloads, /No unlimited-download claim/);
 });

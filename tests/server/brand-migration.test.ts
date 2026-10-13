@@ -19,8 +19,8 @@ test('persistent browser and protocol identifiers remain compatible across the A
 
 test('provider-facing legacy identifiers are retained instead of orphaning live references', () => {
  assert.match(read('server/billing/offer-handlers.ts'), /resumestride_owner/)
- assert.match(read('scripts/provision-stripe-catalog.ts'), /resumestride_catalog/)
- assert.match(read('scripts/provision-stripe-catalog.ts'), /lookup_key:`resumestride_/)
+ assert.match(read('scripts/provision-stripe-catalog.ts'), /deliberately leaves every[\s\S]*existing price\/product active/)
+ assert.match(read('scripts/provision-stripe-catalog.ts'), /metadata:\{offer_key:spec\.key/)
 })
 
 test('APWICO is the public default while compatibility is explicit and bounded', () => {

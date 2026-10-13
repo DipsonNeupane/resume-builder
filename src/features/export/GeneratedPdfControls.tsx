@@ -70,11 +70,11 @@ export function GeneratedDocumentControls({ resume, ownerId, documentScope, jobR
     const response = await fetch(`/api/export-status?template=${encodeURIComponent(resume.template)}`, { headers: { Authorization: `Bearer ${session.access_token}` }, signal: controller.signal });
     if (!response.ok) throw new Error('Unavailable');
     const data = await response.json();
-    if (typeof data.isPro !== 'boolean' || typeof data.hasPaidAccess !== 'boolean' || !Number.isInteger(data.remaining) || data.remaining < 0 || data.remaining > 3 || typeof data.resetsAt !== 'string' || !Number.isFinite(Date.parse(data.resetsAt))) throw new Error('Invalid allowance');
+    if (typeof data.isPro !== 'boolean' || typeof data.hasPaidAccess !== 'boolean' || !Number.isInteger(data.remaining) || data.remaining < 0 || data.remaining > 7 || typeof data.resetsAt !== 'string' || !Number.isFinite(Date.parse(data.resetsAt))) throw new Error('Invalid allowance');
     const current = (await client.auth.getSession()).data.session;
     if (disposed || request !== generation || current?.user.id !== ownerId) return;
     const resets = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(data.resetsAt));
-    setAllowance(data.hasPaidAccess ? 'Generous document downloads are included with your active subscription. Fair-use protection applies.' : data.remaining > 0 ? `${data.remaining} of 3 Free downloads left for this 30-day period.` : `Your Free document download allowance is used for this period. It resets ${resets}.`);
+    setAllowance(data.hasPaidAccess ? 'Generous document downloads are included with your active subscription. Fair-use protection applies.' : data.remaining > 0 ? `${data.remaining} of 7 Free downloads remain in your rolling 7-day window.` : `Your Free download allowance is used. One becomes available ${resets}.`);
     setExhausted(!data.hasPaidAccess && data.remaining === 0);
     setAvailabilityUnknown(false);
    } catch {
@@ -159,14 +159,14 @@ export function GeneratedDocumentControls({ resume, ownerId, documentScope, jobR
  }
 
  if (!ownerId) return <div className="notice" role="status">
-  Sign in to download your resume as PDF or Word. A free account includes 3 downloads every 30 days.
+  Sign in to download your resume as PDF or Word. A free account includes 7 downloads in a rolling 7-day window.
   <button className="text-button" onClick={onSignIn}>Sign in</button>
  </div>;
 
  return <><div ref={downloadGroup} role="group" aria-label="Document downloads" tabIndex={-1} className="field checkbox-field">
   <label><input type="checkbox" checked={consent} disabled={busyFormat !== null} onChange={event => setConsent(event.target.checked)} />I consent to uploading my resume content to APWICO’s server to generate my document.</label>
   <p className="field-hint">PDF and Word share your download allowance. Choose the format you need.</p>
-  {availabilityUnknown?<p className="field-hint" aria-live="polite">We couldn’t check your download allowance. Free accounts include 3 downloads every 30 days. Free downloads exhausted? <button className="text-button" onClick={()=>{setUpgradeConfirmed(false);setUpgradeOpen(true);}}>View Pro options</button></p>:<p className="field-hint" aria-live="polite">{allowance}</p>}
+  {availabilityUnknown?<p className="field-hint" aria-live="polite">We couldn’t check your download allowance. Free accounts include 7 downloads in a rolling 7-day window. Free downloads exhausted? <button className="text-button" onClick={()=>{setUpgradeConfirmed(false);setUpgradeOpen(true);}}>View Pro options</button></p>:<p className="field-hint" aria-live="polite">{allowance}</p>}
   <div className="document-download-actions">
    <button className="button" disabled={!consent || busyFormat !== null || exhausted} onClick={() => download('pdf')}><Download size={16} />{busyFormat === 'pdf' ? 'Generating PDF…' : 'Download PDF'}</button>
    <button className="button outline" disabled={!consent || busyFormat !== null || exhausted} onClick={() => download('docx')}><Download size={16} />{busyFormat === 'docx' ? 'Generating Word…' : 'Download Word (.docx)'}</button>

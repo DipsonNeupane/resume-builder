@@ -108,7 +108,7 @@ export const capabilities: Capability[] = [
     ],
     boundaries: [
       'Sign-in and explicit upload consent are required before resume content is sent for document generation.',
-      'Free accounts share three successful PDF or Word downloads per fixed 30-day period from signup.',
+      'Free accounts share seven successful PDF or Word downloads in a rolling seven-day window.',
       'Paid downloads are subject to fair-use limits. Renewal and cancellation terms are shown before checkout.',
     ],
     action: { href: '/pricing/', label: 'Review export and access terms', note: 'Previewing a template is separate from purchase. Pricing shows renewal and cancellation terms beside paid actions.' },

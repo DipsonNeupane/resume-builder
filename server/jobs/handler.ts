@@ -23,6 +23,7 @@ import { cacheKey, getOrFetchJobs } from './cache.ts'
 import type { EmploymentType, MatchLabel, NormalizedJob, SalaryNormalized, Workplace } from './types.ts'
 import { savedJobSnapshot } from './account.ts'
 import { emitDiagnostic } from '../observability.ts'
+import { reserveProviderRequest } from './provider-budget.ts'
 
 function defaultDelay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -55,7 +56,7 @@ function refreshReservation(value: unknown): RefreshReservation {
   if (typeof row.allowed !== 'boolean' || typeof row.isPro !== 'boolean'
     || !timestamp(row.reservedAt) || !timestamp(row.previousRefreshAt) || !timestamp(row.nextRefreshAt)
     || (row.isPro && row.reservedAt !== null)
-    || (!row.isPro && row.allowed && (row.reservedAt === null || row.nextRefreshAt === null))
+    || (!row.isPro && row.allowed && row.reservedAt === null)
     || (!row.allowed && row.nextRefreshAt === null)) {
     throw new HttpError(503, 'Job refresh allowance returned an unusable response')
   }
@@ -125,7 +126,7 @@ export async function searchJobs(request: Request, env: NodeJS.ProcessEnv = proc
     const reservation = refreshReservation(reservationResult.data)
     if (!reservation.allowed) {
       return json(429, {
-        error: 'Free recommendations can refresh once every 24 hours. Your existing recommendations and saved jobs are still available.',
+        error: 'Free accounts can refresh three times in a rolling 24-hour window. Your existing recommendations and saved jobs are still available.',
         retryAt: reservation.nextRefreshAt,
       })
     }
@@ -150,11 +151,13 @@ export async function searchJobs(request: Request, env: NodeJS.ProcessEnv = proc
     const key = cacheKey(signature)
     const searchParams = { title: criteria.title, countryCode: criteria.countryCode, workPlace: criteria.workplace }
     const jobs = await getOrFetchJobs(key, async () => {
+      await reserveProviderRequest(db, owner, 'manual')
       const page1 = await deps.techmapSearch(config, { ...searchParams, page: 1 })
       let combined = page1.jobs
       if (isPro && page1.hasMore) {
         await deps.delay(SECOND_PAGE_DELAY_MS)
         try {
+          await reserveProviderRequest(db, owner, 'pro_page_2')
           const page2 = await deps.techmapSearch(config, { ...searchParams, page: 2 })
           combined = combined.concat(page2.jobs)
         } catch (error) {

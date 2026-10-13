@@ -17,8 +17,8 @@ select throws_ok($$select public.pdf_finish(id,owner_id,lease,true) from public.
 set local role authenticated;
 select throws_ok($$select public.pdf_begin('11111111-8888-8888-8888-888888888885','88888888-8888-8888-8888-888888888888',repeat('a',64))$$,'42501','permission denied for function pdf_begin','browser cannot forge reservations');
 reset role;
-select is((select remaining from public.pdf_status('88888888-8888-8888-8888-888888888888')),1,'status counts completed and active leases, excludes expired leases');
-select is((select resets_at from public.pdf_status('88888888-8888-8888-8888-888888888888')),now()+interval '29 days','status reset uses signup boundary');
+select is((select remaining from public.pdf_status('88888888-8888-8888-8888-888888888888')),5,'status counts completed and active leases against the seven-download rolling allowance');
+select ok((select resets_at>=now()+interval '6 days 23 hours' and resets_at<=now()+interval '7 days 1 minute' from public.pdf_status('88888888-8888-8888-8888-888888888888')),'status reports a bounded rolling-window horizon');
 insert into public.billing_entitlements(owner_id,paid_through) values('88888888-8888-8888-8888-888888888888',now()+interval '1 day');
 select ok((select is_pro from public.pdf_status('88888888-8888-8888-8888-888888888888')),'status confirms active Pro');
 select public.pdf_begin('11111111-8888-8888-8888-888888888885','88888888-8888-8888-8888-888888888888',repeat('a',64));

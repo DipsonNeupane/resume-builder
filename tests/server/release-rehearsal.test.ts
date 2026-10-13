@@ -59,7 +59,7 @@ test('the APWICO release preserves durable client and provider identifiers', () 
   assert.match(read('src/routing/continuation.ts'), /resumestride\.navigationContinuation\.v1/)
   assert.match(read('src/services/analytics.ts'), /resumestride\.analytics\.firstTouch/)
   assert.match(read('server/billing/offer-handlers.ts'), /resumestride_owner/)
-  assert.match(read('scripts/provision-stripe-catalog.ts'), /resumestride_catalog/)
+  assert.match(read('scripts/provision-stripe-catalog.ts'), /deliberately leaves every[\s\S]*existing price\/product active/)
 })
 
 test('the legacy origin has an explicit browser-only work transition notice', () => {

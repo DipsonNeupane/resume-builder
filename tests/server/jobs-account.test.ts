@@ -48,15 +48,16 @@ test('builds and validates a bounded normalized snapshot with provenance', () =>
 
 test('loads only the authenticated owner account snapshot and ignores browser ownership fields', async () => {
   const expected = { isPro: false, saveLimit: 3, savedJobs: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }
-  const { deps, calls } = fixture(async name => ({ data: ['job_resume_versions_list','jobs_workflow_list','product_outcome_reports_list'].includes(name) ? [] : expected, error: null }))
+  const { deps, calls } = fixture(async name => ({ data: ['job_resume_versions_list','jobs_workflow_list','product_outcome_reports_list'].includes(name) ? [] : name === 'jobs_auto_refresh_result' ? null : expected, error: null }))
   const response = await jobsAccount(request({ action: 'load', owner: 'attacker-controlled' }), env, deps)
   assert.equal(response.status, 200)
-  assert.deepEqual(await response.json(), { ...expected, jobResumeVersions: [], jobWorkflows: [], outcomeReports: [] })
+  assert.deepEqual(await response.json(), { ...expected, jobResumeVersions: [], jobWorkflows: [], outcomeReports: [], autoRefreshResult: null })
   assert.deepEqual(calls, [
     { name: 'jobs_account_snapshot', args: { p_owner: owner } },
     { name: 'job_resume_versions_list', args: { p_owner: owner } },
     { name: 'jobs_workflow_list', args: { p_owner: owner } },
     { name: 'product_outcome_reports_list', args: { p_owner: owner } },
+    { name: 'jobs_auto_refresh_result', args: { p_owner: owner } },
   ])
 })
 
@@ -167,7 +168,18 @@ test('persists bounded preferences and explicit Auto Refresh opt-out', async () 
   const { deps, calls } = fixture(async () => ({ data: null, error: null }))
   const response = await jobsAccount(request({ action: 'preferences', criteria: { title: 'Nurse', countryCode: 'GB' }, autoRefresh: false }), env, deps)
   assert.equal(response.status, 200)
-  assert.deepEqual(calls[0], { name: 'jobs_set_preferences', args: { p_owner: owner, p_criteria: { title: 'Nurse', countryCode: 'GB' }, p_auto_refresh: false } })
+  assert.deepEqual(calls[0], { name: 'jobs_set_preferences_v2', args: { p_owner: owner, p_criteria: { title: 'Nurse', countryCode: 'GB' }, p_auto_refresh: false, p_evidence: null } })
+})
+
+test('Auto Refresh opt-in stores only validated non-contact evidence and cannot be enabled without it', async () => {
+  const { deps, calls } = fixture(async () => ({ data: true, error: null }))
+  const response = await jobsAccount(request({ action:'preferences', criteria:{title:'Engineer'}, autoRefresh:true,
+    evidence:{ headline:'Engineer', summary:'Builds systems', skills:'TypeScript', roles:[], qualifications:[], email:'must-not-store@example.com' } }),env,deps)
+  assert.equal(response.status,200)
+  assert.deepEqual(calls[0],{name:'jobs_set_preferences_v2',args:{p_owner:owner,p_criteria:{title:'Engineer'},p_auto_refresh:true,
+    p_evidence:{headline:'Engineer',summary:'Builds systems',skills:'TypeScript',roles:[],qualifications:[]}}})
+  const missing=await jobsAccount(request({action:'preferences',criteria:{title:'Engineer'},autoRefresh:true}),env,deps)
+  assert.equal(missing.status,400)
 })
 
 test('persists a manual owner-scoped application workflow with revision protection and no inferred submission', async () => {

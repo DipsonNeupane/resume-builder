@@ -13,7 +13,6 @@ import { Bookmark, ExternalLink, RefreshCw, Search } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import type { Resume } from '../../model';
 import { buildResumeEvidence, proposeSearchesFromResume } from './evidence';
-import { startAutoRefreshLoop } from './autoRefreshScheduler';
 import { fingerprintResume, parseJobResumeSummaries, parseJobResumeVersion, type JobResumeVersion, type JobResumeVersionSummary } from '../../services/jobResumeVersions';
 import { trackProductEvent } from '../../services/analytics';
 import { emptyJobWorkflow, JobWorkflowPanel, type JobWorkflow } from './JobWorkflowPanel';
@@ -106,7 +105,6 @@ const EMPLOYMENT_LABELS: Record<EmploymentType | 'unknown', string> = { full_tim
 // the canonical evidence rows explain what is or is not demonstrated.
 const MATCH_LABELS: Record<MatchLabel, string> = { strong: 'Review evidence', good: 'Review evidence', stretch: 'Review evidence' };
 
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 class AccountRequestError extends Error {
   constructor(message: string, readonly status: number) {
@@ -391,7 +389,7 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
   const [results, setResults] = useState<{ jobs: JobCard[]; isPro: boolean; availableCount: number; proLimit: number } | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
-  const [saveLimit, setSaveLimit] = useState(3);
+  const [saveLimit, setSaveLimit] = useState(10);
   const [accountIsPro, setAccountIsPro] = useState(false);
   const [accountLoaded, setAccountLoaded] = useState(false);
   const [accountLoadFailed, setAccountLoadFailed] = useState(false);
@@ -479,7 +477,7 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
     setOutcomeReportsAvailable(true);
     setOutcomeBusyId(null);
     setRestoreFailure(null);
-    setSaveLimit(3);
+    setSaveLimit(10);
     setAccountIsPro(false);
     setAccountLoaded(false);
     setAccountLoadFailed(false);
@@ -507,9 +505,19 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
       setAccountIsPro(body.isPro);
       setAccountLoaded(true);
       setAutoRefresh(preferences.autoRefresh);
+      if (record(body.autoRefreshResult)) {
+        const automatic = body.autoRefreshResult;
+        if ((automatic.status === 'ready' || automatic.status === 'no_results') && record(automatic.result)) {
+          setResults(parseJobCards(automatic.result));
+        } else if (automatic.status === 'provider_cap') {
+          setMessage('Automatic refresh is waiting for APWICO’s monthly fresh-search capacity to reset. Existing results and saved jobs remain available.');
+        }
+      }
       lastCriteriaRef.current = criteria;
       lastProviderRefreshRef.current = typeof preferences.lastProviderRefreshAt === 'string' ? Date.parse(preferences.lastProviderRefreshAt) : 0;
-      setNextFreeRefreshAt(body.isPro || !lastProviderRefreshRef.current ? 0 : lastProviderRefreshRef.current + DAY_MS);
+      // A last-refresh timestamp cannot represent the rolling three-refresh window.
+      // Only a server reservation rejection/response can supply the true next slot.
+      setNextFreeRefreshAt(0);
       if (criteria && typeof criteria.title === 'string') applyCriteria(criteria);
     }).catch(error => {
       if (!controller.signal.aborted) { setAccountLoadFailed(true); setMessage(error instanceof Error ? error.message : 'Saved jobs are temporarily unavailable.'); }
@@ -595,8 +603,8 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
       const now = Date.now();
       lastProviderRefreshRef.current = now;
       const serverNextRefreshAt = record(body) && typeof body.nextRefreshAt === 'string' ? Date.parse(body.nextRefreshAt) : Number.NaN;
-      setNextFreeRefreshAt(parsed.isPro ? 0 : Number.isNaN(serverNextRefreshAt) ? now + DAY_MS : serverNextRefreshAt);
-      try { await accountRequest({ action: 'preferences', criteria, autoRefresh }); }
+      setNextFreeRefreshAt(parsed.isPro || Number.isNaN(serverNextRefreshAt) ? 0 : serverNextRefreshAt);
+      try { await accountRequest({ action: 'preferences', criteria, autoRefresh, ...(autoRefresh ? { evidence: buildResumeEvidence(resume) } : {}) }); }
       catch { setMessage('Jobs loaded, but your search preferences could not be saved.'); }
       if (parsed.jobs.length === 0) setMessage('No matching jobs for this search yet. Try a broader title or location.');
     } catch (error) {
@@ -623,9 +631,9 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
     const requestedOwner = ownerId;
     setAutoRefresh(next);
     try {
-      await accountRequest({ action: 'preferences', criteria: lastCriteriaRef.current, autoRefresh: next });
+      await accountRequest({ action: 'preferences', criteria: lastCriteriaRef.current, autoRefresh: next, ...(next ? { evidence: buildResumeEvidence(resume) } : {}) });
       if (currentOwnerRef.current !== requestedOwner) return;
-      setMessage(next ? (accountIsPro ? 'Auto Refresh is on for a daily background update. You can still refresh manually as needed.' : 'Auto Refresh is on. Free recommendations refresh once a day.') : 'Auto Refresh is off.');
+      setMessage(next ? 'Auto Refresh is on. APWICO will request fresh listings about every 24 hours, even when this browser is closed.' : 'Auto Refresh is off.');
     } catch (error) {
       if (currentOwnerRef.current !== requestedOwner) return;
       setAutoRefresh(!next);
@@ -795,29 +803,6 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to start tailoring.'); }
   }
 
-  // While the toggle is on and the panel stays mounted, actively schedules the next
-  // search for whatever time remains in the 24-hour cadence — it does not just check
-  // once on mount/toggle. Each run replays the last successful search's own criteria
-  // rather than silently inventing a new one, and reads only this account's own scoped
-  // storage keys. The loop is torn down (its timer cancelled) whenever autoRefresh
-  // turns off, the account changes, or the panel unmounts.
-  useEffect(() => {
-    if (!autoRefresh || !ownerId) return;
-    const handle = startAutoRefreshLoop({
-      cadenceMs: DAY_MS,
-      isInFlight: () => inFlight.current,
-      getLastFetchedAt: () => {
-        return lastProviderRefreshRef.current;
-      },
-      runRefresh: () => {
-        const storedCriteria = lastCriteriaRef.current;
-        if (storedCriteria) void runSearch(storedCriteria);
-      },
-    });
-    return () => handle.stop();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoRefresh, ownerId]);
-
   const freeRefreshBlocked = !accountIsPro && nextFreeRefreshAt > Date.now();
 
   const privateHeading = target.kind === 'match' ? 'Match Analysis'
@@ -832,7 +817,7 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
         <button className="back-link" onClick={onBack}>Back</button>
       </div>
       <div className="notice" role="status">
-        Sign in to search and save jobs. Free includes one search every 24 hours with up to 10 relevant results.
+        Sign in to search and save jobs. Free includes three manual refreshes in a rolling 24-hour window, with up to 10 relevant results each.
         <button className="text-button" onClick={onSignIn}>Sign in or create account</button>
       </div>
     </section>;
@@ -928,14 +913,15 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
         ? `Comparing ${salaryPeriod === 'year' ? 'annual' : 'hourly'} salary only against postings listing an amount in the exact same currency and period; jobs with an unlisted or differently formatted salary stay eligible.`
         : 'No salary preference set — jobs with any salary, or none listed, stay eligible.'}
     </p>
-    {accountLoaded && !accountIsPro && !freeRefreshBlocked && <p className="field-hint">Free accounts get one search every 24 hours, with up to 10 relevant results. Set your criteria first.</p>}
+    {accountLoaded && !accountIsPro && !freeRefreshBlocked && <p className="field-hint">Free accounts get three manual refreshes in a rolling 24-hour window, with up to 10 relevant results each. Set your criteria first.</p>}
     {!masterReady && <p className="field-hint" role="status">Saved jobs remain available, but search and Match updates pause until your master resume recovery or account check is resolved.</p>}
     <button className="button" disabled={busy || freeRefreshBlocked || !masterReady} onClick={search}><Search size={16} />{busy ? 'Searching…' : 'Search jobs'}</button>
-    {freeRefreshBlocked && <p className="field-hint" role="status">Free recommendations can refresh again {formatRefreshTime(nextFreeRefreshAt)}. Your current results and saved jobs stay available. Pro has no once-a-day limit. <button className="text-button" onClick={onViewPro}>View Pro options</button></p>}
+    {freeRefreshBlocked && <p className="field-hint" role="status">Your three Free manual refreshes are used. One becomes available {formatRefreshTime(nextFreeRefreshAt)}. Current results and saved jobs stay available. <button className="text-button" onClick={onViewPro}>View Pro options</button></p>}
 
     <div className="jobs-toolbar">
       {results && <button className="text-button" disabled={busy || freeRefreshBlocked || !masterReady} onClick={refresh}><RefreshCw size={14} />Refresh</button>}
-      <label className="jobs-auto-refresh"><input type="checkbox" checked={autoRefresh} onChange={event => void toggleAutoRefresh(event.target.checked)} />{accountIsPro ? 'Auto Refresh (daily background update)' : 'Auto Refresh (once a day)'}</label>
+      <label className="jobs-auto-refresh"><input type="checkbox" checked={autoRefresh} onChange={event => void toggleAutoRefresh(event.target.checked)} />Auto Refresh (fresh listings about every 24 hours)</label>
+      <p className="field-hint">When on, APWICO stores bounded, non-contact resume evidence with your account so the server can rank fresh listings while your browser is closed. Turning it off removes that background-refresh evidence.</p>
     </div>
 
     </aside>}<div className="opportunity-content">

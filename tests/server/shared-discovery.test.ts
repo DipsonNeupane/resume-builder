@@ -22,7 +22,7 @@ test('pending pasted jobs are bounded, expiring and owner isolated',()=>{
 
 test('checkout cancellation returns to the surface that started the offer',()=>{
  const source=readFileSync('server/billing/offer-handlers.ts','utf8');
- assert.match(source,/offer\.kind === 'template' \? '\/workspace\/resume' : '\/workspace\/pro'/);
+ assert.match(source,/cancel_url: `\$\{config\.origin\}\/workspace\/pro\?checkout=cancelled`/);
  for(const file of ['server/billing/stripe.ts'])assert.doesNotMatch(readFileSync(file,'utf8'),/cancel_url: `\$\{config\.origin\}\/\?account=1/);
 });
 

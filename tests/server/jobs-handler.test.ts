@@ -61,6 +61,7 @@ function fixture(options: { isPro?: boolean; page1?: NormalizedJob[]; page2?: No
     serviceDatabase: ((..._args: unknown[]) => { dbCalls.push('serviceDatabase'); return {
       rpc: async (name: string, args?: Record<string, unknown>) => {
         rpcCalls.push({ name, args })
+        if (name === 'jobs_reserve_provider_request') return { data: { allowed:true, used:1, remaining:499, resetsAt:'2026-10-01T00:00:00.000Z' }, error:null }
         return name === 'jobs_reserve_recommendation_refresh'
           ? { data: options.isPro
             ? { allowed: true, isPro: true, reservedAt: null, previousRefreshAt: null, nextRefreshAt: null }
@@ -307,7 +308,7 @@ test('an authoritative Free cadence rejection returns the next refresh time with
   const response = await searchJobs(request({ criteria: { title: uniqueTitle() }, evidence }), env, deps)
   assert.equal(response.status, 429)
   assert.deepEqual(await response.json(), {
-    error: 'Free recommendations can refresh once every 24 hours. Your existing recommendations and saved jobs are still available.',
+    error: 'Free accounts can refresh three times in a rolling 24-hour window. Your existing recommendations and saved jobs are still available.',
     retryAt: '2026-09-27T12:00:00.000Z',
   })
   assert.equal(calls.length, 0)

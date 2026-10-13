@@ -77,12 +77,19 @@
     },
     "api/tailor.ts": {
       "maxDuration": 60
+    },
+    "api/refresh-jobs.ts": {
+      "maxDuration": 60
     }
   },
   "crons": [
     {
       "path": "/api/dispatch-billing-notices",
       "schedule": "15 14 * * *"
+    },
+    {
+      "path": "/api/refresh-jobs",
+      "schedule": "17 * * * *"
     }
   ]
 }
