@@ -3,7 +3,7 @@
  * every contact field (name, email, phone, website, location) and entry
  * organization/location/dates. This is the exact shape POSTed to /api/jobs-search; that
  * server route never forwards any of it to Techmap (see server/jobs/handler.ts). */
-import { isExperienceSection, type Resume } from '../../model';
+import { isExperienceSection, type Resume } from '../../model.js';
 
 export type ResumeEvidence = {
   headline: string;

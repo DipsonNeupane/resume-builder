@@ -54,6 +54,17 @@ for (const name of ['checkout','subscribe','cancel-subscription','stripe-webhook
  assert.equal(result.headers.get('cache-control'), 'no-store');
  console.log(`${name}: packaged handler loads and fails closed (503)`);
 }
+{
+ const name = 'refresh-jobs';
+ const root = path.join(output, 'functions/api', `${name}.func`);
+ process.chdir(root);
+ const config = JSON.parse(await readFile('.vc-config.json', 'utf8'));
+ const mod = await import(pathToFileURL(path.join(root, config.handler)));
+ const result = await mod.default.fetch(new Request(`https://apwico.com/api/${name}`));
+ assert.equal(result.status, 401, `${name} must load and reject requests without the cron secret`);
+ assert.equal(result.headers.get('cache-control'), 'no-store');
+ console.log(`${name}: packaged handler loads and rejects unauthorized requests (401)`);
+}
 const pdfRoot = path.join(output, 'functions/api/export-pdf.func');
 process.chdir(pdfRoot);
 for (const file of ['src/styles.css','server/export/fonts/NotoSansArabic.ttf','server/export/fonts/NotoSansDevanagari.ttf','node_modules/@fontsource/noto-sans/400.css','node_modules/@fontsource/noto-sans-sc/400.css','node_modules/@sparticuz/chromium/bin/chromium.br']) {
