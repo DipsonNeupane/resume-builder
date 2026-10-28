@@ -74,9 +74,10 @@ test('hosting rewrites only the private application namespaces after middleware 
  const config = JSON.parse(read('vercel.json')) as { rewrites?: Array<{ source: string; destination: string }> };
  assert.deepEqual(config.rewrites, [
   { source: '/start/:path*', destination: '/index.html' },
+  { source: '/workspace', destination: '/index.html' },
   { source: '/workspace/:path*', destination: '/index.html' },
  ]);
- for (const path of ['/start/import', '/start/build', '/start/job', '/start/sample', '/workspace/resume', '/workspace/jobs', '/workspace/jobs/saved', '/workspace/account', '/workspace/pro']) {
+ for (const path of ['/start/import', '/start/build', '/start/job', '/start/sample', '/workspace', '/workspace/today', '/workspace/discover', '/workspace/applications', '/workspace/applications/33333333-3333-4333-8333-333333333333', '/workspace/resume', '/workspace/jobs', '/workspace/jobs/saved', '/workspace/account', '/workspace/pro']) {
   assert.equal(policy(path).status, 0, `${path} must reach the hosting rewrite`);
  }
  assert.equal(policy('/workspace/unknown').status, 404, 'middleware must reject invalid routes before the broad namespace rewrite');
@@ -143,8 +144,8 @@ test('all public source HTML has unique, consistent metadata before JavaScript',
   assert.match(html, /<script src="\/seo-guard.js"><\/script>/);
  }
  assert.equal(titles.size, Object.keys(publicPages).length); assert.equal(descriptions.size, Object.keys(publicPages).length);
- assert.equal(publicPages['/'].title, 'APWICO — Resume Builder, Job Match & Tailoring');
- assert.equal(publicPages['/'].description, 'Build a master resume, find relevant jobs, compare your evidence with each role, and create truthful job-specific versions without changing your original.');
+ assert.equal(publicPages['/'].title, 'APWICO — Find jobs, apply with confidence, track applications');
+ assert.equal(publicPages['/'].description, 'Find jobs you like, compare each one with evidence from your own resume, tailor a separate version, and track every application and next step in one place.');
 });
 
 test('structured data describes visible public pages without unsupported commercial or outcome claims', () => {
@@ -299,7 +300,9 @@ test('template routes mirror the verified registry and separate preview from pur
   const html=read(publicHtmlFile(path));
   assert.match(html,new RegExp(`>${item.tier==='free'?'Free':'Premium'}<`));
   assert.ok(html.includes(`template-preview-${item.id}`));
-  assert.ok(html.includes(`Fictional Alex Morgan resume rendered in the ${item.name} template`));
+  // Occupation-appropriate fictional previews: academic templates show an academic CV.
+  assert.match(html,new RegExp(`Fictional [^"]+ resume rendered in the ${item.name} template`));
+  if(item.family==='academic'){assert.ok(html.includes('Fictional Dr. Tomasz'),item.id);assert.match(html,/Publications/);assert.match(html,/Teaching/);assert.doesNotMatch(html,/Alex Morgan/)}
   assert.ok(html.includes(`href="/start/build?template=${item.id}"`));
   assert.match(html,/Preview before you pay|Preview this template/);assert.doesNotMatch(html,/<button[^>]*>[^<]*(?:Buy|Purchase|Checkout)/i);
  }

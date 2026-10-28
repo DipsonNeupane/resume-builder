@@ -119,7 +119,7 @@ const sampleFullAnalysis = {
   deeperExplanation: 'Missing resume evidence remains unknown rather than proof you lack it.', tailoringAction: 'Tailor my resume for this job' as const,
 };
 
-test('saved Match keeps job wording and resume evidence connected while the owner manually controls pursuit and application status', async ({ page }) => {
+test('saved Match keeps job wording and resume evidence connected while the owner manually controls the application stage', async ({ page }) => {
   test.slow();
   await seed(page);
   const savedJobId = '99999999-9999-4999-8999-999999999999';
@@ -129,11 +129,13 @@ test('saved Match keeps job wording and resume evidence connected while the owne
   const updates: unknown[] = [];
   await page.route('**/api/jobs-account', route => {
     const body = route.request().postDataJSON();
-    if (body.action === 'update_workflow') {
+    if (body.action === 'application_update') {
       updates.push(body);
-      return route.fulfill({ json: { workflow: { savedJobId, ...body.workflow, revision: 1, updatedAt: '2026-09-30T12:00:00.000Z', history: [{ decision: body.workflow.decision, applicationStatus: body.workflow.applicationStatus, changedAt: '2026-09-30T12:00:00.000Z' }] } } });
+      return route.fulfill({ json: { application: { savedJobId, stage: body.patch.stage, closedReason: null, priorStage: 'saved', appliedOn: body.patch.appliedOn ?? null, nextAction: '', nextActionDue: null,
+        notes: '', contactName: '', contactDetails: '', origin: 'user', revision: 1, createdAt: '2026-09-29T00:00:00.000Z', updatedAt: '2026-09-30T12:00:00.000Z',
+        events: [{ kind: 'stage_changed', fromStage: 'saved', toStage: body.patch.stage, closedReason: null, origin: 'user', occurredAt: '2026-09-30T12:00:00.000Z' }], documents: [] } } });
     }
-    return route.fulfill({ json: { isPro: false, saveLimit: 10, savedJobs: [saved], jobResumeVersions: [], jobWorkflows: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } } });
+    return route.fulfill({ json: { isPro: false, saveLimit: 100, savedJobs: [saved], jobResumeVersions: [], applications: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } } });
   });
   await page.goto(`/workspace/jobs/${savedJobId}/match`, { waitUntil: 'domcontentloaded' });
   await expect(page.getByText('Job wording', { exact: true })).toBeVisible();
@@ -141,18 +143,16 @@ test('saved Match keeps job wording and resume evidence connected while the owne
   await expect(page.getByText('Resume evidence', { exact: true })).toBeVisible();
   await expect(page.getByText(/unknown, not proof/i)).toBeVisible();
 
-  await page.getByText('My decision and application').click();
-  await page.getByLabel('My decision').selectOption('pursue');
-  await page.getByLabel('Application status').selectOption('applied');
-  await page.getByLabel('Private notes (optional)').fill('Follow up after the stated deadline.');
-  await page.getByLabel('Add a follow-up date for this role').check();
-  await page.getByLabel('Follow-up date and time').fill('2026-10-02T15:00');
-  await page.getByRole('button', { name: 'Save my update' }).click();
-  await expect(page.getByText('Your decision and application update were saved.')).toBeVisible();
+  // Applied is recorded only through an explicit choice that collects the submission date.
+  await page.getByLabel('Application stage').selectOption('applied');
+  expect(updates).toHaveLength(0);
+  await page.getByLabel('Date you submitted').fill('2026-09-30');
+  await page.getByRole('button', { name: 'Record as applied' }).click();
+  await expect(page.getByText('Application stage saved.')).toBeVisible();
   expect(updates).toHaveLength(1);
-  expect(JSON.stringify(updates[0])).not.toContain('submittedAutomatically');
+  expect((updates[0] as { patch: unknown }).patch).toEqual({ stage: 'applied', appliedOn: '2026-09-30' });
   expect(JSON.stringify(updates[0])).not.toContain('support certification');
-  await expect(page.getByText(/does not submit an application or infer a status/i)).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Open application record' })).toHaveAttribute('href', `/workspace/applications/${savedJobId}`);
 });
 
 test('signed-out users see a sign-in prompt instead of the search form', async ({ page }) => {
@@ -175,8 +175,8 @@ test('saved Match Analysis has a reload-safe URL, predictable history, and a con
   expect(page.url()).not.toContain('Customer');
   await page.reload();
   await expect(page.getByRole('heading', { name: 'What your resume shows' })).toBeVisible();
-  await page.getByRole('button', { name: 'Back to saved jobs' }).click();
-  await expect(page).toHaveURL('/workspace/jobs/saved');
+  await page.getByRole('button', { name: 'Back to My applications' }).click();
+  await expect(page).toHaveURL('/workspace/applications');
   await page.goBack();
   await expect(page).toHaveURL(`/workspace/jobs/${savedJobId}/match`);
   await expect(page.getByRole('heading', { name: 'What your resume shows' })).toBeVisible();
@@ -349,7 +349,6 @@ test('renders a job card with match label, salary, workplace, a safe View job li
   await page.getByRole('button', { name: 'Search jobs' }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Customer Experience Specialist', exact: true })).toBeVisible();
   await expect(page.getByText('Acme Support Co')).toBeVisible();
-  await expect(page.getByText('Review evidence')).toBeVisible();
   await expect(page.getByText('GBP 30,000–35,000 / year')).toBeVisible();
   const link = page.getByRole('link', { name: /View job/ });
   await expect(link).toHaveAttribute('href', 'https://jobs.acme.example/1');
@@ -382,7 +381,7 @@ test('Pro match analysis exposes classified evidence depth and a truthful saved-
   await expect(full.getByText('Required', { exact: true })).toBeVisible();
   await expect(full.getByText('Preferred', { exact: true })).toBeVisible();
   await expect(full.getByText('Nice to have', { exact: true })).toBeVisible();
-  await expect(full.getByText('Not demonstrated', { exact: true })).toBeVisible();
+  await expect(full.getByText('No evidence found in this resume', { exact: true })).toBeVisible();
   await expect(page.getByText(/Save this job to start a separate job-specific resume/i)).toBeVisible();
   await expect(page.getByText(/master resume stays unchanged/i)).toBeVisible();
   const axe = await new AxeBuilder({ page }).include('.match-analysis').analyze();
@@ -421,7 +420,7 @@ test('Free saved analysis reload renders only the bounded preview and never Pro 
   await expect(savedCard.getByText('Required', { exact: true })).toHaveCount(0);
   await expect(savedCard.getByRole('button', { name: 'View the full evidence analysis with Pro' })).toBeVisible();
   // A Free account is told up front that tailoring is a Pro step, rather than being redirected unexpectedly.
-  await expect(savedCard.getByRole('button', { name: 'Tailor my resume with Pro' })).toBeVisible();
+  await expect(savedCard.getByRole('button', { name: 'Prepare my application with Pro' })).toBeVisible();
   await expect(page.getByText('Free accounts get three manual refreshes in a rolling 24-hour window, with up to 10 relevant results each.', { exact: false })).toBeVisible();
 });
 
@@ -480,7 +479,7 @@ test('saves a normalized job account-side and deduplicates the matching result a
   await page.getByRole('button', { name: 'Save job' }).click();
   await expect.poll(() => savedPayload?.providerJobId).toBe('1');
   await expect(page.getByRole('heading', { level: 3, name: 'Customer Experience Specialist' })).toBeVisible();
-  const resultCard = page.getByRole('list', { name: 'Job results' }).locator('.job-card');
+  const resultCard = page.getByRole('region', { name: 'Job results' }).locator('.deck-card');
   await expect(resultCard.getByRole('button', { name: 'Saved', exact: true })).toBeDisabled();
   await expect(page.getByText('1 of 10')).toBeVisible();
 });
@@ -719,7 +718,7 @@ test('a second account signing in on the same browser never inherits the first a
   // user id and reload so the app picks up the new session.
   await seed(page, otherOwner);
   await page.reload();
-  await expect(page).toHaveURL('/workspace/jobs');
+  await expect(page).toHaveURL('/workspace/discover');
   await expect(page.getByRole('heading', { level: 1, name: 'Find jobs', exact: true })).toBeVisible();
   const toggle = page.getByRole('checkbox', { name: 'Auto Refresh (fresh listings about every 24 hours)' });
   await expect(toggle).not.toBeChecked();
@@ -744,7 +743,7 @@ test('a second account never inherits the first account saved match analysis', a
 
   await seed(page, otherOwner);
   await page.reload();
-  await expect(page).toHaveURL('/workspace/jobs');
+  await expect(page).toHaveURL('/workspace/discover');
   await expect(page.getByRole('heading', { level: 1, name: 'Find jobs', exact: true })).toBeVisible();
   await expect(page.locator('.saved-job-card')).toHaveCount(0);
   await expect(page.getByText(/keep it and its match evidence here/i)).toBeVisible();
@@ -821,13 +820,6 @@ for (const fromCapture of [false, true]) test(`${fromCapture ? 'extension captur
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ version: version() }) });
     }
     if (body.action === 'get_job_resume') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ version: version() }) });
-    if (body.action === 'update_workflow') {
-      const workflow = body.workflow as Record<string, unknown>;
-      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ workflow: {
-        savedJobId, ...workflow, revision: 1, updatedAt: new Date().toISOString(),
-        history: [{ decision: workflow.decision, applicationStatus: workflow.applicationStatus, changedAt: new Date().toISOString() }],
-      } }) });
-    }
     return route.fulfill({ status: 200, contentType: 'application/json', body: '{"saved":true}' });
   });
   await page.route('**/api/tailor', route => {
@@ -837,8 +829,10 @@ for (const fromCapture of [false, true]) test(`${fromCapture ? 'extension captur
     expect(body.jobDescription).toBeUndefined();
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ suggestions: [{
       field: 'summary', sectionId: null, entryId: null, originalText: persisted?.summary ?? master.summary,
-      suggestedText: 'AI-suggested wording grounded in the current job-specific resume.',
+      suggestedText: 'A carefully tailored customer-support profile focused on helping customers.',
       why: 'This makes the existing customer-support evidence more direct for the saved role.',
+      targetRequirements: [{ id: 'req-1', text: 'Help customers with care.', category: 'required', status: 'demonstrated' }],
+      supportingFacts: [{ location: 'Summary', quote: 'customer-support profile' }], grounded: true,
     }] }) });
   });
   await page.route('**/api/export-status', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isPro: true, remaining: 3, resetsAt: '2026-10-24T00:00:00Z' }) }));
@@ -861,13 +855,9 @@ for (const fromCapture of [false, true]) test(`${fromCapture ? 'extension captur
   const headerJobs = page.locator('.site-header').getByRole('button', { name: 'Find jobs', exact: true });
   if (!fromCapture) { await expect(headerJobs).toBeVisible(); await headerJobs.click(); }
   await expect(page.getByRole('heading', { level: 1, name: 'Find jobs', exact: true })).toBeVisible();
-  await page.getByText('My decision and application', { exact: true }).click();
-  const workflowPanel = page.locator('.job-workflow').first();
-  await workflowPanel.locator('select').first().selectOption('pursue');
-  await workflowPanel.getByRole('button', { name: 'Save my update', exact: true }).click();
-  await expect(page.getByText('Your decision and application update were saved.', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Tailor my resume for this job' })).toBeVisible();
-  await page.getByRole('button', { name: 'Tailor my resume for this job' }).click();
+  // No separate pursue step: Prepare my application starts the separate version directly.
+  await expect(page.getByRole('button', { name: 'Prepare my application' })).toBeVisible();
+  await page.getByRole('button', { name: 'Prepare my application' }).click();
   await expect(page.getByText(/Job-specific resume — Tailored for Customer Experience Specialist · Acme Support Co/)).toBeVisible();
   await expect(page.getByText(/master resume is preserved separately/i)).toBeVisible();
   await page.getByRole('button', { name: 'Profile & skills' }).click();
@@ -880,6 +870,10 @@ for (const fromCapture of [false, true]) test(`${fromCapture ? 'extension captur
   await page.getByRole('button', { name: 'Get tailoring suggestions' }).click();
   await expect(page.locator('.tailoring-why')).toContainText('Why this helps:');
   await expect(page.locator('.tailoring-why')).toContainText('customer-support evidence');
+  const trace = page.locator('.suggestion-trace');
+  await expect(trace).toContainText('Targets job requirement');
+  await expect(trace).toContainText('Help customers with care. (Required · Evidence found)');
+  await expect(trace).toContainText('“customer-support profile” — Summary');
   if (fromCapture) {
     const beforeRejection = persisted?.summary;
     await page.getByRole('button', { name: 'Reject', exact: true }).click();
@@ -888,13 +882,18 @@ for (const fromCapture of [false, true]) test(`${fromCapture ? 'extension captur
     await page.getByRole('button', { name: 'Get tailoring suggestions' }).click();
   }
   await page.getByRole('button', { name: 'Accept', exact: true }).click();
-  await expect.poll(() => persisted?.summary).toBe('AI-suggested wording grounded in the current job-specific resume.');
+  await expect.poll(() => persisted?.summary).toBe('A carefully tailored customer-support profile focused on helping customers.');
+  // One export path: the panel sends the person back to the page's own confirmed download controls.
+  await expect(page.locator('.tailoring-panel').getByRole('button', { name: 'Download PDF', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Review and download this version' }).click();
+  await page.getByRole('button', { name: 'Confirm' }).click();
+  await expect(page.getByRole('button', { name: 'Download PDF', exact: true })).toHaveCount(1);
   await page.getByRole('checkbox', { name: /I consent to uploading my resume content/ }).first().check();
   await page.getByRole('button', { name: 'Download PDF', exact: true }).first().click();
-  await expect.poll(() => exportResume?.summary).toBe('AI-suggested wording grounded in the current job-specific resume.');
+  await expect.poll(() => exportResume?.summary).toBe('A carefully tailored customer-support profile focused on helping customers.');
   if (fromCapture) {
     await page.getByRole('button', { name: 'Download Word (.docx)', exact: true }).first().click();
-    await expect.poll(() => wordResume?.summary).toBe('AI-suggested wording grounded in the current job-specific resume.');
+    await expect.poll(() => wordResume?.summary).toBe('A carefully tailored customer-support profile focused on helping customers.');
     expect(searches).toBe(0);
   }
   const axe = await new AxeBuilder({ page }).include('.paid-tools').analyze();
@@ -1053,6 +1052,98 @@ for (const status of [200, 503]) test(`${transition} during captured save aborts
 });
 }
 
+test('unsupported AI wording cannot be accepted in one step; a fact or the person\'s own wording is required and labelled', async ({page}) => {
+  await seed(page);
+  const savedJobId='99999999-9999-9999-9999-999999999999';
+  const versionId='88888888-8888-8888-8888-888888888888';
+  const master=example();
+  let working=structuredClone(master);
+  let provenance:{origin:string;userFact:string|null;aiText:string;keptText:string;requirements:{id:string}[]}[]=[];
+  let revision=1;
+  const snapshot={...sampleResponse.jobs[0].savedSnapshot, descriptionText:'Lead a support team. Resolve customer complaints by email and live chat.'};
+  const version=()=>({id:versionId,savedJobId,jobSnapshot:snapshot,sourceMasterResumeId:null,sourceMasterRevision:null,sourceMasterFingerprint:'0'.repeat(64),resume:working,provenance,revision,createdAt:'2026-09-24T00:00:00Z',updatedAt:'2026-09-24T00:00:00Z'});
+  await page.route('**/api/jobs-account',route=>{
+    const body=route.request().postDataJSON();
+    if(body.action==='load')return route.fulfill({json:{isPro:true,saveLimit:10000,savedJobs:[{id:savedJobId,snapshot,providerAvailable:false,availabilityCheckedAt:'2026-09-24T00:00:00Z',unavailableAt:'2026-09-24T00:00:00Z',savedAt:'2026-09-24T00:00:00Z',analysisCurrent:true,matchAnalysis:{...sampleMatchAnalysis,label:'good',fullAnalysis:sampleFullAnalysis}}],jobResumeVersions:[{...version(),resume:undefined,savedJobExists:true}],preferences:{criteria:null,autoRefresh:false,lastProviderRefreshAt:null}}});
+    if(body.action==='get_job_resume')return route.fulfill({json:{version:version()}});
+    if(body.action==='update_job_resume'){working=body.resume;provenance=body.provenance;revision++;return route.fulfill({json:{version:version()}});}
+    return route.fulfill({json:{saved:true}});
+  });
+  await page.route('**/api/export-status',route=>route.fulfill({json:{isPro:true,remaining:7,resetsAt:'2026-10-24T00:00:00Z'}}));
+  const role1=master.sections[0].entries[0], role2=master.sections[0].entries[1];
+  const requirement={id:'req-1',text:'Resolve customer complaints by email and live chat.',category:'required',status:'partially_demonstrated'};
+  // Both are traceable (a real id and a real quote) but claim more than the source says.
+  // The first request meets an exhausted monthly AI budget; the retry succeeds.
+  let tailorCalls=0;
+  const paused='AI suggestions are paused for all accounts until the monthly AI budget resets on November 1 (UTC). This request did not use your trial or hourly AI allowance. You can still edit this resume yourself.';
+  await page.route('**/api/tailor',route=>++tailorCalls===1?route.fulfill({status:503,json:{error:paused}}):route.fulfill({json:{suggestions:[
+    {field:'description',sectionId:'experience',entryId:role1.id,originalText:role1.description,suggestedText:role1.description.replace('Support customers across email, phone, and live chat','Resolve customer complaints across email, phone, and live chat'),
+     why:'Mirrors the complaint-handling requirement.',targetRequirements:[requirement],supportingFacts:[{location:'Experience · Customer Experience Specialist, Example Company',quote:'Support customers across email, phone, and live chat'}],grounded:false},
+    {field:'description',sectionId:'experience',entryId:role2.id,originalText:role2.description,suggestedText:role2.description.replace('coordinated with colleagues','managed colleagues'),
+     why:'Shows team leadership.',targetRequirements:[requirement],supportingFacts:[{location:'Experience · Customer Service Associate, Sample Retail',quote:'resolve order questions'}],grounded:false},
+  ]}}));
+  await openJobs(page);
+  await page.getByRole('button',{name:'Open tailored resume',exact:true}).click();
+  await page.getByRole('button',{name:'Keep this version'}).click();
+  await page.getByRole('button',{name:'Preview resume',exact:true}).click();
+  await page.getByRole('checkbox',{name:/I consent to sending/}).check();
+  await page.getByRole('button',{name:'Get tailoring suggestions'}).click();
+  await expect(page.locator('.tailoring-panel').getByRole('status').filter({hasText:'paused for all accounts'})).toHaveText(paused);
+  await expect(page.locator('.suggestion-card')).toHaveCount(0);
+  await page.locator('.tailoring-panel').screenshot({path:'test-results/journeys/t2-ai-budget-paused.png'});
+  await page.getByRole('button',{name:'Get tailoring suggestions'}).click();
+  const first=page.getByRole('article',{name:'Suggestion 1',exact:true});
+  const second=page.getByRole('article',{name:'Suggestion 2',exact:true});
+  await expect(first.getByRole('note')).toContainText('Needs your support.');
+  await expect(page.getByText('paused for all accounts')).toHaveCount(0);
+  await expect(first.getByRole('note')).toContainText('It uses “complaints” from the job, which your resume does not say.');
+  await expect(first.getByRole('note')).toContainText('They cannot confirm that any wording is true.');
+  await expect(second.getByRole('note')).toContainText('It adds “managed”');
+  for (const card of [first, second]) await expect(card.getByRole('button',{name:/^Accept/})).toHaveCount(0);
+  expect((await new AxeBuilder({page}).include('.tailoring-panel').analyze()).violations).toEqual([]);
+
+  // A fact the person writes resolves only what it covers.
+  await first.getByText('Add a fact that supports this').click();
+  await first.getByRole('textbox',{name:'What in your experience supports the proposed wording?'}).fill('I resolve customer complaints about late orders every week.');
+  await first.getByRole('button',{name:'Check again'}).click();
+  await expect(first.getByRole('note')).toHaveCount(0);
+  await expect(first.locator('.suggestion-trace')).toContainText('Fact you added');
+  await first.getByRole('button',{name:'Accept with your fact'}).click();
+  await expect(first.locator('header')).toContainText('Accepted · supported by a fact you added');
+  await expect.poll(()=>working.sections[0].entries[0].description).toContain('Resolve customer complaints across email');
+
+  // A fact that does not cover "managed" leaves it blocked; the person's own wording is labelled as theirs.
+  await second.getByText('Add a fact that supports this').click();
+  await second.getByRole('textbox',{name:'What in your experience supports the proposed wording?'}).fill('I worked closely with colleagues on busy days.');
+  await second.getByRole('button',{name:'Check again'}).click();
+  await expect(second.getByRole('status')).toContainText('Your fact does not cover everything flagged above.');
+  await expect(second.getByRole('button',{name:/^Accept/})).toHaveCount(0);
+  await second.getByText('Write your own wording instead',{exact:true}).click();
+  const own=second.getByRole('textbox',{name:'Your wording'});
+  await expect(second.getByRole('button',{name:'Use my wording'})).toHaveCount(0);
+  await own.fill(role2.description.replace('coordinated with colleagues','worked with colleagues'));
+  await second.getByRole('button',{name:'Use my wording'}).click();
+  await expect(second.locator('header')).toContainText('Accepted · your wording');
+  await expect.poll(()=>working.sections[0].entries[1].description).toContain('worked with colleagues during busy periods');
+  expect(working.sections[0].entries[1].description).not.toContain('managed');
+  // Each accepted change is saved with how it was made: the AI wording with the person's fact,
+  // and the person's own wording alongside the AI wording it replaced.
+  await expect.poll(()=>provenance.map(item=>item.origin)).toEqual(['ai_with_user_fact','user']);
+  expect(provenance[0].userFact).toBe('I resolve customer complaints about late orders every week.');
+  expect(provenance[1]).toMatchObject({userFact:null,requirements:[{id:'req-1'}]});
+  expect(provenance[1].aiText).toContain('managed colleagues');
+  expect(provenance[1].keptText).toContain('worked with colleagues');
+  await page.getByText('Tailoring record for this version (2)').click();
+  await expect(page.locator('.provenance-list')).toContainText('AI wording, supported by a fact you added · In this version');
+  await expect(page.locator('.provenance-list')).toContainText('Your wording · In this version');
+  await page.locator('.tailoring-panel').screenshot({path:'test-results/journeys/t1-unsupported-review.png'});
+  // Undo still restores the exact original wording and removes its record; the master never changes.
+  await second.getByRole('button',{name:'Undo'}).click();
+  await expect.poll(()=>working.sections[0].entries[1].description).toBe(role2.description);
+  await expect.poll(()=>provenance.map(item=>item.origin)).toEqual(['ai_with_user_fact']);
+  expect(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('resumestride.resume.v1')!).sections[0].entries[1].description)).toBe(role2.description);
+});
+
 for (const width of [320, 390, 768, 1440, 1920]) test(`premium opportunity and tailoring review states at ${width}px`, async ({page}) => {
   await page.setViewportSize({width,height:1000});
   await seed(page);
@@ -1073,12 +1164,13 @@ for (const width of [320, 390, 768, 1440, 1920]) test(`premium opportunity and t
   await page.route('**/api/jobs-search',route=>route.fulfill({json:{...sampleResponse,isPro:true,jobs:['strong','good','stretch'].map((matchLabel,i)=>({...sampleResponse.jobs[0],id:`fixture:${i}`,title:`${sampleResponse.jobs[0].title} ${i+1}`,matchLabel,matchAnalysis:{...sampleMatchAnalysis,label:matchLabel,fullAnalysis:sampleFullAnalysis}}))}}));
   await page.route('**/api/export-status',route=>route.fulfill({json:{isPro:true,remaining:7,resetsAt:'2026-10-24T00:00:00Z'}}));
   await page.route('**/api/tailor',route=>route.fulfill({json:{suggestions:[
-    {field:'summary',sectionId:null,entryId:null,originalText:master.summary,suggestedText:'Customer experience specialist who supports customers and documents solutions.',why:'Makes the demonstrated support experience easier to find.'},
+    {field:'summary',sectionId:null,entryId:null,originalText:master.summary,suggestedText:'Customer experience specialist who supports diverse customers and solves problems with a thoughtful approach.',why:'Makes the demonstrated support experience easier to find.',
+     targetRequirements:[{id:'req-1',text:'Support customers and document solutions.',category:'required',status:'demonstrated'}],supportingFacts:[{location:'Summary',quote:master.summary.split(' ').slice(0,4).join(' ')}],grounded:true},
     {field:'headline',sectionId:null,entryId:null,originalText:master.headline,suggestedText:'Customer support specialist',why:'Uses familiar wording for the existing role.'},
   ]}}));
   await openJobs(page);
   await page.getByRole('button',{name:'Search jobs',exact:true}).click();
-  await expect(page.locator('.job-match-badge')).toHaveCount(3);
+  await expect(page.locator('.discover-deck .deck-card')).toHaveCount(3);
   await page.locator('.saved-job-card').getByText('Full evidence analysis',{exact:true}).click();
   expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -1097,6 +1189,10 @@ for (const width of [320, 390, 768, 1440, 1920]) test(`premium opportunity and t
   await page.getByRole('checkbox',{name:/I consent to sending/}).check();
   await page.getByRole('button',{name:'Get tailoring suggestions'}).click();
   await expect(page.getByRole('article',{name:'Suggestion 1',exact:true})).toBeVisible();
+  await expect(page.getByRole('article',{name:'Suggestion 1',exact:true}).locator('.suggestion-trace')).toContainText('Support customers and document solutions.');
+  // No verified requirement/fact link: it needs the person's support and has no one-click Accept.
+  await expect(page.getByRole('article',{name:'Suggestion 2',exact:true}).getByRole('note')).toContainText('Needs your support.');
+  await expect(page.getByRole('article',{name:'Suggestion 2',exact:true}).getByRole('button',{name:/^Accept/})).toHaveCount(0);
   const documentRatios=await page.locator('.review-document .resume-paper').first().evaluate(paper=>{const heading=paper.querySelector('h2')!;return {heading:parseFloat(getComputedStyle(heading).fontSize)/parseFloat(getComputedStyle(paper).fontSize),weight:getComputedStyle(paper).fontWeight};});
   expect(documentRatios.heading).toBeCloseTo(.9,1);expect(documentRatios.weight).toBe('400');
   await page.locator('.tailoring-panel').screenshot({path:`/tmp/rs-premium-tailoring-${width}.png`});
@@ -1105,7 +1201,7 @@ for (const width of [320, 390, 768, 1440, 1920]) test(`premium opportunity and t
   await expect(page.getByRole('article',{name:'Suggestion 1',exact:true})).toBeFocused();
   await page.getByRole('article',{name:'Suggestion 2',exact:true}).getByRole('button',{name:'Reject',exact:true}).click();
   await expect(page.getByRole('article',{name:'Suggestion 2',exact:true})).toBeFocused();
-  await expect.poll(()=>working.summary).toBe('Customer experience specialist who supports customers and documents solutions.');
+  await expect.poll(()=>working.summary).toBe('Customer experience specialist who supports diverse customers and solves problems with a thoughtful approach.');
   expect(working.headline).toBe(master.headline);
   expect(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('resumestride.resume.v1')!).summary)).toBe(master.summary);
   await expect(page.getByText('2 of 2 suggestions reviewed · 1 accepted',{exact:true})).toBeVisible();

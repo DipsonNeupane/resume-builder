@@ -77,7 +77,7 @@ test('capture quota failures and kill switch preserve existing policy without cr
   const deps = { ...accountDependencies, authenticate: async () => owner,
     serviceDatabase: (() => ({ rpc: async (name: string) => {
       calls++
-      return name === 'jobs_match_context' ? { data: { clarifications: {} }, error: null } : { data: null, error: { message: 'Free saved-job limit reached' } }
+      return name === 'jobs_match_context' ? { data: { clarifications: {} }, error: null } : { data: null, error: { message: 'Free application limit reached' } }
     } })) as unknown as typeof accountDependencies.serviceDatabase }
   assert.equal((await jobsAccount(request({ action: 'capture_save', capture, evidence }), { ...env, EXTENSION_CAPTURE_ENABLED: 'false' }, deps)).status, 503)
   assert.equal(calls, 0)

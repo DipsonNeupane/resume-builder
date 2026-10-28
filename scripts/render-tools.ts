@@ -80,14 +80,18 @@ function output(file: string, value: string): void {
   } else writeFileSync(file, value);
 }
 
-function compile(source: string, target: string): void {
-  const code = ts.transpileModule(readFileSync(source, 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022, strict: true }, fileName: source }).outputText;
+function compile(source: string, target: string, imports: Record<string, string> = {}): void {
+  let code = ts.transpileModule(readFileSync(source, 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022, strict: true }, fileName: source }).outputText;
+  // Browser modules are served unbundled, so shared source imports are mapped to the
+  // sibling module generated from the same source file.
+  for (const [from, to] of Object.entries(imports)) code = code.replaceAll(`from '${from}'`, `from '${to}'`);
   output(target, code);
 }
 
 output('public/tools/index.html', hub());
 for (const tool of publicTools) output(`public${tool.path}index.html`, toolPage(tool));
-compile('src/tools/analysis.ts', 'public/tools/analysis.js');
+compile('src/lib/postingRequirements.ts', 'public/tools/posting-requirements.js');
+compile('src/tools/analysis.ts', 'public/tools/analysis.js', { '../lib/postingRequirements': './posting-requirements.js' });
 compile('src/tools/public-tools.ts', 'public/tools/public-tools.js');
 compile('src/tools/tool-analytics.ts', 'public/tools/tool-analytics.js');
 console.log(check ? 'Tool pages and browser modules match their sources.' : `Generated tool hub and ${publicTools.length} tools.`);

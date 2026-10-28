@@ -439,3 +439,26 @@ test('Free responses contain only bounded analysis previews while Pro receives f
   assert.equal(proBody.jobs[0].matchAnalysis.fullAnalysis.tailoringAction, 'Tailor my resume for this job')
   assert.doesNotMatch(JSON.stringify(proBody.jobs[0].matchAnalysis), /\d+%|hiring probability/i)
 })
+
+test('experience level and priorities reorder results within a label; they never hide one and unstated data is neutral', async () => {
+  const candidates = [
+    job({ id: 'techmap:51', title: 'Senior Software Engineer', company: 'A', portal: 'pa', workplace: { value: 'onsite', source: 'provider', confidence: 'high' } }),
+    job({ id: 'techmap:52', title: 'Software Engineer', company: 'B', portal: 'pb' }),
+    job({ id: 'techmap:53', title: 'Junior Software Engineer', company: 'C', portal: 'pc', workplace: { value: 'remote', source: 'provider', confidence: 'high' } }),
+  ]
+  const order = async (extra: Record<string, unknown>) => {
+    const { deps } = fixture({ isPro: true, page1: candidates })
+    const response = await searchJobs(request({ criteria: { title: uniqueTitle(), ...extra }, evidence: { headline: 'Software Engineer', skills: 'TypeScript, PostgreSQL', roles: [] } }), env, deps)
+    assert.equal(response.status, 200)
+    return (await response.json()).jobs.map((card: { id: string }) => card.id)
+  }
+  const entry = await order({ experienceLevel: 'entry' })
+  const senior = await order({ experienceLevel: 'senior' })
+  assert.equal(entry.length, 3); assert.equal(senior.length, 3)
+  assert.ok(entry.indexOf('techmap:53') < entry.indexOf('techmap:51'), `entry level ranks the junior role above the senior one: ${entry}`)
+  assert.ok(senior.indexOf('techmap:51') < senior.indexOf('techmap:53'), `senior level ranks the senior role above the junior one: ${senior}`)
+  // 'unsure' and no preference produce the same order.
+  assert.deepEqual(await order({ experienceLevel: 'unsure' }), await order({}))
+  const flexible = await order({ experienceLevel: 'senior', priorities: ['flexibility'] })
+  assert.equal(flexible.length, 3)
+})

@@ -5,6 +5,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/start/:path*", "destination": "/index.html" },
+    { "source": "/workspace", "destination": "/index.html" },
     { "source": "/workspace/:path*", "destination": "/index.html" }
   ],
   "headers": [

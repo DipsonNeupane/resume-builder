@@ -1,3 +1,87 @@
+## October 28 (fourth pass) — Provenance, AI safeguards, checkpoint commit, staging review (local, not pushed or deployed)
+
+Branch `feat/apwico-launch-tracker`, one local checkpoint commit over `1a883b6` (not pushed). Package:
+`docs/launch-review/README.md` §0; staging plan rewritten in `docs/launch-review/STAGING.md`.
+
+- Migration `20261028100000_tailoring_provenance_ai_safeguards.sql`: `job_resume_versions.provenance` (copied into
+  kept documents only when the snapshot equals the version; cleared by reset); `product_settings.ai_monthly_budget_micro_usd`
+  (default/max 25000000); hourly AI allowance counts only running/succeeded requests (+60-attempt guard); cleanly
+  failed requests retry at once, timed-out/uncertain wait 10 min (`cooldown`); trial runs reserved before the provider
+  call and released on failure (closed a real over-count race).
+- `src/lib/tailoringProvenance.ts`, `ProvenanceList.tsx`; panel records provenance on accept/undo; `main.tsx` saves it
+  with each version update; kept-version view shows it read against the kept snapshot.
+- Tests: DB 801 ok; server 522/522; browser 115/42/98; `vercel build --standalone` + packaged-function check PASS.
+  `npm run test:db:concurrency` NOT RUN (no PostgreSQL binaries).
+- Staging findings: production `ggwwzwqykkncgupdimxp` has no migration ledger and (as of 2026-09-25) 24 pending
+  migrations; CSP hard-codes the production Supabase origin; all 29 Vercel variables are Production-scoped. Staging
+  targets identified, none created; awaiting owner confirmation. `docs/launch-review.zip` (owner's Finder archive)
+  left untouched and uncommitted.
+
+## October 28 (third pass) — Support-checked tailoring, PDF and auth journeys, review package (local branch, not deployed)
+
+Branch `feat/apwico-launch-tracker`, worktree `.claude/worktrees/apwico-launch`, base `1a883b6`. (Committed in the fourth pass.)
+Owner review package: `docs/launch-review/README.md` (checklist, limits, full test logs, screenshots, samples);
+staging commands and expected results: `docs/launch-review/STAGING.md` (not executed).
+
+- `src/lib/tailoringSupport.ts` (shared by server and panel) flags added numbers, added responsibility/seniority/
+  outcome/credential wording, dropped negation, job wording absent from the resume, negated or irrelevant quotes.
+  Unsupported suggestions have no Accept: the user adds a fact (re-checked) or writes their own wording; accepted
+  items are labelled by authorship. Heuristic — does not prove accuracy.
+- Fixed: timeline "Added as Preparing" (now "Job saved" / "Saved → Preparing"), "Save this job" on saved jobs,
+  duplicate download controls (one export path, re-confirm after accepting changes).
+- Journey D (PDF through real handler + renderer, parsed and rendered pages inspected, kept version re-rendered
+  identically) and journey E (stateful local Auth: signed out, sign-in return, logout revokes token, second
+  account isolated, draft recovered). Hosted Auth still unverified.
+- Renewal reminder: mechanism exists (cron → Resend); email now states the renewal date and never sends after
+  renewal; new `renewal_reminder.test.sql`. Delivery unverified → promise removed from `public/terms.html`.
+- `launch-facts.test.ts` now also checks search limits and the trial count, and blocks reminder promises.
+- Open: legal approval, staging rehearsal, live provider checks, AI monthly cap (US$25) decision.
+
+## October 27 (second pass) — Launch completion: traceable tailoring, preference ranking, connected journeys (local branch, not deployed)
+
+Branch `feat/apwico-launch-tracker`, worktree `.claude/worktrees/apwico-launch`, base `1a883b6`. Uncommitted.
+Full status, evidence and plans: `docs/apwico-implementation-progress.md`; terms review:
+`docs/policies/LAUNCH_TERMS_REVIEW.md`.
+
+- Tailoring suggestions now carry server-verified targeted requirement ids and quotes from the rewritten field;
+  anything unverifiable is shown as "Not grounded" ("Accept anyway").
+- Experience level and flexibility/stability/pay priorities rank results (shared `src/lib/jobPreferences.ts`);
+  progression/learning/impact removed from setup; dealbreakers stay the only hard filter.
+- Tracker migration is now expand/contract: legacy columns kept and synced by a trigger; drops moved to
+  `supabase/contract/` (not applied by `db push`). DB tests replay the contract and rerun everything.
+- New migration `20261027160000_saved_match_preview.sql` (trial application gets its full evidence).
+- Fixed: `{}` requirement-edits 503 and white screen; trial evidence hidden; manual applications unpreparable;
+  homepage "10 applications"; pricing page missing currency/refund block; home start screen with a draft;
+  nondeterministic list order. Added read-only "View exact version" for kept documents.
+- Terms rewritten for launch (100 applications, 1 trial, 7/7 downloads, Pro limits, renewal, cancellation,
+  data access; retired products removed) — **pending owner/legal approval**.
+- Results: server 505/505, DB PASS (incl. contract replay), SEO 30/30, build/perf/brand PASS,
+  default browser 115/115 (was 62/53), paid 95/95 (incl. 3 connected journeys), auth 42/42.
+- Not done: staging rehearsal, any live verification, assistive-technology testing.
+
+## October 27 — Launch tracker, Today, preferences, Discover cards (local branch, not deployed)
+
+Implemented the owner brief `docs/APWICO-CLAUDE-IMPLEMENTATION.txt` on branch
+`feat/apwico-launch-tracker` (worktree `.claude/worktrees/apwico-launch`, based on
+`feat/apwico-v2-pricing` 1a883b6). Full detail, decisions, owner-review items, rollout order and demo
+script: `docs/apwico-implementation-progress.md`.
+
+Shipped locally: one application record per saved job (manual/pasted-URL/imported/discovered) with a
+single stage + separate closed reason, event history, next actions, immutable kept documents and
+explicit "record as applied"; Today, My applications (filters, quick add, CSV import/export) and
+detail record; Today/Discover/My applications navigation with retained old links; two homepage
+paths and short skippable preferences; Discover list and one-at-a-time card views with undo; shared
+requirement extraction (paragraph postings fixed) and per-application requirement review; consistent
+7-per-rolling-7-day download facts (terms corrected) and accurate reset time; www→apex 301; truthful
+draft status; Free cap 100 applications and one server-enforced tailoring trial; occupation-specific
+template previews; privacy notice updated for the new stored data.
+
+Verification: client/server TypeScript PASS; server 493/493; DB replay + pgTAP PASS; SEO 30/30;
+build PASS; performance budgets and brand check PASS; paid browser 92/92; auth 42/42; default
+browser 62 pass / 53 fail, where all 53 fail identically on the untouched baseline (stale builder
+journey tests and others listed in the progress doc). Nothing committed, pushed, deployed or migrated
+remotely; no Stripe/Supabase/provider change. Four new migrations await owner-approved staging.
+
 ## October 10 — Task 63 no-cost restore assessment
 
 Rechecked the remaining recovery gate against the live plan and current official Supabase

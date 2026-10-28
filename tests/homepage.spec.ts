@@ -1,13 +1,14 @@
 import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-test('homepage presents one evidence-led choice, three truthful starts and bounded proof', async ({ page }) => {
+test('homepage presents the two primary paths, three truthful starts and bounded proof', async ({ page }) => {
  await page.setViewportSize({ width: 1366, height: 768 });
  await page.goto('/');
 
- await expect(page.getByRole('heading', { level: 1, name: 'Find the roles worth your effort.' })).toBeVisible();
- const primary = page.getByRole('link', { name: 'Compare my resume with a job', exact: true }).first();
+ await expect(page.getByRole('heading', { level: 1, name: 'Find jobs you like. Apply with confidence. Know what happens next.' })).toBeVisible();
+ const primary = page.getByRole('link', { name: 'Find my jobs', exact: true });
  await expect(primary).toBeInViewport();
+ await expect(page.getByRole('link', { name: 'Organize my applications', exact: true })).toBeInViewport();
  await expect(page.getByRole('button', { name: 'Build a resume free', exact: true }).first()).toBeVisible();
 
  const starts = page.getByRole('region', { name: 'Three clear ways in.' });
@@ -34,6 +35,10 @@ test('homepage and public navigation use stable destinations without misleading 
  await expect(nav.getByRole('link', { name: 'Resources' })).toHaveAttribute('href', '/resources/');
  await expect(nav.getByRole('link', { name: 'Pricing' })).toHaveAttribute('href', '/pricing/');
 
+ await page.getByRole('link', { name: 'Organize my applications', exact: true }).click();
+ await expect(page).toHaveURL(/\/workspace\/applications$/);
+ await expect(page.getByText('Sign in to track applications.')).toBeVisible();
+ await page.goBack();
  await page.getByRole('link', { name: 'Compare my resume with a job', exact: true }).first().click();
  await expect(page).toHaveURL(/\/tools\/resume-job-match\/$/);
  await expect(page.getByRole('heading', { level: 1, name: 'Resume vs. job evidence check' })).toBeVisible();

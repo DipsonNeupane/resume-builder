@@ -1,3 +1,5 @@
+import { extractPostingRequirements } from '../lib/postingRequirements';
+
 export const TOOL_LIMITS = {
   job: 20_000,
   resume: 30_000,
@@ -36,14 +38,6 @@ function clean(value: string): string {
   return value.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim();
 }
 
-function cleanPostingChunk(value: string): string {
-  return value
-    .replace(/^[\s\u2022*#_\-–—▪◦]+/, '')
-    .replace(/[\s*_#]+$/, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
 export function validateToolText(value: unknown, label: string, maximum: number, minimum: number): string {
   if (typeof value !== 'string') throw new Error(`${label} must be text.`);
   if (value.length > maximum) throw new Error(`${label} must be ${maximum.toLocaleString('en-US')} characters or fewer.`);
@@ -64,38 +58,6 @@ function hash(value: string): string {
   return (result >>> 0).toString(16).padStart(8, '0');
 }
 
-function headingCategory(line: string): RequirementCategory | null | undefined {
-  const value = cleanPostingChunk(line).replace(/[:;]+$/, '').trim();
-  if (value.length > 80) return undefined;
-  if (/^(?:required(?: qualifications?)?|requirements|minimum qualifications?|what (?:you|we) (?:need|bring|require)|must have|essentials?)$/i.test(value)) return 'required';
-  if (/^(?:preferred|preferred qualifications?|desired|nice to have|nice-to-have|bonus|additional qualifications?)$/i.test(value)) return 'preferred';
-  if (/^(?:essential functions(?:\s*\/\s*duties)?|essential duties(?: and responsibilities)?|duties(?: and responsibilities)?|responsibilities|key responsibilities|what you(?:'|’)ll do|the work|about the role|tools|technologies|location|work arrangement)$/i.test(value)) return 'other';
-  if (/^qualifications$/i.test(value)) return null;
-  return undefined;
-}
-
-function isExplicitRequired(text: string): boolean {
-  return /^(?:required|minimum):\s*\S/i.test(text)
-    || /\b(?:must|mandatory)\b/i.test(text)
-    || /\b(?:security clearance|work authori[sz]ation|eligible to work|license[ds]?|certification|certified|degree)\b/i.test(text)
-    || /\b\d+\+?\s+years?(?:\s+of)?\s+experience\b/i.test(text)
-    || /\b(?:experience|degree|license|certification|clearance|authorization)\b[^.]{0,80}\b(?:is\s+)?required\b/i.test(text);
-}
-
-function categoryFor(text: string, heading: RequirementCategory | null): RequirementCategory | null {
-  if (/\b(?:equal opportunity|we value (?:curiosity|diversity|inclusion)|welcome (?:all|many|diverse) backgrounds|company values?)\b/i.test(text)) return null;
-  if (/\b(?:not required|no [^.]{0,45} required|do(?:es)? not require|do(?:es)?n['’]t require)\b/i.test(text)) return null;
-  if (/\b(?:nice to have|nice-to-have|desirable|bonus points?|would be a plus|is a plus)\b/i.test(text)) return 'preferred';
-  if (/\b(?:preferred|ideally|preference|desired)\b/i.test(text)) return 'preferred';
-  if (isExplicitRequired(text)) return 'required';
-  // Work-arrangement details are useful, explicit posting signals even when the
-  // sentence is not phrased as a conventional qualification.
-  if (/\b(?:remote|hybrid|on[- ]?site|in[- ]?office|relocat|travel|located|location|time zone|timezone)\b/i.test(text)) return 'other';
-  if (heading) return heading;
-  if (/\b(?:you(?:'|’)ll|you will|responsib(?:le|ilities)|duties include|successful candidate|we are looking for)\b/i.test(text)) return 'other';
-  return null;
-}
-
 function kindFor(text: string): RequirementKind {
   if (/\b(?:remote|hybrid|on[- ]?site|in[- ]?office|relocat|travel|located|location|time zone|timezone|work authori[sz]ation|eligible to work)\b/i.test(text)) return 'location';
   if (/\b(?:degree|bachelor|master|phd|doctorate|diploma|certificate|certification|license[ds]?)\b/i.test(text)) return 'education';
@@ -105,40 +67,14 @@ function kindFor(text: string): RequirementKind {
   return 'qualification';
 }
 
-function sourceChunks(input: string): string[] {
-  const chunks: string[] = [];
-  for (const rawLine of input.replace(/\r/g, '').split('\n')) {
-    const line = cleanPostingChunk(rawLine);
-    if (!line) continue;
-    if (headingCategory(line) !== undefined) { chunks.push(line); continue; }
-    const pieces = line.split(/(?<=[.!?;])\s+(?=[A-Z0-9])/u);
-    for (const piece of pieces) {
-      const value = clean(piece);
-      if (value) chunks.push(value);
-    }
-  }
-  return chunks;
-}
-
+/** Browser-only wrapper over the shared extractor (src/lib/postingRequirements.ts). The
+ * public tools have no nice-to-have tier, so nice-to-have signals are shown as preferred. */
 export function extractJobRequirements(input: string): ExtractedRequirement[] {
   const description = validateToolText(input, 'Job description', TOOL_LIMITS.job, 40);
-  const results: ExtractedRequirement[] = [];
-  const seen = new Set<string>();
-  let heading: RequirementCategory | null = null;
-  for (const chunk of sourceChunks(description)) {
-    const nextHeading = headingCategory(chunk);
-    if (nextHeading !== undefined) { heading = nextHeading; continue; }
-    if (chunk.length < 8 || chunk.length > 700) continue;
-    const category = categoryFor(chunk, heading);
-    if (!category) continue;
-    const text = chunk.replace(/[.;:]$/, '').trim();
-    const key = text.toLocaleLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    results.push({ id: hash(key), category, kind: kindFor(text), text, source: chunk });
-    if (results.length >= TOOL_LIMITS.requirements) break;
-  }
-  return results;
+  return extractPostingRequirements(description, { limit: TOOL_LIMITS.requirements }).map(item => {
+    const category: RequirementCategory = item.category === 'nice_to_have' ? 'preferred' : item.category;
+    return { id: hash(item.text.toLocaleLowerCase()), category, kind: kindFor(item.text), text: item.text, source: item.source };
+  });
 }
 
 function tokens(input: string): string[] {

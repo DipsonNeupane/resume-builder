@@ -5,6 +5,8 @@
  * already-retrieved, normalized jobs (see filter.ts). */
 import { HttpError } from '../http/security.ts'
 import type { EmploymentType, SalaryPeriod, Workplace } from './types.ts'
+import { EXPERIENCE_LEVELS, PRIORITIES, type ExperienceLevel, type Priority } from '../../src/lib/jobPreferences.ts'
+export { EXPERIENCE_LEVELS, PRIORITIES, type ExperienceLevel, type Priority }
 
 const MAX_TITLE_CHARS = 200
 const MAX_LOCATION_CHARS = 200
@@ -29,7 +31,17 @@ export type SearchCriteria = {
   workplace?: Workplace
   employmentType?: EmploymentType
   salary?: SalaryPreference
+  /** Discovery preferences (never qualification evidence and never sent to the provider).
+   * `title` stays the role searched; `roles` are further target roles the owner can pick. */
+  roles?: string[]
+  experienceLevel?: ExperienceLevel
+  priorities?: Priority[]
+  dealbreakers?: Dealbreaker[]
 }
+
+/** Only dealbreakers that a posting can state explicitly; unknown data never triggers one. */
+export const DEALBREAKERS = ['onsite', 'contract', 'part_time', 'below_salary'] as const
+export type Dealbreaker = typeof DEALBREAKERS[number]
 
 function record(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object'
@@ -94,5 +106,21 @@ export function parseSearchCriteria(value: unknown): SearchCriteria {
       max: hasMax ? (max as number) : null,
     }
   }
+  if (value.roles !== undefined) {
+    if (!Array.isArray(value.roles) || value.roles.length > 4 || !value.roles.every(role => typeof role === 'string' && role.trim() && role.length <= MAX_TITLE_CHARS)) throw new HttpError(400, 'Target roles are invalid')
+    const roles = [...new Set((value.roles as string[]).map(role => role.trim().replace(/\s+/g, ' ')))].filter(role => role.toLowerCase() !== normalizedTitle.toLowerCase())
+    if (roles.length) criteria.roles = roles
+  }
+  if (value.experienceLevel !== undefined) {
+    if (typeof value.experienceLevel !== 'string' || !(EXPERIENCE_LEVELS as readonly string[]).includes(value.experienceLevel)) throw new HttpError(400, 'Experience level is invalid')
+    criteria.experienceLevel = value.experienceLevel as ExperienceLevel
+  }
+  for (const [key, allowed] of [['priorities', PRIORITIES], ['dealbreakers', DEALBREAKERS]] as const) {
+    const list = value[key]
+    if (list === undefined) continue
+    if (!Array.isArray(list) || list.length > allowed.length || !list.every(item => typeof item === 'string' && (allowed as readonly string[]).includes(item))) throw new HttpError(400, `${key === 'priorities' ? 'Priorities' : 'Dealbreakers'} are invalid`)
+    if (list.length) (criteria as Record<string, unknown>)[key] = [...new Set(list)]
+  }
+  if (criteria.dealbreakers?.includes('below_salary') && !criteria.salary?.min) throw new HttpError(400, 'Add a minimum salary to use it as a dealbreaker')
   return criteria
 }

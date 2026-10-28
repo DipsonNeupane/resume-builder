@@ -71,7 +71,7 @@ test('first occupation portfolio is diverse, sourced and evidence-led', () => {
     assert.ok(item.sources.length > 0);
     assert.ok(Object.hasOwn(publicPages, `/occupations/${item.slug}/`));
     const html = read(`public/occupations/${item.slug}/index.html`);
-    for (const phrase of ['Direct evidence', 'Worth reviewing', 'Not demonstrated', 'fictional', 'checked 2026-09-30']) assert.match(html, new RegExp(phrase, 'i'));
+    for (const phrase of ['Direct evidence', 'Related evidence — review', 'No evidence found in this resume', 'fictional', 'checked 2026-09-30']) assert.match(html, new RegExp(phrase, 'i'));
     assert.doesNotMatch(html, /guaranteed qualification|guaranteed interview|guaranteed hiring/i);
   }
 });

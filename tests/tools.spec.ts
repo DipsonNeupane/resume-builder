@@ -57,8 +57,8 @@ test('evidence check separates supported, review and unknown evidence without a 
   await page.locator('#resume-text').fill('Customer Operations Specialist\nCoordinated onboarding with sales and support.\nBuilt Salesforce reports for weekly service reviews.');
   await page.locator('#job-description').fill('Responsibilities\nCoordinate onboarding across sales and support.\nRequired qualifications\nA bachelor degree is required.\nPreferred qualifications\nSQL experience preferred.');
   await page.getByRole('button', { name: 'Check the evidence' }).click();
-  await expect(page.getByText('Clearly demonstrated', { exact: true }).first()).toBeVisible();
-  await expect(page.getByText('Not demonstrated', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Evidence found', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('No evidence found in this resume', { exact: true }).first()).toBeVisible();
   await expect(page.locator('[data-tool-results]')).not.toContainText(/ATS score|hiring probability|interview likelihood/i);
 });
 
@@ -83,7 +83,7 @@ Qualifications
   await expect(output.locator('.evidence-result').filter({ hasText: 'Serve customers' })).toContainText('Other signals');
   const clearance = output.locator('.evidence-result').filter({ hasText: 'Security clearance required' });
   await expect(clearance).toContainText('Required');
-  await expect(clearance).toContainText('Not demonstrated');
+  await expect(clearance).toContainText('No evidence found in this resume');
   await expect(clearance).not.toContainText('Resume evidence to review');
 });
 

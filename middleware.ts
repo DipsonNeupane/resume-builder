@@ -23,7 +23,7 @@ const occupationPages = Object.fromEntries(Object.entries(occupationNames).map((
 const comparisonNames = { teal:'Teal',huntr:'Huntr',jobscan:'Jobscan','resume-io':'Resume.io',enhancv:'Enhancv' } as const;
 const comparisonPages = Object.fromEntries(Object.entries(comparisonNames).map(([id,name])=>{const path=`/compare/${id}/`;return[path,page(path,`${name} and APWICO: factual comparison`,`Compare ${name} and APWICO using dated official sources for free access, paid terms, workflow and evidence boundaries—without a winner claim.`,'2026-09-30')]}));
 export const publicPages = {
- '/': page('/','APWICO — Resume Builder, Job Match & Tailoring','Build a master resume, find relevant jobs, compare your evidence with each role, and create truthful job-specific versions without changing your original.','2026-09-29'),
+ '/': page('/','APWICO — Find jobs, apply with confidence, track applications','Find jobs you like, compare each one with evidence from your own resume, tailor a separate version, and track every application and next step in one place.','2026-10-27'),
  '/features/': page('/features/','How APWICO works: evidence before effort','See how APWICO connects job requirements, resume evidence, user decisions, safe job-specific versions and concrete export formats.','2026-09-30'),
  '/features/resume-builder/': page('/features/resume-builder/','Master resume builder with safe job-specific versions | APWICO','Build or import a master resume, keep it intact, and use separate job-specific versions when a role deserves tailoring.','2026-09-30'),
  '/features/job-match/': page('/features/job-match/','Job Match based on requirement-level resume evidence | APWICO','Compare each job requirement with resume evidence, preserve the employer’s source wording, and make your own decision about the role.','2026-09-30'),
@@ -55,18 +55,19 @@ export const publicPages = {
  '/templates/': page('/templates/','Resume templates: preview before choosing | APWICO','Browse all APWICO resume templates by verified structure, density and access tier. Preview any design with your own content before choosing it.','2026-09-29'),
  '/pricing/': page('/pricing/','APWICO pricing and template access','Compare APWICO Free and Pro with explicit recurring terms, cancellation behavior and PDF or Word export boundaries.','2026-10-13'),
  '/trust/': page('/trust/','How APWICO earns trust','Review factual APWICO boundaries for Match evidence, master-resume safety, template preview, exports, privacy and payments.','2026-09-30'),
- '/privacy.html': page('/privacy.html','Privacy notice | APWICO','Read how APWICO handles resume drafts, account information, document uploads, payments and optional AI processing, and how to contact support.','2026-09-24'),
- '/terms.html': page('/terms.html','Terms and refunds | APWICO','Read the APWICO terms of service, Pro purchase and renewal conditions, refund information, usage limits and support details.','2026-09-24'),
+ '/privacy.html': page('/privacy.html','Privacy notice | APWICO','Read how APWICO handles resume drafts, account information, document uploads, payments and optional AI processing, and how to contact support.','2026-10-27'),
+ '/terms.html': page('/terms.html','Terms and refunds | APWICO','Read the APWICO terms of service: Free and Pro limits, Pro renewal and cancellation, data access, refunds and support.','2026-10-27'),
  ...templatePages,
 } as const;
 export const publicAnchors = new Set(['', '#how-it-works', '#templates', '#pricing', '#main-content']);
-export type AppPage = 'home' | 'builder' | 'account' | 'pro' | 'jobs';
-const privateAppPath = /^\/(?:start\/(?:import|build|job|sample)|workspace\/(?:resume|jobs(?:\/saved|\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/match)?|resumes\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|account|pro))\/?$/i;
+export type AppPage = 'home' | 'builder' | 'account' | 'pro' | 'jobs' | 'tracker';
+const privateAppPath = /^\/(?:start\/(?:import|build|job|sample)|workspace(?:\/(?:resume|today|preferences|discover|applications(?:\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})?|jobs(?:\/saved|\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/match)?|resumes\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|account|pro))?)\/?$/i;
 export const privateMetadata = {
  builder: { title: 'Resume editor | APWICO', description: 'Edit and review your resume in your private workspace.' },
  account: { title: 'Account access | APWICO', description: 'Sign in, manage your account or recover access to APWICO.' },
  pro: { title: 'Pro options | APWICO', description: 'Review Pro options and manage your APWICO access.' },
- jobs: { title: 'Jobs and Match Analysis | APWICO', description: 'Review job opportunities, saved jobs and resume evidence in your account workspace.' },
+ jobs: { title: 'Discover jobs | APWICO', description: 'Review job opportunities and resume evidence in your account workspace.' },
+ tracker: { title: 'My applications | APWICO', description: 'Track applications, stages and next actions in your private workspace.' },
 };
 export function isPublicPath(path: string): path is keyof typeof publicPages {
  return Object.hasOwn(publicPages, path);
@@ -126,25 +127,30 @@ export function requestSeo(url: URL, production: boolean, domainMigrationEnabled
  if (!production || !canonicalHost || (!isPublicLocation(url) && !isPublicAttributionLocation(url) && !crawlerAsset)) headers['X-Robots-Tag'] = noindex;
  if (url.search) headers['Cache-Control'] = 'private, no-store';
  const infrastructure = /^\/(?:api(?:\/|$)|assets\/|_vercel\/|\.well-known\/)/.test(url.pathname);
+ // www.apwico.com is the same brand and product on a duplicate host, so production
+ // always consolidates navigation onto the canonical apex. Only the legacy-brand
+ // origins wait for the separately authorized brand-migration flags.
+ const duplicateHost = production && url.origin === 'https://www.apwico.com';
  const migrationSource = legacyProductionOrigins.includes(url.origin as (typeof legacyProductionOrigins)[number]) || url.origin === 'https://www.apwico.com';
  // Redirect browser navigations only. Old-origin API/write traffic must keep reaching
  // this compatible deployment during the coexistence window; redirecting a POST can
  // drop its body/authentication or change its method. Start with a no-store 307 so the
  // cutover remains reversible, then promote navigation GET/HEAD traffic to a bounded
  // 301 only after the live matrix and browser-only-state window have passed.
- if (domainMigrationEnabled && migrationSource && (method === 'GET' || method === 'HEAD') && !infrastructure) {
+ if ((duplicateHost || (domainMigrationEnabled && migrationSource)) && (method === 'GET' || method === 'HEAD') && !infrastructure) {
+  const permanent = duplicateHost || permanentDomainMigration;
   return {
-   status: permanentDomainMigration ? 301 : 307,
+   status: permanent ? 301 : 307,
    headers: {
     ...headers,
-    'Cache-Control': permanentDomainMigration ? 'public, max-age=300' : 'private, no-store',
+    'Cache-Control': permanent ? 'public, max-age=300' : 'private, no-store',
     Location: `${productionOrigin}${url.pathname === '/index.html' ? '/' : url.pathname}${url.search}`,
    },
    body: '',
   };
  }
  if (url.pathname === '/index.html') return { status: 308, headers: { ...headers, Location: `/${url.search}` }, body: '' };
- const asset = ['/robots.txt', '/sitemap.xml', '/favicon.ico', '/favicon.svg', '/favicon.png', '/favicon-192.png', '/favicon-512.png', '/apple-touch-icon.png', '/social-card.png', '/site.webmanifest', '/seo-guard.js', '/resources.css', '/apwico-theme.css', '/content-analytics.js', '/tools.css', '/tools/analysis.js', '/tools/public-tools.js', '/tools/tool-analytics.js', '/templates.css', '/template-preview-renderers.css', '/templates-filter.js', '/features.css', '/fonts.css'].includes(url.pathname) || /^\/(?:fonts|social)\/[a-z0-9._-]+$/.test(url.pathname);
+ const asset = ['/robots.txt', '/sitemap.xml', '/favicon.ico', '/favicon.svg', '/favicon.png', '/favicon-192.png', '/favicon-512.png', '/apple-touch-icon.png', '/social-card.png', '/site.webmanifest', '/seo-guard.js', '/resources.css', '/apwico-theme.css', '/content-analytics.js', '/tools.css', '/tools/analysis.js', '/tools/posting-requirements.js', '/tools/public-tools.js', '/tools/tool-analytics.js', '/templates.css', '/template-preview-renderers.css', '/templates-filter.js', '/features.css', '/fonts.css'].includes(url.pathname) || /^\/(?:fonts|social)\/[a-z0-9._-]+$/.test(url.pathname);
  // The extension fixture remains reachable for local installed-extension tests,
  // but must never be an indexable job page.
  const fixture = url.pathname.startsWith('/extension-fixture/');

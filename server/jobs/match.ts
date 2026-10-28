@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto'
 import type { SearchCriteria } from './criteria.ts'
 import type { MatchLabel, NormalizedJob } from './types.ts'
 import { assessRoleRelevance, normalizeRoleText } from './relevance.ts'
+import { extractPostingRequirements } from '../../src/lib/postingRequirements.ts'
 
 export const MATCH_ANALYSIS_VERSION = 2
 export type RequirementCategory = 'required' | 'preferred' | 'nice_to_have'
@@ -12,7 +13,11 @@ export type EvidenceStatus = 'demonstrated' | 'partially_demonstrated' | 'not_de
 export type ClarificationValue = 'demonstrated' | 'not_have' | 'unsure'
 export type MatchClarifications = Record<string, ClarificationValue>
 export type ResumeEvidence = { headline: string; summary?: string; skills: string; roles: { title: string; description: string; dates?: string }[]; qualifications?: { section: string; title: string; description: string }[] }
-export type RequirementAnalysis = { id: string; text: string; category: RequirementCategory; status: EvidenceStatus; evidence: string[] }
+/** origin 'user' = added by the owner; originalCategory is set when the owner corrected the posting's classification. */
+export type RequirementAnalysis = { id: string; text: string; category: RequirementCategory; status: EvidenceStatus; evidence: string[]; origin?: 'posting' | 'user'; originalCategory?: RequirementCategory }
+/** Owner edits to the extracted requirements for one application (never to the posting snapshot). */
+export type RequirementEdits = { removed: string[]; categories: Record<string, RequirementCategory>; added: { id: string; text: string; category: RequirementCategory }[] }
+export const EMPTY_REQUIREMENT_EDITS: RequirementEdits = { removed: [], categories: {}, added: [] }
 export type FullMatchAnalysis = {
   version: typeof MATCH_ANALYSIS_VERSION; label: MatchLabel; resumeHash: string; jobHash: string; contextHash: string
   whyPromising: string; observations: string[]; importantWarning: string | null; seniorityMessage: string | null
@@ -64,7 +69,9 @@ export function parseFullMatchAnalysis(value:unknown):FullMatchAnalysis|null{
   ||!value.requirements.every(req=>record(req)&&typeof req.id==='string'&&/^[0-9a-f]{16}$/.test(req.id)
    &&boundedString(req.text,400)&&['required','preferred','nice_to_have'].includes(String(req.category))
    &&['demonstrated','partially_demonstrated','not_demonstrated','confirmed_incompatible'].includes(String(req.status))
-   &&boundedStringArray(req.evidence,5,1000))
+   &&boundedStringArray(req.evidence,5,1000)
+   &&(req.origin===undefined||req.origin==='posting'||req.origin==='user')
+   &&(req.originalCategory===undefined||['required','preferred','nice_to_have'].includes(String(req.originalCategory))))
   ||!boundedStringArray(value.strengths,10,1000)||!boundedStringArray(value.buriedEvidence,10,1000)
   ||!boundedStringArray(value.areasWorthStrengthening,10,1000)||!boundedStringArray(value.constraints,10,1000)
   ||!boundedString(value.deeperExplanation,2000))return null
@@ -76,29 +83,32 @@ function evidenceText(e:ResumeEvidence):string{return[e.headline,e.summary??'',e
 function phraseAppears(text:string,phrase:string):boolean{const wanted=tokens(phrase),available=tokens(text);if(!wanted.length)return false;return available.some((_,start)=>wanted.every((token,index)=>available[start+index]===token))}
 function requirementId(text:string):string{return matchHash(text.toLowerCase().replace(/\s+/g,' ').trim()).slice(0,16)}
 export function jobMatchHash(job:NormalizedJob):string{return matchHash({id:job.id,title:job.title,description:job.descriptionText.slice(0,12000),location:job.location,workplace:job.workplace,employmentType:job.employmentType,salary:job.salary})}
-type RequirementSection = RequirementCategory | 'responsibilities' | null
-function cleanPostingChunk(value:string):string{return value.replace(/^[\s•*#_\-–—]+/,'').replace(/[\s*_#]+$/,'').replace(/\s+/g,' ').trim()}
-function headingFor(text:string):RequirementSection|undefined{
- const heading=text.replace(/[:;]+$/,'').trim().toLowerCase()
- if(/^(required|required qualifications?|requirements?|minimum qualifications?|what (?:you|we) (?:need|require))$/.test(heading))return'required'
- if(/^(preferred|preferred qualifications?)$/.test(heading))return'preferred'
- if(/^(nice to have|nice-to-have|desirable|bonus qualifications?)$/.test(heading))return'nice_to_have'
- if(/^(essential functions?(?:\/duties)?|essential duties(?: and responsibilities)?|duties(?: and responsibilities)?|responsibilities|what you(?:'|’)ll do|the role)$/.test(heading))return'responsibilities'
- if(/^qualifications$/.test(heading))return null
- if(text.length<=80&&/[:;]$/.test(text))return null
- return undefined
-}
-function explicitRequired(text:string):boolean{
- return /^(?:required|minimum):\s*\S/i.test(text)
-  || /\b(?:must|mandatory)\b/i.test(text)
-  || /\b(?:license[ds]?|licensure|certification|certified|degree|diploma|security clearance|work authorization|eligible to work)\b/i.test(text)
-  || /\b\d+\+?\s+years?(?:\s+of)?\s+(?:relevant\s+)?experience\b/i.test(text)
-  || /\b(?:experience|degree|license|licensure|certification|clearance|authorization)\s+(?:is\s+)?required\b/i.test(text)
-}
-function categoryFor(text:string,section:RequirementSection):RequirementCategory|null{if(/\b(not required|no [^.]{0,50} required|do(?:es)? not need|does not require)\b/i.test(text))return null;if(/\b(nice to have|nice-to-have|desirable|a bonus|bonus points)\b/i.test(text))return'nice_to_have';if(/\b(preferred|ideally|preference|would be a plus|is a plus|plus:)\b/i.test(text))return'preferred';if(explicitRequired(text))return'required';return section==='responsibilities'?null:section}
+// Extraction is shared with the browser-only public tools; duties and work-arrangement
+// context ('other') are not qualifications and are excluded from Match requirements.
 function extractRequirements(description:string):RequirementAnalysis[]{
- const chunks=description.slice(0,12000).split(/\n+|(?<=[.!?;])\s+/).map(cleanPostingChunk).filter(Boolean),out:RequirementAnalysis[]=[];const seen=new Set<string>();let section:RequirementSection=null
- for(const chunk of chunks){const nextSection=headingFor(chunk);if(nextSection!==undefined){section=nextSection;continue}const category=categoryFor(chunk,section);if(!category||chunk.length<8||chunk.length>500)continue;const text=cleanPostingChunk(chunk).slice(0,400),key=text.toLowerCase();if(seen.has(key))continue;seen.add(key);out.push({id:requirementId(text),text,category,status:'not_demonstrated',evidence:[]});if(out.length>=MAX_REQUIREMENTS)break}return out
+ return extractPostingRequirements(description.slice(0,12000),{limit:MAX_REQUIREMENTS*2,maxLength:500})
+  .filter((item):item is typeof item&{category:RequirementCategory}=>item.category!=='other')
+  .slice(0,MAX_REQUIREMENTS)
+  .map(item=>{const text=item.text.slice(0,400);return{id:requirementId(text),text,category:item.category,status:'not_demonstrated' as const,evidence:[]}})
+}
+/** Removes, reclassifies and adds requirements as the owner chose; evidence is then
+ * classified the same way for every item, so an added requirement is never assumed met. */
+export function applyRequirementEdits(requirements:RequirementAnalysis[],edits:RequirementEdits):RequirementAnalysis[]{
+ const removed=new Set(edits.removed)
+ const kept=requirements.filter(req=>!removed.has(req.id)).map(req=>{const category=edits.categories[req.id];return category&&category!==req.category?{...req,category,originalCategory:req.category,origin:'posting' as const}:{...req,origin:'posting' as const}})
+ const added=edits.added.filter(item=>!kept.some(req=>req.text.toLowerCase()===item.text.toLowerCase())).map(item=>({id:item.id,text:item.text,category:item.category,status:'not_demonstrated' as const,evidence:[],origin:'user' as const}))
+ return [...kept,...added].slice(0,MAX_REQUIREMENTS)
+}
+export function parseRequirementEdits(value:unknown):RequirementEdits{
+ // A record with no edits is stored as the column default `{}`.
+ if(value==null||(record(value)&&!Object.keys(value).length))return EMPTY_REQUIREMENT_EDITS
+ const categories=['required','preferred','nice_to_have']
+ if(!record(value)||!Array.isArray(value.removed)||value.removed.length>MAX_REQUIREMENTS||!value.removed.every(id=>typeof id==='string'&&/^[0-9a-f]{16}$/.test(id))
+  ||!record(value.categories)||Object.keys(value.categories).length>MAX_REQUIREMENTS||!Object.entries(value.categories).every(([id,c])=>/^[0-9a-f]{16}$/.test(id)&&categories.includes(String(c)))
+  ||!Array.isArray(value.added)||value.added.length>10||!value.added.every(item=>record(item)&&typeof item.text==='string'&&item.text.trim().length>=3&&item.text.length<=300&&!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(item.text)&&categories.includes(String(item.category))))throw new Error('Invalid requirement edits')
+ if(!value.removed.length&&!Object.keys(value.categories).length&&!value.added.length)return EMPTY_REQUIREMENT_EDITS
+ return{removed:value.removed as string[],categories:value.categories as Record<string,RequirementCategory>,
+  added:(value.added as {text:string;category:RequirementCategory}[]).map(item=>{const text=item.text.trim();return{id:requirementId(`user:${text}`),text,category:item.category}})}
 }
 function analyzeRequirement(req:RequirementAnalysis,evidence:ResumeEvidence,clarifications:MatchClarifications):RequirementAnalysis{
  const explicit=clarifications[req.id];if(explicit==='demonstrated')return{...req,status:'demonstrated',evidence:['Confirmed by you.']};if(explicit==='not_have')return{...req,status:req.category==='required'?'confirmed_incompatible':'not_demonstrated',evidence:['You confirmed this is not part of your current profile.']}
@@ -116,14 +126,14 @@ function analyzeRequirement(req:RequirementAnalysis,evidence:ResumeEvidence,clar
 }
 function constraintObservations(job:NormalizedJob,criteria:SearchCriteria):string[]{const out:string[]=[];if(criteria.workplace&&job.workplace.value===criteria.workplace)out.push(`The listed ${job.workplace.value} arrangement matches your workplace preference.`);if(criteria.location&&Object.values(job.location.value).filter(Boolean).join(' ').toLowerCase().includes(criteria.location.toLowerCase()))out.push(`The listed location aligns with “${criteria.location}.”`);if(criteria.salary&&job.salary&&job.salary.currency===criteria.salary.currency&&job.salary.period===criteria.salary.period&&(criteria.salary.min==null||job.salary.max>=criteria.salary.min)&&(criteria.salary.max==null||job.salary.min<=criteria.salary.max))out.push(`The listed salary overlaps your stated ${criteria.salary.currency} ${criteria.salary.period==='year'?'annual':'hourly'} range.`);if(criteria.employmentType&&job.employmentType.value===criteria.employmentType)out.push('The listed employment type matches your preference.');return out}
 function seniorityMessage(e:ResumeEvidence,j:NormalizedJob,occupationallyRelated:boolean):string|null{if(!occupationallyRelated)return null;const senior=SENIOR.test([e.headline,...e.roles.map(r=>r.title)].join(' '));if(SENIOR.test(j.title)&&!senior)return'This role appears more senior than the experience currently demonstrated in your resume.';if(JUNIOR.test(j.title)&&senior)return'This role appears less senior than the experience currently demonstrated in your resume.';return null}
-function analyzeJobInternal(evidence:ResumeEvidence,job:NormalizedJob,criteria:SearchCriteria={title:job.title},clarifications:MatchClarifications={}):MatchResult{
- const relevance=assessRoleRelevance(evidence,job,criteria),requirements=extractRequirements(job.descriptionText).map(r=>analyzeRequirement(r,evidence,clarifications)),titleSource=relevance.titleSource,matchedSkills=relevance.matchedSkills
+function analyzeJobInternal(evidence:ResumeEvidence,job:NormalizedJob,criteria:SearchCriteria={title:job.title},clarifications:MatchClarifications={},edits:RequirementEdits=EMPTY_REQUIREMENT_EDITS):MatchResult{
+ const relevance=assessRoleRelevance(evidence,job,criteria),requirements=applyRequirementEdits(extractRequirements(job.descriptionText),edits).map(r=>analyzeRequirement(r,evidence,clarifications)),titleSource=relevance.titleSource,matchedSkills=relevance.matchedSkills
  const demonstrated=requirements.filter(r=>r.status==='demonstrated'),partial=requirements.filter(r=>r.status==='partially_demonstrated'),unknownRequired=requirements.filter(r=>r.category==='required'&&r.status==='not_demonstrated'),incompatible=requirements.filter(r=>r.status==='confirmed_incompatible'),constraints=constraintObservations(job,criteria)
  const rank=relevance.score+(titleSource?15:0)+Math.min(24,matchedSkills.length*6)+demonstrated.length*5+partial.length*2+constraints.length*3-unknownRequired.length*4-incompatible.length*100
  const label:MatchLabel=incompatible.length?'stretch':(titleSource&&matchedSkills.length>=2)||(titleSource&&demonstrated.length>=2)?'strong':titleSource||matchedSkills.length>=1||rank>=25?'good':'stretch',observations:string[]=[]
  if(titleSource)observations.push(`Your “${titleSource}” title relates directly to this “${job.title}” role.`);if(matchedSkills.length)observations.push(`Resume evidence also named in the posting: ${matchedSkills.slice(0,5).join(', ')}.`);observations.push(...constraints);if(!observations.length)observations.push('The role’s main focus is not demonstrated in your current resume — a stretch, not a role that is off-limits to you.')
  const importantWarning=incompatible[0]?`Confirmed incompatibility: ${incompatible[0].text}`:unknownRequired[0]?`Important required qualification not demonstrated: ${unknownRequired[0].text}`:null,seniority=seniorityMessage(evidence,job,relevance.eligible),whyPromising=label==='strong'?'Several important parts of the role are clearly supported by your resume.':label==='good'?'Your resume shows relevant evidence, with some areas still worth reviewing.':'The role has limited demonstrated alignment or an important constraint to review.'
- const analysis:FullMatchAnalysis={version:MATCH_ANALYSIS_VERSION,label,resumeHash:matchHash(evidence),jobHash:jobMatchHash(job),contextHash:matchHash({criteria,clarifications}),whyPromising,observations:observations.slice(0,3),importantWarning,seniorityMessage:seniority,requirements,strengths:[...observations,...demonstrated.slice(0,5).map(r=>`Demonstrated: ${r.text}`)].slice(0,8),buriedEvidence:partial.map(r=>`Related evidence exists, but could be clearer: ${r.text}`).slice(0,8),areasWorthStrengthening:requirements.filter(r=>r.status==='not_demonstrated').map(r=>`${r.category==='required'?'Required':r.category==='preferred'?'Preferred':'Nice to have'} — not demonstrated: ${r.text}`).slice(0,10),constraints,deeperExplanation:`${whyPromising} ${unknownRequired.length?`${unknownRequired.length} required ${unknownRequired.length===1?'area is':'areas are'} not demonstrated, which is unknown rather than proof you lack them.`:'No required qualification extracted from the posting is currently unresolved.'}`}
+ const analysis:FullMatchAnalysis={version:MATCH_ANALYSIS_VERSION,label,resumeHash:matchHash(evidence),jobHash:jobMatchHash(job),contextHash:matchHash(edits===EMPTY_REQUIREMENT_EDITS?{criteria,clarifications}:{criteria,clarifications,edits}),whyPromising,observations:observations.slice(0,3),importantWarning,seniorityMessage:seniority,requirements,strengths:[...observations,...demonstrated.slice(0,5).map(r=>`Demonstrated: ${r.text}`)].slice(0,8),buriedEvidence:partial.map(r=>`Related evidence exists, but could be clearer: ${r.text}`).slice(0,8),areasWorthStrengthening:requirements.filter(r=>r.status==='not_demonstrated').map(r=>`${r.category==='required'?'Required':r.category==='preferred'?'Preferred':'Nice to have'} — not demonstrated: ${r.text}`).slice(0,10),constraints,deeperExplanation:`${whyPromising} ${unknownRequired.length?`${unknownRequired.length} required ${unknownRequired.length===1?'area is':'areas are'} not demonstrated, which is unknown rather than proof you lack them.`:'No required qualification extracted from the posting is currently unresolved.'}`}
  return{label,reasons:analysis.observations,analysis,rank,confirmedIncompatibility:incompatible.length>0,searchEligible:relevance.eligible}
 }
 export function matchJob(evidence:ResumeEvidence,job:NormalizedJob):MatchResult{return analyzeJob(evidence,job)}

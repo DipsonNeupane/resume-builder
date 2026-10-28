@@ -4,6 +4,7 @@ import { ResumePreview } from '../../components/ResumePreview';
 import { example, templates, type Resume } from '../../model';
 import { PatinaHero } from './PatinaHero';
 import { MatchShowcase } from './MatchShowcase';
+import { launchFacts } from '../../content/launchFacts';
 import './landing.css';
 
 const sample = example();
@@ -11,9 +12,9 @@ const featuredTemplateIds: Resume['template'][] = ['modern', 'compact', 'boardro
 const featuredTemplates = templates.filter(template => featuredTemplateIds.includes(template.id));
 // The suggestion reworks the sample's own summary using only experience it already lists.
 const suggested = 'Customer experience specialist who supports customers across email, phone and live chat, simplifies everyday support processes, and helps new team members build confidence.';
-type Props = { onBuild: () => void; onUpload: () => void; onJobs: () => void; onCompare: () => void; onPro: () => void; onTemplate: (template: Resume['template']) => void };
+type Props = { onBuild: () => void; onUpload: () => void; onJobs: () => void; onCompare: () => void; onPro: () => void; onTemplate: (template: Resume['template']) => void; onFindJobs: () => void; onOrganize: () => void };
 
-export function HomePage({ onBuild, onUpload, onJobs, onCompare, onPro, onTemplate }: Props) {
+export function HomePage({ onBuild, onUpload, onJobs, onCompare, onPro, onTemplate, onFindJobs, onOrganize }: Props) {
  const [previewTemplate, setPreviewTemplate] = useState<Resume['template']>('modern');
  const sheet = useRef<HTMLDivElement>(null);
  // The light sheet rises over the petrol Match section and its fold settles as it
@@ -36,7 +37,7 @@ export function HomePage({ onBuild, onUpload, onJobs, onCompare, onPro, onTempla
   return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', kick); window.removeEventListener('resize', kick); };
  }, []);
  return <main className="landing landing-approved-c landing-approved-wine" id="main-content">
-  <PatinaHero onBuild={onBuild}/>
+  <PatinaHero onBuild={onBuild} onFindJobs={onFindJobs} onOrganize={onOrganize}/>
   <section className="landing-starts" aria-labelledby="start-heading">
    <div className="landing-starts-heading"><p className="section-label">Start with what you have</p><h2 id="start-heading">Three clear ways in.</h2><p>Start with your resume, a blank page, or a job description. Your master resume stays unchanged.</p></div>
    <div className="start-card-grid">
@@ -56,9 +57,9 @@ export function HomePage({ onBuild, onUpload, onJobs, onCompare, onPro, onTempla
    <p className="landing-sources">Search <strong>190+ job portals</strong> and employer career sites using your resume or your own criteria.</p>
    <MatchShowcase/>
    <dl className="evidence-key">
-    <div><dt><span className="evidence-dot strength"/>Clearly demonstrated</dt><dd>A line of your resume supports the requirement.</dd></div>
-    <div><dt><span className="evidence-dot review"/>Worth reviewing</dt><dd>Partly shown. A little more context may make it clear.</dd></div>
-    <div><dt><span className="evidence-dot unknown"/>Not demonstrated</dt><dd>Your resume doesn’t show it yet. That isn’t a verdict on you.</dd></div>
+    <div><dt><span className="evidence-dot strength"/>Evidence found</dt><dd>A line of your resume supports the requirement.</dd></div>
+    <div><dt><span className="evidence-dot review"/>Related evidence — review</dt><dd>Partly shown. A little more context may make it clear.</dd></div>
+    <div><dt><span className="evidence-dot unknown"/>No evidence found in this resume</dt><dd>Your resume doesn’t show it yet. That isn’t a verdict on you.</dd></div>
     <div><dt><span className="evidence-dot conflict"/>Confirmed incompatibility</dt><dd>Only when you’ve said you don’t have something the role requires.</dd></div>
    </dl>
   </section>
@@ -88,8 +89,8 @@ export function HomePage({ onBuild, onUpload, onJobs, onCompare, onPro, onTempla
   </div>
   <section className="landing-pricing" id="pricing">
    <div className="section-introduction"><h2>Choose the access<br/><em>you need.</em></h2></div>
-   <div className="plan-comparison"><article><span className="section-label">Free</span><h3>Build, compare, organize, and track.</h3><p className="plan-price"><strong>$0</strong><span>no subscription</span></p><ul><li><Check aria-hidden="true"/>The complete builder and all 7 Free templates</li><li><Check aria-hidden="true"/>7 PDF or Word downloads per rolling 7 days</li><li><Check aria-hidden="true"/>3 manual refreshes per rolling 24 hours, up to 10 relevant results each</li><li><Check aria-hidden="true"/>Optional fresh automatic refresh about every 24 hours</li><li><Check aria-hidden="true"/>Save and track up to 10 applications, with a Match preview</li></ul><p className="plan-note">A free account is required for downloads and jobs. The browser-only evidence checker works without an account.</p><button className="button outline" onClick={onBuild}>Build my master resume<ArrowRight size={16} aria-hidden="true"/></button></article>
-   <article className="plan-pro"><span className="section-label">Pro</span><h3>Full Match Analysis and job-specific resumes.</h3><p className="plan-price"><strong>US$14.99</strong><span>/month</span></p><ul><li><Check aria-hidden="true"/>All 27 templates</li><li><Check aria-hidden="true"/>Full requirement-level Match Analysis</li><li><Check aria-hidden="true"/>Advanced job search and a separate resume for each saved job</li><li><Check aria-hidden="true"/>AI-assisted suggestions you accept, reject or rewrite</li></ul><p className="plan-note">Renews until cancelled; paid access continues through the billing period. New subscriptions are US-only. Fair-use limits apply.</p><button className="button" onClick={onPro}>View Pro options<ArrowRight size={16} aria-hidden="true"/></button></article></div>
+   <div className="plan-comparison"><article><span className="section-label">Free</span><h3>Build, compare, organize, and track.</h3><p className="plan-price"><strong>$0</strong><span>no subscription</span></p><ul><li><Check aria-hidden="true"/>The complete builder and all 7 Free templates</li><li><Check aria-hidden="true"/>{launchFacts.freeDownloads.count} PDF or Word downloads per rolling {launchFacts.freeDownloads.windowDays} days</li><li><Check aria-hidden="true"/>{launchFacts.freeManualRefreshes.count} job searches per rolling {launchFacts.freeManualRefreshes.windowHours} hours, up to {launchFacts.freeResultsPerRefresh} relevant results each, plus an optional daily refresh</li><li><Check aria-hidden="true"/>Track up to {launchFacts.freeApplications} applications, with a Match preview</li><li><Check aria-hidden="true"/>{launchFacts.freeTailoringTrials === 1 ? 'One complete tailoring trial' : `${launchFacts.freeTailoringTrials} complete tailoring trials`} for one application</li></ul><p className="plan-note">A free account is required for downloads and jobs. The browser-only evidence checker works without an account.</p><button className="button outline" onClick={onBuild}>Build my master resume<ArrowRight size={16} aria-hidden="true"/></button></article>
+   <article className="plan-pro"><span className="section-label">Pro</span><h3>Full Match Analysis and job-specific resumes.</h3><p className="plan-price"><strong>{launchFacts.proMonthlyPrice}</strong><span>/month</span></p><ul><li><Check aria-hidden="true"/>All 27 templates</li><li><Check aria-hidden="true"/>Full requirement-level Match Analysis</li><li><Check aria-hidden="true"/>Advanced job search and a separate resume for each saved job</li><li><Check aria-hidden="true"/>AI-assisted suggestions you accept, reject or rewrite</li></ul><p className="plan-note">Renews until cancelled; paid access continues through the billing period. New subscriptions are US-only. Fair-use limits apply.</p><button className="button" onClick={onPro}>View Pro options<ArrowRight size={16} aria-hidden="true"/></button></article></div>
   </section>
   <footer className="landing-footer"><div><strong>APWICO</strong><p>Evidence before effort.</p></div><div><a href="mailto:support@apwico.com">support@apwico.com</a><nav aria-label="Site links"><a href="/features/">How it works</a><a href="/tools/">Free tools</a><a href="/resources/">Resources</a><a href="/pricing/">Pricing</a><a href="/trust/">Trust</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms &amp; refunds</a></nav></div></footer>
  </main>;

@@ -6,7 +6,7 @@ test('Match methodology is public, indexable, truthful and responsive', async ({
   await page.setViewportSize({ width: 320, height: 720 });
   const response = await page.goto('/features/match-methodology/', { waitUntil: 'domcontentloaded' });
   expect(response?.status()).toBe(200);
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('How Match reaches an evidence view');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('How Match compares a job and resume');
   await expect(page.getByText(/It does not mean the person lacks the skill/)).toBeVisible();
   await expect(page.getByText(/does not use a generative-AI model/)).toBeVisible();
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(

@@ -13,7 +13,19 @@ test('dual-domain cutover stays disabled by default and maps old URLs in one hop
   assert.match(read('.env.example'), /^BRAND_DOMAIN_REDIRECTS_ENABLED=false$/m)
   assert.match(read('.env.example'), /^BRAND_PERMANENT_REDIRECTS_ENABLED=false$/m)
 
-  for (const origin of [...legacyProductionOrigins, 'https://www.apwico.com']) {
+  // www.apwico.com consolidates onto the apex in production regardless of the
+  // legacy-brand migration flags; preview/local deployments never redirect it.
+  for (const flags of [[false, false], [true, false], [true, true]] as const) {
+    const www = requestSeo(new URL('/pricing/?ref=x', 'https://www.apwico.com'), true, ...flags)
+    assert.equal(www.status, 301)
+    assert.equal(www.headers.Location, 'https://apwico.com/pricing/?ref=x')
+    assert.equal(www.headers['X-Robots-Tag'], 'noindex, nofollow, noarchive')
+  }
+  assert.equal(requestSeo(new URL('https://www.apwico.com/pricing/'), false).status, 0)
+  assert.equal(requestSeo(new URL('https://www.apwico.com/api/jobs-account'), true, false, false, 'POST').status, 0)
+  assert.equal(requestSeo(new URL('https://www.apwico.com/workspace/resume'), true).headers.Location, 'https://apwico.com/workspace/resume')
+
+  for (const origin of legacyProductionOrigins) {
     const source = new URL('/resources/resume-keywords/?utm_source=legacy&utm_campaign=cutover', origin)
     const disabled = requestSeo(source, true, false)
     assert.equal(disabled.status, 0)
@@ -38,6 +50,11 @@ test('private/deep routes remain noindex and retain no content in their URLs', (
   for (const path of [
     '/workspace/resume',
     '/workspace/jobs/saved',
+    '/workspace',
+    '/workspace/today',
+    '/workspace/discover',
+    '/workspace/applications',
+    '/workspace/applications/33333333-3333-4333-8333-333333333333',
     '/workspace/account',
     '/workspace/pro',
     '/workspace/jobs/11111111-1111-4111-8111-111111111111/match',

@@ -1,5 +1,6 @@
 import { contentLength, isResume, maxContentChars, type Resume } from '../model';
 import { supabase } from './supabase';
+import { readProvenance, type ProvenanceEntry } from '../lib/tailoringProvenance';
 
 export type JobResumeVersion = {
   id: string;
@@ -9,12 +10,14 @@ export type JobResumeVersion = {
   sourceMasterRevision: number | null;
   sourceMasterFingerprint: string;
   resume: Resume;
+  /** How each accepted tailoring change came to be; see src/lib/tailoringProvenance.ts. */
+  provenance: ProvenanceEntry[];
   revision: number;
   createdAt: string;
   updatedAt: string;
 };
 
-export type JobResumeVersionSummary = Omit<JobResumeVersion, 'resume'> & { savedJobExists: boolean };
+export type JobResumeVersionSummary = Omit<JobResumeVersion, 'resume' | 'provenance'> & { savedJobExists: boolean };
 
 export class JobResumeConflictError extends Error {
   constructor(readonly server: JobResumeVersion) {
@@ -39,7 +42,7 @@ export function parseJobResumeVersion(value: unknown): JobResumeVersion {
   }
   if (value.sourceMasterResumeId !== null && typeof value.sourceMasterResumeId !== 'string') throw new Error('Job-specific resume returned an unusable response.');
   if (value.sourceMasterRevision !== null && (!Number.isSafeInteger(value.sourceMasterRevision) || Number(value.sourceMasterRevision) < 1)) throw new Error('Job-specific resume returned an unusable response.');
-  return value as unknown as JobResumeVersion;
+  return { ...value, provenance: readProvenance(value.provenance ?? []) ?? [] } as unknown as JobResumeVersion;
 }
 
 export function parseJobResumeSummaries(value: unknown): JobResumeVersionSummary[] {

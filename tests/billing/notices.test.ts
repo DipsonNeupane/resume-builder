@@ -45,3 +45,30 @@ test('safe acceptance sink dispatches six durable notice kinds without external 
   assert.ok(sent.every(item=>item.body.to instanceof Array&&item.body.to[0]==='billing-acceptance@apwico.test'))
   assert.ok(sent.every(item=>!/upgrade|sale|discount|recommended|popular/i.test(`${item.body.subject} ${item.body.text}`)))
 })
+
+test('a renewal reminder states the renewal date and is never sent after the renewal', async () => {
+  const [subject, body] = emailCopy('renewal_reminder', { offerKey:'pro:monthly', renewsAt:'2026-11-04T09:00:00Z' })
+  assert.equal(subject, 'Your subscription renews on November 4, 2026')
+  assert.match(body, /APWICO Pro is scheduled to renew on November 4, 2026\. You can manage or cancel it/)
+  const rows = [
+    { id:'00000000-0000-0000-0000-000000000001', owner_id:'abababab-abab-abab-abab-abababababab', subscription_id:'sub_fixture', kind:'renewal_reminder', dedupe_key:'reminder:future', payload:{ offerKey:'pro:monthly', renewsAt:new Date(Date.now()+2*86400000).toISOString() } },
+    { id:'00000000-0000-0000-0000-000000000002', owner_id:'abababab-abab-abab-abab-abababababab', subscription_id:'sub_fixture', kind:'renewal_reminder', dedupe_key:'reminder:past', payload:{ offerKey:'pro:monthly', renewsAt:new Date(Date.now()-3600000).toISOString() } },
+  ]
+  const finished:Array<Record<string,unknown>>=[]
+  const sent:string[]=[]
+  const db={
+    rpc:async(name:string,args:Record<string,unknown>)=>{
+      if(name==='billing_schedule_renewal_notices')return{error:null,data:0}
+      if(name==='billing_claim_due_notices')return{error:null,data:rows}
+      if(name==='billing_finish_notice'){finished.push(args);return{error:null,data:null}}
+      throw new Error(`Unexpected RPC ${name}`)
+    },
+    auth:{admin:{getUserById:async()=>({data:{user:{email:'billing-acceptance@apwico.test'}}})}},
+  }
+  const response=await dispatchNotices(new Request('https://apwico.test/api/dispatch',{method:'POST',headers:{authorization:`Bearer ${'x'.repeat(24)}`}}),{
+    NOTICE_DISPATCH_SECRET:'x'.repeat(24),RESEND_API_KEY:'re_test_fixture',BILLING_EMAIL_FROM:'APWICO <billing@apwico.test>',APP_ORIGIN:'https://apwico.test',
+  } as NodeJS.ProcessEnv,{ serviceDatabase:()=>db as never, fetch:async(_url,init)=>{sent.push(JSON.parse(String(init?.body)).subject);return Response.json({id:'email_1'})} })
+  assert.deepEqual(await response.json(),{scheduled:0,claimed:2,sent:1})
+  assert.equal(sent.length,1)
+  assert.deepEqual(finished.map(call=>[call.p_id,call.p_success,call.p_error_code]).sort((a,b)=>String(a[0]).localeCompare(String(b[0]))),[['00000000-0000-0000-0000-000000000001',true,null],['00000000-0000-0000-0000-000000000002',false,'reminder_stale']].sort((a,b)=>String(a[0]).localeCompare(String(b[0]))))
+})

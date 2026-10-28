@@ -8,7 +8,13 @@ const id = '11111111-1111-4111-8111-111111111111';
 
 test('workspace routes are strict, stable and map to the existing screen boundary', () => {
  assert.equal(routePage(parseAppRoute(new URL('/workspace/resume', origin))), 'builder');
- assert.equal(routePage(parseAppRoute(new URL('/workspace/jobs/saved', origin))), 'jobs');
+ assert.equal(routePage(parseAppRoute(new URL('/workspace/jobs/saved', origin))), 'tracker', 'retained saved-jobs link opens My applications');
+ assert.equal(parseAppRoute(new URL('/workspace/jobs', origin)).path, '/workspace/discover', 'retained jobs link opens Discover');
+ assert.equal(parseAppRoute(new URL('/workspace', origin)).kind, 'workspace_today');
+ assert.equal(parseAppRoute(new URL('/workspace/today', origin)).kind, 'workspace_today');
+ assert.equal(parseAppRoute(new URL('/workspace/applications', origin)).kind, 'workspace_applications');
+ assert.deepEqual(parseAppRoute(new URL(`/workspace/applications/${id}`, origin)), { kind: 'workspace_application', path: `/workspace/applications/${id}`, savedJobId: id });
+ assert.equal(parseAppRoute(new URL('/workspace/applications/not-an-id', origin)).kind, 'not_found');
  assert.deepEqual(parseAppRoute(new URL(`/workspace/jobs/${id}/match`, origin)), matchRoute(id));
  assert.deepEqual(parseAppRoute(new URL(`/workspace/resumes/${id}`, origin)), jobResumeRoute(id));
  assert.equal(parseAppRoute(new URL('/workspace/jobs/not-an-id/match', origin)).kind, 'not_found');

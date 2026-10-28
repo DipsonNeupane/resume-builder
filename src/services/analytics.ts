@@ -14,6 +14,9 @@ export const productEvents = [
  'requirements_extracted', 'evidence_reviewed', 'decision_recorded',
  'job_specific_version_created', 'changes_reviewed', 'application_package_exported',
  'application_status_recorded',
+ // Launch tracker/discovery events: content-free (closed enums only, no ids or text).
+ 'application_added', 'application_stage_changed', 'applications_imported', 'job_passed',
+ 'onboarding_completed', 'application_submitted_confirmed',
 ] as const;
 
 export type ProductEvent = typeof productEvents[number];
@@ -36,17 +39,17 @@ const propertyKeys = new Set<string>([
 const enumValues: Record<string, ReadonlySet<string>> = {
  user_state: new Set(['anonymous', 'authenticated']),
  plan: new Set(['Free', 'Pro', 'Unknown']),
- surface: new Set(['home', 'builder', 'jobs', 'match', 'tailoring', 'pricing', 'account', 'export', 'resources']),
+ surface: new Set(['home', 'builder', 'jobs', 'match', 'tailoring', 'pricing', 'account', 'export', 'resources', 'today', 'applications', 'discover', 'onboarding']),
  export_type: new Set(['PDF', 'DOCX']),
  outcome: new Set(['success', 'failure', 'blocked']),
  result_bucket: new Set(['none', 'some']),
- journey: new Set(['import_first', 'build_first', 'job_first']),
+ journey: new Set(['import_first', 'build_first', 'job_first', 'find_jobs', 'organize']),
  document_scope: new Set(['master', 'job_draft', 'job_specific']),
  storage_scope: new Set(['local', 'account', 'unavailable']),
- job_source: new Set(['search', 'extension', 'pasted']),
+ job_source: new Set(['search', 'extension', 'pasted', 'manual', 'import']),
  review_depth: new Set(['limited', 'full']),
  decision: new Set(['tailor', 'clarify', 'save_later', 'keep_looking', 'review', 'pursue', 'pass']),
- application_status: new Set(['preparing', 'applied', 'interviewing', 'offer', 'closed', 'withdrawn']),
+ application_status: new Set(['saved', 'preparing', 'applied', 'interviewing', 'offer', 'closed', 'withdrawn']),
  failure_category: new Set(['validation', 'unsupported_file', 'file_too_large', 'parse_failure', 'cancelled', 'network', 'server', 'unknown']),
 };
 const safeToken = /^[A-Za-z0-9][A-Za-z0-9._~-]{0,79}$/;

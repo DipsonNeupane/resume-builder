@@ -48,7 +48,7 @@ test('protected public disclosures and canonical evidence language remain', () =
   'Word (.docx) is a clean, editable content document',
   'A recurring paid action requires an explicit consent checkbox',
  ]) assert.match(`${pricing} ${trust}`, new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
- for (const label of ['Clearly demonstrated', 'Worth reviewing', 'Not demonstrated', 'Confirmed incompatibility']) {
+ for (const label of ['Evidence found', 'Related evidence — review', 'No evidence found in this resume', 'Confirmed incompatibility']) {
   assert.match(methodology, new RegExp(label));
  }
  assert.match(methodology, /does not mean the person lacks the skill/i);

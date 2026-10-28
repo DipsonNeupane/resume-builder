@@ -17,11 +17,11 @@ const count = (cells: State[]) => {
  return `${shown} shown · ${review} to review · ${missing} not shown`;
 };
 const rows: { state: State; label: string; ask: string; quote?: string; source?: string; meaning: string }[] = [
- { state: 'shown', label: 'Clearly demonstrated', ask: 'Support across email, phone and chat', quote: 'Support customers across email, phone, and live chat with clear, empathetic communication.', source: 'Example Company · 2022 — Present', meaning: 'Your own words cover it.' },
- { state: 'shown', label: 'Clearly demonstrated', ask: 'Improve everyday support processes', quote: 'Partner with the operations team to simplify common support processes.', source: 'Example Company · 2022 — Present', meaning: 'Directly supported.' },
- { state: 'shown', label: 'Clearly demonstrated', ask: 'Coach new team members', quote: 'Help new team members develop product knowledge and confidence.', source: 'Example Company · 2022 — Present', meaning: 'Directly supported.' },
- { state: 'review', label: 'Worth reviewing', ask: 'Zendesk administration', quote: 'Customer support, Team collaboration, Problem solving, CRM systems', source: 'Skills', meaning: 'CRM systems are listed; Zendesk itself isn’t named.' },
- { state: 'missing', label: 'Not demonstrated', ask: 'Workforce scheduling', meaning: 'Your resume doesn’t show it yet. You may still have it.' },
+ { state: 'shown', label: 'Evidence found', ask: 'Support across email, phone and chat', quote: 'Support customers across email, phone, and live chat with clear, empathetic communication.', source: 'Example Company · 2022 — Present', meaning: 'Your own words cover it.' },
+ { state: 'shown', label: 'Evidence found', ask: 'Improve everyday support processes', quote: 'Partner with the operations team to simplify common support processes.', source: 'Example Company · 2022 — Present', meaning: 'Directly supported.' },
+ { state: 'shown', label: 'Evidence found', ask: 'Coach new team members', quote: 'Help new team members develop product knowledge and confidence.', source: 'Example Company · 2022 — Present', meaning: 'Directly supported.' },
+ { state: 'review', label: 'Related evidence — review', ask: 'Zendesk administration', quote: 'Customer support, Team collaboration, Problem solving, CRM systems', source: 'Skills', meaning: 'CRM systems are listed; Zendesk itself isn’t named.' },
+ { state: 'missing', label: 'No evidence found in this resume', ask: 'Workforce scheduling', meaning: 'Your resume doesn’t show it yet. You may still have it.' },
 ];
 const choices = [
  { title: 'Tailor a version for this role', detail: 'A separate version for this job. Your original stays put.', chosen: true },

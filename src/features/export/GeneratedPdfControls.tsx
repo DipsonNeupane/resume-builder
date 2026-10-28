@@ -9,6 +9,7 @@ import { supabase } from '../../services/supabase';
 import { validateAll, contentLength, maxContentChars, type Resume } from '../../model';
 import { docxMimeType } from '../../services/docx';
 import { trackProductEvent } from '../../services/analytics';
+import { launchFacts } from '../../content/launchFacts';
 
 const MAX_DOCUMENT_BYTES = 4_200_000;
 type ExportFormat = 'pdf' | 'docx';
@@ -21,6 +22,8 @@ const formats: Record<ExportFormat, { label: string; endpoint: string; mime: str
 
 export function GeneratedDocumentControls({ resume, ownerId, documentScope, jobResumeVersionId, onSignIn, onViewPro }: Props) {
  const [consent, setConsent] = useState(false);
+ const [keepWithApplication, setKeepWithApplication] = useState(true);
+ const canAttach = documentScope === 'job_specific' && Boolean(jobResumeVersionId);
  const [busyFormat, setBusyFormat] = useState<ExportFormat | null>(null);
  const [message, setMessage] = useState('');
  const [allowance, setAllowance] = useState('Checking download availability…');
@@ -70,11 +73,14 @@ export function GeneratedDocumentControls({ resume, ownerId, documentScope, jobR
     const response = await fetch(`/api/export-status?template=${encodeURIComponent(resume.template)}`, { headers: { Authorization: `Bearer ${session.access_token}` }, signal: controller.signal });
     if (!response.ok) throw new Error('Unavailable');
     const data = await response.json();
-    if (typeof data.isPro !== 'boolean' || typeof data.hasPaidAccess !== 'boolean' || !Number.isInteger(data.remaining) || data.remaining < 0 || data.remaining > 7 || typeof data.resetsAt !== 'string' || !Number.isFinite(Date.parse(data.resetsAt))) throw new Error('Invalid allowance');
+    if (typeof data.isPro !== 'boolean' || typeof data.hasPaidAccess !== 'boolean' || !Number.isInteger(data.remaining) || data.remaining < 0 || data.remaining > launchFacts.freeDownloads.count || (data.resetsAt !== null && (typeof data.resetsAt !== 'string' || !Number.isFinite(Date.parse(data.resetsAt))))) throw new Error('Invalid allowance');
     const current = (await client.auth.getSession()).data.session;
     if (disposed || request !== generation || current?.user.id !== ownerId) return;
-    const resets = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(data.resetsAt));
-    setAllowance(data.hasPaidAccess ? 'Generous document downloads are included with your active subscription. Fair-use protection applies.' : data.remaining > 0 ? `${data.remaining} of 7 Free downloads remain in your rolling 7-day window.` : `Your Free download allowance is used. One becomes available ${resets}.`);
+    const { count, windowDays } = launchFacts.freeDownloads;
+    const resets = data.resetsAt ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(data.resetsAt)) : null;
+    setAllowance(data.hasPaidAccess ? 'Generous document downloads are included with your active subscription. Fair-use protection applies.'
+     : data.remaining > 0 ? `${data.remaining} of ${count} Free downloads remain in your rolling ${windowDays}-day window.${resets && data.remaining < count ? ` Your next used download returns ${resets}.` : ''} Failed downloads do not count.`
+     : `Your Free download allowance is used.${resets ? ` One becomes available ${resets}.` : ''}`);
     setExhausted(!data.hasPaidAccess && data.remaining === 0);
     setAvailabilityUnknown(false);
    } catch {
@@ -110,7 +116,7 @@ export function GeneratedDocumentControls({ resume, ownerId, documentScope, jobR
    const response = await fetch(selected.endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${before.data.session.access_token}` },
-    body: JSON.stringify({ requestId: id, resume: snapshot, ...(documentScope === 'job_specific' && jobResumeVersionId ? { jobResumeVersionId } : {}) }),
+    body: JSON.stringify({ requestId: id, resume: snapshot, ...(documentScope === 'job_specific' && jobResumeVersionId ? { jobResumeVersionId } : {}), ...(canAttach && keepWithApplication ? { attachToApplication: true } : {}) }),
     signal: controller.signal,
    });
    if (!response.ok) {
@@ -139,7 +145,8 @@ export function GeneratedDocumentControls({ resume, ownerId, documentScope, jobR
    const url = URL.createObjectURL(blob);
    try { const a = document.createElement('a'); a.href = url; a.download = selected.filename; a.click(); }
    finally { setTimeout(() => URL.revokeObjectURL(url), 1000); }
-   setMessage(`${selected.label} document generated. Your browser should offer the download.`);
+   const attachment = response.headers.get('x-apwico-application-document');
+   setMessage(`${selected.label} document generated. Your browser should offer the download.${attachment === 'attached' ? ' This exact version is kept with the application. When you submit it, confirm Applied in My applications.' : attachment === 'unavailable' ? ' It could not be attached to the application; your download is unaffected.' : ''}`);
    trackProductEvent('export_completed', { surface: 'export', user_state: 'authenticated', export_type: format === 'pdf' ? 'PDF' : 'DOCX', document_scope: documentScope, outcome: 'success' });
    const qualifiedScope = response.headers.get('x-apwico-qualified-conversion') ?? response.headers.get('x-resumestride-qualified-conversion');
    const requestState = lastRequests.current[format];
@@ -159,14 +166,15 @@ export function GeneratedDocumentControls({ resume, ownerId, documentScope, jobR
  }
 
  if (!ownerId) return <div className="notice" role="status">
-  Sign in to download your resume as PDF or Word. A free account includes 7 downloads in a rolling 7-day window.
+  Sign in to download your resume as PDF or Word. A free account includes {launchFacts.freeDownloads.count} downloads in a rolling {launchFacts.freeDownloads.windowDays}-day window.
   <button className="text-button" onClick={onSignIn}>Sign in</button>
  </div>;
 
  return <><div ref={downloadGroup} role="group" aria-label="Document downloads" tabIndex={-1} className="field checkbox-field">
   <label><input type="checkbox" checked={consent} disabled={busyFormat !== null} onChange={event => setConsent(event.target.checked)} />I consent to uploading my resume content to APWICO’s server to generate my document.</label>
-  <p className="field-hint">PDF and Word share your download allowance. Choose the format you need.</p>
-  {availabilityUnknown?<p className="field-hint" aria-live="polite">We couldn’t check your download allowance. Free accounts include 7 downloads in a rolling 7-day window. Free downloads exhausted? <button className="text-button" onClick={()=>{setUpgradeConfirmed(false);setUpgradeOpen(true);}}>View Pro options</button></p>:<p className="field-hint" aria-live="polite">{allowance}</p>}
+  {canAttach && <label><input type="checkbox" checked={keepWithApplication} disabled={busyFormat !== null} onChange={event => setKeepWithApplication(event.target.checked)} />Keep a copy of this exact version with the application in my account, so I can retrieve what I submitted.</label>}
+  <p className="field-hint">PDF and Word share your download allowance. PDF keeps the template design; Word is an editable content document. Downloading never marks an application as submitted.</p>
+  {availabilityUnknown?<p className="field-hint" aria-live="polite">We couldn’t check your download allowance. Free accounts include {launchFacts.freeDownloads.count} downloads in a rolling {launchFacts.freeDownloads.windowDays}-day window. Free downloads exhausted? <button className="text-button" onClick={()=>{setUpgradeConfirmed(false);setUpgradeOpen(true);}}>View Pro options</button></p>:<p className="field-hint" aria-live="polite">{allowance}</p>}
   <div className="document-download-actions">
    <button className="button" disabled={!consent || busyFormat !== null || exhausted} onClick={() => download('pdf')}><Download size={16} />{busyFormat === 'pdf' ? 'Generating PDF…' : 'Download PDF'}</button>
    <button className="button outline" disabled={!consent || busyFormat !== null || exhausted} onClick={() => download('docx')}><Download size={16} />{busyFormat === 'docx' ? 'Generating Word…' : 'Download Word (.docx)'}</button>

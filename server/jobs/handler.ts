@@ -24,6 +24,7 @@ import type { EmploymentType, MatchLabel, NormalizedJob, SalaryNormalized, Workp
 import { savedJobSnapshot } from './account.ts'
 import { emitDiagnostic } from '../observability.ts'
 import { reserveProviderRequest } from './provider-budget.ts'
+import { preferenceSignals, type PreferencePosting } from '../../src/lib/jobPreferences.ts'
 
 function defaultDelay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -78,6 +79,10 @@ export type JobCardView = {
   matchAnalysis: ReturnType<typeof analysisView>
   sourceUrl: string
   savedSnapshot: ReturnType<typeof savedJobSnapshot>
+}
+
+function preferencePosting(job: NormalizedJob): PreferencePosting {
+  return { title: job.title, descriptionText: job.descriptionText, workplace: job.workplace.value, employmentType: job.employmentType.value, salary: job.salary }
 }
 
 function toCardView(job: NormalizedJob, match: MatchResult, isPro: boolean): JobCardView {
@@ -180,7 +185,10 @@ export async function searchJobs(request: Request, env: NodeJS.ProcessEnv = proc
       // a defensible occupational/title relationship are rejected instead of padding
       // the response with unrelated jobs.
       .filter(entry => entry.match.searchEligible)
-      .sort((a, b) => LABEL_ORDER[a.match.label] - LABEL_ORDER[b.match.label] || b.match.rank - a.match.rank)
+      // Soft preferences (experience level, priorities) reorder within an evidence label;
+      // they never hide a posting and unstated posting data scores zero.
+      .map(entry => ({ ...entry, preference: preferenceSignals(preferencePosting(entry.job), criteria).score }))
+      .sort((a, b) => LABEL_ORDER[a.match.label] - LABEL_ORDER[b.match.label] || (b.match.rank + b.preference) - (a.match.rank + a.preference))
     const diverseJobs = new Set(applyDiversity(ranked.map(entry => entry.job), PRO_JOB_LIMIT))
     const diverseRanked = ranked.filter(entry => diverseJobs.has(entry.job))
 

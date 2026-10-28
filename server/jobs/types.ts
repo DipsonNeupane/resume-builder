@@ -14,7 +14,8 @@ export type MatchLabel = 'strong' | 'good' | 'stretch'
  * provider stated explicitly. */
 export type FieldProvenance<T> = {
   value: T
-  source: 'provider' | 'inferred' | 'unknown'
+  /** 'user': entered by the account owner for a manually added application. */
+  source: 'provider' | 'inferred' | 'unknown' | 'user'
   confidence: Confidence
 }
 

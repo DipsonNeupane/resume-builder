@@ -82,6 +82,21 @@ try {
     if (lines.some((line) => /^not ok|^# Looks like/m.test(line))) anyFailed = true;
     if (!lines.some((line) => /^1\.\./.test(line))) filesWithoutPlan++;
   }
+  // Contract step (supabase/contract, never applied by `supabase db push`): prove it
+  // applies after the expand migrations and that this release still passes without the
+  // legacy shape. Legacy-sync tests describe the rollback window and are skipped here.
+  const contractDir = fileURLToPath(new URL('../supabase/contract/', import.meta.url));
+  for (const file of await sqlFilesInOrder(contractDir)) {
+    await db.exec(await readFile(path.join(contractDir, file), 'utf8'));
+    console.log(`-- applied contract ${file} --`);
+  }
+  for (const file of testFiles.filter((name) => !name.includes('legacy_sync'))) {
+    const results = await db.exec(await readFile(path.join(testsDir, file), 'utf8'));
+    const lines = results.flatMap((result) => result.rows.flatMap((row) => Object.values(row))).filter((value) => typeof value === 'string');
+    const failed = lines.filter((line) => /^not ok|^# Looks like/m.test(line));
+    console.log(`-- after contract: ${file} ${failed.length ? 'FAILED' : 'ok'} --`);
+    if (failed.length) { console.log(failed.join('\n')); anyFailed = true; }
+  }
   if (anyFailed || filesWithoutPlan > 0) process.exitCode = 1;
 } catch (error) {
   console.error(error.message);

@@ -207,3 +207,33 @@ test('export render failures are correlated and categorized while reservation cl
  assert.ok(!JSON.stringify(records).includes('private data'))
  assert.equal(records.at(-1)?.health,'degraded')
 })
+
+test('an explicitly kept job-specific export attaches the exact content to its application only after success',async()=>{
+ const versionId='44444444-4444-4444-4444-444444444444'
+ const savedJob='55555555-5555-4555-8555-555555555555'
+ for(const scenario of ['attached','attach_fails','render_fails','not_requested'] as const){
+  const calls:{name:string;args:Record<string,unknown>}[]=[]
+  const deps={
+   authenticate:async()=>owner,
+   renderDocument:async()=>{if(scenario==='render_fails')throw new Error('private');return new TextEncoder().encode('%PDF-fixture')},
+   serviceDatabase:()=>({rpc:async(name:string,args:Record<string,unknown>)=>{
+    calls.push({name,args})
+    if(name==='product_begin_document')return{data:[{lease:'fixture',already_complete:false}],error:null}
+    if(name==='job_resume_version_get')return{data:{data:example(),saved_job_id:savedJob},error:null}
+    if(name==='applications_attach_document')return scenario==='attach_fails'?{data:null,error:{message:'Application document limit reached'}}:{data:{documentId:'x',created:true},error:null}
+    return{data:null,error:null}
+   }}) as unknown as ReturnType<typeof serviceDatabase>,
+  }
+  const body={requestId:owner,resume:example(),jobResumeVersionId:versionId,...(scenario==='not_requested'?{}:{attachToApplication:true})}
+  const response=await exportPdf(new Request(`${env.APP_ORIGIN}/api/export-pdf`,{method:'POST',headers:{origin:env.APP_ORIGIN,'content-type':'application/json'},body:JSON.stringify(body)}),env,deps)
+  const attach=calls.find(call=>call.name==='applications_attach_document')
+  if(scenario==='render_fails'){assert.notEqual(response.status,200);assert.equal(attach,undefined,'a failed export never attaches');continue}
+  assert.equal(response.status,200,scenario)
+  if(scenario==='not_requested'){assert.equal(attach,undefined);assert.equal(response.headers.get('x-apwico-application-document'),null);continue}
+  assert.deepEqual(attach?.args,{p_owner:owner,p_saved_job:savedJob,p_version:versionId,p_format:'pdf',p_template:example().template,p_snapshot:example(),p_fingerprint:attach?.args.p_fingerprint})
+  assert.match(String(attach?.args.p_fingerprint),/^[0-9a-f]{64}$/)
+  assert.equal(response.headers.get('x-apwico-application-document'),scenario==='attached'?'attached':'unavailable')
+ }
+ const master=await exportPdf(new Request(`${env.APP_ORIGIN}/api/export-pdf`,{method:'POST',headers:{origin:env.APP_ORIGIN,'content-type':'application/json'},body:JSON.stringify({requestId:owner,resume:example(),attachToApplication:true})}),env,{...fixtures().deps,renderDocument:async()=>new TextEncoder().encode("%PDF-fixture")})
+ assert.equal(master.status,400,'attachment requires a job-specific version')
+})

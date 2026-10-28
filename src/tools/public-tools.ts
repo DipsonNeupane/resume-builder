@@ -49,9 +49,9 @@ function renderRequirements(requirements: ExtractedRequirement[], container: HTM
 }
 
 const evidenceLabels: Record<EvidenceResult['status'], string> = {
-  demonstrated: 'Clearly demonstrated',
-  partial: 'Worth reviewing',
-  not_demonstrated: 'Not demonstrated',
+  demonstrated: 'Evidence found',
+  partial: 'Related evidence — review',
+  not_demonstrated: 'No evidence found in this resume',
   confirmed_incompatible: 'Confirmed incompatibility',
 };
 

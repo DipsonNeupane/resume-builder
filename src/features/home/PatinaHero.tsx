@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 
-type Props = { onBuild: () => void };
+type Props = { onBuild: () => void; onFindJobs: () => void; onOrganize: () => void };
 
-export function PatinaHero({ onBuild }: Props) {
+export function PatinaHero({ onBuild, onFindJobs, onOrganize }: Props) {
  const [entered, setEntered] = useState(false);
 
  useEffect(() => {
@@ -13,14 +13,14 @@ export function PatinaHero({ onBuild }: Props) {
 
  return <section className={`pt-hero pt-hero-approved ${entered ? 'is-in' : ''}`}>
   <div className="pt-hero-copy">
-   <p className="pt-hero-kicker"><span className="pt-dot" aria-hidden="true"/>Evidence before effort</p>
-   <h1 className="pt-hero-title"><span>Find the roles</span> <span><em>worth your effort.</em></span></h1>
-   <p className="hero-deck">See what a job asks for, where your experience supports it, and what still needs clarification. Then you decide whether the role deserves your effort.</p>
+   <p className="pt-hero-kicker"><span className="pt-dot" aria-hidden="true"/>Job search, organized</p>
+   <h1 className="pt-hero-title"><span>Find jobs you like.</span> <span><em>Apply with confidence.</em></span> <span>Know what happens next.</span></h1>
+   <p className="hero-deck">Save roles you find here or anywhere else, see what each one asks for against your own resume, and keep every application, date and next step in one place.</p>
    <div className="hero-actions">
-    <a className="button large" href="/tools/resume-job-match/">Compare my resume with a job<ArrowRight size={18} aria-hidden="true"/></a>
-    <button className="text-button" onClick={onBuild}>Build a resume free<ArrowRight size={15} aria-hidden="true"/></button>
+    <a className="button large" href="/workspace/preferences" onClick={event => { event.preventDefault(); onFindJobs(); }}>Find my jobs<ArrowRight size={18} aria-hidden="true"/></a>
+    <a className="button large outline" href="/workspace/applications" onClick={event => { event.preventDefault(); onOrganize(); }}>Organize my applications<ArrowRight size={18} aria-hidden="true"/></a>
    </div>
-   <p className="pt-hero-free">Private, limited comparison. No signup required.</p>
+   <p className="pt-hero-free">Free account. No resume or quiz needed to track applications. <button className="text-button" onClick={onBuild}>Or build a resume</button></p>
   </div>
 
   <figure className="pt-story">
@@ -41,7 +41,7 @@ export function PatinaHero({ onBuild }: Props) {
      <div>
       <small>Evidence from your experience</small>
       <q>Support customers across email, phone, and live chat…</q>
-      <span className="pt-story-status"><i aria-hidden="true"/>Clearly demonstrated</span>
+      <span className="pt-story-status"><i aria-hidden="true"/>Evidence found</span>
      </div>
     </li>
     <li className="pt-story-step pt-story-decision">

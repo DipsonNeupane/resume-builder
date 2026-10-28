@@ -17,9 +17,9 @@ test('fictional sample is complete, resettable, accessible and isolated from a r
  }, real);
  await page.goto('/start/sample', { waitUntil: 'domcontentloaded' });
  await expect(page.getByText('This example is fictional')).toBeVisible();
- await expect(page.getByText('Clearly demonstrated', { exact: true })).toBeVisible();
- await expect(page.getByText('Worth reviewing', { exact: true })).toBeVisible();
- await expect(page.getByText('Not demonstrated', { exact: true })).toBeVisible();
+ await expect(page.getByText('Evidence found', { exact: true })).toBeVisible();
+ await expect(page.getByText('Related evidence — review', { exact: true })).toBeVisible();
+ await expect(page.getByText('No evidence found in this resume', { exact: true })).toBeVisible();
  expect(page.url()).not.toContain('Jordan');
  expect(page.url()).not.toContain('Northstar');
 

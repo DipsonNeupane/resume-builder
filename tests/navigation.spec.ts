@@ -76,9 +76,9 @@ test('browser history changes journey context without discarding the local maste
  await page.goto('/start/build');
  await page.getByRole('button', { name: 'Start building' }).click();
  await page.getByLabel('Full name').fill('Amina Rahman');
- await expect(page.locator('.save-status')).toContainText('Saved for this session');
+ await expect(page.locator('.save-status')).toContainText('Temporary draft — this tab only');
  await page.locator('.site-header').getByRole('button', { name: 'Find jobs', exact: true }).click();
- await expect(page).toHaveURL(/\/workspace\/jobs$/);
+ await expect(page).toHaveURL(/\/workspace\/discover$/);
  await page.goBack();
  await expect(page).toHaveURL(/\/workspace\/resume$/);
  await expect(page.getByLabel('Full name')).toHaveValue('Amina Rahman');

@@ -111,13 +111,13 @@ test('delayed lazy route focuses only its loaded heading and cached routes still
   releaseAccount();
   await expect(page.getByRole('heading', { level: 1, name: 'Create your account' })).toBeFocused();
   await page.getByRole('button', { name: 'Back to home', exact: true }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Find the roles worth your effort.', exact: true })).toBeFocused();
+  await expect(page.getByRole('heading', { level: 1, name: 'Find jobs you like. Apply with confidence. Know what happens next.', exact: true })).toBeFocused();
   await page.getByRole('button', { name: 'Find opportunities', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Start with the role you are considering.' })).toBeFocused();
   await page.getByRole('button', { name: 'Search live listings instead', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Find jobs' })).toBeFocused();
   await page.getByRole('button', { name: 'Back', exact: true }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Find the roles worth your effort.', exact: true })).toBeFocused();
+  await expect(page.getByRole('heading', { level: 1, name: 'Find jobs you like. Apply with confidence. Know what happens next.', exact: true })).toBeFocused();
   await page.getByRole('button', { name: 'View Pro options', exact: true }).click();
   await expect(proHeading).toBeFocused();
   await page.getByRole('button', { name: 'Sign in or create account' }).click();

@@ -18,7 +18,6 @@ select is((public.jobs_save('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',(select job f
 select isnt(public.jobs_source_identity('https://jobs.example/view?id=one'),public.jobs_source_identity('https://jobs.example/view?id=two'),'meaningful query identities remain distinct');
 select isnt(public.jobs_source_identity('https://jobs.example/#one'),public.jobs_source_identity('https://jobs.example/#two'),'fragment-based job identities remain distinct');
 select isnt(public.jobs_source_identity('https://jobs.example/view?id=one/'),public.jobs_source_identity('https://jobs.example/view?id=one'),'query values are never path-normalized');
-select public.jobs_workflow_upsert('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',(select id from public.saved_jobs where owner_id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),'pursue','not_applied','','','',false,null,0);
 select lives_ok($$select public.job_resume_version_create('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',(select id from public.saved_jobs where owner_id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),'{}',repeat('a',64))$$,'capture can create normal Pro persistent version');
 select is((select job_snapshot#>>'{capture,original,description}' from public.job_resume_versions where owner_id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),repeat('字',12000),'version snapshot preserves provenance');
 select is(jsonb_array_length(public.job_resume_versions_list('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')),0,'other account cannot list captured version');

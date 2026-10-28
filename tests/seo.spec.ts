@@ -17,7 +17,7 @@ test('public source documents, robots and sitemap are served with correct metada
   expect(await response.text()).toContain(`rel="canonical" href="https://apwico.com${path}"`);
   await page.goto(path);
   if (path === '/') await expect(page.getByRole('button', { name: 'Build my master resume', exact: true }).first()).toBeVisible();
-  if (path === '/resources/') await expect(page.getByRole('heading', { name: /Make the evidence easy to see/ })).toBeVisible();
+  if (path === '/resources/') await expect(page.getByRole('heading', { level: 1, name: 'Job search and resume guides' })).toBeVisible();
   if (path.startsWith('/resources/') && path !== '/resources/') await expect(page.locator('article.article-body')).toBeVisible();
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `https://apwico.com${path}`);
   expect((await page.locator('meta[name="description"]').getAttribute('content'))?.length).toBeGreaterThan(60);
@@ -32,7 +32,7 @@ test('editor, jobs, pro and callback states remove public canonical and structur
  await expect(page).toHaveTitle('Resume editor | APWICO');
  await expect(page.locator('link[rel="canonical"], script[data-seo-schema], meta[property="og:url"]')).toHaveCount(0);
  await page.getByRole('button', { name: 'Find jobs', exact: true }).first().click();
- await expect(page).toHaveTitle('Jobs and Match Analysis | APWICO');
+ await expect(page).toHaveTitle('Discover jobs | APWICO');
  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
  await page.getByRole('button', { name: 'APWICO home', exact: true }).click();
  // A tab that entered through a private route remains privacy-tainted until a

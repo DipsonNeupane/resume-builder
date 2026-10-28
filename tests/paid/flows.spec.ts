@@ -115,7 +115,7 @@ test('PDF and Word use shared server availability, format-specific endpoints, an
  await page.route('**/api/export-status*',route=>{statusRequests++;return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:false,hasPaidAccess:false,remaining,resetsAt:'2026-10-19T12:00:00Z'})});});
  const requests:{format:'pdf'|'docx';requestId:string}[]=[];
  for(const format of ['pdf','docx'] as const)await page.route(`**/api/export-${format}`,async route=>{const body=route.request().postDataJSON();requests.push({format,requestId:body.requestId});remaining=5;await route.fulfill({status:503,contentType:'application/json',body:'{}'});});
- await builder(page);await expect(page.getByText('6 of 7 Free downloads remain in your rolling 7-day window.',{exact:true})).toBeVisible();
+ await builder(page);await expect(page.getByText(/^6 of 7 Free downloads remain in your rolling 7-day window\. Your next used download returns .+\. Failed downloads do not count\.$/)).toBeVisible();
  await page.getByRole('checkbox',{name:'I consent to uploading my resume content',exact:false}).check();
  await page.getByRole('button',{name:'Download PDF',exact:true}).click();
  await expect.poll(()=>statusRequests).toBeGreaterThan(1);

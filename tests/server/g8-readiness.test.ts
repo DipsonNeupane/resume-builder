@@ -11,7 +11,7 @@ test('public Match methodology covers actual evidence states, clarifications, li
  const methodology=capabilities.find(item=>item.slug==='match-methodology');
  assert.ok(methodology);
  const copy=JSON.stringify(methodology);
- for(const phrase of ['required','preferred','Clearly demonstrated','Worth reviewing','Not demonstrated','confirmed incompatibility','deterministic','AI']) assert.match(copy,new RegExp(phrase,'i'));
+ for(const phrase of ['required','preferred','Evidence found','Related evidence — review','No evidence found in this resume','confirmed incompatibility','deterministic','AI']) assert.match(copy,new RegExp(phrase,'i'));
  for(const phrase of ['hiring prediction','ATS score','decision']) assert.match(copy,new RegExp(phrase,'i'));
  const engine=read('server/jobs/match.ts');
  for(const token of ["'required'","'preferred'","'nice_to_have'","'demonstrated'","'partially_demonstrated'","'not_demonstrated'","'confirmed_incompatible'"]) assert.match(engine,new RegExp(token));

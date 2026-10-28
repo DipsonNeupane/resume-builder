@@ -71,6 +71,19 @@ try{
  assert.equal(budget.filter(r=>r.status==='fulfilled').length,1);
  assert.equal(await sql('select spent_micro_usd+reserved_micro_usd from public.ai_budget_months'),'25000000');
  console.log('PASS concurrent AI reservations cannot exceed $25 cap');
+ // The cap is a product setting; a lowered testing budget holds under the same race.
+ await sql(`update public.ai_budget_months set spent_micro_usd=0,reserved_micro_usd=0;update public.product_settings set ai_monthly_budget_micro_usd=2000000 where id;`);
+ const lowered=await Promise.allSettled([1,2,3,4].map(n=>sql(`select public.reserve_ai_budget('cccccccc-cccc-cccc-cccc-cccccccccc0${n}','${[owner,other,mixedOwner,raceOwnerA][n-1]}',1000000)`)));
+ assert.equal(lowered.filter(r=>r.status==='fulfilled').length,2);
+ assert.equal(await sql('select spent_micro_usd+reserved_micro_usd from public.ai_budget_months'),'2000000');
+ await sql('update public.product_settings set ai_monthly_budget_micro_usd=25000000 where id;');
+ console.log('PASS concurrent AI reservations cannot exceed a lowered testing budget');
+ // Four simultaneous Free trial runs with three allowed reserve exactly three.
+ await sql(`insert into public.saved_jobs(id,owner_id,provider,provider_job_id,dedupe_key,snapshot,source_url) values('99999999-9999-4999-8999-999999999999','${other}','fixture','race',repeat('9',64),'{}','https://jobs.example/race');
+ insert into public.product_tailoring_trials(owner_id,saved_job_id) values('${other}','99999999-9999-4999-8999-999999999999');`);
+ const trialRace=await Promise.all([1,2,3,4].map(n=>sql(`select public.product_reserve_trial_run('${other}','99999999-9999-4999-8999-999999999999','dddddddd-dddd-dddd-dddd-dddddddddd0${n}')`)));
+ assert.deepEqual(trialRace.sort(),['exhausted','reserved','reserved','reserved']);
+ console.log('PASS four concurrent Free trial runs reserve exactly the three allowed');
  const attempts=await Promise.allSettled(Array.from({length:25},()=>sql(`set role service_role;select public.billing_throttle_checkout_attempt('${owner}');`)));
  assert.equal(attempts.filter(r=>r.status==='fulfilled').length,20);
  assert.equal(attempts.filter(r=>r.status==='rejected'&&r.reason.code==='54000').length,5);

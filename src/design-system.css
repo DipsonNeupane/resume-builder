@@ -284,6 +284,11 @@ summary{cursor:pointer;min-height:44px;align-content:center}
 .pro-preview-compare span{font-size:11px;color:var(--rs-slate);letter-spacing:0;margin-bottom:10px}
 .pro-preview-compare p{font-size:14px;line-height:1.8;color:var(--rs-text);white-space:pre-wrap}
 .tailoring-why{font-size:12px;color:var(--rs-slate);padding:0 20px}
+.suggestion-trace{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 20px;font-size:13px}
+.suggestion-trace dt{font-size:11px;color:var(--rs-slate);margin-bottom:4px}.suggestion-trace dd{margin:0 0 4px;color:var(--rs-text)}.suggestion-trace small{color:var(--rs-slate)}
+.suggestion-ungrounded{margin:14px 20px}.suggestion-ungrounded p{margin:0}.suggestion-ungrounded ul{margin:8px 0;padding-left:20px}.suggestion-ungrounded small{display:block}.suggestion-support,.suggestion-rewrite{margin:0 20px 12px}
+.provenance-list{margin:12px 0}.provenance-list summary{cursor:pointer;font-weight:600}.provenance-list ol{margin:8px 0;padding-left:20px}.provenance-list li{margin:0 0 10px}.provenance-list li p{margin:2px 0}.provenance-text{overflow-wrap:anywhere}
+@media (max-width:640px){.suggestion-trace{grid-template-columns:1fr}}
 .suggestion-card .section-actions{border-top:1px solid var(--rs-line);margin:16px 0 0;padding:10px 20px;justify-content:flex-end}
 .suggestion-card>.field-hint{padding:12px 20px;border-top:1px solid var(--rs-line)}
 .suggestion-card[data-status=accepted]{border-color:#91bdaa}

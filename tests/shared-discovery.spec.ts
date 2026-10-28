@@ -39,7 +39,7 @@ test('job-first onboarding extracts requirements and preserves private state thr
  await page.getByRole('button',{name:'Start building'}).click();
  await expect(page.getByText('The pasted job is preserved separately')).toBeVisible();
  await page.getByRole('button',{name:'Review the job with this resume'}).click();
- await expect(page).toHaveURL('/workspace/jobs');
+ await expect(page).toHaveURL('/workspace/discover');
  await expect(page.getByText('Program coordinator',{exact:false}).first()).toBeVisible();
  expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
 });

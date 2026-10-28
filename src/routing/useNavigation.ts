@@ -14,6 +14,9 @@ export function useNavigation() {
   const initial = currentRoute();
   if (window.location.pathname === '/' && window.location.search && !isAccountCallback(window.location) && initial.kind !== 'home' && initial.kind !== 'not_found') {
    window.history.replaceState(null, '', initial.path);
+  } else if ((initial.kind === 'workspace_jobs' || initial.kind === 'workspace_applications' || initial.kind === 'workspace_today') && window.location.pathname.replace(/\/$/, '').toLowerCase() !== initial.path) {
+   // Retained links (/workspace, /workspace/jobs, /workspace/jobs/saved) show their current path.
+   window.history.replaceState(null, '', `${initial.path}${window.location.search}${window.location.hash}`);
   }
   const restore = () => setRoute(currentRoute());
   window.addEventListener('popstate', restore);

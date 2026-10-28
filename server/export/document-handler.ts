@@ -26,14 +26,19 @@ export async function exportDocument(config:DocumentExportConfig,request:Request
   requirePost(request,origin)
   const owner=await deps.authenticate(request,databaseConfig(env))
   const body=await jsonBody(request,1_000_000)
-  if(Object.keys(body).some(k=>!['requestId','resume','jobResumeVersionId'].includes(k))||typeof body.requestId!=='string'||!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(body.requestId)
-   ||(body.jobResumeVersionId!==undefined&&(typeof body.jobResumeVersionId!=='string'||!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(body.jobResumeVersionId))))throw new HttpError(400,'Invalid download request')
+  if(Object.keys(body).some(k=>!['requestId','resume','jobResumeVersionId','attachToApplication'].includes(k))||typeof body.requestId!=='string'||!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(body.requestId)
+   ||(body.jobResumeVersionId!==undefined&&(typeof body.jobResumeVersionId!=='string'||!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(body.jobResumeVersionId)))
+   ||(body.attachToApplication!==undefined&&(body.attachToApplication!==true||body.jobResumeVersionId===undefined)))throw new HttpError(400,'Invalid download request')
   validateExport(body.resume)
   const db=deps.serviceDatabase(env)
   let qualifiedVersionId:string|null=null
+  let versionSavedJob:string|null=null
   if(typeof body.jobResumeVersionId==='string'){
    const version=await db.rpc('job_resume_version_get',{p_owner:owner,p_version:body.jobResumeVersionId})
-   if(!version.error&&version.data&&typeof version.data==='object'&&canonicalJson(version.data.data)===canonicalJson(body.resume))qualifiedVersionId=body.jobResumeVersionId
+   if(!version.error&&version.data&&typeof version.data==='object'&&canonicalJson(version.data.data)===canonicalJson(body.resume)){
+    qualifiedVersionId=body.jobResumeVersionId
+    versionSavedJob=typeof version.data.saved_job_id==='string'?version.data.saved_job_id:null
+   }
   }
   // Bind idempotency to both content and format: a UUID safely retries the same
   // document, but can never be reused to turn a counted PDF into a free DOCX.
@@ -58,7 +63,20 @@ export async function exportDocument(config:DocumentExportConfig,request:Request
     const outcome=await db.rpc('product_record_application_package',{p_owner:owner,p_export_request:body.requestId,p_job_resume_version:body.jobResumeVersionId,p_format:config.format})
     if(!outcome.error&&(outcome.data==='limited'||outcome.data==='full'))qualifiedScope=outcome.data
   }
+  // With the owner's explicit choice, keep the exact exported resume content with its
+  // application so the submitted version can be retrieved later. Only the persisted,
+  // owner-bound job version (verified identical above) qualifies. A failure here never
+  // withholds a download that has already been generated and accounted for.
+  let attached:'attached'|'unavailable'|null=null
+  if(body.attachToApplication===true){
+   attached='unavailable'
+   if(qualifiedVersionId&&versionSavedJob){
+    const result=await db.rpc('applications_attach_document',{p_owner:owner,p_saved_job:versionSavedJob,p_version:qualifiedVersionId,p_format:config.format,p_template:body.resume.template,p_snapshot:body.resume,p_fingerprint:hash})
+    if(!result.error)attached='attached'
+   }
+  }
   const headers:Record<string,string>={'Content-Type':config.contentType,'Content-Disposition':`attachment; filename="${config.filename}"`,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}
+  if(attached)headers['X-APWICO-Application-Document']=attached
   if(qualifiedScope){
    headers['X-APWICO-Qualified-Conversion']=qualifiedScope
    // Temporary response compatibility for clients shipped before the brand migration.

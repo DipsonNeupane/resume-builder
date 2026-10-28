@@ -1,4 +1,5 @@
 import { freeTemplates, premiumTemplates } from '../model';
+import { freeDownloadsSummary, launchFacts } from './launchFacts';
 
 export type CommercialPlanId = 'free' | 'pro';
 
@@ -22,11 +23,11 @@ export const commercialPlans: readonly CommercialPlan[] = [
  {
   id: 'free', name: 'Free', price: '$0', cadence: 'No subscription', recurring: false,
   summary: `Build with all ${freeTemplates.length} Free templates, review evidence, and organize a focused job search.`,
-  includes: [`All ${freeTemplates.length} Free templates`, 'Browser-only evidence checker', 'Up to 10 relevant results per refresh; 3 manual refreshes per rolling 24 hours', 'Optional fresh automatic refresh about every 24 hours', 'Save and track up to 10 applications', '7 successful PDF or Word downloads per rolling 7 days'],
+  includes: [`All ${freeTemplates.length} Free templates`, 'Browser-only evidence checker', `Up to ${launchFacts.freeResultsPerRefresh} relevant results per refresh; ${launchFacts.freeManualRefreshes.count} manual refreshes per rolling ${launchFacts.freeManualRefreshes.windowHours} hours`, 'Optional fresh automatic refresh about every 24 hours', `Track up to ${launchFacts.freeApplications} applications`, `${launchFacts.freeTailoringTrials} complete tailoring trial`, freeDownloadsSummary.charAt(0).toUpperCase() + freeDownloadsSummary.slice(1)],
   action: { label: 'Start with Free', href: '/start/build' },
  },
  {
-  id: 'pro', name: 'Pro', price: 'US$14.99', cadence: 'per month', recurring: true,
+  id: 'pro', name: 'Pro', price: launchFacts.proMonthlyPrice, cadence: 'per month', recurring: true,
   summary: 'Unlock every Premium template, expanded job search, full Match Analysis, and job-specific tailoring.',
   includes: [`All ${freeTemplates.length + premiumTemplates.length} templates`, 'Full requirement-level Match Analysis', 'Up to 20 job results per search without the Free daily search limit', 'A separate resume for each saved job', 'AI suggestions you accept, reject or edit', 'Fair-use PDF and editable Word downloads while access is active'],
   action: { label: 'Review Pro in workspace', href: '/workspace/pro' },
@@ -37,17 +38,19 @@ export const commercialPolicy = {
  territory: 'New paid subscriptions are currently available only in the United States.',
  currency: 'All current subscription prices are presented and charged in United States dollars (USD). No local-currency price is promised.',
  paymentMethods: 'Stripe Checkout shows only payment methods enabled for the configured account and compatible with the buyer, device, USD price and subscription. APWICO does not promise a particular method before checkout displays it.',
- taxesAndInvoices: 'Review any taxes, currency conversion, invoice, and receipt details in Stripe Checkout before paying.',
+ taxesAndInvoices: 'Review any taxes, currency conversion, invoice, and receipt details in Stripe Checkout before paying. Tax-inclusive pricing and invoice availability are not promised.',
  refunds: 'Purchases are generally non-refundable except where mandatory consumer, unauthorized-charge, duplicate-charge or non-supply rights apply. The terms and refund policy control.',
  renewal: 'Paid subscriptions renew monthly until cancelled.',
  cancellation: 'Cancellation stops future renewal. Paid access continues through the current billing period.',
- templateAfterCancellation: 'After an individual Premium-template subscription expires, the design remains available to preview, but new downloads in that Premium design require active access. Resume content is not deleted, and files already downloaded remain yours.',
- proOverlap: 'When a Pro purchase succeeds, future renewals for active individual-template subscriptions are stopped. Their already-paid access continues through each paid period.',
+ proLimits: `Pro is not unlimited: up to ${launchFacts.proApplicationCeiling.toLocaleString('en-US')} tracked applications, up to ${launchFacts.proResultsPerSearch} results per job search, fair-use downloads, and up to ${launchFacts.aiRequestsPerHour} AI tailoring requests per hour per account. AI suggestions can pause for everyone when the monthly AI spending limit is reached; everything else keeps working.`,
+ freeTrial: `The Free tailoring trial covers the first application you prepare with it, including up to ${launchFacts.freeTrialAiRuns} successful AI suggestion runs. Failed runs do not count, and the trial does not renew.`,
+ dataAccess: `Your resumes, job-specific versions, application records and kept document copies stay in your account on Free and Pro and after Pro ends. Above the Free limit of ${launchFacts.freeApplications} applications, every existing record stays available to open, edit, export as CSV and remove; only adding new ones waits.`,
+ templateAfterCancellation: 'After Pro ends, Premium designs remain available to preview, but new downloads in a Premium design require active Pro. Resume content and application records are not deleted, and files already downloaded remain yours.',
  pdf: 'PDF preserves the selected resume design.',
  docx: 'Word (.docx) is a clean, editable content document; it does not promise visual parity with the PDF template.',
- freeDownloads: 'Free includes 7 successful PDF or Word downloads in a rolling 7-day window. Both formats share the allowance; each successful download leaves the window seven days after it occurred.',
- paidDownloads: 'Pro includes fair-use downloads for every template. Server size and abuse limits apply. Existing individual-template subscriptions retain their original access while active, but are no longer sold to new customers.',
- exportBoundary: 'Downloads require a signed-in account and explicit consent to send the current resume to APWICO for server generation. The export routes do not intentionally keep the resume or generated file as a separate permanent server copy.',
+ freeDownloads: `Free includes ${launchFacts.freeDownloads.count} successful PDF or Word downloads in a rolling ${launchFacts.freeDownloads.windowDays}-day window. Both formats share the allowance; failed downloads do not count, and each counted download leaves the window ${launchFacts.freeDownloads.windowDays} days after it started.`,
+ paidDownloads: 'Pro includes fair-use downloads for every template. Server size and abuse limits apply.',
+ exportBoundary: 'Downloads require a signed-in account and explicit consent to send the current resume to APWICO for server generation. The generated file is not kept. When you export a job-specific version and choose to keep it with its application, the exact resume content is stored in your account so you can retrieve what you submitted.',
  outcomes: 'No plan or template promises ATS passage, interviews, job offers, or hiring outcomes.',
  checkout: 'Previewing a template does not start checkout. A recurring paid action requires an explicit consent checkbox before Stripe checkout opens.',
 } as const;

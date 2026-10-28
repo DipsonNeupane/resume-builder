@@ -6,7 +6,7 @@ for (const width of [320, 390, 768, 1440, 1920]) test(`premium public and docume
  await page.setViewportSize({width,height:900});
  await page.addInitScript(draft=>sessionStorage.setItem('resumestride.resume.v1',JSON.stringify(draft)),example());
  await page.goto('/');
- await expect(page.getByRole('heading',{name:'Find the roles worth your effort.'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Find jobs you like. Apply with confidence. Know what happens next.'})).toBeVisible();
  const templateHeadingRatio=await page.locator('.template-specimen .resume-paper').evaluate(paper=>parseFloat(getComputedStyle(paper.querySelector('h2')!).fontSize)/parseFloat(getComputedStyle(paper).fontSize));
  expect(templateHeadingRatio).toBeCloseTo(.9,1);
  expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
@@ -17,7 +17,7 @@ for (const width of [320, 390, 768, 1440, 1920]) test(`premium public and docume
   await page.getByRole('link',{name:'Templates',exact:true}).click();
   await expect(page).toHaveURL(/\/templates\/$/);
   await page.goBack();
-  await expect(page.getByRole('heading',{name:'Find the roles worth your effort.'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Find jobs you like. Apply with confidence. Know what happens next.'})).toBeVisible();
  }
  await page.goto('/workspace/resume');
  const activeDocument=page.getByRole('region',{name:'Active document'});

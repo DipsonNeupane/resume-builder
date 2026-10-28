@@ -45,9 +45,9 @@ function renderRequirements(requirements, container) {
     }
 }
 const evidenceLabels = {
-    demonstrated: 'Clearly demonstrated',
-    partial: 'Worth reviewing',
-    not_demonstrated: 'Not demonstrated',
+    demonstrated: 'Evidence found',
+    partial: 'Related evidence — review',
+    not_demonstrated: 'No evidence found in this resume',
     confirmed_incompatible: 'Confirmed incompatibility',
 };
 function renderEvidence(results, container) {

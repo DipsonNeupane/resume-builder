@@ -206,7 +206,7 @@ test('requirement extraction removes formatting headings and does not promote or
     title: 'Facilities Technician',
     descriptionText: `**ESSENTIAL FUNCTIONS/DUTIES**\nNotifies supervisor if major repairs are required.\n**Essential Duties and Responsibilities:**\nInspect equipment each morning.\nServe customers and operate register.\n**Required:**\nMust hold an active electrician license.\nQualifications\n2+ years of facilities maintenance experience required.`,
   }))
-  assert.deepEqual(result.analysis.requirements.map(item => item.text), ['Must hold an active electrician license.', '2+ years of facilities maintenance experience required.'])
+  assert.deepEqual(result.analysis.requirements.map(item => item.text), ['Must hold an active electrician license', '2+ years of facilities maintenance experience required'])
   assert.doesNotMatch(JSON.stringify(result.analysis.requirements), /ESSENTIAL FUNCTIONS|Essential Duties|Required:\*\*|Qualifications|Notifies supervisor|Serve customers/i)
 })
 
@@ -258,4 +258,33 @@ test('Free depth is bounded while Pro receives full analysis and the truthful ta
   assert.equal(pro.fullAnalysis?.requirements.length, 3)
   assert.equal(pro.fullAnalysis?.tailoringAction, 'Tailor my resume for this job')
   assert.doesNotMatch(JSON.stringify({ free, pro }), /\d+%|chance of|probability/i)
+})
+
+test('owner requirement edits remove, reclassify and add items while keeping source wording and origin', async () => {
+  const { analyzeJob: analyze, parseRequirementEdits } = await import('../../server/jobs/match.ts')
+  const posting = 'Experience with Zendesk administration.\nAbility to coach new team members.\nPreferred: Spanish language proficiency.'
+  const job = { id: 'manual:x', provider: 'manual', providerJobId: 'x', title: 'Support specialist', company: 'Example Company',
+    location: { value: { city: null, region: null, country: null }, source: 'unknown', confidence: 'low' },
+    workplace: { value: 'unknown', source: 'unknown', confidence: 'low' }, employmentType: { value: 'unknown', source: 'unknown', confidence: 'low' },
+    salary: null, descriptionText: posting, postedAt: null, expiry: { expiresAt: null, isLikelyExpired: false, confidence: 'low', source: 'unknown' },
+    directness: { value: null, source: 'unknown', confidence: 'low' }, sourceUrl: '', portal: null, source: null, dedupeKey: '0'.repeat(64), retrievedAt: '2026-10-27T00:00:00Z' } as const
+  const evidence = { headline: 'Support specialist', skills: '', roles: [{ title: 'Support specialist', description: 'Trained three new team members.' }] }
+  const base = analyze(evidence, job as never).analysis.requirements
+  const zendesk = base.find(item => /Zendesk/.test(item.text))!
+  const spanish = base.find(item => /Spanish/.test(item.text))!
+  const edits = parseRequirementEdits({ removed: [zendesk.id], categories: { [spanish.id]: 'required' }, added: [{ text: 'Workforce scheduling experience', category: 'preferred' }] })
+  const edited = analyze(evidence, job as never, undefined, undefined, edits).analysis
+  assert.equal(edited.requirements.some(item => item.id === zendesk.id), false)
+  const corrected = edited.requirements.find(item => item.id === spanish.id)!
+  assert.equal(corrected.category, 'required')
+  assert.equal(corrected.originalCategory, 'preferred')
+  assert.equal(corrected.text, spanish.text, 'source wording is unchanged')
+  const added = edited.requirements.find(item => item.origin === 'user')!
+  assert.equal(added.text, 'Workforce scheduling experience')
+  assert.equal(added.status, 'not_demonstrated', 'an added requirement is never assumed to be met')
+  assert.notEqual(edited.contextHash, analyze(evidence, job as never).analysis.contextHash, 'edits invalidate the saved analysis context')
+  assert.throws(() => parseRequirementEdits({ removed: ['bad'], categories: {}, added: [] }))
+  // The database column default for a record with no edits.
+  assert.deepEqual(parseRequirementEdits({}), { removed: [], categories: {}, added: [] })
+  assert.throws(() => parseRequirementEdits({ removed: [], categories: {}, added: Array.from({ length: 11 }, () => ({ text: 'Something useful', category: 'required' })) }))
 })
