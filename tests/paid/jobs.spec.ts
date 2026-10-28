@@ -204,9 +204,14 @@ test('an owner-scoped job-specific resume restores after reload while preserving
     ownerId, jobContext: { title: 'Unrelated local draft', company: 'Private employer', description: 'Private description', sourceUrl: 'https://jobs.example/private', capturedAt: '2026-09-29T00:00:00.000Z' },
     baseSnapshot: base, resume: { ...base, summary: 'Unrelated local draft wording.' },
   })), { ownerId: owner, base: master });
+  const updates: { versionId: string; expectedRevision: number; resume: { summary: string } }[] = [];
   await page.route('**/api/jobs-account', route => {
     const body = route.request().postDataJSON();
     if (body.action === 'get_job_resume') return route.fulfill({ json: { version: body.versionId === versionBId ? versionB : version } });
+    if (body.action === 'update_job_resume') {
+      updates.push(body);
+      return route.fulfill({ json: { version: { ...version, resume: body.resume, revision: body.expectedRevision + 1, updatedAt: '2026-09-30T00:00:00Z' } } });
+    }
     return route.fulfill({ json: { isPro: true, saveLimit: 10000, savedJobs: [], jobResumeVersions: [version, versionB].map(item => ({ ...item, resume: undefined, savedJobExists: true })), preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } } });
   });
   await page.goto(`/workspace/resumes/${versionId}`, { waitUntil: 'domcontentloaded' });
@@ -225,6 +230,11 @@ test('an owner-scoped job-specific resume restores after reload while preserving
   await expect(page.getByText(/Your master resume is preserved separately/)).toBeVisible();
   await page.getByRole('button', { name: 'Profile & skills' }).click();
   await expect(page.getByRole('textbox', { name: 'Professional profile', exact: true })).toHaveValue('Separate version wording.');
+  expect(JSON.parse(await page.evaluate(() => sessionStorage.getItem('resumestride.resume.v1')!)).summary).toBe(master.summary);
+  // The restored version is editable: the change saves to that version only.
+  await page.getByRole('textbox', { name: 'Professional profile', exact: true }).fill('Edited version wording after reload.');
+  await expect.poll(() => updates.length).toBe(1);
+  expect(updates[0]).toMatchObject({ versionId, expectedRevision: 2, resume: { summary: 'Edited version wording after reload.' } });
   expect(JSON.parse(await page.evaluate(() => sessionStorage.getItem('resumestride.resume.v1')!)).summary).toBe(master.summary);
   await page.evaluate(next => { history.pushState(null, '', next); dispatchEvent(new PopStateEvent('popstate')); }, `/workspace/resumes/${versionBId}`);
   await expect(page.getByText(/Job-specific resume — Tailored for Second private role/)).toBeVisible();

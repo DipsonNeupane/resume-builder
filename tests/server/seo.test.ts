@@ -59,6 +59,12 @@ test('Vite dev and preview register HTTP policy before the SPA fallback', () => 
      continue;
     }
     assert.equal(response.getHeader('X-Robots-Tag'), noindex, `${hook}: ${method} ${path}`);
+    if (hook === 'configureServer' && path.startsWith('/api/')) {
+     // Never the transformed server module: functions do not run under Vite.
+     assert.equal(response.statusCode, 404); assert.equal(continued, false); assert.equal(ended, true);
+     assert.equal(response.getHeader('Content-Type'), 'application/json');
+     continue;
+    }
     const expected = requestSeo(new URL(path, 'http://localhost'), false);
     assert.equal(response.statusCode, expected.status || 200);
     assert.equal(ended, Boolean(expected.status)); assert.equal(continued, !expected.status);
