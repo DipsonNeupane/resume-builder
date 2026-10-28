@@ -28,7 +28,7 @@ Stripe, Techmap, OpenAI, Resend or a deployed site.
 | 1 | Persist suggestion provenance with saved versions (AI wording, user wording, user-added facts, requirement and resume references); edits, reloads and historical views correct | **Verified locally** | migration `20261028100000`; `src/lib/tailoringProvenance.ts`; `supabase/tests/tailoring_provenance_ai_safeguards.test.sql` (34); `tests/server/tailoring-provenance-ai.test.ts`; journey A (stored, kept, reload, later edit shows "Edited by you since", kept view unchanged); `jobs.spec.ts` (fact and own-wording origins, undo removes its record); screenshots `a12`, `a13` |
 | 2 | Configurable US$25 AI cap; concurrency, exhaustion, clear errors, recovery; failures use no trial run or allowance; no substitute output | **Verified locally**; real-PostgreSQL race harness **not run** (no PostgreSQL binaries here) | `product_settings.ai_monthly_budget_micro_usd` (default and maximum 25000000); trial runs reserved before the provider call and released on failure (this closed a real race: three simultaneous trial requests could previously record more than three runs); hourly allowance counts only running or successful requests, with a separate 60-attempt cap; `tests/server/tailoring-provenance-ai.test.ts` (5); `jobs.spec.ts` budget-paused message then recovery; screenshot `t2`; live spending limits unchanged |
 | 3 | Local checkpoint commit | **Done, not pushed** | `git log -1` on `feat/apwico-launch-tracker`; other worktrees untouched |
-| 4 | `STAGING.md` reviewed against the repository; phases separated; production-linked commands identified; contract step excluded | **Done** | `STAGING.md` §1–§10. Findings: production has no migration ledger and (as last inspected) 24 pending migrations, not 5; the CSP hard-codes the production Supabase origin; the Vercel project has no Preview variables |
+| 4 | `STAGING.md` corrected for the authorized staging rehearsal; migration reapplication removed | **Updated; remote verification blocked** | Owner reports staging migrations 1–39 and production 1–30. The runbook prohibits migration commands and production access. Staging-only `STAGING_DB_URL` is unavailable in this environment, so hosted ledger checks and deployment have not run. |
 | 5 | Local packaging checks | **Passed** | `vercel build --standalone` + `prepare-vercel-output.mjs` + `check-packaged-functions.mjs` (`test-results/12`, `13`). Hosted execution still needs the preview |
 | 6 | Staging targets identified, not created | **Identified; awaiting confirmation** | `STAGING.md` §1 |
 
@@ -182,7 +182,7 @@ staging preview, then the live checks L1–L15 in `STAGING.md` §6.
 
 1. **Owner and counsel approval** of `public/terms.html` and `public/privacy.html`. Counsel should
    also say whether a renewal notice is legally required for this plan.
-2. **Staging rehearsal** (`STAGING.md`). Needs approval and staging credentials.
+2. **Staging rehearsal** (`STAGING.md`). Authorized, but blocked in this environment until the staging-only `STAGING_DB_URL` and existing staging Vercel target credentials are available. Migrations 1–39 are reported already applied; no migration should be run.
 3. **Live verification**:
    - hosted Supabase Auth (email links, redirect URLs, token refresh);
    - Stripe test-mode checkout, portal and renewal;
@@ -195,11 +195,9 @@ staging preview, then the live checks L1–L15 in `STAGING.md` §6.
 4. **AI monthly budget**: US$25 per month service-wide is the current cap (now a setting, never
    above US$25 without a migration). Decide the launch value. The provider-side spend limit is
    separate and was not changed.
-5. **Staging targets**: confirm the database (candidate A `ntrqseoiwyrvdsobwxaj` or a new project)
-   and web target (new Vercel project or Preview scope), and supply a staging-only CSP
-   (`STAGING.md` §1, A6).
-6. **Production migration reconciliation**: production has no migration ledger; re-inspect its
-   catalog read-only (`supabase/checks/catalog_fingerprint.sql`) before any production plan.
+5. **Staging-only credentials**: provide `STAGING_DB_URL` and credentials for the already existing
+   staging Vercel target. No project creation or production-scoped environment access is part of
+   this task (`STAGING.md` §1).
 7. **Real-PostgreSQL concurrency harness** (`npm run test:db:concurrency`): needs PostgreSQL 17
    server binaries; not run here.
 8. **Accessibility beyond automated checks**: screen readers, 200–400% zoom, real devices.

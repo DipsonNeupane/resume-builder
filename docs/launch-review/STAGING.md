@@ -1,49 +1,37 @@
 # Staging rehearsal — targets, phases, exact commands and expected results
 
-**Status: prepared, not executed.** Nothing in Phases B–D has been run by this package except
-the read-only Vercel listings recorded in §1. Phase C needs the owner to confirm the exact
-staging targets in §1 first. "No existing users" does not authorize deleting remote data,
-objects or resources.
+**Status: staging rehearsal authorized; staging migration state reported complete.** The owner
+reports that the existing **ResumeStride Recovery Drill** staging database has migrations
+**1–39** applied and production has **1–30**. Verify staging's ledger read-only with staging-only
+credentials before the checks. Do not reapply migrations, run `supabase db push`, or migrate
+production. No remote data may be deleted.
 
-Reviewed against the repository on 2026-10-28. This review changed three earlier assumptions:
+Reviewed against the repository on 2026-10-28. The CSP in `vercel.json` hard-codes the production Supabase origin, so staging builds need a staging-only CSP.
 
-1. **Production has no Supabase migration ledger.** The last recorded read-only inspection
-   (`docs/PRODUCTION_CATALOG_RECONCILIATION_2026-09-25.md`) found
-   `supabase_migrations.schema_migrations` absent and only migrations 1–15 applied, through the
-   SQL editor, with two recorded drifts (#2 stricter constraint, #5 old 999-cent price). The
-   earlier plan used `supabase db push` and expected exactly five pending files. Both are wrong.
-   Unless production changed after 2026-09-25 (check B3), **24 migrations are pending (16–39)**,
-   not five or six. Running `supabase db push` against production would try to apply all 39.
-2. **The CSP in `vercel.json` hard-codes the production Supabase origin**
-   (`connect-src 'self' https://ggwwzwqykkncgupdimxp.supabase.co`). A preview build pointed at
-   a staging database would have its browser calls blocked unless the staging build uses a
-   staging-only CSP (C4).
-3. **The Vercel project has no Preview environment variables.** All 29 are Production-scoped
-   (B1). A plain `vercel deploy` preview would run with no database, AI, export or billing
-   configuration. Staging configuration must be added before any live check (C4).
-
+1. **Migration state is intentionally different.** The owner reports staging migrations **1–39**
+   and production migrations **1–30**. This task targets staging only; the difference does not
+   authorize production migration or production data access. Verify staging read-only, then run
+   checks without applying migration files or using `supabase db push`.
 ## 1. Targets (identified, not yet confirmed)
 
 | Role | Identifier | Status / evidence |
 |---|---|---|
-| **Production database — never a staging target** | Supabase project `ggwwzwqykkncgupdimxp` | Named in `vercel.json` CSP, `docs/EXTERNAL_SETUP_STATUS.md`, `scripts/validate-task63-cloud.mjs` |
-| Staging database, **candidate A** (existing) | Supabase project `ntrqseoiwyrvdsobwxaj` — "ResumeStride Recovery Drill" restore target | Non-production restore made 2026-09-20 03:48 UTC; migrations 1–15 applied by SQL editor; holds one retained fictional canary (`docs/verification/backup-canary.json`). Current state unverified since 2026-09 (B2). |
-| Staging database, **candidate B** (new) | none yet — would be a new project, e.g. `apwico-staging` | Requires creating a resource (and possibly a paid compute add-on). Not created. |
-| Production web project | Vercel `dipsons-projects/resumestride`, `prj_W7PZMjcFj5LnmPtZ2x9QGwIkP6tC`, team `team_5diMdtyzJJlmwjNvMzL2BMN1` | Read-only `vercel env ls`: 29 variables, **all Production-scoped**, 0 Preview |
-| Current production deployment (rollback reference) | `dpl_3Qvdo3Dd9XPuYVrBw9Y3AQzN8QVN`, created 2026-10-14 02:03 UTC | Read-only `vercel ls` / `vercel inspect` |
-| Staging web, **option 1** (recommended) | new Vercel project, e.g. `apwico-staging` | Not created. Removes any chance of a staging command touching `resumestride` |
-| Staging web, **option 2** | Preview environment of `resumestride` | Needs Preview-scoped variables added to the production project's settings |
-| Billing | Stripe sandbox account `acct_1QqPbG7sBbdVbWSQ`, **test-mode keys only** | Per `docs/EXTERNAL_SETUP_STATUS.md`; not checked this session |
-| Other Vercel projects (not inspected) | `project-kdi8e`, `project-7fs0r`, `spendpulse-mvp` | Unrelated or unidentified. Not used. |
+| **Production database — out of scope** | not used | No production connection or credential is needed for this rehearsal. |
+| Staging database | Supabase project `ntrqseoiwyrvdsobwxaj` — "ResumeStride Recovery Drill" | Existing project; owner reports migrations 1–39 applied. Verify ledger and checks read-only with staging credentials. |
+| Production web project | out of scope | Do not inspect or use for the staging task. |
+| Current production deployment | out of scope | Do not inspect or use for the staging task. |
+| Staging web | Existing authorized staging Vercel target | Target identity/credentials not available in this environment; do not use `resumestride` or add Preview variables there. |
+| Billing | out of scope | No billing action or credential is needed for staging checks. |
 
-Local machine: Vercel CLI 59.23.2 (signed in); `psql` 18 at `/usr/local/opt/libpq/bin/psql` (not
-on `PATH`); Stripe CLI at `/usr/local/bin/stripe`; **Supabase CLI not installed**; **no
-PostgreSQL server binaries** (needed by `npm run test:db:concurrency`). The main checkout
-`/Users/dipson/ResumeStride` contains `.vercel/project.json` linked to the **production**
-project; this worktree is not linked.
+Local machine: Vercel CLI 59.23.2 is signed in, but its available project is the production-linked
+`resumestride`; no staging Vercel target credentials are available here. `STAGING_DB_URL` is not
+set and `psql` is unavailable on `PATH`; Supabase CLI is not installed. Never inspect or reuse
+Production environment values. The main checkout `/Users/dipson/ResumeStride` is linked to the
+production project; this worktree is not linked.
 
-Placeholders, never committed: `STAGING_REF`, `STAGING_DB_URL` (direct connection, staging only),
-`PROD_DB_URL` (read-only role preferred), `PREVIEW_URL`.
+Required staging-only values, never committed: `STAGING_REF=ntrqseoiwyrvdsobwxaj`,
+`STAGING_DB_URL` (direct connection to this project), Supabase staging API URL/key(s), and the
+existing staging Vercel deployment target. Do not use production credentials.
 
 ## 2. Phase A — local preparation (no network)
 
@@ -54,43 +42,41 @@ Placeholders, never committed: `STAGING_REF`, `STAGING_DB_URL` (direct connectio
 | A3 | `vercel build --standalone` → `prepare-vercel-output.mjs` → `check-packaged-functions.mjs` | **passed** 2026-10-28 (`test-results/12`, `13`); offline load check, not hosted execution |
 | A4 | `node scripts/rehearse-tracker-migrations.mjs` (all 39 migrations on PGlite with fictional pre-launch rows) | passed (`test-results/08`) |
 | A5 | `PGBIN=<postgresql-17>/bin npm run test:db:concurrency` — real-PostgreSQL races, including the new AI-budget and trial races | **not run**: no PostgreSQL server binaries on this machine. Needs a local PostgreSQL 17 install. Expected: every line `PASS`. |
-| A6 | Prepare the staging-only CSP: a throwaway copy of `vercel.json` whose `connect-src` names `https://$STAGING_REF.supabase.co` instead of the production origin. Never commit it to the checkpoint branch. | to do after targets are confirmed |
+| A6 | Prepare the staging-only CSP: a throwaway copy of `vercel.json` whose `connect-src` names `https://$STAGING_REF.supabase.co` instead of the production origin. Never commit it to the checkpoint branch. | before staging deployment |
 | A7 | Install the Supabase CLI only if C-steps will use it (this plan uses `psql` alone) | optional |
 
 ## 3. Phase B — read-only remote checks
 
-None of these change anything. B3 reads **production** metadata, schema only.
+These checks are read-only and use staging credentials only. Production is not queried.
 
 | # | Command / action | Target | Expected |
 |---|---|---|---|
-| B1 | `vercel env ls` (names/scopes only; done 2026-10-28) | Vercel `resumestride` | 29 Production-scoped names, 0 Preview |
-| B2 | `psql "$STAGING_DB_URL" -X -A -t -v ON_ERROR_STOP=1 -f supabase/checks/catalog_fingerprint.sql > staging-fp.txt` | staging | the file is produced; `migration_ledger` line recorded |
-| B3 | Same command with `PROD_DB_URL` (or paste the file into the production SQL editor, read-only) → `prod-fp.txt` | **production, read-only** | `migration_ledger|absent`; catalog matches migrations 1–15 with the two recorded drifts |
-| B4 | `diff prod-fp.txt staging-fp.txt` | local | no difference. Otherwise, bring staging to production's exact state first (candidate A), or build it from files 1–15 plus the two drifts (candidate B) |
-| B5 | `psql "$STAGING_DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/checks/hosted_preflight.sql > preflight.txt` | staging | lists tables, policies, grants; recorded for comparison |
-| B6 | Stripe dashboard (test mode): confirm the sandbox account and test price IDs exist | Stripe test | IDs recorded, names only |
+| B1 | Inspect only staging Vercel target variable names/scopes (never values) | staging Vercel target | requires staging target credentials |
+| B2 | `psql "$STAGING_DB_URL" -X -A -t -v ON_ERROR_STOP=1 -f supabase/checks/catalog_fingerprint.sql > staging-fp.txt` | staging | ledger confirms migrations 1–39; schema fingerprint recorded |
+| B3 | `psql "$STAGING_DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/checks/hosted_preflight.sql > preflight.txt` | staging | tables, policies and grants recorded for review |
+| B4 | Run read-only tracker rehearsal checks in §5 | staging | launch markers and settings verified |
+| B5 | Confirm the existing staging Vercel target and staging-only variable names/scopes without exposing values | staging Vercel target only | requires staging target credentials |
 
-## 4. Phase C — staging mutations (only after §1 targets are confirmed)
+## 4. Phase C — staging setup and deployment (staging only)
 
 One bounded operation, in this order. Stop at the first unexpected result.
 
 | # | Command / action | Expected |
 |---|---|---|
-| C1 | Back up staging: dashboard backup, or `pg_dump "$STAGING_DB_URL" -Fc -f staging-before.dump` (outside the repository) | dump file non-empty |
-| C2 | Seed fictional pre-launch rows in staging (two fictional Auth users created by sign-up; one saved job each when the schema allows). Only fictional data. | rows exist |
-| C3 | Apply files 16–33 **in filename order, one transaction per file** (none of the 24 pending files opens its own transaction): `for f in $(ls supabase/migrations/*.sql \| sed -n '16,33p'); do psql "$STAGING_DB_URL" -X -v ON_ERROR_STOP=1 --single-transaction -f "$f" \|\| break; done` | no `ERROR`; the last file applied is `20261013160000_v2_allowance_override.sql`. On an error the loop stops with that file rolled back. |
-| C3b | `psql "$STAGING_DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/checks/tracker_rehearsal_before.sql > before.txt` | all four markers `f`; workflow and history counts recorded |
-| C3c | Apply the six launch files the same way: `sed -n '34,39p'` in the loop above | no `ERROR`; the last file is `20261028100000_tailoring_provenance_ai_safeguards.sql` |
-| C3d | This plan does **not** create a migration ledger on either database. Whether production gets one is a separate owner decision (`docs/PRODUCTION_READINESS_AUDIT.md`, step 5). | — |
-| C4 | Web: option 1 (new Vercel project) or option 2 (Preview variables on `resumestride`). Set, scoped to staging/preview only: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (all **staging**), `APP_ORIGIN=$PREVIEW_URL`, `EXPORTS_ENABLED`, `AI_ENABLED`, `OPENAI_API_KEY` (a key with its own provider spend limit), `TECHMAP_API_KEY`, `VITE_PAID_FEATURES_UI_ENABLED`, `VITE_BILLING_UI_ENABLED`, `BILLING_ENABLED`, `RECURRING_BILLING_ENABLED`, `BILLING_RECURRING_ENABLED`, `SUBSCRIPTION_OFFERS_ENABLED`, `STRIPE_MODE=test`, `STRIPE_SECRET_KEY=sk_test_…`, `STRIPE_WEBHOOK_SECRET` (test endpoint), `STRIPE_ACCOUNT_ID`, test price IDs, `RESEND_API_KEY`, `BILLING_EMAIL_FROM`, `CRON_SECRET`. Use the staging CSP from A6. | variables listed for the staging scope only; Production list unchanged |
+| C1 | Confirm an existing staging recovery point. If unavailable, stop before database writes; do not delete or replace the project. | recovery point confirmed |
+| C2 | Seed only isolated fictional rows if required by checks and after confirming existing fixtures. Never delete existing remote rows. | fictional rows isolated and attributable |
+| C3 | **Do not apply migrations.** Staging is reported at 1–39. | no migration executed |
+| C4 | Configure the existing authorized staging Vercel target with staging-only database credentials and staging CSP. Do not add variables to Production scope or inspect production values. | staging-only configuration; stop if target credentials are unavailable |
 | C5 | Staging Supabase Auth: Site URL and redirect URLs = `PREVIEW_URL` | saved |
 | C6 | Stripe **test mode**: a webhook endpoint for `PREVIEW_URL/api/stripe-webhook` | endpoint shows `test` |
-| C7 | Deploy the checkpoint revision as a preview: `vercel deploy --prebuilt` from a staging-linked directory (after `vercel build --standalone` + `prepare-vercel-output.mjs`). **Never `--prod`.** | a `…vercel.app` URL; not aliased to any production domain |
+| C7 | Deploy the checkpoint revision only to the existing staging Vercel target using `vercel deploy --prebuilt`. Never `--prod`, promote, alias, or use the production-linked project. | staging preview URL; no production alias |
 | C8 | Optional exhaustion rehearsal, staging only: `update public.product_settings set ai_monthly_budget_micro_usd = 1 where id;` then restore with `= 25000000` | see L15 |
 
 Vercel cron jobs do not run on preview deployments, so L12 triggers the reminder dispatch manually.
 
-## 5. Expected results after C3 (read-only)
+## 5. Expected results from staging checks (read-only)
+
+These commands run only after staging credentials are available. No query can be run from the current environment.
 
 `psql "$STAGING_DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/checks/tracker_rehearsal_after.sql > after.txt`
 
@@ -106,8 +92,8 @@ Vercel cron jobs do not run on preview deployments, so L12 triggers the reminder
 | `versions_without_provenance`, `trial_runs_reserved`, `old_update_signature` | 0, 0, 0 | provenance column populated; no stranded reservations; old 4-argument update replaced |
 | `events` vs `legacy_history_rows` | `events` ≥ `legacy_history_rows` | history backfilled |
 
-A fresh `catalog_fingerprint.sql` on staging must equal the same file run on a local database
-with all 39 migrations (the local result for the checkpoint revision can be produced with
+A fresh `catalog_fingerprint.sql` on staging should confirm the owner-reported 1–39 state. It can
+be compared with a local database on the checkpoint revision produced with
 `node --import tsx` and `tests/server/pgliteDatabase.ts`; PGlite's catalog differs slightly
 from hosted Postgres, for example in extension objects, so compare the application objects).
 The local rehearsal of the same checks passed (`test-results/08`).
@@ -134,48 +120,44 @@ The local rehearsal of the same checks passed (`test-results/08`).
 
 Only after L12 passes may the owner decide whether to add a reminder promise back to the terms.
 
-## 7. Phase D — production actions (not part of this rehearsal)
+## 7. Production is out of scope
 
-Listed so that none is run by mistake. Each needs its own explicit approval after the rehearsal.
+Production is reported at migrations 1–30. Do not inspect, migrate, configure, deploy, or otherwise
+access production for this task. Any future production work requires a separate task and explicit
+authorization. The contract step is excluded.
 
-1. Fresh production backup (PITR point or `pg_dump` with a read role).
-2. Re-run B3 and B4 on production immediately before the change; stop on any difference.
-3. Apply the same 24 files with the same C3 loop against `PROD_DB_URL`, in an agreed window.
-4. Production Vercel variables (names in C4, production values), then `vercel deploy --prebuilt --prod` of the rehearsed revision.
-5. The contract step, much later and separately (§9).
-
-## 8. Commands that can link to or mutate production
+## 8. Prohibited production and migration actions
 
 | Command | Why it is dangerous here | Rule |
 |---|---|---|
-| Any `vercel …` run from `/Users/dipson/ResumeStride` | that checkout is linked to the production project `resumestride` | run staging Vercel commands only from a directory linked to the staging project |
-| `vercel deploy --prod`, `vercel promote`, `vercel rollback`, `vercel alias set`, `vercel redeploy` on `resumestride` | changes what `resumestride.com` / `apwico.com` serve | Phase D only |
-| `vercel env add/rm` on `resumestride` | changes the production project's configuration | option 2 adds **Preview**-scoped variables only, after approval |
-| `vercel env pull` / `vercel pull --environment=production` on `resumestride` | writes production secret values to disk | never in the repository |
-| `supabase link --project-ref ggwwzwqykkncgupdimxp`, then any `--linked` command | links the CLI to production | this plan avoids `--linked`; use explicit `STAGING_DB_URL` |
-| `supabase db push` (any target without a verified ledger) | production has no ledger: it would try to apply all 39 files | never on production; not used for staging either |
-| `supabase db dump --linked` or `pg_dump "$PROD_DB_URL"` | copies production data to the operator's machine | backups only, stored outside the repository |
-| `psql "$PROD_DB_URL" …` with any DDL/DML file, including `supabase/contract/*` | mutates production | Phase D only; the contract file is destructive |
-| `node scripts/validate-task63-cloud.mjs` | pinned to the production origin; creates and deletes fixture rows there | not part of this rehearsal |
-| `npx tsx scripts/provision-stripe-catalog.ts --live` | creates live Stripe products and prices | excluded; the rehearsal is test mode only |
-| `stripe … --live`, a live `sk_live_` key in any staging variable | live billing | test keys only; `STRIPE_MODE=test` |
-| `npx tsx scripts/benchmark-tailoring-costs.ts` in a provider mode | spends money on whichever OpenAI key is set | use a staging key with its own provider limit |
+| Any Vercel command from a production-linked checkout | could access or change production | do not use it for staging |
+| Production deployment, promotion, rollback, alias or redeploy command | changes the production service | prohibited in this task |
+| Production-scoped Vercel environment change | changes production configuration | prohibited in this task |
+| `vercel env pull` / `vercel pull --environment=production` | writes production secret values to disk | prohibited in this task |
+| Any production project link or linked Supabase command | could point later commands at production | prohibited in this task |
+| `supabase db push` | could reapply migrations or make unintended changes | prohibited in this rehearsal; staging is reported at 1–39 |
+| Any production database connection or dump | accesses production metadata/data | prohibited in this task |
+| Any production database command | accesses or mutates production | prohibited in this task |
+| `node scripts/validate-task63-cloud.mjs` | pinned to production and mutates fixture rows | prohibited in this task |
+| Any Stripe action | changes billing state or accesses billing data | prohibited in this task |
+| `stripe … --live`, a live `sk_live_` key in any staging variable | live billing | prohibited; no billing use in this task |
+| Any paid provider action | could incur provider charges or use non-staging credentials | not authorized in this task |
 | `git push` to a branch connected to Vercel Git deployments (if any) | could auto-deploy | not done; nothing has been pushed |
-| `node scripts/check-hosted-isolation.mjs` | writes fictional rows to `ntrqseoiwyrvdsobwxaj` (candidate A) | staging mutation; only after A is confirmed |
+| `node scripts/check-hosted-isolation.mjs` | writes fictional rows to `ntrqseoiwyrvdsobwxaj` | staging mutation; only with staging credentials and after checking existing fixtures |
 
-## 9. Rollback
+## 9. Staging deployment rollback
 
 - **Web (staging):** stop using the preview, or deploy the previous release (`dpl_3Qvdo3Dd9XPuYVrBw9Y3AQzN8QVN`'s source) as a second preview against the same staging database. Expected: it loads; saved jobs keep their stage (legacy sync trigger); it cannot show manual applications, events, kept documents, next actions, the trial, requirement edits or provenance.
-- **Compatibility of file 39 with code built from `1a883b6` or the uncommitted launch work before it:** a four-argument call to `job_resume_version_update` still resolves (the new argument has a default); a trial run recorded without a reservation is stored as succeeded; extra returned keys are ignored. The four-argument call is covered by `supabase/tests/tailoring_provenance_ai_safeguards.test.sql`. The current production deployment predates migrations 16–33 entirely; whether it runs against the migrated schema is exactly what the §9 app-rollback preview checks.
+- **Compatibility of file 39 with code built from `1a883b6` or the uncommitted launch work before it:** a four-argument call to `job_resume_version_update` still resolves (the new argument has a default); a trial run recorded without a reservation is stored as succeeded; extra returned keys are ignored. The four-argument call is covered by `supabase/tests/tailoring_provenance_ai_safeguards.test.sql`. The production deployment and production schema are outside this staging task.
 - **AI budget setting:** `update public.product_settings set ai_monthly_budget_micro_usd = 25000000 where id;` (staging only).
-- **Database:** the migrations are expand-only; there are no down migrations. Schema rollback = restore C1's backup (`pg_restore --clean -d "$STAGING_DB_URL" staging-before.dump`), or discard candidate B's project entirely.
-- **Contract step:** `supabase/contract/20261110000000_application_tracker_contract.sql` drops legacy columns, the history table, legacy RPCs and the sync trigger. After it, the previous release cannot run and rollback means restoring a backup. It is **excluded** from this rehearsal and from Phase D's first window. Locally, `npm run test:db` replays it after the full suite and passes.
+- **Database:** no migrations are planned. Do not restore over or discard the existing staging project as part of this task.
+- **Contract step:** `supabase/contract/20261110000000_application_tracker_contract.sql` drops legacy columns, the history table, legacy RPCs and the sync trigger. After it, the previous release cannot run and rollback means restoring a backup. It is **excluded** from this rehearsal. Locally, `npm run test:db` replays it after the full suite and passes.
 
-## 10. Migration notes
+## 10. Migration state
 
 | File | Kind | Rollback |
 |---|---|---|
-| 16–33 (`20260923120000` … `20261013160000`) | pending on production since 2026-09-25 per the last inspection; additive plus function replacements | restore backup |
+| 1–39 | reported applied on staging; production is reported at 1–30 | no migration action in this staging rehearsal |
 | `20261027100000_launch_allowance_status` | replaces `pdf_status` | redefine the previous function from `20261013160000` |
 | `20261027120000_application_tracker` | **expand**: new columns (backfilled), events, kept documents, settings, RPCs, legacy sync trigger; legacy columns kept | app rollback works without restore; schema rollback = restore |
 | `20261027140000_free_tailoring_trial` | additive tables + replaced functions | restore |
