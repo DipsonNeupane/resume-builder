@@ -90,7 +90,7 @@ const sampleResponse = {
       workplace: { value: 'remote', source: 'provider', confidence: 'high' },
       employmentType: { value: 'full_time', source: 'provider', confidence: 'high' },
       salary: { min: 30000, max: 35000, currency: 'GBP', period: 'year', confidence: 'high' },
-      descriptionExcerpt: 'Help customers.', postedAt: null,
+      descriptionExcerpt: 'Help customers.', descriptionText: 'Help customers.', postedAt: null,
       expiry: { expiresAt: null, isLikelyExpired: false, source: 'unknown', confidence: 'low' },
       sourceUrl: 'https://jobs.acme.example/1', portal: 'acme-careers', source: 'employer',
       retrievedAt: '2026-09-24T00:00:00Z', matchLabel: 'strong',
@@ -1216,4 +1216,20 @@ for (const width of [320, 390, 768, 1440, 1920]) test(`premium opportunity and t
   expect(await page.evaluate(()=>JSON.parse(sessionStorage.getItem('resumestride.resume.v1')!).summary)).toBe(master.summary);
   await expect(page.getByText('2 of 2 suggestions reviewed · 1 accepted',{exact:true})).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+
+test('saved Match Analysis with no posting hides cached verdict and preserves the trial', async ({ page }) => {
+ await seed(page);
+ const savedJobId = '99999999-9999-4999-8999-999999999999';
+ const actions: string[] = [];
+ await page.route('**/api/jobs-account', route => {
+   actions.push(route.request().postDataJSON().action);
+   return route.fulfill({ json: { isPro: false, saveLimit: 100, savedJobs: [{ id: savedJobId, snapshot: { ...sampleResponse.jobs[0].savedSnapshot, descriptionText: '' }, providerAvailable: true, savedAt: '2026-09-29T00:00:00Z', analysisCurrent: true, matchAnalysis: sampleMatchAnalysis }], jobResumeVersions: [], tailoringTrial: { available: true, savedJobId: null, runsAllowed: 3 }, preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } } });
+ });
+ await page.goto(`/workspace/jobs/${savedJobId}/match`);
+ await expect(page.getByText('Job description needed', { exact: true })).toBeVisible();
+ await expect(page.getByRole('heading', { name: 'What your resume shows' })).toHaveCount(0);
+ await page.getByRole('button', { name: /Prepare|trial|Tailor/i }).last().click();
+ await expect(page.getByText(/Your tailoring trial has not been used/)).toBeVisible();
+ expect(actions).not.toContain('create_job_resume');
 });
