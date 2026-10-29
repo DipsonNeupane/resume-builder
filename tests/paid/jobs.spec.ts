@@ -939,7 +939,7 @@ test('an existing version detects master changes and offers non-destructive keep
   await expect(page.getByRole('button', { name: 'Update from master' })).toBeVisible();
   await page.getByRole('button', { name: 'Design & format' }).click();
   await page.getByRole('button', { name: 'Confirm' }).click();
-  await expect(page.getByText(/no description available/i)).toBeVisible();
+  await expect(page.getByText(/Add the job description before getting resume suggestions/i)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Get tailoring suggestions' })).toBeDisabled();
   expect(tailorCalls).toBe(0);
   await page.getByRole('button', { name: 'Back to editing' }).click();
