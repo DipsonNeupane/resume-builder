@@ -60,3 +60,9 @@ GitHub Actions quality gate run 40814982968 passed for e1233e9. PR #2 merged as 
 - Rollback: restore prior Vercel deployment dpl_GRqeb9TKJP2boa4jaZWe7pRccweq (236a207). This patch requires no database rollback.
 
 ![Production posting context preserved](production-comparison-fixed.png)
+
+## Authorized live export check
+
+After the owner's explicit follow-up authorization, production generated PDF and Word from the fictional Alex QA resume. Both formats appear in Application materials; opening the Word exact-version view restored the expected fictional content. Shared allowance moved from 7/7 to 5/7. Stage remained Preparing, with Applied not recorded. Browser download-manager inspection was blocked by browser URL policy; actual downloaded file contents and visual pagination were not independently inspected. No additional release was needed.
+
+![Production export history](production-exports.png)
