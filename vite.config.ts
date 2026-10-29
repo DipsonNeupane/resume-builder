@@ -4,7 +4,7 @@ import { requestSeo } from './src/seo/policy';
 // Source modules outside src/ that the browser app imports during development:
 // the shared extension capture contract, and the self-contained Vercel middleware
 // that src/seo/policy.ts re-exports. Exact paths only (Vite may add a query).
-export const devSourceModules: ReadonlySet<string> = new Set(['/apps/extension/src/lib/capture.ts', '/middleware.ts', '/template-library/templates/index.tsx']);
+export const devSourceModules: ReadonlySet<string> = new Set(['/apps/extension/src/lib/capture.ts', '/middleware.ts', '/template-library/fixtures.ts', '/template-library/templates/index.tsx']);
 
 export function seoPolicy() {
  const handler = (development: boolean): Connect.NextHandleFunction => (req, res, next) => {
