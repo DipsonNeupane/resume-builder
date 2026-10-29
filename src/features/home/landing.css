@@ -763,3 +763,6 @@ body:has(.landing-approved-wine) .site-header .header-cta:hover { background:#ff
 @media (prefers-reduced-motion:reduce) {
  .pt-story { opacity:1; transform:none; animation:none!important; }
 }
+
+/* A restrained blush halo reveals Ap-wi-co without changing the letter fill. */
+.pt-hero-title .brand-initial-glow { color:inherit; text-shadow:0 0 3px #f5c7dc66,0 0 10px #f5c7dc40,0 0 18px #f5c7dc24; }
