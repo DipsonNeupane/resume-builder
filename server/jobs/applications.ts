@@ -143,6 +143,13 @@ export function classifyImportRows(rows: unknown[], existing: Identity[]): { res
 }
 
 export async function handleApplicationAction(action: string, body: Record<string, unknown>, owner: string, db: Db): Promise<Response | null> {
+  if (action === 'application_fill_posting') {
+    if (typeof body.savedJobId !== 'string' || !UUID.test(body.savedJobId)) throw new HttpError(400, 'Application is invalid')
+    if (typeof body.description !== 'string' || !body.description.trim() || body.description.length > 12000) throw new HttpError(400, 'Paste a job description of up to 12,000 characters.')
+    const result = await db.rpc('applications_fill_missing_posting', { p_owner: owner, p_saved_job: body.savedJobId, p_description: body.description.trim() })
+    if (result.error) throw new HttpError(result.error.message.includes('already') ? 409 : result.error.message.includes('not found') ? 404 : 503, result.error.message.includes('already') ? 'This posting already has a description. Reload to see it.' : 'Unable to add this posting. Reload and try again.')
+    return json(200, { saved: true })
+  }
   if (action === 'applications') {
     const snapshot = await db.rpc('jobs_account_snapshot', { p_owner: owner })
     const applications = await listApplications(owner, db)

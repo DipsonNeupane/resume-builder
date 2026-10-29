@@ -258,3 +258,31 @@ test('Pro boundary: Pro prepares any number of applications without a trial and 
   assert.equal((await h.pg.query<{ n: number }>(`select count(*)::int as n from public.product_tailoring_trials`)).rows[0].n, 0, 'Pro never consumes the Free trial')
   await h.pg.close()
 })
+
+test('missing posting recovery is owner-scoped and preserves kept exports and trial', { timeout: 120_000 }, async () => {
+ const h = await setup();
+ try {
+  const created = await h.account({ action: 'application_create', application: { company: 'Recovery fixture', title: 'Support specialist', stage: 'saved', descriptionText: '\n\t\u00a0\ufeff' } });
+  const savedJobId = created.body.savedJobId as string;
+  const legacy = await h.db.rpc('job_resume_version_create', { p_owner: FREE, p_saved_job: savedJobId, p_data: example(), p_fingerprint: 'a'.repeat(64) });
+  assert.equal(legacy.error, null);
+  const version = (legacy.data as {version:{id:string}}).version;
+  const exported = await exportDocx(h.post('/api/export-docx', { requestId: '1b0b0b0b-0b0b-4b0b-8b0b-0b0b0b0b0b0b', resume: example(), jobResumeVersionId: version.id, attachToApplication: true }), env, { authenticate: h.authenticate, serviceDatabase: h.serviceDatabase, renderDocument: renderDocx } as never);
+  assert.equal(exported.status, 200);
+  const before = await h.pg.query('select * from public.job_application_documents');
+  const trial = await h.pg.query('select * from public.product_tailoring_trials');
+  h.as(PRO);
+  assert.equal((await h.account({action:'application_fill_posting',savedJobId,description:POSTING})).status,404);
+  h.as(FREE);
+  assert.equal((await h.account({action:'application_fill_posting',savedJobId,description:' '})).status,400);
+  const saved = await h.account({action:'application_fill_posting',savedJobId,description:POSTING});
+  assert.equal(saved.status,200,JSON.stringify(saved.body));
+  const restored = await h.account({action:'get_job_resume',versionId:version.id});
+  assert.equal((restored.body.version as {jobSnapshot:{descriptionText:string}}).jobSnapshot.descriptionText,POSTING);
+  assert.equal((await h.account({action:'application_fill_posting',savedJobId,description:'Overwrite'})).status,409);
+  assert.deepEqual((await h.pg.query('select * from public.job_application_documents')).rows,before.rows);
+  assert.deepEqual((await h.pg.query('select * from public.product_tailoring_trials')).rows,trial.rows);
+  const grants=await h.pg.query<{anon:boolean;authenticated:boolean}>("select has_function_privilege('anon','public.applications_fill_missing_posting(uuid,uuid,text)','EXECUTE') as anon, has_function_privilege('authenticated','public.applications_fill_missing_posting(uuid,uuid,text)','EXECUTE') as authenticated");
+  assert.deepEqual(grants.rows,[{anon:false,authenticated:false}]);
+ } finally { await h.pg.close(); }
+});

@@ -105,3 +105,5 @@ export async function loadApplicationDocument(ownerId: string, documentId: strin
 export async function savePreferences(ownerId: string, criteria: Record<string, unknown>, autoRefresh: boolean, evidence?: unknown): Promise<void> {
   await request(ownerId, { action: 'preferences', criteria, autoRefresh, ...(autoRefresh ? { evidence } : {}) });
 }
+
+export async function fillMissingPosting(ownerId: string, savedJobId: string, description: string): Promise<void> { await request(ownerId, { action: 'application_fill_posting', savedJobId, description }); }
