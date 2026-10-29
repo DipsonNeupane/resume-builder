@@ -1224,7 +1224,7 @@ test('saved Match Analysis with no posting hides cached verdict and preserves th
  const actions: string[] = [];
  await page.route('**/api/jobs-account', route => {
    actions.push(route.request().postDataJSON().action);
-   return route.fulfill({ json: { isPro: false, saveLimit: 100, savedJobs: [{ id: savedJobId, snapshot: { ...sampleResponse.jobs[0].savedSnapshot, descriptionText: '' }, providerAvailable: true, savedAt: '2026-09-29T00:00:00Z', analysisCurrent: true, matchAnalysis: sampleMatchAnalysis }], jobResumeVersions: [], tailoringTrial: { available: true, savedJobId: null, runsAllowed: 3 }, preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } } });
+   return route.fulfill({ json: { isPro: false, saveLimit: 100, savedJobs: [{ id: savedJobId, snapshot: { ...sampleResponse.jobs[0].savedSnapshot, descriptionText: '' }, providerAvailable: true, availabilityCheckedAt: '2026-09-29T00:00:00Z', unavailableAt: null, savedAt: '2026-09-29T00:00:00Z', analysisCurrent: true, matchAnalysis: sampleMatchAnalysis }], jobResumeVersions: [], tailoringTrial: { available: true, savedJobId: null, runsAllowed: 3 }, preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } } });
  });
  await page.goto(`/workspace/jobs/${savedJobId}/match`);
  await expect(page.getByText('Job description needed', { exact: true })).toBeVisible();
