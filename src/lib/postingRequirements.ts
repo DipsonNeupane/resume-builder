@@ -141,7 +141,7 @@ function chunks(input: string): Chunk[] {
 
 function categorize(text: string, scope: PostingScope, labelled: PostingCategory | null): PostingCategory | null {
   if (NOT_A_REQUIREMENT.test(text) || NEGATED.test(text)) return null;
-  if (/^(?:our work (?:directly )?impacts|join one of .*?(?:renowned|trusted)|our (?:company|mission) (?:is|aims))\b/i.test(text) && !/\b(?:must|required|requires|qualifications)\b/i.test(text)) return null;
+  if (/^(?:our work (?:directly )?impacts|join one of .*?(?:renowned|trusted))\b/i.test(text) && !/\b(?:must|required|requires|qualifications)\b/i.test(text)) return null;
   if (labelled) return labelled;
   if (NICE.test(text)) return 'nice_to_have';
   if (PREFERRED.test(text)) return 'preferred';

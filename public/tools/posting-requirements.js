@@ -131,7 +131,7 @@ function chunks(input) {
 function categorize(text, scope, labelled) {
     if (NOT_A_REQUIREMENT.test(text) || NEGATED.test(text))
         return null;
-    if (/^(?:our work (?:directly )?impacts|join one of .*?(?:renowned|trusted)|our (?:company|mission) (?:is|aims))\b/i.test(text) && !/\b(?:must|required|requires|qualifications)\b/i.test(text))
+    if (/^(?:our work (?:directly )?impacts|join one of .*?(?:renowned|trusted))\b/i.test(text) && !/\b(?:must|required|requires|qualifications)\b/i.test(text))
         return null;
     if (labelled)
         return labelled;

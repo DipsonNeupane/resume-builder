@@ -117,3 +117,9 @@ test('missing posting reports insufficient information instead of negative align
  assert.equal(result.analysis.importantWarning, null);
  assert.deepEqual(result.analysis.strengths, []);
 });
+
+test('company-prefixed recruiting sentences retain candidate qualifications', () => {
+ for (const text of ['Our company is looking for candidates with experience in customer support.', 'Our company is looking for a licensed electrician.']) {
+   assert.equal(extractPostingRequirements(text).length, 1);
+ }
+});
