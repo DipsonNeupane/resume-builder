@@ -27,3 +27,4 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run quality:gate
+      - run: npx playwright test tests/tools.spec.ts --workers=1

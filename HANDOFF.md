@@ -1,3 +1,11 @@
+## Browser audit follow-up — October 28, 2026
+
+Isolated checkout /tmp/apwico-ui-audit, branch fix/browser-audit-functional. Fixed requirement extraction, same-tab public-tool handoff, account loading/save labels, and missing-posting match copy. Added optional posting text to quick-add and server/client guards before allocating tailoring trial. Existing historical snapshots remain unchanged; older blank-posting versions still support manual editing/export but cannot AI-tailor until a posting-repair workflow exists. See docs/launch-review/BROWSER-AUDIT-2026-10-29.md. Server suite 525 passed; release gate and CI status recorded separately.
+
+# October 29 — Live browser audit and UI patch
+
+See docs/launch-review/BROWSER-AUDIT-2026-10-29.md. UI patch PR #2 merged after successful CI; no database/billing changes. This isolated checkout preserves original worktree edits.
+
 ## October 28 (fourth pass) — Provenance, AI safeguards, checkpoint commit, staging review (local, not pushed or deployed)
 
 Branch `feat/apwico-launch-tracker`, one local checkpoint commit over `1a883b6` (not pushed). Package:

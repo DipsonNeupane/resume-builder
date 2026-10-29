@@ -390,7 +390,7 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
   const [results, setResults] = useState<{ jobs: JobCard[]; isPro: boolean; availableCount: number; proLimit: number } | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
-  const [saveLimit, setSaveLimit] = useState(10);
+  const [saveLimit, setSaveLimit] = useState(100);
   const [accountIsPro, setAccountIsPro] = useState(false);
   const [trial, setTrial] = useState<{ available: boolean; savedJobId: string | null; runsAllowed: number } | null>(null);
   const [accountLoaded, setAccountLoaded] = useState(false);
@@ -486,7 +486,7 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
     setOutcomeReportsAvailable(true);
     setOutcomeBusyId(null);
     setRestoreFailure(null);
-    setSaveLimit(10);
+    setSaveLimit(100);
     setAccountIsPro(false);
     setTrial(null);
     setAccountLoaded(false);
@@ -865,6 +865,10 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
       setMessage('This application is closed. Reopen it before preparing a new job-specific resume.');
       return;
     }
+    if (typeof saved.snapshot.descriptionText !== 'string' || !saved.snapshot.descriptionText.trim()) {
+      setMessage('This saved role has no job description. Add a role with its posting text in My applications before starting tailoring. Your tailoring trial has not been used.');
+      return;
+    }
     if (!accountIsPro && !trialAppliesTo(saved.id)) { onViewPro(); return; }
     const requestedOwner = ownerId;
     try {
@@ -934,15 +938,17 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
       <div className="empty-state" role="status"><strong>This workspace item is unavailable.</strong><p>It may have been removed, belong to another account, or no longer be accessible. No job or resume content was loaded.</p><button className="button" onClick={onOpenSavedJobs}>Go to My applications</button></div>
     </section>;
     const job = saved.snapshot;
+    const hasPosting = typeof job.descriptionText === 'string' && Boolean(job.descriptionText.trim());
     const application = applications.find(item => item.savedJobId === saved.id) ?? emptyApplication(saved.id);
     return <section className="field jobs-panel" aria-label="Match Analysis">
       <div className="jobs-panel-heading"><div><span className="section-label">Saved job · Private workspace</span><h1>Match Analysis</h1><p>{job.title} at {job.company}</p></div><button className="back-link" onClick={onOpenSavedJobs}>Back to My applications</button></div>
       {message && <p role="status" className="field-hint">{message}</p>}
-      {saved.analysisCurrent === false && <><p className="match-stale" role="status">This analysis needs refreshing because its saved context changed.</p><button className="button" onClick={() => void refreshSavedAnalysis(saved.id)}>Refresh Match Analysis</button></>}
-      {saved.analysisCurrent !== false && saved.matchAnalysis
+      {!hasPosting && <div className="empty-state" role="status"><strong>Job description needed</strong><p>There is not enough posting information to assess alignment. Tracking and manual resume editing remain available.</p><button className="button outline" onClick={onOpenSavedJobs}>Go to My applications</button></div>}
+      {hasPosting && saved.analysisCurrent === false && <><p className="match-stale" role="status">This analysis needs refreshing because its saved context changed.</p><button className="button" onClick={() => void refreshSavedAnalysis(saved.id)}>Refresh Match Analysis</button></>}
+      {hasPosting && (saved.analysisCurrent !== false && saved.matchAnalysis
         ? <MatchAnalysisPanel saved jobTitle={`${job.title} at ${job.company}`} analysis={saved.matchAnalysis} isPro={accountIsPro} onViewPro={onViewPro} onClarify={(id, value) => void clarify(id, value, { savedJobId: saved.id })} onEvidenceReviewed={scope => recordEvidenceReview(job.dedupeKey as string, saved.matchAnalysis!.contextHash, scope)} />
-        : <div className="empty-state"><strong>Evidence is not available yet.</strong><p>Compare this role with your current master resume to see what it shows.</p><button className="button" onClick={() => void refreshSavedAnalysis(saved.id)}>Show what my resume shows</button></div>}
-      {saved.analysisCurrent !== false && saved.matchAnalysis?.fullAnalysis && <RequirementReview requirements={saved.matchAnalysis.fullAnalysis.requirements} edits={application.requirementEdits ?? null} busy={stageBusyId === saved.id} onSave={edits => saveRequirementEdits(saved.id, edits)} />}
+        : <div className="empty-state"><strong>Evidence is not available yet.</strong><p>Compare this role with your current master resume to see what it shows.</p><button className="button" onClick={() => void refreshSavedAnalysis(saved.id)}>Show what my resume shows</button></div>)}
+      {hasPosting && saved.analysisCurrent !== false && saved.matchAnalysis?.fullAnalysis && <RequirementReview requirements={saved.matchAnalysis.fullAnalysis.requirements} edits={application.requirementEdits ?? null} busy={stageBusyId === saved.id} onSave={edits => saveRequirementEdits(saved.id, edits)} />}
       <div className="job-stage"><StageControl application={application} busy={stageBusyId === saved.id || !applicationsAvailable} onChange={patch => void saveStage(saved.id, patch)} label="Application stage" /><a className="text-button" href={`/workspace/applications/${saved.id}`}>Open application record</a></div>
       <OutcomeReportPanel reports={outcomeReports.filter(item=>item.savedJobId===saved.id)} busy={outcomeBusyId===saved.id} available={outcomeReportsAvailable} onReport={report=>saveOutcome(saved.id,report)}/>
       <div className="job-card-actions"><button className="button" disabled={!jobResumeVersions.some(version => version.savedJobId === saved.id) && application.stage === 'closed'} onClick={() => void startTailoring(saved)}>{jobResumeVersions.some(version => version.savedJobId === saved.id) ? 'Open job-specific resume' : prepareLabel(saved.id)}</button></div>
@@ -1008,8 +1014,8 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
     {target.kind === 'jobs' && !results && !busy && savedJobs.length === 0 && <div className="empty-state"><strong>Your experience is the starting point.</strong><p>Choose a suggested role or enter your own criteria, then search. You’ll see why each opportunity may fit before deciding what to save.</p></div>}
 
     <section className="saved-jobs-section" aria-labelledby="saved-jobs-heading">
-      <div className="saved-jobs-heading"><h2 id="saved-jobs-heading">Saved to My applications</h2><span>{savedJobs.length}{accountIsPro ? '' : ` of ${saveLimit}`}</span></div>
-      {savedJobs.length === 0 ? <div className="empty-state"><strong>Keep the roles worth a second look.</strong><p>Choose “Save job” on a result to keep it and its match evidence here, even if the listing closes{accountIsPro ? ' or your Pro access ends' : ''}.{accountIsPro ? '' : ` Free accounts can save up to ${saveLimit}.`}</p></div> :
+      <div className="saved-jobs-heading"><h2 id="saved-jobs-heading">Saved to My applications</h2><span>{accountLoaded ? `${savedJobs.length}${accountIsPro ? '' : ` of ${saveLimit}`}` : 'Loading…'}</span></div>
+      {!accountLoaded ? <p role="status">Loading your applications…</p> : savedJobs.length === 0 ? <div className="empty-state"><strong>Keep the roles worth a second look.</strong><p>Choose “Save job” on a result to keep it and its match evidence here, even if the listing closes{accountIsPro ? ' or your Pro access ends' : ''}.{accountIsPro ? '' : ` Free accounts can save up to ${saveLimit}.`}</p></div> :
 	        <ul className="jobs-results" aria-label="Saved jobs">{savedJobs.map(saved => {
 	          const job = saved.snapshot;
 	          const application = applications.find(item => item.savedJobId === saved.id) ?? emptyApplication(saved.id);
@@ -1031,7 +1037,7 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
             </>}
             {saved.analysisCurrent === false && <p className="match-stale" role="status">Saved match analysis needs refreshing because the resume, job, preferences, or clarifications changed.</p>}
             {saved.analysisCurrent === false && <button className="text-button" onClick={() => void refreshSavedAnalysis(saved.id)}>Refresh match analysis</button>}
-            {saved.analysisCurrent !== false && saved.matchAnalysis && <MatchAnalysisPanel saved jobTitle={`Saved: ${job.title} at ${job.company}`} analysis={saved.matchAnalysis} isPro={accountIsPro} onViewPro={onViewPro} onClarify={(id, value) => void clarify(id, value, { savedJobId: saved.id })} onEvidenceReviewed={scope=>recordEvidenceReview(job.dedupeKey as string,saved.matchAnalysis!.contextHash,scope)} fullAnalysisInitiallyOpen={false} />}
+            {typeof job.descriptionText === 'string' && Boolean(job.descriptionText.trim()) && saved.analysisCurrent !== false && saved.matchAnalysis && <MatchAnalysisPanel saved jobTitle={`Saved: ${job.title} at ${job.company}`} analysis={saved.matchAnalysis} isPro={accountIsPro} onViewPro={onViewPro} onClarify={(id, value) => void clarify(id, value, { savedJobId: saved.id })} onEvidenceReviewed={scope=>recordEvidenceReview(job.dedupeKey as string,saved.matchAnalysis!.contextHash,scope)} fullAnalysisInitiallyOpen={false} />}
 	            <div className="job-stage"><StageControl application={application} busy={stageBusyId === saved.id || !applicationsAvailable} onChange={patch => void saveStage(saved.id, patch)} label={`Application stage for ${job.title}`} /><a className="text-button" href={`/workspace/applications/${saved.id}`}>Open application record</a></div>
 	            <OutcomeReportPanel reports={outcomeReports.filter(item=>item.savedJobId===saved.id)} busy={outcomeBusyId===saved.id} available={outcomeReportsAvailable} onReport={report=>saveOutcome(saved.id,report)}/>
 	            <div className="job-card-actions">

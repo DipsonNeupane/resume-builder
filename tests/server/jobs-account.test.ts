@@ -86,6 +86,7 @@ test('creates one account-owned job resume only when tailoring begins and never 
     created_at: '2026-09-24T00:00:00Z', updated_at: '2026-09-24T00:00:00Z',
   }
   const { deps, calls } = fixture(async name => {
+    if (name === 'jobs_saved_match_inputs') return { data: { snapshot: analyzedSnapshot }, error: null }
     if (name === 'job_resume_master') return { data: null, error: null }
     if (name === 'job_resume_version_create') return { data: { created: true, version: row }, error: null }
     return { data: null, error: { message: `unexpected ${name}` } }
@@ -93,15 +94,15 @@ test('creates one account-owned job resume only when tailoring begins and never 
   const response = await jobsAccount(request({ action: 'create_job_resume', savedJobId, resume, owner: 'attacker' }), env, deps)
   assert.equal(response.status, 200)
   assert.equal((await response.json()).version.savedJobId, savedJobId)
-  assert.equal(calls.length, 2)
-  assert.equal(calls[1].args.p_owner, owner)
-  assert.equal(calls[1].args.p_saved_job, savedJobId)
-  assert.deepEqual(calls[1].args.p_data, resume)
-  assert.match(String(calls[1].args.p_fingerprint), /^[0-9a-f]{64}$/)
+  assert.equal(calls.length, 3)
+  assert.equal(calls[2].args.p_owner, owner)
+  assert.equal(calls[2].args.p_saved_job, savedJobId)
+  assert.deepEqual(calls[2].args.p_data, resume)
+  assert.match(String(calls[2].args.p_fingerprint), /^[0-9a-f]{64}$/)
 })
 
 test('maps the server-side closed-application gate without creating a job-specific resume', async () => {
-  const blocked = fixture(async name => name === 'job_resume_master'
+  const blocked = fixture(async name => name === 'jobs_saved_match_inputs' ? { data: { snapshot: analyzedSnapshot }, error: null } : name === 'job_resume_master'
     ? { data: null, error: null }
     : { data: null, error: { message: 'Application closed' } })
   const response = await jobsAccount(request({ action: 'create_job_resume', savedJobId, resume: blank() }), env, blocked.deps)
@@ -118,13 +119,13 @@ test('cloud-backed master is authoritative when a browser starts a job-specific 
     source_master_fingerprint: 'f'.repeat(64), data: cloudResume, revision: 1,
     created_at: '2026-09-24T00:00:00Z', updated_at: '2026-09-24T00:00:00Z',
   }
-  const { deps, calls } = fixture(async name => name === 'job_resume_master'
+  const { deps, calls } = fixture(async name => name === 'jobs_saved_match_inputs' ? { data: { snapshot: analyzedSnapshot }, error: null } : name === 'job_resume_master'
     ? { data: { id: row.source_master_resume_id, revision: 7, data: cloudResume }, error: null }
     : { data: { created: true, version: row }, error: null })
   const response = await jobsAccount(request({ action: 'create_job_resume', savedJobId, resume: browserResume }), env, deps)
   assert.equal(response.status, 200)
-  assert.deepEqual(calls[1].args.p_data, cloudResume)
-  assert.notEqual(calls[1].args.p_fingerprint, resumeFingerprint(browserResume))
+  assert.deepEqual(calls[2].args.p_data, cloudResume)
+  assert.notEqual(calls[2].args.p_fingerprint, resumeFingerprint(browserResume))
 })
 
 test('preserves optimistic conflict protection for manual and accepted-suggestion job-resume writes', async () => {
@@ -277,3 +278,11 @@ test('rejects origin and auth failures before constructing the database client',
   assert.equal((await jobsAccount(request({ action: 'load' }), env, deps)).status, 401)
   assert.equal(databaseTouched, false)
 })
+
+test('missing saved posting cannot reserve a trial even if the browser submits a description', async () => {
+ const { deps, calls } = fixture(async () => ({ data: { snapshot: { ...analyzedSnapshot, descriptionText: '  ' } }, error: null }));
+ const response = await jobsAccount(request({ action: 'create_job_resume', savedJobId, resume: blank(), descriptionText: 'browser supplied' }), env, deps);
+ assert.equal(response.status, 400);
+ assert.deepEqual(calls.map(call => call.name), ['jobs_saved_match_inputs']);
+ assert.match((await response.json()).error, /trial has not been used/);
+});

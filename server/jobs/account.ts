@@ -287,6 +287,9 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
     }
     if (action === 'create_job_resume') {
       if (typeof body.savedJobId !== 'string' || !SAVED_JOB_ID.test(body.savedJobId)) throw new HttpError(400, 'Saved job is invalid')
+      const posting = await db.rpc('jobs_saved_match_inputs', { p_owner: owner, p_saved_job: body.savedJobId })
+      if (posting.error || !record(posting.data) || !record(posting.data.snapshot)) throw new HttpError(503, 'Unable to load this saved posting')
+      if (typeof posting.data.snapshot.descriptionText !== 'string' || !posting.data.snapshot.descriptionText.trim()) throw new HttpError(400, 'Add a job description before starting tailoring. Your trial has not been used.')
       const resume = await authoritativeMaster(owner, storedResume(body.resume), db)
       const result = await db.rpc('job_resume_version_create', {
         p_owner: owner, p_saved_job: body.savedJobId, p_data: resume, p_fingerprint: resumeFingerprint(resume),

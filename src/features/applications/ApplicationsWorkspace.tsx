@@ -83,6 +83,7 @@ function StatusLine({ status, savedJobId, onUndo, onRetry, onReload, onDismiss }
 }
 
 function QuickAdd({ onCreate, atLimit, limit }: { onCreate: (input: Record<string, unknown>) => Promise<string | null>; atLimit: boolean; limit: number }) {
+  const [descriptionText, setDescriptionText] = useState('');
   const [company, setCompany] = useState('');
   const [title, setTitle] = useState('');
   const [stage, setStage] = useState<Stage>('saved');
@@ -102,14 +103,14 @@ function QuickAdd({ onCreate, atLimit, limit }: { onCreate: (input: Record<strin
     if (urlProblem) return;
     setBusy(true); setError(null);
     const message = await onCreate({
-      company, title, stage, sourceUrl: url.trim() || null, location, notes,
+      company, title, stage, sourceUrl: url.trim() || null, location, notes, descriptionText,
       appliedOn: stage === 'applied' ? (appliedOn || localDay()) : appliedOn || null,
       closedReason: stage === 'closed' ? 'other' : null,
       nextAction: nextAction.trim(), nextActionDue: nextDue ? new Date(nextDue).toISOString() : null,
     });
     setBusy(false);
     if (message) { setError(message); return; }
-    setCompany(''); setTitle(''); setStage('saved'); setUrl(''); setLocation(''); setAppliedOn(''); setNextAction(''); setNextDue(''); setNotes(''); setMore(false);
+    setDescriptionText(''); setCompany(''); setTitle(''); setStage('saved'); setUrl(''); setLocation(''); setAppliedOn(''); setNextAction(''); setNextDue(''); setNotes(''); setMore(false);
   };
 
   if (atLimit) return <div className="tracker-card" role="note"><h2>Add application</h2><p>You are tracking {limit} applications, the Free limit. Every existing record stays available to view, update and export. Pro adds more.</p></div>;
@@ -123,6 +124,7 @@ function QuickAdd({ onCreate, atLimit, limit }: { onCreate: (input: Record<strin
     </div>
     <label className="field compact"><span>Job link (optional)</span><input type="url" inputMode="url" placeholder="https://" maxLength={APPLICATION_LIMITS.url} value={url} onChange={event => setUrl(event.target.value)} aria-invalid={Boolean(urlProblem)} aria-describedby="quick-add-url-hint" /></label>
     <small id="quick-add-url-hint" className={urlProblem ? 'field-error' : 'field-hint'}>{urlProblem ?? 'APWICO keeps the link for you and does not fetch the page. Add any details yourself.'}</small>
+    <label className="field compact"><span>Job description (optional for tracking)</span><textarea rows={3} maxLength={12000} value={descriptionText} onChange={event => setDescriptionText(event.target.value)} placeholder="Paste the responsibilities and qualifications to enable matching and tailoring." /><small className="field-hint">A description is needed before starting your tailoring trial. Tracking needs no resume or posting.</small></label>
     <button type="button" className="text-button" aria-expanded={more} onClick={() => setMore(value => !value)}>{more ? 'Fewer details' : 'More details (optional)'}</button>
     {more && <div className="quick-add-grid">
       <label className="field compact"><span>Location</span><input maxLength={APPLICATION_LIMITS.location} value={location} onChange={event => setLocation(event.target.value)} /></label>

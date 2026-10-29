@@ -78,6 +78,7 @@ export function headingScope(line: string): PostingScope | undefined {
 
 function explicitRequired(text: string): boolean {
   return /\b(?:must|mandatory)\b/i.test(text)
+    || /\b(?:is|are) required\s*$/i.test(text)
     || /\b(?:licen[cs](?:e[ds]?|ure)|certification|certified|degree|diploma|security clearance|work authori[sz]ation|eligible to work)\b/i.test(text)
     || /\b\d+\+?\s+years?(?:\s+of)?\s+(?:relevant\s+)?(?:\w+\s+){0,3}experience\b/i.test(text)
     || /\b(?:experience|degree|licen[cs]e|licensure|certification|clearance|authori[sz]ation)\b[^.]{0,80}\b(?:is\s+)?required\b/i.test(text);
@@ -140,6 +141,7 @@ function chunks(input: string): Chunk[] {
 
 function categorize(text: string, scope: PostingScope, labelled: PostingCategory | null): PostingCategory | null {
   if (NOT_A_REQUIREMENT.test(text) || NEGATED.test(text)) return null;
+  if (/^(?:our work (?:directly )?impacts|join one of .*?(?:renowned|trusted))\b/i.test(text) && !/\b(?:must|required|requires|qualifications)\b/i.test(text)) return null;
   if (labelled) return labelled;
   if (NICE.test(text)) return 'nice_to_have';
   if (PREFERRED.test(text)) return 'preferred';

@@ -249,7 +249,7 @@ test('Pro boundary: Pro prepares any number of applications without a trial and 
   const master = example()
   const ids: string[] = []
   for (const n of [1, 2]) {
-    const created = await h.account({ action: 'application_create', application: { company: `Fixture Co ${n}`, title: 'Support specialist', stage: 'saved' } })
+    const created = await h.account({ action: 'application_create', application: { company: `Fixture Co ${n}`, title: 'Support specialist', stage: 'saved', descriptionText: 'Experience supporting customers is required.' } })
     ids.push(created.body.savedJobId as string)
   }
   for (const id of ids) assert.equal((await h.account({ action: 'create_job_resume', savedJobId: id, resume: master })).status, 200)
