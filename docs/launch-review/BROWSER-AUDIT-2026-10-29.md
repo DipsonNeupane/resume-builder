@@ -45,7 +45,18 @@ GitHub Actions quality gate run 40814982968 passed for e1233e9. PR #2 merged as 
 
 ## Follow-up patch verification
 
-- Server tests: 525 passed, including missing-description trial protection, explicit language extraction, company promotion exclusion and insufficient posting assessment.
+- Server tests: 526 passed, including missing-description trial protection, explicit language extraction, company promotion exclusion and insufficient posting assessment.
 - Local connected Chrome: paragraph fixture returns five required and one preferred requirement; comparison retains posting text and leaves resume input empty.
 - Automated local Chromium remains unavailable due to host sandbox launch restrictions; GitHub Actions includes the public-tools regression suite in addition to the full quality gate.
 - No database migrations, billing configuration, quota resets or historical document rewrites in this patch.
+
+## Production follow-up completed
+
+- PR #3 merged as 71d966f3da1dcb0d79ae8b13c3babed59e62b44c after CI run 40819145970 passed all 13 quality-gate checks plus all 10 public-tool browser tests. Tested source: 7158b20b1ca95a59dbfb6aa62a1c622c091dfb5b.
+- Vercel deployment dpl_vu5QkZ44ZuNqSL46RFKuC7S6P9B1 is Ready in Production and assigned to apwico.com.
+- Live verification: five required plus one preferred extracted from the paragraph fixture; promotional sentence excluded; all posting text carried into comparison with resume blank; missing-posting Match hides the old verdict; quick-add posting field visible and count remains 1/100.
+- Actual hosted export remains unverified: automatic approval review rejected the upload-consent action and requires explicit approval to send the fictional Alex QA resume to APWICO. No upload or download was performed.
+- No guarantee of universal defect freedom. Existing blank posting snapshots still cannot be edited in place; their resumes remain manually editable/exportable, and no historical data was rewritten.
+- Rollback: restore prior Vercel deployment dpl_GRqeb9TKJP2boa4jaZWe7pRccweq (236a207). This patch requires no database rollback.
+
+![Production posting context preserved](production-comparison-fixed.png)
