@@ -391,7 +391,7 @@ test('Pro match analysis exposes classified evidence depth and a truthful saved-
   await expect(full.getByText('Required', { exact: true })).toBeVisible();
   await expect(full.getByText('Preferred', { exact: true })).toBeVisible();
   await expect(full.getByText('Nice to have', { exact: true })).toBeVisible();
-  await expect(full.getByText('No evidence found in this resume', { exact: true })).toBeVisible();
+  await expect(full.getByText('Not found in your resume', { exact: true })).toBeVisible();
   await expect(page.getByText(/Save this job to start a separate job-specific resume/i)).toBeVisible();
   await expect(page.getByText(/master resume stays unchanged/i)).toBeVisible();
   const axe = await new AxeBuilder({ page }).include('.match-analysis').analyze();
@@ -459,7 +459,7 @@ test('saving a visible clarification updates its analysis without another provid
   await page.route('**/api/jobs-search', route => { searchCalls += 1; return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...sampleResponse, jobs: [{ ...sampleResponse.jobs[0], matchAnalysis: sampleMatchAnalysis }] }) }); });
   await page.route('**/api/jobs-account', route => {
     const body = route.request().postDataJSON();
-    if (body.action === 'clarification') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ saved: true, matchAnalysis: { ...sampleMatchAnalysis, label: 'stretch', importantWarning: 'Confirmed incompatibility: Must hold an active support certification.' } }) });
+    if (body.action === 'clarification') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ saved: true, matchAnalysis: { ...sampleMatchAnalysis, label: 'stretch', importantWarning: 'You said you don’t meet this requirement: Must hold an active support certification.' } }) });
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isPro: false, saveLimit: 10, savedJobs: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }) });
   });
   await openJobs(page);
@@ -882,7 +882,7 @@ for (const fromCapture of [false, true]) test(`${fromCapture ? 'extension captur
   await expect(page.locator('.tailoring-why')).toContainText('customer-support evidence');
   const trace = page.locator('.suggestion-trace');
   await expect(trace).toContainText('Targets job requirement');
-  await expect(trace).toContainText('Help customers with care. (Required · Evidence found)');
+  await expect(trace).toContainText('Help customers with care. (Required · Shown in your resume)');
   await expect(trace).toContainText('“customer-support profile” — Summary');
   if (fromCapture) {
     const beforeRejection = persisted?.summary;
@@ -939,7 +939,7 @@ test('an existing version detects master changes and offers non-destructive keep
   await expect(page.getByRole('button', { name: 'Update from master' })).toBeVisible();
   await page.getByRole('button', { name: 'Design & format' }).click();
   await page.getByRole('button', { name: 'Confirm' }).click();
-  await expect(page.getByText(/no description available/i)).toBeVisible();
+  await expect(page.getByText(/Add the job description before getting resume suggestions/i)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Get tailoring suggestions' })).toBeDisabled();
   expect(tailorCalls).toBe(0);
   await page.getByRole('button', { name: 'Back to editing' }).click();
@@ -1104,7 +1104,7 @@ test('unsupported AI wording cannot be accepted in one step; a fact or the perso
   await page.getByRole('button',{name:'Get tailoring suggestions'}).click();
   const first=page.getByRole('article',{name:'Suggestion 1',exact:true});
   const second=page.getByRole('article',{name:'Suggestion 2',exact:true});
-  await expect(first.getByRole('note')).toContainText('Needs your support.');
+  await expect(first.getByRole('note')).toContainText('Needs more information.');
   await expect(page.getByText('paused for all accounts')).toHaveCount(0);
   await expect(first.getByRole('note')).toContainText('It uses “complaints” from the job, which your resume does not say.');
   await expect(first.getByRole('note')).toContainText('They cannot confirm that any wording is true.');
@@ -1201,7 +1201,7 @@ for (const width of [320, 390, 768, 1440, 1920]) test(`premium opportunity and t
   await expect(page.getByRole('article',{name:'Suggestion 1',exact:true})).toBeVisible();
   await expect(page.getByRole('article',{name:'Suggestion 1',exact:true}).locator('.suggestion-trace')).toContainText('Support customers and document solutions.');
   // No verified requirement/fact link: it needs the person's support and has no one-click Accept.
-  await expect(page.getByRole('article',{name:'Suggestion 2',exact:true}).getByRole('note')).toContainText('Needs your support.');
+  await expect(page.getByRole('article',{name:'Suggestion 2',exact:true}).getByRole('note')).toContainText('Needs more information.');
   await expect(page.getByRole('article',{name:'Suggestion 2',exact:true}).getByRole('button',{name:/^Accept/})).toHaveCount(0);
   const documentRatios=await page.locator('.review-document .resume-paper').first().evaluate(paper=>{const heading=paper.querySelector('h2')!;return {heading:parseFloat(getComputedStyle(heading).fontSize)/parseFloat(getComputedStyle(paper).fontSize),weight:getComputedStyle(paper).fontWeight};});
   expect(documentRatios.heading).toBeCloseTo(.9,1);expect(documentRatios.weight).toBe('400');

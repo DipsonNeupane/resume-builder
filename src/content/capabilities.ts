@@ -45,7 +45,7 @@ export const capabilities: Capability[] = [
       { title: 'The decision stays yours', body: 'You decide whether a role is worth pursuing. Match does not issue an apply verdict, hiring prediction or dominant ATS percentage.' },
     ],
     boundaries: [
-      '“No evidence found in this resume” means the reviewed resume did not show evidence; it does not mean you lack the qualification.',
+      '“Not found in your resume” means the reviewed resume did not show evidence; it does not mean you lack the qualification.',
       'Job descriptions can be incomplete or ambiguous, so extracted requirements require review.',
       'The free check reviews up to 12 requirements. Saved Match lets you review more requirements and keep your clarifications.',
     ],
@@ -60,10 +60,10 @@ export const capabilities: Capability[] = [
     promise: 'Match compares a job description with your resume. It supports your decision; it does not predict hiring, assign an ATS score, or tell you to apply.',
     facts: [
       { title: 'Requirements come from the posting', body: 'APWICO looks for explicit qualifications in the job description, keeps each item linked to its source wording, and groups it as required, preferred, or nice to have.' },
-      { title: 'Direct evidence stays traceable', body: 'Evidence found means wording in the reviewed resume directly supports the requirement. The product shows the connected resume wording so the user can check whether the connection is meaningful.' },
-      { title: 'Related evidence is not a pass', body: 'Related evidence — review means the resume contains related wording, but the evidence may be incomplete or indirect. It is presented for review, not upgraded into direct evidence automatically.' },
-      { title: 'No evidence found remains unknown', body: 'No evidence found in this resume means the reviewed resume did not show supporting evidence. It does not mean the person lacks the skill, credential or experience, and it does not become a rejection recommendation.' },
-      { title: 'Confirmed incompatibility requires the user', body: 'A required item becomes a confirmed incompatibility only when the user explicitly says they do not have it. Preferred or nice-to-have items remain non-demonstrated rather than becoming disqualifiers.' },
+      { title: 'Direct evidence stays traceable', body: 'Shown in your resume means wording in the reviewed resume directly supports the requirement. The product shows the connected resume wording so the user can check whether the connection is meaningful.' },
+      { title: 'Related evidence is not a pass', body: 'Possibly relevant—check this means the resume contains related wording, but the evidence may be incomplete or indirect. It is presented for review, not upgraded into direct evidence automatically.' },
+      { title: 'No evidence found remains unknown', body: 'Not found in your resume means the reviewed resume did not show supporting evidence. It does not mean the person lacks the skill, credential or experience, and it does not become a rejection recommendation.' },
+      { title: 'You said you don’t meet this requirement requires the user', body: 'A required item becomes a confirmed incompatibility only when the user explicitly says they do not have it. Preferred or nice-to-have items remain non-demonstrated rather than becoming disqualifiers.' },
       { title: 'Clarifications change the evidence view', body: 'The user can confirm that they can demonstrate an unresolved requirement, state that they do not have it or remain unsure. Saved Match Analysis is recalculated with that explicit clarification and keeps the decision with the user.' },
       { title: 'Match and AI are separate', body: 'The current Match classification is deterministic and does not use a generative-AI model. AI is used only for separately requested tailoring suggestions; those suggestions must stay grounded in supplied resume content and are never applied without review.' },
     ],

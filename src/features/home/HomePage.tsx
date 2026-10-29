@@ -39,10 +39,10 @@ export function HomePage({ onBuild, onUpload, onJobs, onCompare, onPro, onTempla
  return <main className="landing landing-approved-c landing-approved-wine" id="main-content">
   <PatinaHero onBuild={onBuild} onFindJobs={onFindJobs} onOrganize={onOrganize}/>
   <section className="landing-starts" aria-labelledby="start-heading">
-   <div className="landing-starts-heading"><p className="section-label">Start with what you have</p><h2 id="start-heading">Three clear ways in.</h2><p>Start with your resume, a blank page, or a job description. Your master resume stays unchanged.</p></div>
+   <div className="landing-starts-heading"><p className="section-label">Your next step</p><h2 id="start-heading">Where would you like to start?</h2><p>Bring your current resume, create a new one, or check a job you’re interested in.</p></div>
    <div className="start-card-grid">
-    <article><Upload aria-hidden="true"/><h3>Upload my resume</h3><p>Upload a Word or text-based PDF. It is read in your browser and requires your review.</p><button className="text-button" onClick={onUpload}>Choose a resume file<ArrowRight size={16} aria-hidden="true"/></button></article>
-    <article><FileText aria-hidden="true"/><h3>Build from scratch</h3><p>Build a master resume with 7 Free templates, PDF, and editable Word export.</p><button className="text-button" onClick={onBuild}>Build a resume free<ArrowRight size={16} aria-hidden="true"/></button></article>
+    <article><Upload aria-hidden="true"/><h3>Upload my resume</h3><p>Import a Word document or a PDF with selectable text. Review the details before continuing. Your file is read in your browser.</p><button className="text-button" onClick={onUpload}>Choose a resume file<ArrowRight size={16} aria-hidden="true"/></button></article>
+    <article><FileText aria-hidden="true"/><h3>Build from scratch</h3><p>Choose from 7 free templates and add your experience. Download your resume as a PDF or Word document.</p><button className="text-button" onClick={onBuild}>Build a resume free<ArrowRight size={16} aria-hidden="true"/></button></article>
     <article><Search aria-hidden="true"/><h3>Start with a job</h3><p>Paste a job description and compare each requirement with your resume.</p><a className="text-button" href="/tools/resume-job-match/" onClick={onCompare}>Compare resume and job<ArrowRight size={16} aria-hidden="true"/></a></article>
    </div>
    <ul className="product-proof-strip" aria-label="Product facts">
@@ -53,19 +53,19 @@ export function HomePage({ onBuild, onUpload, onJobs, onCompare, onPro, onTempla
    </ul>
   </section>
   <section className="evidence-story landing-match" id="how-it-works">
-   <div><p className="section-label">Match Analysis · requirement by requirement</p><p>See each job requirement beside supporting resume evidence—or a clear note when none is shown. You decide whether the role deserves more effort.</p><a className="button outline" href="/tools/resume-job-match/" onClick={onCompare}>Compare my resume with a job<ArrowRight size={16} aria-hidden="true"/></a></div>
+   <div><p className="section-label">Match Analysis · requirement by requirement</p><p>See how your resume matches the job requirements and what you may need to explain.</p><a className="button outline" href="/tools/resume-job-match/" onClick={onCompare}>Compare my resume with a job<ArrowRight size={16} aria-hidden="true"/></a></div>
    <p className="landing-sources">Search <strong>190+ job portals</strong> and employer career sites using your resume or your own criteria.</p>
    <MatchShowcase/>
    <dl className="evidence-key">
-    <div><dt><span className="evidence-dot strength"/>Evidence found</dt><dd>A line of your resume supports the requirement.</dd></div>
-    <div><dt><span className="evidence-dot review"/>Related evidence — review</dt><dd>Partly shown. A little more context may make it clear.</dd></div>
-    <div><dt><span className="evidence-dot unknown"/>No evidence found in this resume</dt><dd>Your resume doesn’t show it yet. That isn’t a verdict on you.</dd></div>
-    <div><dt><span className="evidence-dot conflict"/>Confirmed incompatibility</dt><dd>Only when you’ve said you don’t have something the role requires.</dd></div>
+    <div><dt><span className="evidence-dot strength"/>Shown in your resume</dt><dd>A line of your resume supports the requirement.</dd></div>
+    <div><dt><span className="evidence-dot review"/>Possibly relevant—check this</dt><dd>Partly shown. A little more context may make it clear.</dd></div>
+    <div><dt><span className="evidence-dot unknown"/>Not found in your resume</dt><dd>You may have this experience even if it isn’t listed.</dd></div>
+    <div><dt><span className="evidence-dot conflict"/>You said you don’t meet this requirement</dt><dd>Only when you’ve said you don’t have something the role requires.</dd></div>
    </dl>
   </section>
   <div className="landing-sheet" ref={sheet}>
   <section className="landing-tailor">
-   <div className="section-introduction"><h2>Tailor a separate resume for the roles you choose.</h2><p>Pro creates a separate resume for the job and suggests changes grounded in your existing content. Accept, reject, or edit each suggestion. Your master stays unchanged.</p><button className="text-button" onClick={onPro}>Tailor a saved job with Pro<ArrowRight size={16} aria-hidden="true"/></button></div>
+   <div className="section-introduction"><h2>Tailor a separate resume for the roles you choose.</h2><p>Pro creates a separate resume for the job and suggests edits based on what you’ve written. Accept, reject, or edit each suggestion. Your master stays unchanged.</p><button className="text-button" onClick={onPro}>Tailor a saved job with Pro<ArrowRight size={16} aria-hidden="true"/></button></div>
    <div className="tailor-proof" aria-hidden="true">
     <div className="tailor-master"><span className="tailor-tag">Your original resume · unchanged</span><p>{sample.summary}</p></div>
     <div className="tailor-version">

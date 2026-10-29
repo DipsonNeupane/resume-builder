@@ -110,7 +110,7 @@ const TIME_SAVED_VALUES = ['under_15_minutes','15_to_30_minutes','31_to_60_minut
 const WORKPLACE_LABELS: Record<Workplace | 'unknown', string> = { remote: 'Remote', hybrid: 'Hybrid', onsite: 'Onsite', field: 'Field-based', unknown: 'Workplace not listed' };
 const EMPLOYMENT_LABELS: Record<EmploymentType | 'unknown', string> = { full_time: 'Full-time', part_time: 'Part-time', contract: 'Contract', temporary: 'Temporary', internship: 'Internship', unknown: 'Employment type not listed' };
 // These ranking buckets order source jobs; they are not hiring verdicts or
-// requirement-level evidence states. Keep the visible label neutral and let
+// labels showing what your resume supports and what needs checking. Keep the visible label neutral and let
 // the canonical evidence rows explain what is or is not demonstrated.
 const MATCH_LABELS: Record<MatchLabel, string> = { strong: 'Review evidence', good: 'Review evidence', stretch: 'Review evidence' };
 
@@ -300,7 +300,7 @@ function parseJobCards(body: unknown): { jobs: JobCard[]; isPro: boolean; availa
 }
 
 const CATEGORY_LABELS = { required: 'Required', preferred: 'Preferred', nice_to_have: 'Nice to have' } as const;
-const STATUS_LABELS = { demonstrated: 'Evidence found', partially_demonstrated: 'Related evidence — review', not_demonstrated: 'No evidence found in this resume', confirmed_incompatible: 'Confirmed incompatibility' } as const;
+const STATUS_LABELS = { demonstrated: 'Shown in your resume', partially_demonstrated: 'Possibly relevant—check this', not_demonstrated: 'Not found in your resume', confirmed_incompatible: 'You said you don’t meet this requirement' } as const;
 
 function RequirementLedger({ requirements, scope, onReviewed }: { requirements: Requirement[]; scope: 'limited'|'full'; onReviewed: (scope: 'limited'|'full') => Promise<boolean> }) {
   const ledger = useRef<HTMLDivElement>(null);
@@ -346,7 +346,7 @@ function MatchAnalysisPanel({ analysis, isPro, onViewPro, onClarify, onEvidenceR
   }, [isPro]);
   return <section ref={panel} className="match-analysis" role="group" aria-label={`Match analysis — ${jobTitle}`}>
     <div className="match-analysis-header"><h3>What your resume shows</h3><span>Resume evidence · Match Analysis</span></div>
-    <p>{analysis.whyPromising}</p><p className="field-hint">Based only on what your resume shows, not a prediction of hiring. “No evidence found in this resume” doesn’t mean you don’t have it.</p>
+    <p>{analysis.whyPromising}</p><p className="field-hint">Based only on what your resume shows, not a prediction of hiring. “Not found in your resume” doesn’t mean you don’t have it.</p>
     <ul>{analysis.observations.slice(0, 3).map((item, index) => <li key={index}>{item}</li>)}</ul>
     {analysis.importantWarning && <div className="match-warning" role="note"><strong>Important requirement</strong><span>{analysis.importantWarning}</span></div>}
     {analysis.seniorityMessage && <p className="match-seniority">{analysis.seniorityMessage}</p>}
@@ -944,7 +944,7 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
       <div className="jobs-panel-heading"><div><span className="section-label">Saved job · Private workspace</span><h1>Match Analysis</h1><p>{job.title} at {job.company}</p></div><button className="back-link" onClick={onOpenSavedJobs}>Back to My applications</button></div>
       {message && <p role="status" className="field-hint">{message}</p>}
       {!hasPosting && <div className="empty-state" role="status"><strong>Job description needed</strong><p>There is not enough posting information to assess alignment. Tracking and manual resume editing remain available.</p><button className="button outline" onClick={onOpenSavedJobs}>Go to My applications</button></div>}
-      {hasPosting && saved.analysisCurrent === false && <><p className="match-stale" role="status">This analysis needs refreshing because its saved context changed.</p><button className="button" onClick={() => void refreshSavedAnalysis(saved.id)}>Refresh Match Analysis</button></>}
+      {hasPosting && saved.analysisCurrent === false && <><p className="match-stale" role="status">Your resume or job details changed. Update the comparison.</p><button className="button" onClick={() => void refreshSavedAnalysis(saved.id)}>Refresh Match Analysis</button></>}
       {hasPosting && (saved.analysisCurrent !== false && saved.matchAnalysis
         ? <MatchAnalysisPanel saved jobTitle={`${job.title} at ${job.company}`} analysis={saved.matchAnalysis} isPro={accountIsPro} onViewPro={onViewPro} onClarify={(id, value) => void clarify(id, value, { savedJobId: saved.id })} onEvidenceReviewed={scope => recordEvidenceReview(job.dedupeKey as string, saved.matchAnalysis!.contextHash, scope)} />
         : <div className="empty-state"><strong>Evidence is not available yet.</strong><p>Compare this role with your current master resume to see what it shows.</p><button className="button" onClick={() => void refreshSavedAnalysis(saved.id)}>Show what my resume shows</button></div>)}

@@ -26,9 +26,9 @@ export function FictionalSample({ onUseResume, onUseJobDescription }: Props) {
    <p><strong>This example is fictional</strong> and does not read or change your resume.</p>
    <section className="sample-source" aria-labelledby="sample-source-heading"><h2 id="sample-source-heading">Fictional source resume</h2><p><strong>Jordan Lee · Community Program Coordinator</strong></p><ul><li>Coordinated weekly community programs and volunteer schedules for 25 volunteers.</li><li>Tracked attendance in spreadsheets and prepared monthly summaries.</li><li>Responded to participant questions and resolved schedule conflicts.</li></ul></section>
    <section aria-labelledby="sample-evidence-heading"><h2 id="sample-evidence-heading">Requirement-level evidence</h2><div className="sample-evidence">
-    <p><strong>Evidence found</strong><span>Requirement: coordinate schedules. Resume evidence: weekly programs and volunteer schedules for 25 volunteers.</span></p>
-    <p><strong>Related evidence — review</strong><span>Requirement: prepare operational reports. The resume shows attendance spreadsheets and monthly summaries, but not the full reporting scope.</span></p>
-    <p><strong>No evidence found in this resume</strong><span>Requirement: manage procurement. No procurement evidence appears in the fictional resume. That is not proof Jordan lacks the experience.</span></p>
+    <p><strong>Shown in your resume</strong><span>Requirement: coordinate schedules. Resume evidence: weekly programs and volunteer schedules for 25 volunteers.</span></p>
+    <p><strong>Possibly relevant—check this</strong><span>Requirement: prepare operational reports. The resume shows attendance spreadsheets and monthly summaries, but not the full reporting scope.</span></p>
+    <p><strong>Not found in your resume</strong><span>Requirement: manage procurement. No procurement evidence appears in the fictional resume. That is not proof Jordan lacks the experience.</span></p>
    </div></section>
    <fieldset className="sample-decision-choices"><legend>What does Jordan decide?</legend>
     <label><input type="radio" name="sample-decision" checked={decision === 'tailor'} onChange={() => setDecision('tailor')} />Worth pursuing — create a separate version</label>

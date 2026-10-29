@@ -20,7 +20,7 @@ const releaseChrome = (html: string) => html
  .replaceAll('Give your experience a reliable home before you decide what each application needs.', 'Build your master resume, then tailor separate versions for the roles you choose.')
  .replaceAll('Put the method into practice', 'Try it')
  .replaceAll('Keep going', 'Related guides')
- .replaceAll('<p class="eyebrow">A practical, evidence-first method</p>', '')
+ .replaceAll('<p class="eyebrow">How to tailor your resume</p>', '')
  .replaceAll('<p class="eyebrow">Change relevance, not identity</p>', '')
  .replaceAll('<p class="eyebrow">Worldwide scope without universal rules</p>', '');
 

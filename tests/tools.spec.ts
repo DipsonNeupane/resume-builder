@@ -56,9 +56,9 @@ test('evidence check separates supported, review and unknown evidence without a 
   await page.goto('/tools/resume-job-match/');
   await page.locator('#resume-text').fill('Customer Operations Specialist\nCoordinated onboarding with sales and support.\nBuilt Salesforce reports for weekly service reviews.');
   await page.locator('#job-description').fill('Responsibilities\nCoordinate onboarding across sales and support.\nRequired qualifications\nA bachelor degree is required.\nPreferred qualifications\nSQL experience preferred.');
-  await page.getByRole('button', { name: 'Check the evidence' }).click();
-  await expect(page.getByText('Evidence found', { exact: true }).first()).toBeVisible();
-  await expect(page.getByText('No evidence found in this resume', { exact: true }).first()).toBeVisible();
+  await page.getByRole('button', { name: 'Compare my resume' }).click();
+  await expect(page.getByText('Shown in your resume', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Not found in your resume', { exact: true }).first()).toBeVisible();
   await expect(page.locator('[data-tool-results]')).not.toContainText(/ATS score|hiring probability|interview likelihood/i);
 });
 
@@ -76,14 +76,14 @@ Serve customers and operate register.
 Security clearance required.
 Qualifications
 2+ years of retail supervisory experience required.`);
-  await page.getByRole('button', { name: 'Check the evidence' }).click();
+  await page.getByRole('button', { name: 'Compare my resume' }).click();
   const output = page.locator('[data-tool-output]');
   await expect(output).not.toContainText(/ESSENTIAL FUNCTIONS|Essential Duties and Responsibilities|Required:\*\*|Qualifications/);
-  await expect(output.locator('.evidence-result').filter({ hasText: 'Notifies supervisor' })).toContainText('Other signals');
-  await expect(output.locator('.evidence-result').filter({ hasText: 'Serve customers' })).toContainText('Other signals');
+  await expect(output.locator('.evidence-result').filter({ hasText: 'Notifies supervisor' })).toContainText('Other details');
+  await expect(output.locator('.evidence-result').filter({ hasText: 'Serve customers' })).toContainText('Other details');
   const clearance = output.locator('.evidence-result').filter({ hasText: 'Security clearance required' });
   await expect(clearance).toContainText('Required');
-  await expect(clearance).toContainText('No evidence found in this resume');
+  await expect(clearance).toContainText('Not found in your resume');
   await expect(clearance).not.toContainText('Resume evidence to review');
 });
 
@@ -96,7 +96,7 @@ test('evidence review qualifies only after a requirement result is genuinely vie
   await page.goto('/tools/resume-job-match/');
   await page.locator('#resume-text').fill('Customer Operations Specialist\nCoordinated onboarding with sales and support.\nBuilt Salesforce reports for weekly service reviews.');
   await page.locator('#job-description').fill('Responsibilities\nCoordinate onboarding across sales and support.\nRequired qualifications\nA bachelor degree is required.\nPreferred qualifications\nSQL experience preferred.');
-  await page.getByRole('button', { name: 'Check the evidence' }).click();
+  await page.getByRole('button', { name: 'Compare my resume' }).click();
   const results = page.locator('[data-tool-results]');
   await expect(results).toBeVisible();
   await expect(results).not.toHaveAttribute('data-review-scope', 'limited');
@@ -113,7 +113,7 @@ test('public evidence can continue with bounded job context without carrying res
   const job = 'Required qualifications\nSalesforce administration is required.\nPreferred qualifications\nSQL experience preferred.';
   await page.locator('#resume-text').fill(privateResume);
   await page.locator('#job-description').fill(job);
-  await page.getByRole('button', { name: 'Check the evidence' }).click();
+  await page.getByRole('button', { name: 'Compare my resume' }).click();
   await page.getByRole('link', { name: /Continue with full APWICO Match/ }).click();
   await expect(page).toHaveURL('/start/job');
   expect(page.url()).not.toContain('Salesforce');

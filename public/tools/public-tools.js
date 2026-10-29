@@ -23,7 +23,7 @@ function quote(label, value) {
     return wrapper;
 }
 function categoryLabel(category) {
-    return category === 'required' ? 'Required' : category === 'preferred' ? 'Preferred' : 'Other signals';
+    return category === 'required' ? 'Required' : category === 'preferred' ? 'Preferred' : 'Other details';
 }
 function renderRequirements(requirements, container) {
     for (const category of ['required', 'preferred', 'other']) {
@@ -46,10 +46,10 @@ function renderRequirements(requirements, container) {
     }
 }
 const evidenceLabels = {
-    demonstrated: 'Evidence found',
-    partial: 'Related evidence — review',
-    not_demonstrated: 'No evidence found in this resume',
-    confirmed_incompatible: 'Confirmed incompatibility',
+    demonstrated: 'Shown in your resume',
+    partial: 'Possibly relevant—check this',
+    not_demonstrated: 'Not found in your resume',
+    confirmed_incompatible: 'You said you don’t meet this requirement',
 };
 function renderEvidence(results, container) {
     const summary = node('div', 'evidence-summary');
