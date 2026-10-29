@@ -32,7 +32,7 @@ type ParsedSuggestion = Suggestion & { why: string; targetRequirements: TargetRe
  * edited or wrote, or the AI wording backed by a fact the person added. */
 type Authorship = 'ai' | 'edited' | 'user_supported';
 const CATEGORY_LABEL: Record<string, string> = { required: 'Required', preferred: 'Preferred', nice_to_have: 'Nice to have', other: 'Other' };
-const STATUS_LABEL: Record<string, string> = { demonstrated: 'Evidence found', partially_demonstrated: 'Related evidence — review', not_demonstrated: 'No evidence found in this resume', confirmed_incompatible: 'You said you don’t have this' };
+const STATUS_LABEL: Record<string, string> = { demonstrated: 'Shown in your resume', partially_demonstrated: 'Possibly relevant—check this', not_demonstrated: 'Not found in your resume', confirmed_incompatible: 'You said you don’t have this' };
 const text = (value: unknown, max: number): value is string => typeof value === 'string' && value.trim() !== '' && value.length <= max;
 function targets(value: unknown): TargetRequirement[] {
  if (!Array.isArray(value)) return [];
@@ -291,7 +291,7 @@ export function TailoringPanel({ resume, ownerId, onSignIn, onViewPro, versionId
  }
 
  return <section className="field tailoring-panel" aria-label="Job tailoring">
-  <div className="tailoring-heading"><div><span className="section-label">From match to application</span><h3>AI tailoring suggestions</h3><p className="field-hint">Make the connection clearer. Keep the experience yours.</p></div><span>AI suggests. You decide.</span></div>
+  <div className="tailoring-heading"><div><span className="section-label">From match to application</span><h3>AI tailoring suggestions</h3><p className="field-hint">Suggest edits for this job using your existing experience.</p></div><span>AI suggests. You decide.</span></div>
   <ol className="tailoring-flow" aria-label="How tailoring keeps you in control">
    <li><strong>Master resume</strong>Remains unchanged</li>
    <li><strong>Job-specific version</strong>A separate document</li>
@@ -299,7 +299,7 @@ export function TailoringPanel({ resume, ownerId, onSignIn, onViewPro, versionId
    <li><strong>You</strong>Accept, reject or edit</li>
   </ol>
   <ol className="review-progress" aria-label="Tailoring progress"><li aria-current={!draft?'step':undefined}>01 / Get suggestions</li><li aria-current={draft&&items.some(item=>item.status==='pending')?'step':undefined}>02 / Review each change</li><li aria-current={draft&&!items.some(item=>item.status==='pending')?'step':undefined}>03 / Your resume</li></ol>
-  {!jobDescriptionAvailable && <p className="notice" role="status">This saved job has no description available, so APWICO cannot generate grounded tailoring suggestions.</p>}
+  {!jobDescriptionAvailable && <p className="notice" role="status">Add the job description before getting resume suggestions.</p>}
   <div className="field checkbox-field">
    <label>
     <input type="checkbox" checked={consent} disabled={busy} onChange={event => setConsent(event.target.checked)} />
@@ -321,14 +321,14 @@ export function TailoringPanel({ resume, ownerId, onSignIn, onViewPro, versionId
    const showIssues = !acceptable && !ownWordingKept;
    const focus = (event: { currentTarget: HTMLElement }) => event.currentTarget.closest('article')?.focus({preventScroll:true});
    return <article className="suggestion-card" tabIndex={-1} data-status={item.status} data-supported={acceptable ? 'true' : 'false'} key={`${item.field}-${item.sectionId ?? ''}-${item.entryId ?? ''}`} aria-label={`Suggestion ${index + 1}`}>
-   <header><span>Suggestion {index + 1} / {item.field}</span><span>{item.status==='pending'?(acceptable?'Your decision':'Needs your support'):item.status==='accepted'?AUTHORSHIP_LABEL[item.authorship ?? 'ai']:'Rejected'}</span></header>
+   <header><span>Suggestion {index + 1} / {item.field}</span><span>{item.status==='pending'?(acceptable?'Your decision':'Needs more information'):item.status==='accepted'?AUTHORSHIP_LABEL[item.authorship ?? 'ai']:'Rejected'}</span></header>
    <div className="pro-preview-compare"><div><span>Original wording</span><p>{item.originalText || 'No text yet'}</p></div><div><span>{item.status === 'accepted' && item.authorship === 'edited' ? 'Your wording' : 'Proposed wording'}</span><p>{item.status === 'accepted' ? item.suggestedText : item.aiText}</p></div></div>
    {(item.targetRequirements.length > 0 || assessment.quotes.length > 0) && <dl className="suggestion-trace">
     {item.targetRequirements.length > 0 && <div><dt>Targets job requirement{item.targetRequirements.length > 1 ? 's' : ''}</dt>{item.targetRequirements.map(requirement => <dd key={requirement.id}>{requirement.text} <small>({CATEGORY_LABEL[requirement.category] ?? 'Other'}{requirement.status && STATUS_LABEL[requirement.status] ? ` · ${STATUS_LABEL[requirement.status]}` : ''})</small></dd>)}</div>}
     {assessment.quotes.length > 0 && <div><dt>Supported by your resume</dt>{item.supportingFacts.filter(fact => assessment.quotes.includes(fact.quote)).map(fact => <dd key={fact.quote}>“{fact.quote}” <small>— {fact.location}</small></dd>)}</div>}
     {assessment.userFactUsed && acceptable && <div><dt>Fact you added</dt><dd>“{item.userFacts}” <small>— written by you, not from your resume</small></dd></div>}
    </dl>}
-   {showIssues && <div className="notice suggestion-ungrounded" role="note"><div><p><strong>Needs your support.</strong> APWICO found {issues.length === 1 ? 'a problem' : 'problems'} with the proposed wording, so it cannot be accepted as it is:</p>
+   {showIssues && <div className="notice suggestion-ungrounded" role="note"><div><p><strong>Needs more information.</strong> APWICO found {issues.length === 1 ? 'a problem' : 'problems'} with the proposed wording, so it cannot be accepted as it is:</p>
     <ul>{issues.map((issue, i) => <li key={i}>{describeIssue(issue)}</li>)}</ul>
     <small>These checks catch common overstatements. They cannot confirm that any wording is true.</small></div></div>}
    {ownWordingKept ? <p className="tailoring-why"><strong>Your wording:</strong> written by you, so APWICO does not check it as an AI claim. Make sure it is true.</p>

@@ -26,7 +26,7 @@ function quote(label: string, value: string): HTMLElement {
 }
 
 function categoryLabel(category: ExtractedRequirement['category']): string {
-  return category === 'required' ? 'Required' : category === 'preferred' ? 'Preferred' : 'Other signals';
+  return category === 'required' ? 'Required' : category === 'preferred' ? 'Preferred' : 'Other details';
 }
 
 function renderRequirements(requirements: ExtractedRequirement[], container: HTMLElement): void {
@@ -50,10 +50,10 @@ function renderRequirements(requirements: ExtractedRequirement[], container: HTM
 }
 
 const evidenceLabels: Record<EvidenceResult['status'], string> = {
-  demonstrated: 'Evidence found',
-  partial: 'Related evidence — review',
-  not_demonstrated: 'No evidence found in this resume',
-  confirmed_incompatible: 'Confirmed incompatibility',
+  demonstrated: 'Shown in your resume',
+  partial: 'Possibly relevant—check this',
+  not_demonstrated: 'Not found in your resume',
+  confirmed_incompatible: 'You said you don’t meet this requirement',
 };
 
 function renderEvidence(results: EvidenceResult[], container: HTMLElement): void {

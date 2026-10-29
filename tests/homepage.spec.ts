@@ -11,7 +11,7 @@ test('homepage presents the two primary paths, three truthful starts and bounded
  await expect(page.getByRole('link', { name: 'Organize my applications', exact: true })).toBeInViewport();
  await expect(page.getByRole('button', { name: 'Build a resume free', exact: true }).first()).toBeVisible();
 
- const starts = page.getByRole('region', { name: 'Three clear ways in.' });
+ const starts = page.getByRole('region', { name: 'Where would you like to start?' });
  await expect(starts.getByRole('heading', { level: 3 })).toHaveText(['Upload my resume', 'Build from scratch', 'Start with a job']);
  await expect(starts.getByText('read in your browser and requires your review')).toBeVisible();
  await expect(starts.getByText('7 Free templates, PDF, and editable Word export')).toBeVisible();
@@ -41,7 +41,7 @@ test('homepage and public navigation use stable destinations without misleading 
  await page.goBack();
  await page.getByRole('link', { name: 'Compare my resume with a job', exact: true }).first().click();
  await expect(page).toHaveURL(/\/tools\/resume-job-match\/$/);
- await expect(page.getByRole('heading', { level: 1, name: 'Resume vs. job evidence check' })).toBeVisible();
+ await expect(page.getByRole('heading', { level: 1, name: 'Compare your resume with a job' })).toBeVisible();
  await page.goBack();
  await page.getByRole('button', { name: 'Build a resume free', exact: true }).first().click();
  await expect(page).toHaveURL(/\/start\/build$/);

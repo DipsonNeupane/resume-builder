@@ -39,21 +39,21 @@ export function PatinaHero({ onBuild, onFindJobs, onOrganize }: Props) {
     <li className="pt-story-step pt-story-evidence">
      <span className="pt-story-number" aria-hidden="true">02</span>
      <div>
-      <small>Evidence from your experience</small>
+      <small>From your resume</small>
       <q>Support customers across email, phone, and live chat…</q>
-      <span className="pt-story-status"><i aria-hidden="true"/>Evidence found</span>
+      <span className="pt-story-status"><i aria-hidden="true"/>Shown in your resume</span>
      </div>
     </li>
     <li className="pt-story-step pt-story-decision">
      <span className="pt-story-number" aria-hidden="true">03</span>
      <div>
       <small>Your decision</small>
-      <strong>This role is worth my effort.</strong>
+      <strong>I’d like to apply.</strong>
       <span>You decide what happens next—not a score.</span>
      </div>
     </li>
    </ol>
-   <p className="pt-story-foot">Requirement <span aria-hidden="true">→</span> evidence <span aria-hidden="true">→</span> your decision</p>
+
   </figure>
  </section>;
 }
