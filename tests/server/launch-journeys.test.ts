@@ -262,7 +262,7 @@ test('Pro boundary: Pro prepares any number of applications without a trial and 
 test('missing posting recovery is owner-scoped and preserves kept exports and trial', { timeout: 120_000 }, async () => {
  const h = await setup();
  try {
-  const created = await h.account({ action: 'application_create', application: { company: 'Recovery fixture', title: 'Support specialist', stage: 'saved' } });
+  const created = await h.account({ action: 'application_create', application: { company: 'Recovery fixture', title: 'Support specialist', stage: 'saved', descriptionText: '\n\t\u00a0\ufeff' } });
   const savedJobId = created.body.savedJobId as string;
   const legacy = await h.db.rpc('job_resume_version_create', { p_owner: FREE, p_saved_job: savedJobId, p_data: example(), p_fingerprint: 'a'.repeat(64) });
   assert.equal(legacy.error, null);
