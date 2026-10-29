@@ -13,8 +13,8 @@ test('homepage presents the two primary paths, three truthful starts and bounded
 
  const starts = page.getByRole('region', { name: 'Where would you like to start?' });
  await expect(starts.getByRole('heading', { level: 3 })).toHaveText(['Upload my resume', 'Build from scratch', 'Start with a job']);
- await expect(starts.getByText('read in your browser and requires your review')).toBeVisible();
- await expect(starts.getByText('7 Free templates, PDF, and editable Word export')).toBeVisible();
+ await expect(starts.getByText('Review the details before continuing. Your file is read in your browser.')).toBeVisible();
+ await expect(starts.getByText('Choose from 7 free templates and add your experience.')).toBeVisible();
  await expect(starts.getByText('Paste a job description and compare each requirement')).toBeVisible();
 
  const proof = page.getByRole('list', { name: 'Product facts' });
