@@ -9,7 +9,10 @@ function meta(key: string, value: string, property = false) {
 export function updateAppHead(page: AppPage, privateOverlay: boolean, sensitiveEntry: boolean) {
  const url = new URL(window.location.href);
  const isHome = page === 'home' && !privateOverlay && !sensitiveEntry && (isPublicLocation(url) || isPublicAttributionLocation(url));
- const details = page === 'home' ? publicPages['/'] : privateMetadata[page];
+ const base = page === 'home' ? publicPages['/'] : privateMetadata[page];
+ const routeTitles: Record<string,string> = { '/workspace/today':'Today | APWICO', '/workspace/preferences':'Job preferences | APWICO' };
+ const routeTitle = routeTitles[url.pathname] ?? (/^\/workspace\/jobs\/[^/]+\/match$/.test(url.pathname) ? 'Match Analysis | APWICO' : undefined);
+ const details = routeTitle ? {...base,title:routeTitle} : base;
  document.title = details.title;
  meta('description', details.description);
  meta('robots', isHome && url.origin === productionOrigin ? 'index, follow' : noindex);
