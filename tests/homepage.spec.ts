@@ -47,3 +47,30 @@ test('homepage and public navigation use stable destinations without misleading 
  await expect(page).toHaveURL(/\/start\/build$/);
  await expect(page.getByRole('heading', { level: 1, name: 'Start your master resume' })).toBeVisible();
 });
+
+test('template previews switch on click without opening the editor and fit a complete page', async ({ page }) => {
+ for (const width of [1366, 390]) {
+  await page.setViewportSize({ width, height: 900 });
+  await page.goto('/');
+  for (const name of ['Modern', 'Compact', 'Boardroom', 'Stackline', 'Scholar', 'Primer']) {
+   const choice = page.getByRole('button', { name: `Preview ${name}`, exact: true });
+   await choice.click();
+   await expect(choice).toHaveAttribute('aria-pressed', 'true');
+   await expect(page).toHaveURL(/\/$/);
+   const specimen = page.getByRole('figure', { name: `Fictional sample in the ${name.toLowerCase()} template` });
+   await expect(specimen.locator('.fixed-preview')).toHaveClass(/is-measured/);
+   await expect(specimen.locator('.fixed-preview-frame').first()).toBeVisible();
+   expect(await specimen.locator('.fixed-preview-page').first().evaluate(el => {
+    const page = el.getBoundingClientRect(), frame = el.parentElement!.getBoundingClientRect();
+    return Math.abs(page.width - frame.width) < 2 && Math.abs(page.height - frame.height) < 2;
+   })).toBe(true);
+   if (name === 'Scholar') {
+    await expect(specimen).toContainText('Publications');
+    await expect(specimen).not.toContainText('Customer Experience Specialist');
+   }
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+ }
+ await page.getByRole('button', { name: 'Use this template', exact: true }).click();
+ await expect(page).not.toHaveURL(/\/$/);
+});

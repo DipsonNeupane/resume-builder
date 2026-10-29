@@ -8,6 +8,7 @@ export default defineConfig({
  testDir: './tests',
  testMatch: [
   'sample.spec.ts',
+  'homepage.spec.ts',
   'performance.spec.ts',
   'shared-discovery.spec.ts',
   'public-quality.spec.ts',

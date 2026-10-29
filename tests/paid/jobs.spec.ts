@@ -235,6 +235,8 @@ test('an owner-scoped job-specific resume restores after reload while preserving
   await page.getByRole('textbox', { name: 'Professional profile', exact: true }).fill('Edited version wording after reload.');
   await expect.poll(() => updates.length).toBe(1);
   expect(updates[0]).toMatchObject({ versionId, expectedRevision: 2, resume: { summary: 'Edited version wording after reload.' } });
+  // Receiving a request is not completion: navigation is intentionally blocked while saving.
+  await expect(page.locator('.save-status')).toHaveText('Job-specific resume saved to your account');
   expect(JSON.parse(await page.evaluate(() => sessionStorage.getItem('resumestride.resume.v1')!)).summary).toBe(master.summary);
   await page.evaluate(next => { history.pushState(null, '', next); dispatchEvent(new PopStateEvent('popstate')); }, `/workspace/resumes/${versionBId}`);
   await expect(page.getByText(/Job-specific resume — Tailored for Second private role/)).toBeVisible();
