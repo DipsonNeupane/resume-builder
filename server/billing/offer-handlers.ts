@@ -2,7 +2,7 @@ import type Stripe from 'stripe'
 import { authenticate, HttpError, json, jsonBody, requirePost } from '../http/security.js'
 import { databaseConfig, serviceDatabase } from '../database.js'
 import { billingError, stripeClient } from './stripe.js'
-import { assertPaidTerritory, offerCatalogConfig, offerFor, validateOffer, type Offer } from './catalog.js'
+import { assertPaidTerritory, offerCatalogConfig, offerFor, paidCheckoutTaxOptions, validateOffer, type Offer } from './catalog.js'
 
 const dependencies = { authenticate, serviceDatabase, stripeClient, validateOffer }
 type Dependencies = typeof dependencies
@@ -29,12 +29,13 @@ export async function offerCheckout(request: Request, env: NodeJS.ProcessEnv = p
     const config = offerCatalogConfig(env)
     requirePost(request, config.origin)
     assertPaidTerritory(request, env)
-    const owner = await deps.authenticate(request, databaseConfig(env))
     const body = await jsonBody(request)
     if (Object.keys(body).some(key => !['requestId', 'offerKey', 'renewalConsent', 'overlapConsent'].includes(key)) || !uuid(body.requestId) || body.renewalConsent !== true) {
       throw new HttpError(400, 'Explicit monthly renewal consent is required')
     }
     const offer = offerFor(config, body.offerKey)
+    if (offer.kind !== 'pro') throw new HttpError(400, 'New individual-template subscriptions are no longer available. Pro includes every template.')
+    const owner = await deps.authenticate(request, databaseConfig(env))
     const db = deps.serviceDatabase(env)
     const currentAccess = await db.rpc('billing_effective_access', { p_owner: owner, p_template: offer.templateId || '__pro__' })
     if (currentAccess.error || !currentAccess.data?.[0]) throw new Error('Entitlement lookup unavailable')
@@ -58,8 +59,9 @@ export async function offerCheckout(request: Request, env: NodeJS.ProcessEnv = p
       mode: 'subscription', customer, line_items: [{ price: offer.priceId, quantity: 1 }],
       client_reference_id: body.requestId, metadata: { checkout_id: body.requestId, offer_key: offer.key },
       subscription_data: { metadata: { offer_key: offer.key } },
-      success_url: `${config.origin}/?account=1&checkout=success`, cancel_url: `${config.origin}/?account=1&checkout=cancelled`,
+      success_url: `${config.origin}/?account=1&checkout=success`, cancel_url: `${config.origin}/workspace/pro?checkout=cancelled`,
       allow_promotion_codes: false,
+      ...paidCheckoutTaxOptions(env),
     }, { idempotencyKey: `offer:${owner}:${body.requestId}` })
     if (!session.url || session.livemode !== config.live || new URL(session.url).origin !== 'https://checkout.stripe.com') throw new Error('Unexpected checkout response')
     const bound = await db.rpc('billing_bind_offer_checkout', { p_id: body.requestId, p_owner: owner, p_session: session.id })
@@ -154,9 +156,13 @@ export async function applyOfferCheckoutSession(session: Stripe.Checkout.Session
   if (!subscriptionId) throw new Error('Missing subscription reference')
   const subscription = await stripe.subscriptions.retrieve(subscriptionId)
   const { item, start, end } = subscriptionPeriod(subscription)
-  if (session.livemode !== config.live || subscription.livemode !== config.live || item.price.id !== offer.priceId || lookup.data.price_id !== offer.priceId) throw new Error('Offer subscription identity mismatch')
+  const trustedPriceId = String(lookup.data.price_id || '')
+  // A checkout opened immediately before a price cutover may complete after the
+  // deployment. Its immutable server-side intent remains authoritative; never
+  // strand a paid legacy checkout merely because the new-sale catalog advanced.
+  if (!/^price_[A-Za-z0-9]+$/.test(trustedPriceId) || session.livemode !== config.live || subscription.livemode !== config.live || item.price.id !== trustedPriceId) throw new Error('Offer subscription identity mismatch')
   const stored = await db.rpc('billing_record_offer_subscription', {
-    p_owner: lookup.data.owner_id, p_subscription: subscription.id, p_price: offer.priceId, p_live: config.live,
+    p_owner: lookup.data.owner_id, p_subscription: subscription.id, p_price: trustedPriceId, p_live: config.live,
     p_status: subscription.status, p_cancel_at_period_end: subscriptionStopsAtPeriodEnd(subscription),
     p_period_start: start.toISOString(), p_period_end: end.toISOString(), p_offer_key: offer.key, p_offer_kind: offer.kind, p_template_id: offer.templateId,
   })
@@ -169,6 +175,8 @@ export async function applyOfferCheckoutSession(session: Stripe.Checkout.Session
 export async function applyOfferInvoice(invoice: Stripe.Invoice, eventCreated: number, eventType: string, stripe: Stripe, db: ReturnType<typeof serviceDatabase>, trustedRow: Record<string, unknown>, env: NodeJS.ProcessEnv): Promise<Response> {
   const config = offerCatalogConfig(env, false)
   const offer = offerFromTrusted(config, String(trustedRow.offer_key))
+  const trustedPriceId = String(trustedRow.price_id || '')
+  const legacy = trustedPriceId !== offer.priceId
   const subscriptionRef = invoice.parent?.subscription_details?.subscription
   const subscriptionId = typeof subscriptionRef === 'string' ? subscriptionRef : subscriptionRef?.id
   if (!subscriptionId || subscriptionId !== trustedRow.subscription_id || invoice.livemode !== config.live) throw new Error('Offer invoice identity mismatch')
@@ -186,19 +194,21 @@ export async function applyOfferInvoice(invoice: Stripe.Invoice, eventCreated: n
   const line = invoice.lines.data[0]
   const priceRef = line.pricing?.price_details?.price
   const priceId = typeof priceRef === 'string' ? priceRef : priceRef?.id
-  if (priceId !== offer.priceId || line.quantity !== 1 || invoice.currency !== 'usd' || line.amount !== offer.amount || (invoice.amount_paid ?? 0) < offer.amount) throw new Error('Offer invoice catalog mismatch')
+  const expectedPriceId = legacy ? trustedPriceId : offer.priceId
+  const expectedAmount = legacy ? line.amount : offer.amount
+  if (!/^price_[A-Za-z0-9]+$/.test(expectedPriceId) || priceId !== expectedPriceId || line.quantity !== 1 || invoice.currency !== 'usd' || line.amount <= 0 || (!legacy && line.amount !== offer.amount) || (invoice.amount_paid ?? 0) < expectedAmount) throw new Error('Offer invoice catalog mismatch')
   if (!invoice.payments || invoice.payments.has_more || invoice.payments.data.length !== 1 || invoice.payments.data[0].status !== 'paid' || invoice.payments.data[0].payment.type !== 'payment_intent') throw new Error('Unexpected offer invoice payment')
   const paymentRef=invoice.payments.data[0].payment.payment_intent
   const paymentIntent=typeof paymentRef==='string'?paymentRef:paymentRef?.id
   if(!paymentIntent)throw new Error('Missing offer payment intent')
   const applied = await db.rpc('billing_apply_offer_invoice', {
-    p_subscription: subscriptionId, p_invoice: invoice.id, p_owner: trustedRow.owner_id, p_payment_intent:paymentIntent,p_price: offer.priceId, p_live: config.live,
+    p_subscription: subscriptionId, p_invoice: invoice.id, p_owner: trustedRow.owner_id, p_payment_intent:paymentIntent,p_price: expectedPriceId, p_live: config.live,
     p_amount: invoice.amount_paid, p_currency: invoice.currency, p_period_start: new Date(line.period.start * 1000).toISOString(),
     p_period_end: new Date(line.period.end * 1000).toISOString(), p_verified_at: new Date(eventCreated * 1000).toISOString(),
   })
   if (applied.error) throw new Error('Offer invoice persistence unavailable')
   const noticeKind = invoice.billing_reason === 'subscription_create' ? 'purchase' : 'renewal_receipt'
-  await db.rpc('billing_enqueue_notice', { p_owner: trustedRow.owner_id, p_subscription: subscriptionId, p_kind: noticeKind, p_due_at: new Date().toISOString(), p_dedupe_key: `${noticeKind}:${invoice.id}`, p_payload: { offerKey: offer.key, amount: offer.amount, currency: 'usd', periodEnd: new Date(line.period.end * 1000).toISOString() } })
+  await db.rpc('billing_enqueue_notice', { p_owner: trustedRow.owner_id, p_subscription: subscriptionId, p_kind: noticeKind, p_due_at: new Date().toISOString(), p_dedupe_key: `${noticeKind}:${invoice.id}`, p_payload: { offerKey: offer.key, amount: expectedAmount, currency: 'usd', periodEnd: new Date(line.period.end * 1000).toISOString() } })
   if (offer.kind === 'pro') {
     const rows = await db.rpc('billing_owner_subscription_summary', { p_owner: trustedRow.owner_id })
     if (rows.error || !Array.isArray(rows.data)) throw new Error('Overlap lookup unavailable')

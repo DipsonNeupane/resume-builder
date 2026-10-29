@@ -132,7 +132,7 @@ test('auth verification failures carry correlation but no bearer token or provid
  const records: Diagnostic[] = []
  const response = await runObservedRequest('billing-status', 'entitlement', async () => {
   try {
-   await authenticate(new Request('https://resumestride.com', { headers: { authorization: 'Bearer private-token' } }), { url: 'https://db.invalid', publicKey: secret }, async () => Response.json({ message: secret }, { status: 401 }))
+   await authenticate(new Request('https://apwico.com', { headers: { authorization: 'Bearer private-token' } }), { url: 'https://db.invalid', publicKey: secret }, async () => Response.json({ message: secret }, { status: 401 }))
    return json(200, {})
   } catch (error) { return safeError(error) }
  }, env, record => records.push(record))
@@ -158,7 +158,7 @@ test('provider 429s remain diagnosable even when an optional page failure is swa
 test('all deployed API entrypoints generate IDs and ignore attacker-controlled IDs/URLs', async () => {
  for (const file of (await readdir(new URL('../../api/', import.meta.url))).filter(file => file.endsWith('.ts'))) {
   const handler = (await import(`../../api/${file}`)).default
-  const response = await handler.fetch(new Request(`https://resumestride.com/api/${file}?token=private-query`, { headers: { 'X-Request-ID': 'private-incoming-id' } }))
+  const response = await handler.fetch(new Request(`https://apwico.com/api/${file}?token=private-query`, { headers: { 'X-Request-ID': 'private-incoming-id' } }))
   assert.match(response.headers.get('x-request-id')!, uuid, file)
   assert.notEqual(response.headers.get('x-request-id'), 'private-incoming-id')
   assert.ok(response.status >= 400, file)
@@ -166,7 +166,7 @@ test('all deployed API entrypoints generate IDs and ignore attacker-controlled I
 })
 
 test('analytics permits only sanitized public pageviews, closed product events and coarse properties', () => {
- const origin = 'https://resumestride.com'
+ const origin = 'https://apwico.com'
  for (const path of ['/?account=1', '/?code=private-token', '/#access_token=private-token', '/resume/private-name', '/jobs', '/?job=private-description']) {
   assert.equal(safeAnalyticsEvent({ type: 'pageview', url: origin + path }), null)
  }
@@ -177,6 +177,8 @@ test('analytics permits only sanitized public pageviews, closed product events a
  assert.deepEqual(safeAnalyticsEvent({ type: 'pageview', url: origin + '/?utm_source=google&utm_campaign=launch' }), { type: 'pageview', url: origin + '/' })
  assert.deepEqual(safeAnalyticsEvent(Object.assign({ type: 'pageview' as const, url: origin + '/#pricing' }, { resume: secret, properties: { password: secret } })), { type: 'pageview', url: origin + '/' })
  assert.deepEqual(sanitizeProductProperties({ user_state: 'authenticated', plan: 'Pro', export_type: 'PDF', utm_source: 'google', utm_term: secret, referrer_host: 'Search.Google.com' }), { user_state: 'authenticated', plan: 'Pro', export_type: 'PDF', utm_source: 'google', referrer_host: 'search.google.com' })
+ assert.deepEqual(sanitizeProductProperties({ journey: 'job_first', document_scope: 'job_specific', storage_scope: 'account', job_source: 'pasted', review_depth: 'limited', decision: 'pursue', application_status: 'applied', failure_category: 'parse_failure' }), { journey: 'job_first', document_scope: 'job_specific', storage_scope: 'account', job_source: 'pasted', review_depth: 'limited', decision: 'pursue', application_status: 'applied', failure_category: 'parse_failure' })
+ assert.deepEqual(sanitizeProductProperties({ journey: secret, document_scope: 'private-resume', failure_category: secret }), {})
  assert.deepEqual(sanitizeProductProperties({ surface: 'resources', article_slug: 'resume-keywords', cta_destination: 'match' }), { surface: 'resources', article_slug: 'resume-keywords', cta_destination: 'match' })
  const memory = new Map<string, string>()
  const storage = { getItem: (key: string) => memory.get(key) ?? null, setItem: (key: string, value: string) => { memory.set(key, value) } }
@@ -188,10 +190,12 @@ test('browser diagnostics are bounded, content-free, clearable and preserve thro
  clearBrowserDiagnostics()
  for (let i = 0; i < 60; i++) recordBrowserDiagnostic('extension', 'bridge_receive', 'bridge_rejected')
  recordBrowserDiagnostic('extension', secret as 'bridge_receive', 'bridge_rejected')
+ recordBrowserDiagnostic('cloud', 'cloud_delete', 'ok')
  const failure = Object.assign(new Error(secret), { name: 'ResumeConflictError', server: { resume: secret } })
  await assert.rejects(observeBrowserOperation('cloud', 'cloud_save', async () => { throw failure }), error => error === failure)
  const records = readBrowserDiagnostics()
  assert.equal(records.length, 50)
+ assert.ok(records.some(record => record.operation === 'cloud_delete' && record.category === 'ok'))
  assert.equal(records.at(-1)?.category, 'database_conflict')
  assert.ok(!JSON.stringify(records).includes(secret))
  clearBrowserDiagnostics()

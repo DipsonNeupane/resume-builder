@@ -36,7 +36,7 @@ test('requirement extractor handles empty, huge and hostile input without networ
   page.on('request', request => { if (request.method() !== 'GET') outbound.push(`${request.method()} ${request.url()} ${request.postData() ?? ''}`); });
   await page.goto('/tools/job-requirement-extractor/');
   await page.getByRole('button', { name: 'Extract requirements' }).click();
-  await expect(page.getByRole('alert')).toContainText('more detail');
+  await expect(page.getByRole('alert')).toContainText('Paste more');
 
   await page.locator('#job-description').evaluate((field, value) => { (field as HTMLTextAreaElement).value = value as string; }, 'x'.repeat(20_001));
   await page.getByRole('button', { name: 'Extract requirements' }).click();
@@ -57,9 +57,69 @@ test('evidence check separates supported, review and unknown evidence without a 
   await page.locator('#resume-text').fill('Customer Operations Specialist\nCoordinated onboarding with sales and support.\nBuilt Salesforce reports for weekly service reviews.');
   await page.locator('#job-description').fill('Responsibilities\nCoordinate onboarding across sales and support.\nRequired qualifications\nA bachelor degree is required.\nPreferred qualifications\nSQL experience preferred.');
   await page.getByRole('button', { name: 'Check the evidence' }).click();
-  await expect(page.getByText('Clearly demonstrated', { exact: true }).first()).toBeVisible();
-  await expect(page.getByText('Not demonstrated', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Evidence found', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('No evidence found in this resume', { exact: true }).first()).toBeVisible();
   await expect(page.locator('[data-tool-results]')).not.toContainText(/ATS score|hiring probability|interview likelihood/i);
+});
+
+test('public matcher does not turn headings, duties, or generic security overlap into qualification evidence', async ({ page }) => {
+  await page.goto('/tools/resume-job-match/');
+  await page.locator('#resume-text').fill(`Java Full Stack Developer
+Built Java and Spring Boot services for secure financial applications.
+Implemented application security controls and REST APIs with React.`);
+  await page.locator('#job-description').fill(`Keyholder Full Time
+**ESSENTIAL FUNCTIONS/DUTIES**
+Notifies supervisor if major repairs are required.
+**Essential Duties and Responsibilities:**
+Serve customers and operate register.
+**Required:**
+Security clearance required.
+Qualifications
+2+ years of retail supervisory experience required.`);
+  await page.getByRole('button', { name: 'Check the evidence' }).click();
+  const output = page.locator('[data-tool-output]');
+  await expect(output).not.toContainText(/ESSENTIAL FUNCTIONS|Essential Duties and Responsibilities|Required:\*\*|Qualifications/);
+  await expect(output.locator('.evidence-result').filter({ hasText: 'Notifies supervisor' })).toContainText('Other signals');
+  await expect(output.locator('.evidence-result').filter({ hasText: 'Serve customers' })).toContainText('Other signals');
+  const clearance = output.locator('.evidence-result').filter({ hasText: 'Security clearance required' });
+  await expect(clearance).toContainText('Required');
+  await expect(clearance).toContainText('No evidence found in this resume');
+  await expect(clearance).not.toContainText('Resume evidence to review');
+});
+
+test('evidence review qualifies only after a requirement result is genuinely viewed', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 500 });
+  await page.addInitScript(() => {
+    (window as unknown as { nativeScrollIntoView: typeof Element.prototype.scrollIntoView }).nativeScrollIntoView = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function () {};
+  });
+  await page.goto('/tools/resume-job-match/');
+  await page.locator('#resume-text').fill('Customer Operations Specialist\nCoordinated onboarding with sales and support.\nBuilt Salesforce reports for weekly service reviews.');
+  await page.locator('#job-description').fill('Responsibilities\nCoordinate onboarding across sales and support.\nRequired qualifications\nA bachelor degree is required.\nPreferred qualifications\nSQL experience preferred.');
+  await page.getByRole('button', { name: 'Check the evidence' }).click();
+  const results = page.locator('[data-tool-results]');
+  await expect(results).toBeVisible();
+  await expect(results).not.toHaveAttribute('data-review-scope', 'limited');
+  await page.locator('.evidence-result').first().evaluate(node => {
+    (window as unknown as { nativeScrollIntoView: typeof Element.prototype.scrollIntoView }).nativeScrollIntoView.call(node, { block: 'center' });
+  });
+  await expect(results).toHaveAttribute('data-review-scope', 'limited');
+});
+
+test('public evidence can continue with bounded job context without carrying resume text in URL or analytics', async ({ page }) => {
+  test.slow();
+  await page.goto('/tools/resume-job-match/');
+  const privateResume = 'Private Resume Phrase\nCustomer support and Salesforce administration across distributed teams.';
+  const job = 'Required qualifications\nSalesforce administration is required.\nPreferred qualifications\nSQL experience preferred.';
+  await page.locator('#resume-text').fill(privateResume);
+  await page.locator('#job-description').fill(job);
+  await page.getByRole('button', { name: 'Check the evidence' }).click();
+  await page.getByRole('link', { name: /Continue with full APWICO Match/ }).click();
+  await expect(page).toHaveURL('/start/job');
+  expect(page.url()).not.toContain('Salesforce');
+  const continuation = await page.evaluate(() => sessionStorage.getItem('resumestride.pendingJobFirst.v1'));
+  expect(JSON.parse(continuation!).capture.description).toBe(job);
+  expect(continuation).not.toContain('Private Resume Phrase');
 });
 
 test('bullet checker keeps rewrites grounded and clears private state', async ({ page }) => {
@@ -73,4 +133,14 @@ test('bullet checker keeps rewrites grounded and clears private state', async ({
   await page.getByRole('button', { name: 'Clear private text' }).click();
   await expect(page.locator('#resume-bullet')).toHaveValue('');
   await expect(page.locator('[data-tool-results]')).toBeHidden();
+});
+
+test('bullet checker does not turn vague input into a noun fragment and counters update', async ({ page }) => {
+  await page.goto('/tools/resume-bullet-checker/');
+  await page.locator('#resume-bullet').fill('Helped customers.');
+  await expect(page.locator('[data-count-for="resume-bullet"]')).toContainText('17 / 600');
+  await page.getByRole('button', { name: 'Review this bullet' }).click();
+  await expect(page.locator('.dimension-card').filter({ hasText: 'Specificity' })).toContainText('Review');
+  await expect(page.locator('.structure-card')).toContainText('There is not enough detail to suggest a stronger version yet.');
+  await expect(page.locator('[data-tool-output]')).not.toContainText(/^Customers\.?$/);
 });

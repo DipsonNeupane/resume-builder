@@ -1,10 +1,10 @@
-# ResumeStride Job Capture — V1 candidate 0.2.0
+# APWICO Job Capture — prepared candidate 0.2.5
 
-Unpublished integration candidate. **No deployment or Chrome Web Store submission.**
-The app, API and migration in this change must be released together in a later authorized
-release. A package pointing at production does not make this source available there.
+Version 0.2.4 remains in Chrome Web Store review. Candidate 0.2.5 adds user-initiated
+capture on permitted public job pages and a compact paste fallback on restricted boards.
+It is local only and must not be uploaded until separately authorized.
 
-Click the extension on a public job page → review/edit the fields → send to ResumeStride
+Click the extension on a public job page → review/edit the fields → send to APWICO
 → sign in there if necessary → **Save job and see how I match** → normal Saved Jobs /
 Match Analysis → Pro creates or reopens the persistent job-specific resume → explicit
 AI consent → review individual Accept/Reject suggestions → manual edits → PDF/Word.
@@ -19,8 +19,10 @@ The older separate local draft remains a manual-edit option; it cannot invoke AI
 | Lever `jobs.lever.co` / `jobs.eu.lever.co`, UUID job path | JSON-LD first; partial fallback requires headline, employer logo alt, and scoped posting sections | Controlled extraction fixture added. Partial pattern support, no claim covering all live Lever pages. |
 | Generic JobPosting JSON-LD (including Workday pages that expose it) | One unambiguous JobPosting object, array, or `@graph`; title, employer, description required; matching URL when present | Controlled fixtures added. No Workday-specific scraper or API adapter; absent/ambiguous metadata falls back to manual entry. |
 | Local `/extension-fixture/job-posting.html` | Explicit test selectors | Existing installed-fixture automation retained. |
-| LinkedIn, Indeed | Deliberately unsupported, including generic extraction | Manual entry only. No scraping or host grant. |
-| Job search results, authenticated/private pages, embedded job iframes, browser internal pages, query-only job identity | Unsupported/unverified | No arbitrary full-page extraction. User may enter public job details manually. |
+| LinkedIn job pages | Policy-safe compact paste/review fallback; no page DOM, selection, structured data, cookies, profiles, messages, or credentials are read | LinkedIn's published prohibition on scraping browser extensions was rechecked 2026-10-13. Canonical job URL is retained from the active tab only. |
+| Indeed job pages | Policy-safe compact paste/review fallback; no page DOM, selection, or structured data are read | Indeed's Terms prohibit scraping/extracting Site data without written permission; rechecked 2026-10-13. Canonical job URL is retained from the active tab only. |
+| Workday | One unique, URL-correlated JobPosting object only | Partial by design: falls back when metadata is absent or ambiguous. |
+| Other/unsupported job pages | Explicit user text selection, or one description paste with title/company review | No arbitrary full-page extraction, clipboard permission, or background collection. |
 
 Later parent acceptance for tasks #47–#53 recorded two complete controlled installed
 suite passes (42/42 each), including the real toolbar activeTab grant with intercepted
@@ -38,8 +40,8 @@ the later owner checklist is `docs/EXTENSION_LIVE_ACCEPTANCE.md`.
 - Descriptions are inert text, capped at **12,000 characters including a truncation mark**;
   title/company/location 300, source URL 2,000. Original bounded fields and reviewed edits
   are retained. HTML scripts/forms are removed in detached templates; never executed.
-- Source links drop query/fragment tracking. Generic extraction rejects meaningful query
-  parameters because query-only job identity cannot safely survive this stripping.
+- Source links drop tracking/fragment data. For LinkedIn and Indeed paste fallbacks, only
+  the active tab's public canonical job identifier is retained; page content is not read.
   Save requires a stable public HTTPS URL and non-empty title/company/description.
 - One pending capture in **`chrome.storage.session`**, not local/sync disk storage, expires
   after 30 minutes of inactivity. An alarm removes expired data; reads check expiry too.
@@ -49,8 +51,9 @@ the later owner checklist is `docs/EXTENSION_LIVE_ACCEPTANCE.md`.
   each with an eight-second acknowledgment window. A worker/browser shutdown may interrupt
   delivery: reopen to retry while the session capture exists. No endless/durable queue.
   Receipt is not an account save: finish the explicit web-app save before closing that tab.
-- Before saving, the web review is tab memory only; it clears on account switch/sign-out.
-  A guest can sign in and explicitly save. Saving uses verified account ownership, existing
+- Before saving, the web review is retained in session storage for up to 30 minutes so an
+  auth return/reload does not lose it. It adopts only the first signed-in account and clears
+  on account switch, save, discard, or expiry. Saving uses verified account ownership, existing
   Free/Pro save limits, server Match Analysis, and existing RLS/RPC boundaries. No search
   or AI call occurs as a side effect of saving a capture. Captured availability is unknown.
 - URL identity and existing normalized fingerprints deduplicate against saved jobs,
@@ -71,11 +74,11 @@ npx playwright test --config playwright.capture.config.ts # fixture extraction o
 
 In a disposable Chrome profile, open `chrome://extensions`, enable Developer mode, Load
 unpacked, select the appropriate folder, pin the action, and click it on a job page.
-Development delivery allows only root URLs on `https://resumestride.com` or HTTP
+Development delivery allows only root URLs on `https://apwico.com` or HTTP
 localhost/127.0.0.1 ports 5173, 5183, 5185. The production artifact removes all localhost
 host permissions **and** disables localhost in its built destination allowlist.
 Never load the development package into the store. Packaging now also writes the local
-`dist/resumestride-extension.zip` and `dist/extension-package-report.json` with file and
+`dist/apwico-extension.zip` and `dist/extension-package-report.json` with file and
 archive hashes. It verifies both the allowlisted folder and extracted ZIP; it never
 installs, uploads or submits. Requires local `zip`/`unzip`. Package after the web build,
 which clears root `dist/`. Source maps, secrets, tests, docs and stale files are excluded;
@@ -91,9 +94,9 @@ browser tests, not a real authenticated save. Do not call paid providers for acc
 - `scripting`: inject the extractor and the destination receipt bridge.
 - `storage`: single bounded session capture, only for review/retry across popup closure.
 - `alarms`: expire that session capture without requiring another popup invocation.
-- Host permissions: production ResumeStride only; local ports only in developer manifest.
+- Host permissions: production APWICO only; local ports only in developer manifest.
 
-No `tabs`, `history`, `cookies`, `webRequest`, `<all_urls>`, clipboard, auth or AI permissions.
+No persistent board host permissions, `tabs`, `history`, `cookies`, `webRequest`, `<all_urls>`, clipboard, auth or AI permissions.
 The action popup is the only accepted internal sender. The web bridge is same-window,
 same-origin, bounded and acknowledged; page messages are **untrusted text**, never proof
 of extension identity and never permission to save, create a resume or call AI.
@@ -106,5 +109,7 @@ retain their normal authorization; this switch is an operational capture-entry d
 not a revocation of users' ordinary save capability. Users can disable/remove the extension
 or discard the pending capture in the popup. No remote extension configuration/tracking.
 
-Icons at 16/32/48/128, versioned production manifest and production packaging are included.
+APWICO icons at 16/32/48/128, a padded 128px store source, required 440×280
+promotional tile, real installed-candidate 1280×800 fictional-fixture screenshot,
+versioned production manifest and production packaging are included.
 See `docs/EXTENSION_STORE_READINESS.md` for accurate draft disclosures and release gates.

@@ -45,13 +45,13 @@ export interface TemplateMeta {
 }
 
 const free: Record<TemplateId, Omit<TemplateMeta, 'id' | 'name' | 'tier' | 'status' | 'releasedAt' | 'distinctFrom' | 'whyChoose'>> = {
- modern: { family: 'general', useCase: 'General purpose.', structure: 'Shared single-column flow; accent rule under header, pill contacts.', typography: 'Noto Sans.', density: 'standard', sectionOrder: 'Profile → sections in user order → Skills last', facts: ['single-column', 'sans'] },
+ modern: { family: 'general', useCase: 'For most roles.', structure: 'Shared single-column flow; accent rule under header, pill contacts.', typography: 'Noto Sans.', density: 'standard', sectionOrder: 'Profile → sections in user order → Skills last', facts: ['single-column', 'sans'] },
  classic: { family: 'traditional', useCase: 'Conservative applications.', structure: 'Shared flow; centered header and centered headings.', typography: 'Georgia (falls back to Noto Sans where Georgia is unavailable).', density: 'standard', sectionOrder: 'Profile → sections in user order → Skills last', facts: ['single-column', 'serif'] },
- minimal: { family: 'general', useCase: 'Understated general purpose.', structure: 'Shared flow; no header rule, quiet headings.', typography: 'Noto Sans, light weights.', density: 'airy', sectionOrder: 'Profile → sections in user order → Skills last', facts: ['single-column', 'sans'] },
+ minimal: { family: 'general', useCase: 'For most roles that need a quieter layout.', structure: 'Shared flow; no header rule, quiet headings.', typography: 'Noto Sans, light weights.', density: 'airy', sectionOrder: 'Profile → sections in user order → Skills last', facts: ['single-column', 'sans'] },
  compact: { family: 'compact', useCase: 'Longer content on fewer pages.', structure: 'Shared flow with reduced spacing.', typography: 'Noto Sans.', density: 'compact', sectionOrder: 'Profile → sections in user order → Skills last', facts: ['single-column', 'sans'] },
- bold: { family: 'general', useCase: 'Visible header presence.', structure: 'Shared flow; filled accent header band.', typography: 'Noto Sans.', density: 'standard', sectionOrder: 'Profile → sections in user order → Skills last', facts: ['single-column', 'sans'] },
- executive: { family: 'executive', useCase: 'Senior roles.', structure: 'Shared flow; double rule header, left-barred headings.', typography: 'Noto Sans.', density: 'standard', sectionOrder: 'Profile → sections in user order → Skills last', facts: ['single-column', 'sans'] },
- ledger: { family: 'general', useCase: 'Structured general purpose.', structure: 'Shared flow; split header, tinted heading bands, dashed entry rules.', typography: 'Noto Sans.', density: 'standard', sectionOrder: 'Profile → sections in user order → Skills last', facts: ['single-column', 'sans'] },
+ bold: { family: 'general', useCase: 'For resumes that need a prominent header.', structure: 'Shared flow; filled accent header band.', typography: 'Noto Sans.', density: 'standard', sectionOrder: 'Profile → sections in user order → Skills last', facts: ['single-column', 'sans'] },
+ executive: { family: 'executive', useCase: 'For senior leadership roles.', structure: 'Shared flow; double rule header, left-barred headings.', typography: 'Noto Sans.', density: 'standard', sectionOrder: 'Profile → sections in user order → Skills last', facts: ['single-column', 'sans'] },
+ ledger: { family: 'general', useCase: 'For most roles that benefit from clear structure.', structure: 'Shared flow; split header, tinted heading bands, dashed entry rules.', typography: 'Noto Sans.', density: 'standard', sectionOrder: 'Profile → sections in user order → Skills last', facts: ['single-column', 'sans'] },
 };
 
 const freeMeta: TemplateMeta[] = freeTemplates.map(t => ({
@@ -64,7 +64,7 @@ const premium = (meta: Omit<TemplateMeta, 'tier' | 'releasedAt'> & { id: Premium
 const premiumMeta: TemplateMeta[] = [
  premium({ id: 'boardroom', name: 'Boardroom', status: 'prototype', family: 'executive',
   useCase: 'Directors, VPs and C-level leaders whose story is scope, progression and remit.',
-  structure: 'Split header (identity left, contact stack right). Summary set as a serif lede — or, when written as a list, a numbered highlights grid. Areas of expertise directly under the summary. Experience is employer-first: consecutive roles at the same organization are grouped beneath one employer heading.',
+  structure: 'Employer-first experience groups multiple roles at the same organization. The summary and areas of expertise appear near the top.',
   typography: 'Newsreader for name, lede and employers; Source Sans 3 for roles, bullets and metadata.',
   density: 'standard', sectionOrder: 'Summary → Expertise → Experience → Board/Leadership → Education → Certifications → Other',
   distinctFrom: 'Free Executive only restyles headings on the shared flow. Boardroom changes the hierarchy: employer over title, grouped progression, expertise moved to the top.',

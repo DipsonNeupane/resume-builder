@@ -1,4 +1,5 @@
 import { TOOL_LIMITS, analyzeResumeBullet, compareResumeToJob, extractJobRequirements } from './analysis.js';
+const pendingJobKey = 'resumestride.pendingJobFirst.v1';
 const root = document.querySelector('[data-public-tool]');
 const analytics = () => window.rsToolAnalytics;
 const element = (selector) => {
@@ -44,9 +45,9 @@ function renderRequirements(requirements, container) {
     }
 }
 const evidenceLabels = {
-    demonstrated: 'Clearly demonstrated',
-    partial: 'Worth reviewing',
-    not_demonstrated: 'Not demonstrated',
+    demonstrated: 'Evidence found',
+    partial: 'Related evidence — review',
+    not_demonstrated: 'No evidence found in this resume',
     confirmed_incompatible: 'Confirmed incompatibility',
 };
 function renderEvidence(results, container) {
@@ -88,6 +89,11 @@ function renderBullet(value, container) {
         structure.append(node('span', '', 'Stronger structure using only what you provided'), node('p', '', analysis.strongerStructure));
         container.append(structure);
     }
+    else if (analysis.prompts.length) {
+        const structure = node('section', 'structure-card');
+        structure.append(node('span', '', 'Stronger structure'), node('p', '', 'There is not enough detail to suggest a stronger version yet.'));
+        container.append(structure);
+    }
     if (analysis.prompts.length) {
         const prompts = node('section', 'prompt-card');
         prompts.append(node('h3', '', 'Questions that may strengthen the bullet'));
@@ -106,7 +112,27 @@ function setError(message) {
 function clearResult() {
     const output = element('[data-tool-output]');
     output.replaceChildren();
-    element('[data-tool-results]').hidden = true;
+    const results = element('[data-tool-results]');
+    results.hidden = true;
+    delete results.dataset.reviewScope;
+}
+let reviewObserver = null;
+let analyzedJobText = '';
+function observeEvidenceReview(requirementCount) {
+    reviewObserver?.disconnect();
+    const results = element('[data-tool-results]');
+    const firstRequirement = results.querySelector('.evidence-result');
+    if (!firstRequirement)
+        return;
+    reviewObserver = new IntersectionObserver(entries => {
+        const viewed = entries.some(entry => entry.target === firstRequirement && entry.isIntersecting && entry.intersectionRatio >= 0.5);
+        if (!viewed || document.visibilityState !== 'visible' || results.dataset.reviewScope)
+            return;
+        results.dataset.reviewScope = 'limited';
+        analytics()?.event('tool_result_reviewed', { review_scope: 'limited', requirement_count: String(Math.min(requirementCount, 12)) });
+        reviewObserver?.disconnect();
+    }, { threshold: 0.5 });
+    reviewObserver.observe(firstRequirement);
 }
 function updateCounts() {
     document.querySelectorAll('textarea[data-maximum]').forEach(textarea => {
@@ -135,9 +161,11 @@ function initialize() {
                 renderRequirements(results, output);
             }
             else if (tool === 'resume-job-match') {
-                const results = compareResumeToJob(element('#resume-text').value, element('#job-description').value);
+                const jobText = element('#job-description').value;
+                const results = compareResumeToJob(element('#resume-text').value, jobText);
                 if (!results.length)
                     throw new Error('No traceable requirements were found in the job description. Try including its qualifications or responsibilities sections.');
+                analyzedJobText = jobText.trim();
                 renderEvidence(results, output);
             }
             else
@@ -147,13 +175,39 @@ function initialize() {
             results.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
             results.focus({ preventScroll: true });
             analytics()?.event('tool_completed', { outcome: 'success' });
+            if (tool === 'resume-job-match')
+                observeEvidenceReview(output.querySelectorAll('.evidence-result').length);
         }
         catch (error) {
             setError(error instanceof Error ? error.message : 'This check could not be completed. Review the input and try again.');
             analytics()?.event('tool_completed', { outcome: 'failure' });
         }
     });
+    if (tool === 'resume-job-match') {
+        const continuation = document.querySelector('[data-tool-cta="full_match"]');
+        continuation?.addEventListener('click', event => {
+            const visibleResult = !element('[data-tool-results]').hidden;
+            if (!visibleResult || analyzedJobText.length < 40) {
+                event.preventDefault();
+                setError('Complete and review the evidence check before continuing.');
+                return;
+            }
+            try {
+                sessionStorage.setItem(pendingJobKey, JSON.stringify({ version: 1, ownerId: null, createdAt: Date.now(), capture: {
+                        title: '', company: '', description: analyzedJobText, sourceUrl: '', capturedAt: new Date().toISOString(), site: 'manual',
+                    } }));
+            }
+            catch {
+                event.preventDefault();
+                setError('This browser could not preserve the job description for the next step. Keep this tab open and try again.');
+            }
+        });
+    }
     element('[data-clear-tool]').addEventListener('click', () => {
+        reviewObserver?.disconnect();
+        analyzedJobText = '';
+        if (tool === 'resume-job-match')
+            sessionStorage.removeItem(pendingJobKey);
         form.reset();
         clearResult();
         setError('');
@@ -167,7 +221,7 @@ function initialize() {
         setError('');
         updateCounts();
     } });
-    window.addEventListener('pagehide', () => { form.querySelectorAll('textarea').forEach(textarea => { textarea.value = ''; }); });
+    window.addEventListener('pagehide', () => { reviewObserver?.disconnect(); form.querySelectorAll('textarea').forEach(textarea => { textarea.value = ''; }); });
 }
 initialize();
 // Compile-time guard: the DOM limits and analysis limits must stay aligned.

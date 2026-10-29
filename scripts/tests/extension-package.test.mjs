@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { inspectPackage } from '../check-extension-package.mjs';
+import { inspectPackage, inspectStoreAssets } from '../check-extension-package.mjs';
 import { packageExtension } from '../package-extension.mjs';
 
 test('packaging excludes stale compiler output, secrets, maps and unused type-only modules', async () => {
@@ -42,4 +42,9 @@ test('artifact gate rejects extra permissions/files, CSP drift, maps, secret mar
       await assert.rejects(inspectPackage(dir), { name: 'AssertionError' });
     }
   } finally { await rm(temp, { recursive: true, force: true }); }
+});
+
+test('store assets have the required dimensions and padded APWICO icon source', async () => {
+  const assets = await inspectStoreAssets(resolve('.'));
+  assert.deepEqual(assets.map(asset => [asset.width, asset.height]), [[440, 280], [1280, 800]]);
 });

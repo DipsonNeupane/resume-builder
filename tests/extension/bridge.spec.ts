@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { deliverReviewedJob } from '../../apps/extension/src/lib/delivery';
-import { isAllowedAppUrl, productionAppOrigin } from '../../apps/extension/src/lib/config';
+import { isAllowedAppUrl, legacyProductionAppOrigin, productionAppOrigin } from '../../apps/extension/src/lib/config';
 
 test('destination agrees with manifest hosts and rejects credentials and unrelated pages',async()=>{
  const manifest=JSON.parse(await readFile('apps/extension/manifest.json','utf8'));
@@ -10,11 +10,17 @@ test('destination agrees with manifest hosts and rejects credentials and unrelat
 });
 
 test('exact production origin is allowed only at its root and rejects look-alike hosts',async()=>{
- expect(productionAppOrigin).toBe('https://resumestride.com');
+ expect(productionAppOrigin).toBe('https://apwico.com');
+ expect(isAllowedAppUrl(new URL('https://apwico.com/'))).toBe(true);
+ expect(legacyProductionAppOrigin).toBe('https://resumestride.com');
  expect(isAllowedAppUrl(new URL('https://resumestride.com/'))).toBe(true);
- for(const url of ['http://resumestride.com/','https://resumestride.com/other','https://resumestride.com/?token=secret','https://resumestride.com/#payload','https://user:pass@resumestride.com/','https://resumestride.com.evil.test/','https://evil-resumestride.com/','https://resumestride.com:8443/']) expect(isAllowedAppUrl(new URL(url)),url).toBe(false);
+ for(const url of ['http://resumestride.com/','https://apwico.com/other','https://apwico.com/?token=secret','https://apwico.com/#payload','https://user:pass@resumestride.com/','https://apwico.com.evil.test/','https://evil-resumestride.com/','https://apwico.com:8443/']) expect(isAllowedAppUrl(new URL(url)),url).toBe(false);
 });
 test('delivery retries until receiver is ready, acknowledges once and ignores wrong origin',async({page})=>{
+ await page.route('http://127.0.0.1:5185/',route=>route.fulfill({
+  contentType:'text/html',
+  body:'<!doctype html><html><body>Extension delivery receiver</body></html>'
+ }));
  await page.goto('/',{waitUntil:'domcontentloaded'});
  const source=deliverReviewedJob.toString();
  const result=await page.evaluate(async source=>{
@@ -35,6 +41,10 @@ test('delivery retries until receiver is ready, acknowledges once and ignores wr
 });
 
 test('delivery times out on unrelated acknowledgments and stops transmitting afterward',async({page})=>{
+ await page.route('http://127.0.0.1:5185/',route=>route.fulfill({
+  contentType:'text/html',
+  body:'<!doctype html><html><body>Extension delivery receiver</body></html>'
+ }));
  await page.goto('/',{waitUntil:'domcontentloaded'});
  const result=await page.evaluate(async source=>{
   const deliver=new Function('return ('+source+')')();

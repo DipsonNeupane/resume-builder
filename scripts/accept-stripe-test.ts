@@ -33,7 +33,7 @@ const env={
   ...process.env,
   STRIPE_MODE:'test',STRIPE_ACCOUNT_ID:'acct_1QqPbAGGSDSNHj5K',STRIPE_WEBHOOK_SECRET:'whsec_acceptance_fixture',
   STRIPE_PASS_PRICE_ID:'price_acceptance_legacy',BILLING_ENABLED:'true',SUBSCRIPTION_OFFERS_ENABLED:'true',
-  APP_ORIGIN:'https://resumestride.test',SUPABASE_URL:'https://local.invalid',SUPABASE_SERVICE_ROLE_KEY:'sb_secret_acceptance',
+  APP_ORIGIN:'https://apwico.test',SUPABASE_URL:'https://local.invalid',SUPABASE_SERVICE_ROLE_KEY:'sb_secret_acceptance',
   SUPABASE_PUBLISHABLE_KEY:'sb_publishable_acceptance',EXPORTS_ENABLED:'true',NODE_ENV:'test',
 } as NodeJS.ProcessEnv
 
@@ -59,7 +59,7 @@ const db={
 
 const owners={template:'11111111-1111-1111-1111-111111111111',pro:'22222222-2222-2222-2222-222222222222',overlap:'33333333-3333-3333-3333-333333333333',failure:'44444444-4442-4444-4444-444444444444',other:'55555555-5555-5555-5555-555555555555'}
 const depsFor=(owner:string)=>({authenticate:async()=>owner,serviceDatabase:()=>db as never,stripeClient:()=>stripe,validateOffer:async(s:Stripe,c:never,o:never)=>{const {validateOffer}=await import('../server/billing/catalog.ts');return validateOffer(s,c,o)}})
-const request=(pathName:string,body:Record<string,unknown>)=>new Request(`${env.APP_ORIGIN}${pathName}`,{method:'POST',headers:{origin:env.APP_ORIGIN!,'content-type':'application/json','x-resumestride-country':'US'},body:JSON.stringify(body)})
+const request=(pathName:string,body:Record<string,unknown>)=>new Request(`${env.APP_ORIGIN}${pathName}`,{method:'POST',headers:{origin:env.APP_ORIGIN!,'content-type':'application/json','x-apwico-country':'US'},body:JSON.stringify(body)})
 const rpc=async(name:string,args:Record<string,unknown>)=>{const result=await db.rpc(name,args);if(result.error)throw new Error(`${name}: ${result.error.message}`);return result.data}
 
 function subscriptionPeriod(subscription:Stripe.Subscription){
@@ -90,7 +90,7 @@ async function paidSubscription(owner:string,offerKey:string,price:string,clock?
   const invoice=typeof subscription.latest_invoice==='string'
     ? await stripe.invoices.retrieve(subscription.latest_invoice,{expand:['payments']})
     : await stripe.invoices.retrieve(subscription.latest_invoice!.id,{expand:['payments']})
-  const trusted={owner_id:owner,subscription_id:subscription.id,offer_key:offerKey,cancel_at_period_end:false,current_period_end:period.end}
+  const trusted={owner_id:owner,subscription_id:subscription.id,offer_key:offerKey,price_id:price,cancel_at_period_end:false,current_period_end:period.end}
   assert.equal((await applyOfferInvoice(invoice,Math.floor(Date.now()/1000),'invoice.paid',stripe,db as never,trusted,env)).status,200)
   return{subscription,invoice,trusted,customerId,period}
 }
@@ -124,14 +124,10 @@ try{
   for(const file of (await readdir('supabase/migrations')).filter(file=>file.endsWith('.sql')).sort())await client.query(await readFile(path.join('supabase/migrations',file),'utf8'))
   await client.query(`insert into auth.users(id,created_at) values ${Object.values(owners).map((_,index)=>`($${index+1},now()-interval '60 days')`).join(',')}`,Object.values(owners))
 
-  // FREE -> PREMIUM TEMPLATE: actual allowlisted Checkout plus paid test subscription.
+  // Legacy template subscriptions remain renewable and entitled, but the app must
+  // reject every new individual-template purchase attempt.
   const first=await checkout(owners.template,'template:boardroom')
-  assert.equal(first.response.status,200)
-  assert.match(String((await first.response.json()).url),/^https:\/\/checkout\.stripe\.com\//)
-  const duplicate=await offerCheckout(request('/api/subscription-checkout',first.body),env,depsFor(owners.template) as never)
-  assert.equal(duplicate.status,200)
-  const competing=await checkout(owners.template,'template:mandate')
-  assert.equal(competing.response.status,409)
+  assert.equal(first.response.status,400)
   const templatePrices=JSON.parse(env.STRIPE_TEMPLATE_PRICE_MAP!) as Record<string,string>
   const templatePaid=await paidSubscription(owners.template,'template:boardroom',templatePrices.boardroom)
   assert.deepEqual(await access(owners.template,'boardroom'),{is_pro:false,has_template:true})
@@ -146,12 +142,12 @@ try{
     assert.ok(bytes.length>500)
     assert.equal(format==='pdf'?new TextDecoder().decode(bytes.slice(0,4)):'PK',format==='pdf'?'%PDF':'PK')
   }
-  console.log('PASS $1.99 checkout, paid entitlement, selective access, PDF and DOCX')
+  console.log('PASS new template-sale rejection, legacy entitlement, selective access, PDF and DOCX')
 
   // Customer Portal and ordinary cancellation retain the paid period.
   let portal=await customerPortal(request('/api/customer-portal',{}),env,depsFor(owners.template) as never)
   if(portal.status!==200){
-    await stripe.billingPortal.configurations.create({business_profile:{headline:'Manage ResumeStride billing'},features:{invoice_history:{enabled:true},customer_update:{enabled:false}}})
+    await stripe.billingPortal.configurations.create({business_profile:{headline:'Manage APWICO billing'},features:{invoice_history:{enabled:true},customer_update:{enabled:false}}})
     portal=await customerPortal(request('/api/customer-portal',{}),env,depsFor(owners.template) as never)
   }
   assert.equal(portal.status,200)
@@ -173,7 +169,6 @@ try{
   console.log('PASS Pro payment, all 27 templates and Pro workflow access')
 
   // TEMPLATE -> PRO: explicit disclosure gate, paid Pro, then stop template renewal.
-  assert.equal((await checkout(owners.overlap,'template:kernel')).response.status,200)
   const overlapTemplate=await paidSubscription(owners.overlap,'template:kernel',templatePrices.kernel)
   assert.equal((await checkout(owners.overlap,'pro:monthly')).response.status,400)
   await client.query(`update public.billing_offer_checkout_intents set completed_at=now() where owner_id=$1`,[owners.overlap])
@@ -203,7 +198,7 @@ try{
   const failedPeriod=subscriptionPeriod(failedSub)
   await rpc('billing_record_offer_subscription',{p_owner:owners.failure,p_subscription:failedSub.id,p_price:templatePrices.mandate,p_live:false,p_status:failedSub.status,p_cancel_at_period_end:false,p_period_start:failedPeriod.start,p_period_end:failedPeriod.end,p_offer_key:'template:mandate',p_offer_kind:'template',p_template_id:'mandate'})
   const failedInvoice=typeof failedSub.latest_invoice==='string'?await stripe.invoices.retrieve(failedSub.latest_invoice):failedSub.latest_invoice!
-  await applyOfferInvoice(failedInvoice,Math.floor(Date.now()/1000),'invoice.payment_failed',stripe,db as never,{owner_id:owners.failure,subscription_id:failedSub.id,offer_key:'template:mandate',cancel_at_period_end:false,current_period_end:failedPeriod.end},env)
+  await applyOfferInvoice(failedInvoice,Math.floor(Date.now()/1000),'invoice.payment_failed',stripe,db as never,{owner_id:owners.failure,subscription_id:failedSub.id,offer_key:'template:mandate',price_id:templatePrices.mandate,cancel_at_period_end:false,current_period_end:failedPeriod.end},env)
   assert.equal((await access(owners.failure,'mandate')).has_template,false)
   assert.equal(Number((await client.query(`select count(*) from public.billing_transactional_notices where owner_id=$1 and kind='payment_failed'`,[owners.failure])).rows[0].count),1)
   console.log('PASS real test decline, no entitlement and durable failure notice')
@@ -221,7 +216,7 @@ try{
 
   // Stripe test clock proves cancellation reaches a terminal state; local wall-clock
   // simulation then proves the same recorded paid period reverts to Free without deletion.
-  const clock=await stripe.testHelpers.testClocks.create({frozen_time:Math.floor(Date.now()/1000),name:`ResumeStride ${runTag}`})
+  const clock=await stripe.testHelpers.testClocks.create({frozen_time:Math.floor(Date.now()/1000),name:`APWICO ${runTag}`})
   createdClocks.push(clock.id)
   const expiryOwner=owners.other
   const expiring=await paidSubscription(expiryOwner,'template:plainsong',templatePrices.plainsong,clock.id)

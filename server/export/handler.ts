@@ -6,5 +6,5 @@ import {exportDocument,type DocumentExportDependencies} from './document-handler
 const depsDefault:DocumentExportDependencies={authenticate,serviceDatabase,renderDocument:renderPdf}
 
 export function exportPdf(request:Request,env:NodeJS.ProcessEnv=process.env,deps:DocumentExportDependencies=depsDefault):Promise<Response>{
- return exportDocument({format:'pdf',contentType:'application/pdf',filename:'ResumeStride.pdf'},request,env,deps)
+ return exportDocument({format:'pdf',contentType:'application/pdf',filename:'APWICO.pdf'},request,env,deps)
 }

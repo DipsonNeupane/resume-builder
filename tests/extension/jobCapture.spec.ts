@@ -45,7 +45,7 @@ test.describe('extension extraction (runs the compiled injected script exactly a
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     const result = await page.evaluate(script);
     expect(result.supported).toBe(false);
-    expect(result.reason).toMatch(/type the title, company/i);
+    expect(result.reason).toMatch(/select the visible job description|paste/i);
   });
 
   test('sanitizes hostile and oversized page text instead of passing it through raw', async ({ page }) => {
@@ -69,6 +69,15 @@ test.describe('extension extraction (runs the compiled injected script exactly a
 });
 
 test.describe('web app job-import receiver (src/services/extensionImport.ts)', () => {
+  test('keeps a reviewed capture across a reload without putting its content in the URL', async ({ page }) => {
+    await seedBaseResumeAndOpenBuilder(page);
+    await postJobImport(page, { title: 'Reload-safe role', company: 'Example', description: 'Review this job after authentication.', sourceUrl: 'http://localhost/job', capturedAt: new Date().toISOString(), site: 'manual' });
+    await expect(page.getByText('Reload-safe role', { exact: false }).first()).toBeVisible();
+    await page.reload();
+    await expect(page.getByText('Reload-safe role', { exact: false }).first()).toBeVisible();
+    expect(page.url()).not.toContain('Reload-safe');
+  });
+
   test('ignores a job-import message relayed from a different origin', async ({ page }) => {
     await seedBaseResumeAndOpenBuilder(page);
     await page.evaluate(type => {

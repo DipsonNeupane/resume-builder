@@ -6,6 +6,7 @@ export type Guide = {
  eyebrow: string;
  deck: string;
  directAnswer: string;
+ directAnswerTitle?: string;
  sections: Array<{ id: string; title: string; html: string }>;
  related: string[];
  cta: { label: string; href: string; destination: string; note: string };
@@ -13,18 +14,30 @@ export type Guide = {
 
 export const resourcesPath = '/resources/';
 
+export const contentClusters = [
+ { id: 'role-fit', label: 'Role fit and qualification', question: 'Am I qualified for this job?', slugs: ['how-to-know-if-qualified-for-job'] },
+ { id: 'requirement-evidence', label: 'Requirements and evidence', question: 'Does my experience demonstrate what they want?', slugs: ['compare-resume-to-job-description'] },
+ { id: 'application-decisions', label: 'Application decisions', question: 'Is this job worth applying to?', slugs: ['should-you-tailor-resume-for-every-job'] },
+ { id: 'truthful-tailoring', label: 'Truthful tailoring', question: 'How should I tailor for this job?', slugs: ['tailor-resume-to-job-description', 'how-much-resume-should-change', 'tailor-resume-without-lying'] },
+ { id: 'master-and-transitions', label: 'Master resumes and career transitions', question: 'What evidence transfers to a new direction?', slugs: ['master-resume-vs-tailored-resume', 'career-change-transferable-evidence'] },
+ { id: 'resume-writing', label: 'Resume writing and keywords', question: 'What is missing or unclear?', slugs: ['resume-keywords'] },
+ { id: 'templates-and-formats', label: 'Templates, formats and regional context', question: 'How should I present this evidence?', slugs: ['choose-resume-template', 'a4-vs-letter-resume', 'resume-or-cv-by-country'] },
+] as const;
+
+export const clusterByGuideSlug = new Map(contentClusters.flatMap(cluster => cluster.slugs.map(slug => [slug, cluster] as const)));
+
 export const guides: Guide[] = [
  {
   slug: 'tailor-resume-to-job-description',
   title: 'How to tailor a resume to a job description',
-  seoTitle: 'How to tailor a resume to a job description | ResumeStride',
+  seoTitle: 'How to tailor a resume to a job description | APWICO',
   description: 'Tailor your resume by mapping the role’s real requirements to evidence you already have—without rewriting everything or adding unsupported claims.',
   eyebrow: 'A practical, evidence-first method',
   deck: 'Turn a long job posting into a focused resume by changing the emphasis—not the truth.',
   directAnswer: '<p>Read the job description for priorities, not just repeated words. Separate essential requirements from preferences, find the strongest real evidence for each priority, then move, trim or clarify that evidence in a separate copy of your resume. Keep your master resume unchanged.</p>',
   sections: [
    { id: 'read', title: '1. Read the role in three passes', html: `<p>Trying to edit while you read usually produces scattered changes. First understand the role.</p><ol><li><strong>Purpose:</strong> What outcome is this person hired to create?</li><li><strong>Requirements:</strong> Which qualifications appear mandatory, preferred or unclear?</li><li><strong>Language:</strong> Which specific tools, methods, customers or domains does the employer name?</li></ol><p>A phrase appearing several times can signal importance, but repetition alone is not proof that it belongs in your resume. It still needs to describe something you have actually done or learned. The free <a href="/tools/job-requirement-extractor/" data-content-cta="requirement_extractor">job requirement extractor</a> can create a traceable first pass while keeping ambiguous wording ambiguous.</p>` },
-   { id: 'map', title: '2. Build a requirement-to-evidence map', html: `<p>For each central requirement, point to evidence in your work, education, projects, research, volunteering or caregiving. Use four honest labels:</p><div class="evidence-grid"><div><strong>Demonstrated</strong><span>Your resume already shows clear evidence.</span></div><div><strong>Present but hidden</strong><span>You have evidence, but the current wording obscures it.</span></div><div><strong>Adjacent</strong><span>You have comparable experience, not the exact item.</span></div><div><strong>Gap</strong><span>You cannot support the requirement yet.</span></div></div><p>A gap is useful information. It may affect whether you apply, what you learn next or what you explain in a cover letter. It is not an instruction to insert the missing phrase.</p>` },
+   { id: 'map', title: '2. Build a requirement-to-evidence map', html: `<p>For each central requirement, point to evidence in your work, education, projects, research, volunteering or caregiving. Use the same four evidence states as Match:</p><div class="evidence-grid"><div><strong>Evidence found</strong><span>Your resume already shows direct evidence.</span></div><div><strong>Related evidence — review</strong><span>Related evidence may be relevant, but you need to judge the connection.</span></div><div><strong>No evidence found in this resume</strong><span>The reviewed resume does not establish it.</span></div><div><strong>Confirmed incompatible</strong><span>You explicitly confirmed a conflict, such as an unavailable required licence.</span></div></div><p>No evidence found in this resume is useful information. It may affect whether you apply, what you learn next or what you explain elsewhere. It is not an instruction to insert a missing phrase.</p>` },
    { id: 'edit', title: '3. Edit in order of impact', html: `<p>Start where readers get the most context:</p><ul><li>Clarify the target role in your headline or summary only if it accurately fits your background.</li><li>Move the most relevant roles, projects or bullets into easier view.</li><li>Rewrite vague bullets so they show the work, scope and result.</li><li>Name a tool or method when you genuinely used it and the detail helps.</li><li>Trim material that competes with stronger evidence for this role.</li></ul><p>Dates, employers, credentials and outcomes do not change just because the posting uses different language.</p>` },
    { id: 'example', title: 'Before and after: clearer evidence, same experience', html: `<div class="example"><p><span>Job priority</span>Coordinate customer onboarding across sales and support.</p><p><span>Before</span>Helped new customers and worked with other teams.</p><p><span>After</span>Coordinated onboarding for new business accounts with sales and support, maintained handoff notes, and resolved setup questions.</p></div><p>The revision does not add a team size, result or software the applicant cannot prove. It makes the existing coordination work visible using accurate language from the role.</p>` },
    { id: 'final-check', title: 'A ten-minute final check', html: `<ul class="checklist"><li>Can every claim be explained with a real example?</li><li>Are the role’s most important requirements easy to find?</li><li>Did you preserve required dates, qualifications and context?</li><li>Does the resume still sound like you?</li><li>Is this saved as a separate job-specific version?</li><li>Would the document make sense without the job posting beside it?</li></ul><aside class="callout"><strong>What not to do</strong><p>Do not paste a list of “missing keywords,” hide text, rename yourself to an inaccurate title or turn exposure into expertise. A closer word match is not worth a weaker interview conversation.</p></aside>` },
@@ -35,7 +48,7 @@ export const guides: Guide[] = [
  {
   slug: 'should-you-tailor-resume-for-every-job',
   title: 'Should you tailor your resume for every job?',
-  seoTitle: 'Should you tailor your resume for every job? | ResumeStride',
+  seoTitle: 'Should you tailor your resume for every job? | APWICO',
   description: 'Decide when a job deserves a fully tailored resume, a light role-family edit or no application at all—with a practical effort framework.',
   eyebrow: 'A realistic answer for a real job search',
   deck: 'Tailor for every serious application, but do not give every posting the same amount of time.',
@@ -48,19 +61,19 @@ export const guides: Guide[] = [
    { id: 'mistakes', title: 'Mistakes that create work without adding value', html: `<ul class="checklist"><li>Rewriting every sentence when the role is nearly identical</li><li>Changing wording only to chase a keyword count</li><li>Letting tailored files replace the master resume</li><li>Editing before deciding whether the role fits</li><li>Sending an unreviewed AI rewrite that adds claims or changes your voice</li></ul>` },
   ],
   related: ['how-much-resume-should-change', 'master-resume-vs-tailored-resume', 'tailor-resume-to-job-description'],
-  cta: { label: 'See what your resume already demonstrates', href: '/?jobs=1', destination: 'match', note: 'Use Match Analysis as an evidence review—not an interview prediction.' },
+  cta: { label: 'See what your resume already demonstrates', href: '/start/job', destination: 'match', note: 'Use Match Analysis as an evidence review—not an interview prediction.' },
  },
  {
   slug: 'compare-resume-to-job-description',
   title: 'How to compare your resume to a job description',
-  seoTitle: 'How to compare your resume to a job description | ResumeStride',
+  seoTitle: 'How to compare your resume to a job description | APWICO',
   description: 'Compare a resume with a job description using a requirement-to-evidence table, not a misleading keyword percentage or interview prediction.',
   eyebrow: 'A manual comparison you can trust',
   deck: 'The useful question is not “What is my match score?” It is “What can my resume actually demonstrate?”',
   directAnswer: '<p>Break the posting into individual requirements, label each as required, preferred or contextual, and connect it to a specific line in your resume. Mark evidence as clear, partial, absent or genuinely incompatible. Then decide whether to clarify the resume, find better evidence, accept a gap or skip the role.</p>',
   sections: [
    { id: 'extract', title: 'Turn the posting into a short requirement list', html: `<p>Job descriptions mix outcomes, tasks, qualifications and company language. Reduce the posting to items you can evaluate:</p><ul><li><strong>Eligibility and hard constraints:</strong> licence, work authorization, location, schedule or required credential.</li><li><strong>Core work:</strong> the outcomes and responsibilities the person will own.</li><li><strong>Tools and domain knowledge:</strong> software, methods, customers, regulations or subject matter.</li><li><strong>Preferences:</strong> useful advantages that are not stated as minimums.</li></ul><p>Combine duplicate ideas. “Partner with sales,” “work cross-functionally” and “manage stakeholder handoffs” may describe one central collaboration requirement rather than three separate boxes. If the posting is long, use the <a href="/tools/job-requirement-extractor/" data-content-cta="requirement_extractor">free requirement extractor</a> and verify every result against its source text.</p>` },
-   { id: 'matrix', title: 'Make a requirement-to-evidence table', html: `<div class="matrix" role="table" aria-label="Example requirement to evidence comparison"><div role="row"><strong role="columnheader">Requirement</strong><strong role="columnheader">Resume evidence</strong><strong role="columnheader">Status</strong></div><div role="row"><span>Run monthly reporting</span><span>Prepared weekly service reports and presented trends</span><span>Adjacent</span></div><div role="row"><span>Advanced Excel</span><span>Built pivot-table reporting workbook</span><span>Demonstrated</span></div><div role="row"><span>Professional licence</span><span>No licence held</span><span>Gap</span></div></div><p>“Adjacent” is not automatically weak. Weekly reporting may be credible evidence for monthly reporting. But it should not be relabelled “five years of monthly reporting” if that did not happen.</p>` },
+   { id: 'matrix', title: 'Make a requirement-to-evidence table', html: `<div class="matrix" role="table" aria-label="Example requirement to evidence comparison"><div role="row"><strong role="columnheader">Requirement</strong><strong role="columnheader">Resume evidence</strong><strong role="columnheader">Status</strong></div><div role="row"><span>Run monthly reporting</span><span>Prepared weekly service reports and presented trends</span><span>Related evidence — review</span></div><div role="row"><span>Advanced Excel</span><span>Built pivot-table reporting workbook</span><span>Evidence found</span></div><div role="row"><span>Professional licence</span><span>User confirmed the licence is not held</span><span>Confirmed incompatible</span></div></div><p>“Related evidence — review” is not automatically weak. Weekly reporting may be credible evidence for monthly reporting. But it should not be relabelled “five years of monthly reporting” if that did not happen.</p>` },
    { id: 'interpret', title: 'Interpret the gaps instead of counting them', html: `<p>Ten minor preferences do not necessarily outweigh one central requirement. One missing legal credential may matter more than ten demonstrated soft skills. Rank the gaps by consequence:</p><ol><li>Does it affect eligibility or safe/legal performance?</li><li>Is it central to the day-to-day work?</li><li>Could adjacent experience transfer?</li><li>Could it reasonably be learned after starting?</li><li>Does the posting call it required, preferred or simply mention it?</li></ol><p>This produces a decision you can explain. A percentage collapses those different questions into one number.</p>` },
    { id: 'actions', title: 'Choose one action for each item', html: `<ul><li><strong>Keep:</strong> the evidence is already clear.</li><li><strong>Clarify:</strong> accurate experience is present but vague.</li><li><strong>Add:</strong> relevant real evidence exists elsewhere in your master resume.</li><li><strong>Explain:</strong> adjacent experience needs context in a cover letter or application answer.</li><li><strong>Accept the gap:</strong> apply without pretending to have it.</li><li><strong>Stop:</strong> a hard constraint makes the role unsuitable.</li></ul>` },
    { id: 'check', title: 'What a good comparison leaves you with', html: `<ul class="checklist"><li>A short, prioritized requirement list</li><li>A real resume line beside every supported requirement</li><li>Uncertain items kept uncertain</li><li>Gaps visible enough to inform your decision</li><li>A small set of justified edits—not a wall of suggested keywords</li></ul>` },
@@ -71,7 +84,7 @@ export const guides: Guide[] = [
  {
   slug: 'how-to-know-if-qualified-for-job',
   title: 'How to know if you’re qualified for a job',
-  seoTitle: 'How to know if you’re qualified for a job | ResumeStride',
+  seoTitle: 'How to know if you’re qualified for a job | APWICO',
   description: 'Evaluate job qualifications without arbitrary percentage rules: check eligibility, core work, evidence, transferable experience and genuine gaps.',
   eyebrow: 'A better answer than “meet 60% and apply”',
   deck: 'Qualification is not a single percentage. Start with hard constraints, then judge whether your evidence supports the work.',
@@ -84,12 +97,12 @@ export const guides: Guide[] = [
    { id: 'avoid', title: 'Avoid both extremes', html: `<aside class="callout"><strong>Do not reject yourself too quickly</strong><p>Different titles and tools can hide highly transferable work. Compare responsibilities and outcomes, not labels alone.</p></aside><aside class="callout warning"><strong>Do not apply by denial</strong><p>Interest is not evidence. If the role’s essential work is mostly unfamiliar, use it as a development map rather than changing your resume to appear qualified.</p></aside>` },
   ],
   related: ['compare-resume-to-job-description', 'resume-keywords', 'tailor-resume-without-lying'],
-  cta: { label: 'See what your resume demonstrates', href: '/?jobs=1', destination: 'match', note: 'Use evidence beside each requirement to make your own application decision.' },
+  cta: { label: 'See what your resume demonstrates', href: '/start/job', destination: 'match', note: 'Use evidence beside each requirement to make your own application decision.' },
  },
  {
   slug: 'master-resume-vs-tailored-resume',
   title: 'Master resume vs. tailored resume',
-  seoTitle: 'Master resume vs. tailored resume: what to keep in each | ResumeStride',
+  seoTitle: 'Master resume vs. tailored resume: what to keep in each | APWICO',
   description: 'Learn the difference between a complete master resume and a focused tailored resume, what belongs in each and how to keep versions organized.',
   eyebrow: 'One career record, many focused versions',
   deck: 'Your master resume preserves the full record. A tailored resume selects the evidence that matters for one role.',
@@ -98,19 +111,19 @@ export const guides: Guide[] = [
    { id: 'difference', title: 'The difference at a glance', html: `<div class="matrix" role="table" aria-label="Master and tailored resume comparison"><div role="row"><strong role="columnheader">Question</strong><strong role="columnheader">Master resume</strong><strong role="columnheader">Tailored resume</strong></div><div role="row"><span>Who is it for?</span><span>You</span><span>One employer or role family</span></div><div role="row"><span>What does it include?</span><span>Your useful career evidence</span><span>The most relevant, supported evidence</span></div><div role="row"><span>How long?</span><span>As long as needed to preserve detail</span><span>As concise as the context requires</span></div><div role="row"><span>Does it get submitted?</span><span>Usually no</span><span>Yes, after review</span></div></div>` },
    { id: 'master', title: 'What belongs in the master resume', html: `<ul><li>Roles, projects, education, training, certifications and volunteering</li><li>Fuller accomplishment notes, scope, tools and outcomes</li><li>Different kinds of work that support different future directions</li><li>Accurate dates, titles and context you do not want to reconstruct later</li><li>Prompts for evidence you still need to verify or quantify</li></ul><p>The master is not a dumping ground for private data. It still does not need government ID numbers, banking information, irrelevant confidential material or claims you cannot support.</p>` },
    { id: 'tailored', title: 'What changes in a tailored resume', html: `<ul><li>The order and space given to relevant sections</li><li>Which bullets, projects or skills are included</li><li>How clearly the summary connects your real background to the role</li><li>Terminology where the employer’s wording accurately describes your experience</li><li>Details that are trimmed because they distract from stronger evidence</li></ul><p>The facts do not change: dates, credentials, employers, responsibility level and results must remain accurate.</p>` },
-   { id: 'system', title: 'A simple version system', html: `<ol><li>Update the master when you gain or remember useful evidence.</li><li>Duplicate it before any job-specific edits.</li><li>Name the version with the role and employer, not “resume-final-final.”</li><li>Keep a copy of exactly what you submitted.</li><li>Return new verified details to the master so future versions improve.</li></ol><div class="example"><p><span>Master</span>resumestride-master-2026.docx</p><p><span>Submitted version</span>alex-chen-operations-coordinator-northstar.pdf</p></div>` },
+   { id: 'system', title: 'A simple version system', html: `<ol><li>Update the master when you gain or remember useful evidence.</li><li>Duplicate it before any job-specific edits.</li><li>Name the version with the role and employer, not “resume-final-final.”</li><li>Keep a copy of exactly what you submitted.</li><li>Return new verified details to the master so future versions improve.</li></ol><div class="example"><p><span>Master</span>apwico-master-2026.docx</p><p><span>Submitted version</span>alex-chen-operations-coordinator-northstar.pdf</p></div>` },
    { id: 'failure', title: 'When one document tries to do both jobs', html: `<p>A “universal” resume often becomes crowded because it tries to support every direction at once. The opposite failure is also common: a tailored resume gets overwritten repeatedly until earlier evidence disappears. Separating the two documents solves both problems—breadth stays in the master; focus belongs in the application version.</p>` },
   ],
-  related: ['should-you-tailor-resume-for-every-job', 'how-much-resume-should-change', 'tailor-resume-to-job-description'],
-  cta: { label: 'Build your master resume', href: '/?builder=1', destination: 'builder', note: 'Create the foundation first, then keep job-specific versions separate.' },
+  related: ['career-change-transferable-evidence', 'how-much-resume-should-change', 'tailor-resume-to-job-description'],
+  cta: { label: 'Build your master resume', href: '/start/build', destination: 'builder', note: 'Create the foundation first, then keep job-specific versions separate.' },
  },
  {
   slug: 'how-much-resume-should-change',
   title: 'How much of your resume should change for each job?',
-  seoTitle: 'How much should your resume change for each job? | ResumeStride',
+  seoTitle: 'How much should your resume change for each job? | APWICO',
   description: 'Learn what to change, what to keep fixed and when a resume needs a light edit versus a deeper job-specific version.',
   eyebrow: 'Change relevance, not identity',
-  deck: 'There is no honest percentage. The amount should follow how different the role is from your current resume’s focus.',
+  deck: 'The amount depends on how different the role is from your current resume’s focus.',
   directAnswer: '<p>Change only what improves relevance or clarity. For a similar role, that may mean reordering a few bullets and adjusting the summary. For a career shift, you may select different projects and substantially change the emphasis. Keep factual identity, dates, credentials, employers and outcomes fixed.</p>',
   sections: [
    { id: 'layers', title: 'Think in three layers', html: `<div class="decision-table"><div><strong>Fixed facts</strong><span>Do not tailor</span><p>Contact details, employers, dates, credentials, job level and verified outcomes.</p></div><div><strong>Selected evidence</strong><span>Tailor most often</span><p>Bullets, projects, skills, ordering and the space each experience receives.</p></div><div><strong>Framing</strong><span>Tailor carefully</span><p>Headline and summary, using language that remains accurate and natural.</p></div></div>` },
@@ -119,13 +132,13 @@ export const guides: Guide[] = [
    { id: 'stop', title: 'Know when to stop editing', html: `<p>Your version is ready when a reader can quickly understand:</p><ul class="checklist"><li>What direction you are pursuing</li><li>Which past evidence supports the central work</li><li>What scope and outcomes you can credibly discuss</li><li>Where any important gap remains</li></ul><p>It is not ready merely because every phrase from the job posting appears somewhere. More edits can make the document less coherent, less human and harder to defend.</p>` },
    { id: 'never', title: 'What should never change', html: `<aside class="callout warning"><strong>The truth boundary</strong><p>Never change a date, title, credential, client type, tool proficiency, team size or result to resemble the posting. If the only way to make a resume look aligned is to alter a fact, the role is revealing a gap—not an editing task.</p></aside>` },
   ],
-  related: ['should-you-tailor-resume-for-every-job', 'master-resume-vs-tailored-resume', 'tailor-resume-without-lying'],
-  cta: { label: 'Create a separate job-specific version', href: '/?jobs=1', destination: 'tailoring', note: 'Start from your master and keep the original unchanged.' },
+  related: ['career-change-transferable-evidence', 'master-resume-vs-tailored-resume', 'tailor-resume-without-lying'],
+  cta: { label: 'Create a separate job-specific version', href: '/start/job', destination: 'tailoring', note: 'Start from your master and keep the original unchanged.' },
  },
  {
   slug: 'resume-keywords',
   title: 'Resume keywords: what actually belongs in your resume',
-  seoTitle: 'Resume keywords: what actually belongs in your resume | ResumeStride',
+  seoTitle: 'Resume keywords: what actually belongs in your resume | APWICO',
   description: 'Choose resume keywords that describe real skills, tools, methods and qualifications—and place them where your evidence supports them.',
   eyebrow: 'Use the language of the work, not a keyword dump',
   deck: 'A keyword belongs when it accurately names something you can demonstrate and helps a reader understand your fit.',
@@ -143,7 +156,7 @@ export const guides: Guide[] = [
  {
   slug: 'tailor-resume-without-lying',
   title: 'How to tailor a resume without making things up',
-  seoTitle: 'How to tailor a resume without lying or making things up | ResumeStride',
+  seoTitle: 'How to tailor a resume without lying or making things up | APWICO',
   description: 'Tailor your resume honestly by clarifying, selecting and translating real experience—without inventing skills, titles, results or credentials.',
   eyebrow: 'Make the evidence clearer. Keep every claim defensible.',
   deck: 'Honest tailoring changes what you emphasize. Fabrication changes what happened.',
@@ -158,6 +171,82 @@ export const guides: Guide[] = [
   ],
   related: ['tailor-resume-to-job-description', 'resume-keywords', 'how-to-know-if-qualified-for-job'],
   cta: { label: 'Check one resume bullet', href: '/tools/resume-bullet-checker/', destination: 'bullet_checker', note: 'Get transparent feedback without invented metrics, tools or outcomes.' },
+ },
+ {
+  slug: 'career-change-transferable-evidence',
+  title: 'How to show transferable experience for a career change',
+  seoTitle: 'Transferable experience for a career change | APWICO',
+  description: 'Map a new role’s real requirements to transferable evidence without renaming old jobs, overstating responsibility or hiding genuine gaps.',
+  eyebrow: 'Career change without identity change',
+  deck: 'Translate the work you have done into evidence a new field can understand—while keeping titles, scope and gaps honest.',
+  directAnswer: '<p>Start with the target role’s work, not its title. For each central requirement, find a real example with a similar action, constraint or outcome. Describe that example in plain language, keep the original setting visible and mark exact, adjacent and missing evidence separately. A career change needs a bridge, not a rewritten past.</p>',
+  directAnswerTitle: 'Build a truthful bridge to the new work.',
+  sections: [
+   { id: 'requirements', title: '1. Separate the title from the work', html: `<p>Job titles vary across employers and countries. Break the target role into observable responsibilities, tools, qualifications and constraints before comparing it with your background.</p><ul><li><strong>Actions:</strong> what the person must do</li><li><strong>Context:</strong> who, what or where the work supports</li><li><strong>Standards:</strong> licences, safety rules or methods that may be mandatory</li><li><strong>Outcomes:</strong> what the work is meant to improve or protect</li></ul><p>The <a href="/tools/job-requirement-extractor/" data-content-cta="requirement_extractor">requirement extractor</a> keeps each item beside the posting’s source wording.</p>` },
+   { id: 'evidence', title: '2. Map evidence by action and outcome', html: `<p>Look across paid work, projects, education, volunteering and caregiving. Comparable evidence may live in a different setting.</p><div class="example"><p><span>Target work</span>Coordinate stakeholders and keep delivery risks visible.</p><p><span>Existing evidence</span>Organised community events with venue staff, volunteers and suppliers; maintained a shared issue list.</p><p><span>Honest bridge</span>Coordinated volunteers, venues and suppliers for community events and tracked open delivery issues through completion.</p></div>` },
+   { id: 'distance', title: '3. Name the distance honestly', html: `<div class="evidence-grid"><div><strong>Evidence found</strong><span>You performed substantially the same work.</span></div><div><strong>Related evidence — review</strong><span>The action may transfer, but the context differs or the experience came through study or practice.</span></div><div><strong>No evidence found in this resume</strong><span>Your current materials do not establish it.</span></div><div><strong>Confirmed incompatible</strong><span>You explicitly confirmed a conflict with the requirement.</span></div></div><p>“No evidence found in this resume” is not proof that you cannot do something. It tells you what to clarify, investigate or develop before making your decision.</p>` },
+   { id: 'resume', title: '4. Build the career-change version', html: `<ul><li>Keep original employers, titles, dates and credentials unchanged.</li><li>Lead with the most relevant supported projects and outcomes.</li><li>Use a short summary to name the direction and evidence—not to declare expertise you have not earned.</li><li>Explain transferable context inside bullets instead of filling a detached skills list.</li><li>Create a separate version so the master remains complete.</li></ul>` },
+   { id: 'decision', title: '5. Decide whether the bridge is credible', html: `<p>Apply when central work is supported and remaining gaps are explainable or learnable. Investigate when the posting is ambiguous. Step back when a legal eligibility condition, required licence or central capability is absent and cannot be bridged truthfully.</p><aside class="callout"><strong>Your decision, not a prediction</strong><p>No keyword score can decide whether the employer values your transition. Use the evidence to make a considered choice and keep important unknowns visible.</p></aside>` },
+  ],
+  related: ['how-to-know-if-qualified-for-job', 'compare-resume-to-job-description', 'master-resume-vs-tailored-resume'],
+  cta: { label: 'Compare my evidence with the new role', href: '/tools/resume-job-match/', destination: 'resume_job_match', note: 'Review direct, adjacent and not-demonstrated evidence before rewriting.' },
+ },
+ {
+  slug: 'choose-resume-template',
+  title: 'How to choose a resume template for the work you need to show',
+  seoTitle: 'How to choose a resume template | APWICO',
+  description: 'Choose a resume template by content density, hierarchy, paper size and direction—not by unsupported claims about hiring or ATS success.',
+  eyebrow: 'Let the evidence choose the layout',
+  deck: 'A useful template makes your strongest evidence easy to scan and fits the amount of content you need to show.',
+  directAnswer: '<p>Choose a template after you know what the resume must contain. Compare the amount of experience, section hierarchy, reading direction, paper size and the employer’s requested format. Preview your own content before paying. No design determines hiring outcomes or proves that every hiring system will parse a document the same way.</p>',
+  directAnswerTitle: 'Let your content choose the structure.',
+  sections: [
+   { id: 'content', title: '1. Start with content volume', html: `<p>A compact layout can help a detailed career record, while a more spacious layout can give a shorter record clearer rhythm. Do not shrink type or remove relevant evidence merely to imitate a one-page example.</p><p>APWICO labels templates with verified density and structural family in the <a href="/templates/">template gallery</a>; those labels describe layout, not candidate quality.</p>` },
+   { id: 'hierarchy', title: '2. Check the hierarchy with your own resume', html: `<ul><li>Can a reader find role, employer and dates quickly?</li><li>Are long titles and multilingual names still readable?</li><li>Do projects, volunteering or certifications receive the space they need?</li><li>Does the design still work when one section is much longer than the sample?</li></ul>` },
+   { id: 'direction', title: '3. Verify language direction and typography', html: `<p>Right-to-left content and non-Latin scripts need more than mirrored decoration. Preview actual names, headings and paragraphs, then check punctuation, line breaks and font coverage. APWICO’s template metadata states verified RTL/LTR behavior; the interface itself remains English.</p>` },
+   { id: 'paper', title: '4. Choose paper and file format deliberately', html: `<p>A4 and Letter have different proportions. Use the size requested by the employer or normal for the application context, then review page breaks after changing it. Download requirements also vary: follow the posting when it asks for PDF or Word rather than assuming one format is universally preferred.</p>` },
+   { id: 'access', title: '5. Preview before choosing access', html: `<p>Free templates are included for everyone; Premium templates are included with Pro. The template page should show the verified tier and let you preview first; payment is a later explicit action. Read the current <a href="/pricing/">pricing and renewal terms</a> beside any paid choice.</p><aside class="callout warning"><strong>Avoid template mythology</strong><p>“ATS-proof,” “guaranteed,” and “best for every role” are not verifiable template properties. Judge the actual structure and output instead.</p></aside>` },
+  ],
+  related: ['a4-vs-letter-resume', 'master-resume-vs-tailored-resume', 'resume-or-cv-by-country'],
+  cta: { label: 'Browse resume templates', href: '/templates/', destination: 'templates', note: 'Filter by structure, density and access, then preview with your own content.' },
+ },
+ {
+  slug: 'a4-vs-letter-resume',
+  title: 'A4 vs. Letter: choosing a resume page size',
+  seoTitle: 'A4 vs. Letter resume page size | APWICO',
+  description: 'Choose A4 or Letter for a resume by following the application context, then verify pagination and export instead of relying on a universal country rule.',
+  eyebrow: 'A practical output decision',
+  deck: 'The page sizes are close, but changing between them can move lines and page breaks.',
+  directAnswer: '<p>Use the size explicitly requested by the employer or application system. If no size is specified, use the convention you can verify for that application context. Always inspect the final PDF or Word file after switching: A4 is narrower and taller than US Letter, so a stable draft can repaginate.</p>',
+  directAnswerTitle: 'Follow the request, then check the exported pages.',
+  sections: [
+   { id: 'dimensions', title: '1. Know the physical difference', html: `<div class="comparison"><div><strong>A4</strong><p>210 × 297 millimetres</p></div><div><strong>US Letter</strong><p>8.5 × 11 inches (215.9 × 279.4 millimetres)</p></div></div><p>The difference is large enough to affect wrapping and page breaks even when the type and margins stay the same.</p>` },
+   { id: 'request', title: '2. Follow the actual request', html: `<p>A country-level convention is only a default. A multinational employer, university, government portal or recruiter may specify a different page size or file format. The job posting and upload instructions are stronger evidence than a generic list.</p>` },
+   { id: 'preview', title: '3. Recheck after every size change', html: `<ul class="checklist"><li>No heading is stranded at the bottom of a page</li><li>Dates and contact details have not wrapped awkwardly</li><li>Bullets are not clipped or split confusingly</li><li>Page count still suits the amount of relevant evidence</li><li>The downloaded file matches the preview</li></ul>` },
+   { id: 'formats', title: '4. Keep page size separate from file format', html: `<p>A4 versus Letter describes the page dimensions. PDF versus Word describes the file. An employer may request any combination. APWICO supports both page sizes in its templates and provides server-generated PDF and Word exports under the current access policy.</p>` },
+   { id: 'international', title: '5. Verify the local convention', html: `<p>Paper size varies within countries and organizations. Use the <a href="/resources/resume-or-cv-by-country/">regional verification method</a>, then let the vacancy and upload instructions control.</p>` },
+  ],
+  related: ['choose-resume-template', 'resume-or-cv-by-country', 'master-resume-vs-tailored-resume'],
+  cta: { label: 'Preview A4 and Letter templates', href: '/templates/', destination: 'templates', note: 'Use verified template metadata, then inspect your own pagination before export.' },
+ },
+ {
+  slug: 'resume-or-cv-by-country',
+  title: 'Resume or CV by country: a safer way to check local expectations',
+  seoTitle: 'Resume or CV by country: verify local expectations | APWICO',
+  description: 'Check regional resume and CV expectations through official current sources while keeping employer instructions and occupation rules in control.',
+  eyebrow: 'Worldwide scope without universal rules',
+  deck: 'Terms, personal details, length and document conventions differ. Verify the exact market and application instead of copying a global checklist.',
+  directAnswer: '<p>Start with the employer’s instructions, then consult a current government or official employment source for the country where you are applying. Check terminology, personal-information norms, required credentials and file expectations separately. A national guide is context—not permission to ignore the posting, regulated-occupation rules or privacy concerns.</p>',
+  directAnswerTitle: 'Verify the market and the exact application.',
+  sections: [
+   { id: 'order', title: '1. Use a reliable order of evidence', html: `<ol><li>The vacancy and application portal</li><li>The employer’s official careers guidance</li><li>Government employment or recognised public career services</li><li>Regulator instructions for licensed occupations</li><li>General articles only when stronger sources are silent</li></ol><p>This order prevents a broad internet convention from overriding a specific requirement.</p>` },
+   { id: 'sources', title: '2. Use the sourced regional matrix', html: `<p>The <a href="/regions/">regional matrix</a> records what named public services actually say, what each source leaves unresolved and when it was checked. This guide explains the method; the matrix holds the maintained source summaries. It is an initial set, not a complete world directory.</p>` },
+   { id: 'differences', title: '3. Check differences one by one', html: `<ul><li>Whether the document is normally called a resume or CV in this context</li><li>Whether photos or personal details are expected, optional or discouraged</li><li>Typical page length and paper size</li><li>How education, licences and language proficiency should be expressed</li><li>Whether references belong in the document</li><li>Whether the employer requests PDF, Word or an application form</li></ul>` },
+   { id: 'privacy', title: '4. Minimise personal information', html: `<p>Do not add a date of birth, government identifier, marital status, banking data or a third party’s contact details merely because an unsourced example contains them. Include only what the application legitimately requires, and confirm how the employer asks to receive sensitive documentation.</p>` },
+   { id: 'limits', title: '5. What this guide does not claim', html: `<aside class="callout warning"><strong>No country is one hiring market</strong><p>Practices vary by occupation, sector, employer and time. This page does not claim complete coverage, translated interface support or local legal advice. Recheck the linked source and its update date before relying on it.</p></aside><p>APWICO supports Unicode content, right-to-left resume direction, A4 and Letter output, and flexible section headings. Those technical capabilities do not automatically localise the English interface or validate a country-specific convention.</p>` },
+  ],
+  related: ['a4-vs-letter-resume', 'choose-resume-template', 'career-change-transferable-evidence'],
+  cta: { label: 'Build with flexible sections and page size', href: '/start/build', destination: 'resume_builder', note: 'Use the verified local convention you found; APWICO does not choose it for you.' },
  },
 ];
 

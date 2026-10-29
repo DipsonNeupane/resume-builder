@@ -1,9 +1,13 @@
-# Production cloud-saving acceptance plan — not executed
+# Production cloud-saving acceptance plan — bounded Task 63 execution recorded
 
 Task #60, September 24–25, 2026. This is the exact later acceptance procedure for the
-production candidate, under the existing access lock. No production test accounts,
-cloud writes, entitlement changes, provider calls or restore were made in this task.
-Prerequisites and blockers: [production audit](PRODUCTION_READINESS_AUDIT.md).
+production candidate, under the existing access lock. On 2026-10-07, Task 63's bounded
+non-destructive hosted matrix was executed with dedicated fictional accounts while the
+public cloud flag remained off. The 14/14 direct hosted result, 8/8 real-browser result,
+fixture cleanup, daily-backup inspection and remaining populated-restore boundary are in
+[`redesign/TASK_63_HOSTED_CLOUD_VALIDATION_2026-10-07.md`](redesign/TASK_63_HOSTED_CLOUD_VALIDATION_2026-10-07.md).
+No entitlement change, public cloud enablement or provider restore was made. Prerequisites
+and blockers: [production audit](PRODUCTION_READINESS_AUDIT.md).
 
 ## Entry criteria and evidence
 

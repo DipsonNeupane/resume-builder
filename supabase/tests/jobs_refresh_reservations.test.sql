@@ -1,5 +1,5 @@
 begin;
-select plan(23);
+select plan(25);
 
 insert into auth.users(id) values
   ('12121212-1212-1212-1212-121212121212'),
@@ -13,11 +13,15 @@ select is((public.jobs_reserve_recommendation_refresh('12121212-1212-1212-1212-1
   'first Free refresh reserves the allowance');
 select is((select last_provider_refresh_at is not null from public.job_preferences where owner_id='12121212-1212-1212-1212-121212121212'),true,
   'Free reservation is persisted in the existing refresh timestamp');
+select is((public.jobs_reserve_recommendation_refresh('12121212-1212-1212-1212-121212121212')->>'allowed')::boolean,true,
+  'a second manual refresh is allowed inside the rolling window');
+select is((public.jobs_reserve_recommendation_refresh('12121212-1212-1212-1212-121212121212')->>'allowed')::boolean,true,
+  'a third manual refresh is allowed inside the rolling window');
 select is((public.jobs_reserve_recommendation_refresh('12121212-1212-1212-1212-121212121212')->>'allowed')::boolean,false,
-  'a concurrent or stale second Free request cannot pass the reservation');
+  'a fourth manual refresh is blocked inside the rolling window');
 select is(
   (public.jobs_reserve_recommendation_refresh('12121212-1212-1212-1212-121212121212')->>'nextRefreshAt')::timestamptz,
-  (select last_provider_refresh_at+interval '24 hours' from public.job_preferences where owner_id='12121212-1212-1212-1212-121212121212'),
+  (select min(reserved_at)+interval '24 hours' from public.job_refresh_events where owner_id='12121212-1212-1212-1212-121212121212'),
   'blocked Free response gives the authoritative next refresh time');
 
 select is(public.jobs_release_recommendation_refresh('34343434-3434-3434-3434-343434343434',
@@ -29,19 +33,21 @@ select is(public.jobs_release_recommendation_refresh('12121212-1212-1212-1212-12
 select is(public.jobs_release_recommendation_refresh('12121212-1212-1212-1212-121212121212',
   (select last_provider_refresh_at from public.job_preferences where owner_id='12121212-1212-1212-1212-121212121212'),null),true,
   'the exact failed reservation is released');
-select is((select last_provider_refresh_at is null from public.job_preferences where owner_id='12121212-1212-1212-1212-121212121212'),true,
-  'failed first refresh restores the prior null timestamp');
+select is((select count(*)::int from public.job_refresh_events where owner_id='12121212-1212-1212-1212-121212121212'),2,
+  'failed third refresh removes only its exact rolling-window event');
 select is((public.jobs_reserve_recommendation_refresh('12121212-1212-1212-1212-121212121212')->>'allowed')::boolean,true,
   'a safely released failure does not consume the Free allowance');
 
 reset role;
 update public.job_preferences set last_provider_refresh_at=now()-interval '25 hours'
   where owner_id='12121212-1212-1212-1212-121212121212';
+update public.job_refresh_events set reserved_at=reserved_at-interval '25 hours'
+  where owner_id='12121212-1212-1212-1212-121212121212';
 set local role service_role;
 select is((public.jobs_reserve_recommendation_refresh('12121212-1212-1212-1212-121212121212')->>'allowed')::boolean,true,
-  'Free refresh is available again after the daily cadence');
-select ok((public.jobs_reserve_recommendation_refresh('12121212-1212-1212-1212-121212121212')->>'previousRefreshAt') is not null,
-  'a blocked retry preserves the successful prior refresh timestamp');
+  'Free refresh is available again after rolling events leave the 24-hour window');
+select is((select count(*)::int from public.job_refresh_events where owner_id='12121212-1212-1212-1212-121212121212'),1,
+  'expired rolling-window events are removed before reserving again');
 
 select is((public.jobs_reserve_recommendation_refresh('56565656-5656-5656-5656-565656565656')->>'isPro')::boolean,true,
   'active Pro is recognized authoritatively');

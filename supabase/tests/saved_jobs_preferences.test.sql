@@ -1,5 +1,7 @@
 begin;
-select plan(36);
+select plan(37);
+-- The launch Free cap is configurable (default 100); this file exercises the cap at 10.
+update public.product_settings set free_application_limit=10;
 
 insert into auth.users(id) values
  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
@@ -30,7 +32,7 @@ select throws_ok($$select public.jobs_account_snapshot('aaaaaaaa-aaaa-aaaa-aaaa-
 reset role;
 
 set local role service_role;
-select is((public.jobs_account_snapshot('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')->>'saveLimit')::int, 3, 'Free account reports the three-job limit');
+select is((public.jobs_account_snapshot('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')->>'saveLimit')::int, 10, 'Free account reports the configured tracking limit');
 select is(public.jobs_account_snapshot('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')#>>'{preferences,autoRefresh}', 'false', 'Auto Refresh defaults off');
 
 select lives_ok($$select public.jobs_save('cccccccc-cccc-cccc-cccc-cccccccccccc', job || jsonb_build_object(
@@ -64,24 +66,25 @@ select is((select count(*)::int from public.saved_jobs where owner_id='aaaaaaaa-
 
 select lives_ok($$select public.jobs_save('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', job || '{"id":"techmap:two","providerJobId":"two","dedupeKey":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","sourceUrl":"https://jobs.example/two"}'::jsonb) from job_fixture$$, 'second Free save succeeds');
 select lives_ok($$select public.jobs_save('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', job || '{"id":"techmap:three","providerJobId":"three","dedupeKey":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","sourceUrl":"https://jobs.example/three"}'::jsonb) from job_fixture$$, 'third Free save succeeds');
-select throws_ok($$select public.jobs_save('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', job || '{"id":"techmap:four","providerJobId":"four","dedupeKey":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","sourceUrl":"https://jobs.example/four"}'::jsonb) from job_fixture$$, 'P0001', 'Free saved-job limit reached', 'fourth new Free save is transactionally blocked');
-select is((select count(*)::int from public.saved_jobs where owner_id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'), 3, 'blocked save preserves all existing records');
+select lives_ok($$select public.jobs_save('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', job || jsonb_build_object('id','techmap:'||n,'providerJobId',n::text,'dedupeKey',encode(sha256(n::text::bytea),'hex'),'sourceUrl','https://jobs.example/'||n)) from job_fixture, generate_series(4,10) n$$, 'Free can organize ten saved applications');
+select throws_ok($$select public.jobs_save('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', job || jsonb_build_object('id','techmap:11','providerJobId','11','dedupeKey',encode(sha256('11'::bytea),'hex'),'sourceUrl','https://jobs.example/11')) from job_fixture$$, 'P0001', 'Free application limit reached', 'eleventh new Free save is transactionally blocked');
+select is((select count(*)::int from public.saved_jobs where owner_id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'), 10, 'blocked save preserves all existing records');
 
 select lives_ok($$select public.jobs_set_preferences('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','{"title":"Nurse","countryCode":"GB"}'::jsonb,true)$$, 'account can explicitly opt in to Auto Refresh');
 select is(public.jobs_account_snapshot('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')#>>'{preferences,autoRefresh}', 'true', 'opt-in is persisted');
 select is(public.jobs_account_snapshot('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')#>>'{preferences,autoRefresh}', 'false', 'second account does not inherit preferences');
 select is((public.jobs_account_snapshot('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')->>'saveLimit')::int, 10000, 'Pro exposes the documented high safety ceiling');
 select lives_ok($$select public.jobs_save('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', job || jsonb_build_object(
-  'id','techmap:pro-'||n,'providerJobId','pro-'||n,'dedupeKey',repeat((n+3)::text,64),'sourceUrl','https://jobs.example/pro-'||n))
-  from job_fixture cross join generate_series(1,4) n$$, 'Pro can save beyond the Free ceiling');
-select is((select count(*)::int from public.saved_jobs where owner_id='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'), 4, 'Pro save count exceeds three without changing entitlement behavior');
+  'id','techmap:pro-'||n,'providerJobId','pro-'||n,'dedupeKey',encode(sha256(('pro-'||n)::bytea),'hex'),'sourceUrl','https://jobs.example/pro-'||n))
+  from job_fixture cross join generate_series(1,11) n$$, 'Pro can save beyond the Free ceiling');
+select is((select count(*)::int from public.saved_jobs where owner_id='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'), 11, 'Pro save count exceeds ten without changing entitlement behavior');
 reset role;
 update public.billing_entitlements set paid_through=now()-interval '1 second' where owner_id='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 set local role service_role;
 select is(public.jobs_account_snapshot('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')->>'isPro', 'false', 'expired entitlement is recognized without mutating saved records');
-select is((select count(*)::int from public.saved_jobs where owner_id='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'), 4, 'saved records remain after Pro expires even above the Free ceiling');
+select is((select count(*)::int from public.saved_jobs where owner_id='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'), 11, 'saved records remain after Pro expires even above the Free ceiling');
 select throws_ok($$select public.jobs_save('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', job || '{"id":"techmap:after-expiry","providerJobId":"after-expiry","dedupeKey":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","sourceUrl":"https://jobs.example/after-expiry"}'::jsonb) from job_fixture$$,
-  'P0001', 'Free saved-job limit reached', 'expired Pro blocks only a new save');
+  'P0001', 'Free application limit reached', 'expired Pro blocks only a new save');
 select lives_ok($$select public.jobs_set_preferences('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','{"title":"Nurse"}'::jsonb,false)$$, 'Auto Refresh can be turned back off');
 
 reset role;
@@ -94,7 +97,7 @@ select is(public.jobs_mark_seen('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',array['te
 
 select is(public.jobs_remove('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',(select id from public.saved_jobs where owner_id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' limit 1)), false, 'another account cannot remove a saved job');
 select is(public.jobs_remove('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',(select id from public.saved_jobs where owner_id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' limit 1)), true, 'owner can explicitly remove a saved job');
-select is((select count(*)::int from public.saved_jobs where owner_id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'), 2, 'explicit removal affects only the selected record');
+select is((select count(*)::int from public.saved_jobs where owner_id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'), 9, 'explicit removal affects only the selected record');
 
 reset role;
 select * from finish();

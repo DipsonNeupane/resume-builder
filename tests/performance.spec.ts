@@ -1,0 +1,104 @@
+import { test, expect } from '@playwright/test';
+
+declare global {
+ interface Window { __rsPerf: { lcp: number; cls: number; webglAt: number; fcp: number; idleAt: number } }
+}
+
+test.setTimeout(120_000);
+
+test('homepage lab budgets cover LCP, layout shift, interaction response and a GPU-free hero', async ({ page }) => {
+ await page.addInitScript(() => {
+  window.__rsPerf = { lcp: 0, cls: 0, webglAt: 0, fcp: 0, idleAt: 0 };
+  new PerformanceObserver(list => { for (const entry of list.getEntries()) window.__rsPerf.lcp = entry.startTime; }).observe({ type: 'largest-contentful-paint', buffered: true });
+  new PerformanceObserver(list => { for (const entry of list.getEntries() as (PerformanceEntry & { value: number; hadRecentInput: boolean })[]) if (!entry.hadRecentInput) window.__rsPerf.cls += entry.value; }).observe({ type: 'layout-shift', buffered: true });
+  new PerformanceObserver(list => { for (const entry of list.getEntries()) if (entry.name === 'first-contentful-paint') window.__rsPerf.fcp = entry.startTime; }).observe({ type: 'paint', buffered: true });
+  const originalIdle = window.requestIdleCallback.bind(window);
+  window.requestIdleCallback = (callback, options) => originalIdle(deadline => {
+   if (!window.__rsPerf.idleAt) window.__rsPerf.idleAt = performance.now();
+   callback(deadline);
+  }, options);
+  const original = HTMLCanvasElement.prototype.getContext;
+  HTMLCanvasElement.prototype.getContext = function (...args: Parameters<typeof original>) {
+   if (args[0] === 'webgl' && !window.__rsPerf.webglAt) window.__rsPerf.webglAt = performance.now();
+   return original.apply(this, args) as ReturnType<typeof original>;
+  } as typeof original;
+ });
+ await page.goto('/', { waitUntil: 'domcontentloaded' });
+ await expect(page.locator('.pt-hero-title')).toBeVisible();
+ await page.waitForLoadState('networkidle');
+ await page.waitForTimeout(500);
+ await expect(page.locator('.pt-story')).toBeVisible();
+ await expect(page.locator('canvas[data-silk-mode]')).toHaveCount(0);
+ const metrics = await page.evaluate(() => window.__rsPerf);
+ expect(metrics.fcp, 'first contentful paint must be observed').toBeGreaterThan(0);
+ expect(metrics.lcp, 'local lab LCP').toBeGreaterThan(0);
+ expect(metrics.lcp, 'local lab LCP').toBeLessThanOrEqual(3000);
+ expect(metrics.cls, 'local lab CLS').toBeLessThanOrEqual(0.1);
+ expect(metrics.webglAt, 'the approved hero must not initialize WebGL').toBe(0);
+
+ const start = Date.now();
+ await page.getByRole('link', { name: 'Compare my resume with a job', exact: true }).first().click();
+ await expect(page).toHaveURL(/\/tools\/resume-job-match\/$/);
+ expect(Date.now() - start, 'primary CTA response').toBeLessThanOrEqual(1000);
+});
+
+test('data-saver devices retain a complete homepage without initializing WebGL', async ({ page }) => {
+ await page.addInitScript(() => {
+  Object.defineProperty(navigator, 'hardwareConcurrency', { configurable: true, get: () => 8 });
+  Object.defineProperty(navigator, 'connection', { configurable: true, get: () => ({ saveData: true }) });
+  const original = HTMLCanvasElement.prototype.getContext;
+  (window as typeof window & { __webglCalls?: number }).__webglCalls = 0;
+  HTMLCanvasElement.prototype.getContext = function (...args: Parameters<typeof original>) {
+   if (args[0] === 'webgl') (window as typeof window & { __webglCalls?: number }).__webglCalls! += 1;
+   return original.apply(this, args) as ReturnType<typeof original>;
+  } as typeof original;
+ });
+ await page.goto('/', { waitUntil: 'domcontentloaded' });
+ await expect(page.locator('.pt-hero-title')).toBeVisible();
+ await expect(page.locator('.pt-story')).toBeVisible();
+ await expect(page.locator('canvas[data-silk-mode]')).toHaveCount(0);
+ expect(await page.evaluate(() => (window as typeof window & { __webglCalls?: number }).__webglCalls)).toBe(0);
+ await expect(page.getByRole('link', { name: 'Compare my resume with a job', exact: true }).first()).toBeVisible();
+});
+
+test('low-core devices retain complete content without decorative GPU work or remote fonts', async ({ page }) => {
+ const remoteFonts: string[] = [];
+ page.on('request', request => {
+  if (/fonts\.(?:googleapis|gstatic)\.com/.test(request.url())) remoteFonts.push(request.url());
+ });
+ await page.addInitScript(() => {
+  Object.defineProperty(navigator, 'hardwareConcurrency', { configurable: true, get: () => 2 });
+  const original = HTMLCanvasElement.prototype.getContext;
+  (window as typeof window & { __webglCalls?: number }).__webglCalls = 0;
+  HTMLCanvasElement.prototype.getContext = function (...args: Parameters<typeof original>) {
+   if (args[0] === 'webgl') (window as typeof window & { __webglCalls?: number }).__webglCalls! += 1;
+   return original.apply(this, args) as ReturnType<typeof original>;
+  } as typeof original;
+ });
+ await page.goto('/', { waitUntil: 'networkidle' });
+ await expect(page.locator('.pt-hero-title')).toBeVisible();
+ await expect(page.locator('.pt-story')).toBeVisible();
+ await expect(page.locator('canvas[data-silk-mode]')).toHaveCount(0);
+ expect(await page.evaluate(() => (window as typeof window & { __webglCalls?: number }).__webglCalls)).toBe(0);
+ expect(remoteFonts).toEqual([]);
+ const preload = page.locator('link[rel="preload"][as="font"][href="/fonts/brand-sans.woff2"]');
+ await expect(preload).toHaveCount(1);
+});
+
+test('reduced motion renders the evidence story without animation or GPU work', async ({ page }) => {
+ await page.emulateMedia({ reducedMotion: 'reduce' });
+ await page.addInitScript(() => {
+  (window as typeof window & { __draws?: number }).__draws = 0;
+  const original = WebGLRenderingContext.prototype.drawArrays;
+  WebGLRenderingContext.prototype.drawArrays = function (...args: Parameters<typeof original>) {
+   (window as typeof window & { __draws?: number }).__draws! += 1;
+   return original.apply(this, args);
+  };
+ });
+ await page.goto('/', { waitUntil: 'domcontentloaded' });
+ const story = page.locator('.pt-story');
+ await expect(story).toBeVisible();
+ await expect(page.locator('canvas[data-silk-mode]')).toHaveCount(0);
+ expect(await story.evaluate(element => getComputedStyle(element).animationName)).toBe('none');
+ expect(await page.evaluate(() => (window as typeof window & { __draws?: number }).__draws ?? 0)).toBe(0);
+});

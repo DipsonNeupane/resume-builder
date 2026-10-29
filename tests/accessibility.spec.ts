@@ -9,30 +9,34 @@ test('mobile navigation has sequential keyboard access, Escape, and destination 
  await page.keyboard.press(tab);
  await expect(page.getByRole('link', { name: 'Skip to main content' })).toBeFocused();
  await page.keyboard.press(tab);
- await expect(page.getByRole('button', { name: 'ResumeStride home' })).toBeFocused();
+ await expect(page.getByRole('button', { name: 'APWICO home' })).toBeFocused();
  await page.keyboard.press(tab);
  const toggle = page.getByRole('button', { name: 'Toggle navigation' });
  await expect(toggle).toBeFocused();
  await expect(toggle).toHaveAttribute('aria-controls', 'main-navigation');
  await page.keyboard.press('Enter');
  await page.keyboard.press(tab);
- await expect(page.getByRole('link', { name: 'How it works' })).toBeFocused();
+ await expect(page.getByRole('link', { name: 'Resume Builder' })).toBeFocused();
  await page.keyboard.press('Escape');
  await expect(toggle).toBeFocused();
  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
  await page.keyboard.press('Enter');
  await page.keyboard.press(tab);
  await page.keyboard.press(tab);
+ await page.keyboard.press(tab);
+ await page.keyboard.press(tab);
+ await page.keyboard.press(tab);
  await expect(page.getByRole('link', { name: 'Templates', exact: true })).toBeFocused();
- await page.keyboard.press('Enter');
- await expect(toggle).toHaveAttribute('aria-expanded', 'false');
- await expect(page.locator('#templates')).toBeFocused();
+ await Promise.all([
+  page.waitForURL(/\/templates\/$/, { timeout: 30_000 }),
+  page.keyboard.press('Enter'),
+ ]);
+ await expect(page.getByRole('heading', { level: 1, name: 'Browse resume templates.' })).toBeVisible();
  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
 test('sample dialog isolates focus, cycles both directions, and restores its opener', async ({ page }) => {
- await page.goto('/');
- await page.getByRole('button', { name: 'Build my master resume', exact: true }).first().click();
+ await page.goto('/workspace/resume');
  const opener = page.getByRole('button', { name: 'View sample resume', exact: true });
  await opener.focus();
  await page.keyboard.press('Enter');
@@ -56,8 +60,7 @@ test('sample dialog isolates focus, cycles both directions, and restores its ope
 });
 
 test('builder fields expose input purpose and a visible keyboard focus ring', async ({ page }) => {
- await page.goto('/');
- await page.getByRole('button', { name: 'Build my master resume', exact: true }).first().click();
+ await page.goto('/workspace/resume');
  const name = page.getByRole('textbox', { name: 'Full name', exact: true });
  await expect(name).toHaveAttribute('autocomplete', 'name');
  for (const [key, type, autocomplete] of [['email', 'email', 'email'], ['phone', 'tel', 'tel'], ['website', 'url', 'url']]) {
@@ -76,17 +79,17 @@ test('builder fields expose input purpose and a visible keyboard focus ring', as
  });
  expect(outline.width).toBeGreaterThanOrEqual(2);
  expect(outline.style).toBe('solid');
- // The Patina action colour (#ad521b): the ring must stay the brand's visible action colour.
- expect(outline.color).toBe('rgb(173, 82, 27)');
+ // The approved Wine action colour (#922036): the ring stays visibly on-brand.
+ expect(outline.color).toBe('rgb(146, 32, 54)');
  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
 test('lazy route transitions focus the destination heading', async ({ page }) => {
  await page.goto('/');
  await page.getByRole('button', { name: 'View Pro options', exact: true }).click();
- await expect(page.getByRole('heading', { level: 1, name: 'A promising role. A considered application.' })).toBeFocused();
+ await expect(page.getByRole('heading', { level: 1, name: 'Get APWICO Pro' })).toBeFocused();
  await page.getByRole('button', { name: 'Sign in or create account' }).click();
- await expect(page.getByRole('heading', { level: 1, name: 'Make room for your next move.' })).toBeFocused();
+ await expect(page.getByRole('heading', { level: 1, name: 'Create your account' })).toBeFocused();
 });
 
 test('delayed lazy route focuses only its loaded heading and cached routes still receive focus', async ({ page }) => {
@@ -99,24 +102,26 @@ test('delayed lazy route focuses only its loaded heading and cached routes still
  try {
   await page.goto('/');
   await page.getByRole('button', { name: 'View Pro options', exact: true }).click();
-  const proHeading = page.getByRole('heading', { level: 1, name: 'A promising role. A considered application.' });
+  const proHeading = page.getByRole('heading', { level: 1, name: 'Get APWICO Pro' });
   await expect(proHeading).toBeFocused();
   await page.getByRole('button', { name: 'Sign in or create account' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Loading…' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 1, name: 'Loading…' })).not.toBeFocused();
   await expect(proHeading).toBeHidden();
   releaseAccount();
-  await expect(page.getByRole('heading', { level: 1, name: 'Make room for your next move.' })).toBeFocused();
+  await expect(page.getByRole('heading', { level: 1, name: 'Create your account' })).toBeFocused();
   await page.getByRole('button', { name: 'Back to home', exact: true }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Stop searching everywhere. Start with jobs that fit your experience.', exact: true })).toBeFocused();
+  await expect(page.getByRole('heading', { level: 1, name: 'Find jobs you like. Apply with confidence. Know what happens next.', exact: true })).toBeFocused();
   await page.getByRole('button', { name: 'Find opportunities', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Start with the role you are considering.' })).toBeFocused();
+  await page.getByRole('button', { name: 'Search live listings instead', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Find jobs' })).toBeFocused();
   await page.getByRole('button', { name: 'Back', exact: true }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Stop searching everywhere. Start with jobs that fit your experience.', exact: true })).toBeFocused();
+  await expect(page.getByRole('heading', { level: 1, name: 'Find jobs you like. Apply with confidence. Know what happens next.', exact: true })).toBeFocused();
   await page.getByRole('button', { name: 'View Pro options', exact: true }).click();
   await expect(proHeading).toBeFocused();
   await page.getByRole('button', { name: 'Sign in or create account' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Make room for your next move.' })).toBeFocused();
+  await expect(page.getByRole('heading', { level: 1, name: 'Create your account' })).toBeFocused();
  } finally {
   releaseAccount();
  }
@@ -133,8 +138,7 @@ test('reduced motion applies to scripted download scrolling as well as CSS', asy
    original.call(this, options);
   };
  }, example());
- await page.goto('/');
- await page.getByRole('button', { name: 'Build my master resume', exact: true }).first().click();
+ await page.goto('/workspace/resume');
  await page.getByRole('button', { name: 'Design & format', exact: true }).click();
  await page.getByRole('button', { name: 'Confirm', exact: true }).click();
  await expect.poll(() => page.evaluate(() => (window as unknown as { scrollBehaviors: unknown[] }).scrollBehaviors)).toContain('instant');
@@ -152,8 +156,7 @@ for (const width of [320, 390, 768, 1920]) test(`long international content fits
  draft.website = `https://example.com/${'portfolio'.repeat(25)}`;
  await page.setViewportSize({ width, height: 900 });
  await page.addInitScript(value => sessionStorage.setItem('resumestride.resume.v1', JSON.stringify(value)), draft);
- await page.goto('/');
- await page.getByRole('button', { name: 'Build my master resume', exact: true }).first().click();
+ await page.goto('/workspace/resume');
  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
  await page.getByRole('button', { name: 'Preview resume', exact: true }).click();
  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

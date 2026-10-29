@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { cancelSubscription, cancellationDependencies } from '../../server/billing/cancel.ts'
-const env = { BILLING_ENABLED:'true', STRIPE_MODE:'test', STRIPE_SECRET_KEY:'sk_test_fixture', STRIPE_WEBHOOK_SECRET:'whsec_fixture', STRIPE_ACCOUNT_ID:'acct_fixture', STRIPE_PASS_PRICE_ID:'price_fixture', APP_ORIGIN:'https://resumestride.com', SUPABASE_URL:'https://fixture.supabase.co', SUPABASE_PUBLISHABLE_KEY:'public', SUPABASE_SERVICE_ROLE_KEY:'fixture' }
+const env = { BILLING_ENABLED:'true', STRIPE_MODE:'test', STRIPE_SECRET_KEY:'sk_test_fixture', STRIPE_WEBHOOK_SECRET:'whsec_fixture', STRIPE_ACCOUNT_ID:'acct_fixture', STRIPE_PASS_PRICE_ID:'price_fixture', APP_ORIGIN:'https://apwico.com', SUPABASE_URL:'https://fixture.supabase.co', SUPABASE_PUBLISHABLE_KEY:'public', SUPABASE_SERVICE_ROLE_KEY:'fixture' }
 function fixture(owner='owner', stopped=false, persistenceError=false) {
  const calls: string[]=[]
  const subscription={ id:'sub_fixture', livemode:false, status:'active', cancel_at_period_end:stopped }

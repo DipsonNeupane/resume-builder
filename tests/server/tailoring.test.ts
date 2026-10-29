@@ -364,7 +364,7 @@ test('the provider schema requires a bounded grounded why for every suggestion',
 test('only the supplied bounded Match Analysis subset is included as tailoring evidence', () => {
   const context = {
     label: 'good' as const, whyPromising: 'Relevant support evidence.', observations: ['CRM systems are named.'],
-    relevantRequirements: [{ text: 'Customer support required.', category: 'required' as const, status: 'demonstrated' as const, evidence: ['Resume evidence: customer support.'] }],
+    relevantRequirements: [{ id: 'req-support', text: 'Customer support required.', category: 'required' as const, status: 'demonstrated' as const, evidence: ['Resume evidence: customer support.'] }],
     areasWorthStrengthening: ['Preferred — not demonstrated: reporting.'],
   }
   const body = buildTailoringRequestBody(resume, 'Job text', context)
@@ -394,4 +394,89 @@ test('provider input excludes fields beyond the tailoring resume shape (e.g. dir
   const sentBody = String((calls[0] as RequestInit).body)
   assert.ok(!sentBody.includes('person@example.com'))
   assert.ok(!sentBody.includes('+1 555 0100'))
+})
+
+const POSTING = 'Requirements:\n- Experience supporting customers by phone and chat.\n- Fluency in Spanish.'
+
+test('the provider receives server-issued requirement ids: Match ids when current, posting ids otherwise', () => {
+  const fromPosting = JSON.parse(buildTailoringRequestBody(resume, POSTING).input[1].content[0].text)
+  assert.deepEqual(fromPosting.requirements.map((r: { id: string }) => r.id), ['posting-1', 'posting-2'])
+  assert.match(fromPosting.requirements[0].text, /supporting customers/)
+  const context = { label: 'good' as const, whyPromising: 'x', observations: [], areasWorthStrengthening: [],
+    relevantRequirements: [{ id: 'req-7', text: 'Customer support required.', category: 'required' as const, status: 'demonstrated' as const, evidence: [] }] }
+  const fromMatch = JSON.parse(buildTailoringRequestBody(resume, POSTING, context).input[1].content[0].text)
+  assert.deepEqual(fromMatch.requirements, [{ id: 'req-7', text: 'Customer support required.', category: 'required' }])
+})
+
+test('a suggestion is grounded only when an issued requirement id and a quote from its own source field resolve', async () => {
+  const fetcher = jsonFetcher(validPayload({ targetRequirementIds: ['posting-1', 'posting-1'], supportingQuotes: ['by phone and  chat', 'Helped 10 clients weekly'] }))
+  const { prereqs: gated } = prereqs(fetcher)
+  const [suggestion] = await generateTailoringSuggestions(config, gated, resume, POSTING, fetcher)
+  assert.equal(suggestion.grounded, true)
+  assert.deepEqual(suggestion.targetRequirements.map(r => [r.id, r.category]), [['posting-1', 'required']])
+  assert.deepEqual(suggestion.supportingFacts.map(f => [f.location, f.quote, f.field, f.entryId]), [
+    ['Experience · Support Rep, Acme', 'by phone and  chat', 'description', 'ent1'],
+    ['Experience · Support Rep, Acme', 'Helped 10 clients weekly', 'description', 'ent1'],
+  ])
+})
+
+test('invented requirement ids and quotes from elsewhere are dropped and the suggestion is not grounded', async () => {
+  for (const refs of [
+    { targetRequirementIds: ['posting-99'], supportingQuotes: ['Helped 10 clients'] },
+    { targetRequirementIds: ['posting-1'], supportingQuotes: ['Fluency in Spanish', 'CRM systems'] },
+    { targetRequirementIds: [], supportingQuotes: [] },
+    {},
+  ]) {
+    const fetcher = jsonFetcher(validPayload(refs))
+    const { prereqs: gated } = prereqs(fetcher)
+    const [suggestion] = await generateTailoringSuggestions(config, gated, resume, POSTING, fetcher)
+    assert.equal(suggestion.grounded, false, JSON.stringify(refs))
+    assert.ok(suggestion.targetRequirements.every(r => r.id !== 'posting-99'))
+    assert.ok(suggestion.supportingFacts.every(f => resume.sections[0].entries[0].description.includes(f.quote)))
+  }
+})
+
+test('malformed reference lists reject the batch', async () => {
+  for (const refs of [{ targetRequirementIds: 'posting-1' }, { supportingQuotes: [1] }, { targetRequirementIds: ['a', 'b', 'c', 'd'] }]) {
+    const fetcher = jsonFetcher(validPayload(refs))
+    const { prereqs: gated } = prereqs(fetcher)
+    await assert.rejects(generateTailoringSuggestions(config, gated, resume, POSTING, fetcher), /unusable/)
+  }
+})
+
+test('traceable but unsupported wording is returned as not grounded, with the reasons', async () => {
+  const run = async (override: Record<string, unknown>, original = resume) => {
+    const fetcher = jsonFetcher(validPayload({ targetRequirementIds: ['posting-1'], ...override }))
+    const { prereqs: gated } = prereqs(fetcher)
+    const [suggestion] = await generateTailoringSuggestions(config, gated, original, POSTING, fetcher)
+    return suggestion
+  }
+  // Changed responsibility: the quote and id resolve, but "Managed" is not in the source.
+  const managed = await run({ suggestedText: 'Managed 10 clients weekly by phone and chat.', supportingQuotes: ['Helped 10 clients weekly'] })
+  assert.equal(managed.grounded, false)
+  assert.ok(managed.supportIssues.some(issue => issue.kind === 'added_claim' && issue.term === 'managed'))
+  assert.equal(managed.supportingFacts.length, 1)
+  // Irrelevant quote: it occurs in the source but shares nothing with the rewrite.
+  const irrelevant = await run({ suggestedText: 'Supported 10 clients weekly.', supportingQuotes: ['by phone and chat'] })
+  assert.equal(irrelevant.grounded, false)
+  assert.deepEqual(irrelevant.supportingFacts, [])
+  assert.deepEqual(irrelevant.supportIssues.map(issue => issue.kind).sort(), ['irrelevant_quote', 'no_support'])
+  // Negation: the source says the opposite of the rewrite.
+  const negative = { ...resume, sections: [{ ...resume.sections[0], entries: [{ ...resume.sections[0].entries[0], description: 'Helped clients by phone; did not use chat.' }] }] }
+  const dropped = await run({ originalText: 'Helped clients by phone; did not use chat.', suggestedText: 'Helped clients by phone and chat.', supportingQuotes: ['use chat', 'Helped clients by phone'] }, negative)
+  assert.equal(dropped.grounded, false)
+  assert.deepEqual(dropped.supportIssues.map(issue => issue.kind).sort(), ['dropped_negation', 'negated_quote'])
+  assert.deepEqual(dropped.supportingFacts.map(fact => fact.quote), ['Helped clients by phone'])
+  // A faithful rewrite stays grounded.
+  const faithful = await run({ suggestedText: 'Supported 10 clients each week by phone and chat.', supportingQuotes: ['Helped 10 clients weekly'] })
+  assert.equal(faithful.grounded, true)
+  assert.deepEqual(faithful.supportIssues, [])
+})
+
+test('a fabricated metric in digits still rejects the whole batch', async () => {
+  for (const suggestedText of ['Helped 25 clients weekly by phone and chat.', 'Helped 10 clients weekly by phone and chat, a 30% increase.']) {
+    const fetcher = jsonFetcher(validPayload({ suggestedText, targetRequirementIds: ['posting-1'], supportingQuotes: ['Helped 10 clients weekly'] }))
+    const { prereqs: gated } = prereqs(fetcher)
+    await assert.rejects(generateTailoringSuggestions(config, gated, resume, POSTING, fetcher), /unusable/)
+  }
 })

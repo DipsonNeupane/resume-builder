@@ -58,7 +58,7 @@ export async function createPassCheckout(stripe: Stripe, config: BillingConfig, 
     mode: 'payment', line_items: [{ price: config.priceId, quantity: 1 }],
     client_reference_id: checkoutId, metadata: { checkout_id: checkoutId },
     success_url: `${config.origin}/?account=1&checkout=success`,
-    cancel_url: `${config.origin}/?account=1&checkout=cancelled`,
+    cancel_url: `${config.origin}/workspace/pro?checkout=cancelled`,
     allow_promotion_codes: false,
     // Do not pin this session to US-centric cards. Omitting
     // payment_method_types lets Stripe dynamically offer only the Dashboard-
@@ -124,7 +124,7 @@ export async function createSubscriptionCheckout(stripe: Stripe, config: Recurri
     mode: 'subscription', line_items: [{ price: config.recurringPriceId, quantity: 1 }],
     client_reference_id: checkoutId, metadata: { checkout_id: checkoutId },
     success_url: `${config.origin}/?account=1&checkout=success`,
-    cancel_url: `${config.origin}/?account=1&checkout=cancelled`,
+    cancel_url: `${config.origin}/workspace/pro?checkout=cancelled`,
     allow_promotion_codes: false,
     // Dynamic payment methods are filtered by Stripe for subscription
     // compatibility as well as location, device and the USD Price. This keeps

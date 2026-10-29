@@ -14,7 +14,8 @@ export type MatchLabel = 'strong' | 'good' | 'stretch'
  * provider stated explicitly. */
 export type FieldProvenance<T> = {
   value: T
-  source: 'provider' | 'inferred' | 'unknown'
+  /** 'user': entered by the account owner for a manually added application. */
+  source: 'provider' | 'inferred' | 'unknown' | 'user'
   confidence: Confidence
 }
 
@@ -70,10 +71,10 @@ export type NormalizedJob = {
   portal: string | null
   /** Provider-reported origin classification, e.g. "employer"/"aggregator", or null. */
   source: string | null
-  /** Independent canonical fingerprint used for ResumeStride's own deduplication,
+  /** Independent canonical fingerprint used for APWICO's own deduplication,
    * deliberately separate from any duplicate flag the provider itself reports. */
   dedupeKey: string
-  /** ISO timestamp of when ResumeStride fetched this record from the provider. */
+  /** ISO timestamp of when APWICO fetched this record from the provider. */
   retrievedAt: string
 }
 

@@ -22,6 +22,9 @@ import { matchesEmploymentType, matchesLocation, matchesSalaryPreference } from 
 import { cacheKey, getOrFetchJobs } from './cache.ts'
 import type { EmploymentType, MatchLabel, NormalizedJob, SalaryNormalized, Workplace } from './types.ts'
 import { savedJobSnapshot } from './account.ts'
+import { emitDiagnostic } from '../observability.ts'
+import { reserveProviderRequest } from './provider-budget.ts'
+import { preferenceSignals, type PreferencePosting } from '../../src/lib/jobPreferences.ts'
 
 function defaultDelay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -30,7 +33,7 @@ function defaultDelay(ms: number): Promise<void> {
 export const dependencies = { authenticate, serviceDatabase, techmapSearch, delay: defaultDelay }
 type Dependencies = typeof dependencies
 
-export const FREE_JOB_LIMIT = 5
+export const FREE_JOB_LIMIT = 10
 export const PRO_JOB_LIMIT = 20
 const MAX_BODY_BYTES = 200000
 const LABEL_ORDER: Record<MatchLabel, number> = { strong: 0, good: 1, stretch: 2 }
@@ -54,7 +57,7 @@ function refreshReservation(value: unknown): RefreshReservation {
   if (typeof row.allowed !== 'boolean' || typeof row.isPro !== 'boolean'
     || !timestamp(row.reservedAt) || !timestamp(row.previousRefreshAt) || !timestamp(row.nextRefreshAt)
     || (row.isPro && row.reservedAt !== null)
-    || (!row.isPro && row.allowed && (row.reservedAt === null || row.nextRefreshAt === null))
+    || (!row.isPro && row.allowed && row.reservedAt === null)
     || (!row.allowed && row.nextRefreshAt === null)) {
     throw new HttpError(503, 'Job refresh allowance returned an unusable response')
   }
@@ -76,6 +79,10 @@ export type JobCardView = {
   matchAnalysis: ReturnType<typeof analysisView>
   sourceUrl: string
   savedSnapshot: ReturnType<typeof savedJobSnapshot>
+}
+
+function preferencePosting(job: NormalizedJob): PreferencePosting {
+  return { title: job.title, descriptionText: job.descriptionText, workplace: job.workplace.value, employmentType: job.employmentType.value, salary: job.salary }
 }
 
 function toCardView(job: NormalizedJob, match: MatchResult, isPro: boolean): JobCardView {
@@ -124,7 +131,7 @@ export async function searchJobs(request: Request, env: NodeJS.ProcessEnv = proc
     const reservation = refreshReservation(reservationResult.data)
     if (!reservation.allowed) {
       return json(429, {
-        error: 'Free recommendations can refresh once every 24 hours. Your existing recommendations and saved jobs are still available.',
+        error: 'Free accounts can refresh three times in a rolling 24-hour window. Your existing recommendations and saved jobs are still available.',
         retryAt: reservation.nextRefreshAt,
       })
     }
@@ -142,17 +149,20 @@ export async function searchJobs(request: Request, env: NodeJS.ProcessEnv = proc
     // the Techmap request itself: they are applied as a local filter below, never sent
     // upstream, so requests differing only in those fields can still share one provider
     // fetch. Also deliberately excludes the owner: cached jobs carry no resume/account
-    // data, so an identical normalized public query is reused across accounts, and
-    // getOrFetchJobs coalesces simultaneous identical misses onto one provider fetch.
-    const signature = JSON.stringify({ title: criteria.title.toLowerCase(), countryCode: criteria.countryCode ?? null, workplace: criteria.workplace ?? null })
+    // data. The public-query cache is separated only by one-page/two-page depth so a
+    // Free page-one entry can never reduce Pro coverage; accounts at the same depth can
+    // still reuse and coalesce identical provider requests.
+    const signature = JSON.stringify({ title: criteria.title.toLowerCase(), countryCode: criteria.countryCode ?? null, workplace: criteria.workplace ?? null, depth: isPro ? 2 : 1 })
     const key = cacheKey(signature)
     const searchParams = { title: criteria.title, countryCode: criteria.countryCode, workPlace: criteria.workplace }
     const jobs = await getOrFetchJobs(key, async () => {
+      await reserveProviderRequest(db, owner, 'manual')
       const page1 = await deps.techmapSearch(config, { ...searchParams, page: 1 })
       let combined = page1.jobs
-      if (page1.hasMore) {
+      if (isPro && page1.hasMore) {
         await deps.delay(SECOND_PAGE_DELAY_MS)
         try {
+          await reserveProviderRequest(db, owner, 'pro_page_2')
           const page2 = await deps.techmapSearch(config, { ...searchParams, page: 2 })
           combined = combined.concat(page2.jobs)
         } catch (error) {
@@ -171,12 +181,29 @@ export async function searchJobs(request: Request, env: NodeJS.ProcessEnv = proc
     )
     const ranked = filtered
       .map(job => ({ job, match: analyzeJob(evidence, job, criteria, clarifications) }))
-      .sort((a, b) => LABEL_ORDER[a.match.label] - LABEL_ORDER[b.match.label] || b.match.rank - a.match.rank)
+      // The account allowance is a ceiling, never a quota. Provider candidates without
+      // a defensible occupational/title relationship are rejected instead of padding
+      // the response with unrelated jobs.
+      .filter(entry => entry.match.searchEligible)
+      // Soft preferences (experience level, priorities) reorder within an evidence label;
+      // they never hide a posting and unstated posting data scores zero.
+      .map(entry => ({ ...entry, preference: preferenceSignals(preferencePosting(entry.job), criteria).score }))
+      .sort((a, b) => LABEL_ORDER[a.match.label] - LABEL_ORDER[b.match.label] || (b.match.rank + b.preference) - (a.match.rank + a.preference))
     const diverseJobs = new Set(applyDiversity(ranked.map(entry => entry.job), PRO_JOB_LIMIT))
     const diverseRanked = ranked.filter(entry => diverseJobs.has(entry.job))
 
     const limit = isPro ? PRO_JOB_LIMIT : FREE_JOB_LIMIT
     const cards = diverseRanked.slice(0, limit).map(entry => toCardView(entry.job, entry.match, isPro))
+    // Register only bounded, content-free identities for results the server
+    // actually issued. A later browser visibility signal must match one of these
+    // rows (or a current owner-saved analysis) before it can become a review.
+    const registered = await db.rpc('product_register_match_results', {
+      p_owner: owner,
+      p_job_keys: cards.map(card => card.savedSnapshot.dedupeKey),
+      p_analysis_keys: cards.map(card => card.matchAnalysis.contextHash),
+      p_scope: isPro ? 'full' : 'limited',
+    })
+    if (registered.error) emitDiagnostic('match', 'database', 'database_error')
 
     // Availability is refreshed separately from the immutable saved snapshot, using
     // only positive observations from this provider response. A missing item in these

@@ -14,7 +14,7 @@ import { stripeClient, billingServiceConfig } from '../../server/billing/stripe.
 const baseEnv = {
   STRIPE_MODE: 'test', STRIPE_SECRET_KEY: 'sk_test_fixture', STRIPE_WEBHOOK_SECRET: 'whsec_fixture',
   STRIPE_ACCOUNT_ID: 'acct_fixture', STRIPE_PASS_PRICE_ID: 'price_manual', STRIPE_RECURRING_PRICE_ID: 'price_recurring',
-  APP_ORIGIN: 'https://resumestride.com', SUPABASE_URL: 'https://fixture.supabase.co',
+  APP_ORIGIN: 'https://apwico.com', SUPABASE_URL: 'https://fixture.supabase.co',
   SUPABASE_PUBLISHABLE_KEY: 'public', SUPABASE_SERVICE_ROLE_KEY: 'fixture',
 }
 // Both sales flags OFF: new one-time-pass AND new subscription sales paused.

@@ -10,4 +10,4 @@ import { defineConfig } from '@playwright/test';
 // (Vite's loadEnv gives already-set process.env vars priority over .env
 // files), so this suite is always exercising the unconfigured/local-only
 // builder regardless of what any .env.local on the machine contains.
-export default defineConfig({projects:browserProjects(),testDir:'./tests',testIgnore:['**/auth/**','**/extension/**','**/paid/**','**/server/**','**/billing/**'],use:{baseURL:'http://127.0.0.1:5183',headless:true},webServer:{command:'npm run dev -- --port 5183 --strictPort',url:'http://127.0.0.1:5183',reuseExistingServer:false,env:{VITE_SUPABASE_URL:'',VITE_SUPABASE_PUBLISHABLE_KEY:''}},reporter:'list'});
+export default defineConfig({projects:browserProjects(),testDir:'./tests',testIgnore:['**/auth/**','**/extension/**','**/paid/**','**/server/**','**/billing/**'],use:{baseURL:'http://127.0.0.1:5183',headless:true},webServer:{command:'npm run dev -- --port 5183 --strictPort',url:'http://127.0.0.1:5183',reuseExistingServer:false,timeout:300_000,env:{VITE_SUPABASE_URL:'',VITE_SUPABASE_PUBLISHABLE_KEY:''}},reporter:'list'});

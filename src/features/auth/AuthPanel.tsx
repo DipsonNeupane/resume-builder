@@ -3,11 +3,12 @@ import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { useSession } from '../../hooks/useSession';
 import { BillingPanel } from '../billing/BillingPanel';
+import { accountUrl, authReturnRoute } from '../../routing/authReturn';
 
 const genericAuthFailure = 'Unable to connect. Check your connection and try again.';
 const rateLimited = 'Too many requests. Please wait a minute before trying again.';
 
-export function AuthPanel({ onBack }: { onBack: () => void }) {
+export function AuthPanel({ onBack, onRecoveryComplete }: { onBack: () => void; onRecoveryComplete: () => void }) {
  const [mode,setMode]=useState<'signup'|'signin'>('signup');
  const [email,setEmail]=useState('');
  const [password,setPassword]=useState('');
@@ -22,6 +23,7 @@ export function AuthPanel({ onBack }: { onBack: () => void }) {
  const [invalidPassword,setInvalidPassword]=useState<'password'|'confirm'|null>(null);
  const passwordInput=useRef<HTMLInputElement>(null);
  const confirmInput=useRef<HTMLInputElement>(null);
+ const emailReturnUrl=(recovery=false)=>{const route=authReturnRoute(new URLSearchParams(window.location.search).get('return_to'));return `${window.location.origin}${route?accountUrl(route,recovery):recovery?'/workspace/account?reset=1':'/workspace/account'}`;};
  function passwordError(field:'password'|'confirm',message:string){
   setInvalidPassword(field);setError(message);
   (field==='password'?passwordInput:confirmInput).current?.focus();
@@ -37,6 +39,14 @@ export function AuthPanel({ onBack }: { onBack: () => void }) {
   return()=>subscription.unsubscribe();
  },[]);
 
+ useEffect(()=>{
+  if(!recovery||loading||!user)return;
+  const url=new URL(window.location.href);
+  if(!url.searchParams.has('code'))return;
+  url.searchParams.delete('code');
+  window.history.replaceState(null,'',`${url.pathname}${url.search}${url.hash}`);
+ },[recovery,loading,user]);
+
  function resetFeedback(){setError('');setStatus('');setInvalidPassword(null);}
  function switchMode(next:'signup'|'signin'){setMode(next);setForgotPassword(false);setPassword('');setConfirmPassword('');resetFeedback();}
 
@@ -49,7 +59,7 @@ export function AuthPanel({ onBack }: { onBack: () => void }) {
   setBusy(true);resetFeedback();
   try{
    if(mode==='signup'){
-    const {data,error}=await supabase.auth.signUp({email:email.trim(),password,options:{emailRedirectTo:`${window.location.origin}/?account=1`}});
+    const {data,error}=await supabase.auth.signUp({email:email.trim(),password,options:{emailRedirectTo:emailReturnUrl()}});
     if(error){setError(error.status===429?rateLimited:/password/i.test(error.message)?'Choose a stronger password and try again.':'Unable to create your account. Check your details and try again.');return;}
     if(!data.session)setStatus('confirm-email');
    }else{
@@ -67,7 +77,7 @@ export function AuthPanel({ onBack }: { onBack: () => void }) {
   event.preventDefault();if(!supabase||busy)return;
   setBusy(true);resetFeedback();
   try{
-   const {error}=await supabase.auth.resetPasswordForEmail(email.trim(),{redirectTo:`${window.location.origin}/?account=1&reset=1`});
+   const {error}=await supabase.auth.resetPasswordForEmail(email.trim(),{redirectTo:emailReturnUrl(true)});
    if(error){setError(error.status===429?rateLimited:'Unable to send a password-reset link. Check the address and try again.');return;}
    setStatus('reset-sent');
   }catch{setError(genericAuthFailure);}finally{setBusy(false);}
@@ -82,7 +92,7 @@ export function AuthPanel({ onBack }: { onBack: () => void }) {
    const {error}=await supabase.auth.updateUser({password});
    if(error){setError('This password-reset link is invalid or has expired. Request a new one from the sign-in page.');return;}
    const url=new URL(window.location.href);url.searchParams.delete('reset');url.searchParams.delete('code');window.history.replaceState(null,'',`${url.pathname}${url.search}${url.hash}`);
-   setPassword('');setConfirmPassword('');setRecovery(false);setStatus('password-updated');
+   setPassword('');setConfirmPassword('');setRecovery(false);setStatus('password-updated');onRecoveryComplete();
   }catch{setError(genericAuthFailure);}finally{setBusy(false);}
  }
 
@@ -92,10 +102,10 @@ export function AuthPanel({ onBack }: { onBack: () => void }) {
   catch{setError('Sign out did not complete. Please try again.');}finally{setBusy(false);}
  }
 
- return <main className="account-page" id="main-content"><aside className="account-context"><span className="section-label">Your next move, in one place</span><h2>Your experience.<br/>Room to go further.</h2><p>A resume to build on. Opportunities to consider. A version for the role that matters.</p><ol><li>Build your master resume</li><li>Understand the opportunity</li><li>Prepare your application</li></ol></aside><section className="account-card" aria-label="ResumeStride account">
+ return <main className="account-page" id="main-content"><section className="account-card" aria-label="APWICO account">
   <button className="back-link" onClick={onBack}><ArrowLeft size={15}/>Back to home</button>
-  <h1>{recovery?'Choose a new password.':user?'Your profile':mode==='signup'?'Make room for your next move.':forgotPassword?'Reset your password.':'Welcome back.'}</h1>
-  <p className="account-description">{recovery?'Enter a new password for your ResumeStride account.':user?'You’re signed in to ResumeStride.':forgotPassword?'We’ll email a secure link to the address on your account.':'Your free account connects your downloads, saved jobs and next steps.'}</p>
+  <h1>{recovery?'Choose a new password.':user?'Your profile':mode==='signup'?'Create your account':forgotPassword?'Reset your password.':'Welcome back.'}</h1>
+  <p className="account-description">{recovery?'Enter a new password for your APWICO account.':user?'You’re signed in to APWICO.':forgotPassword?'We’ll email a secure link to the address on your account.':'Use a free account to download resumes and save jobs.'}</p>
   {!supabase?<div role="status" className="helper-box">Account access is not available in this local preview yet. You can still work on your resume in the builder.</div>:loading?<p role="status">Checking your session…</p>:recovery?<form onSubmit={submitNewPassword}>
    <label className="field">New password<div className="password-field"><input type={showPassword?'text':'password'} autoComplete="new-password" required minLength={8} maxLength={128} ref={passwordInput} name="password" aria-invalid={invalidPassword==='password'} aria-describedby={invalidPassword==='password'?'auth-error':undefined} value={password} onChange={event=>editPassword(event.target.value)} disabled={busy}/><button type="button" className="password-toggle" aria-label={showPassword?'Hide password':'Show password'} aria-pressed={showPassword} onClick={()=>setShowPassword(current=>!current)}>{showPassword?<EyeOff size={16}/>:<Eye size={16}/>}</button></div></label>
    <label className="field">Confirm new password<input type={showPassword?'text':'password'} autoComplete="new-password" required minLength={8} maxLength={128} ref={confirmInput} name="confirm-password" aria-invalid={invalidPassword==='confirm'} aria-describedby={invalidPassword==='confirm'?'auth-error':undefined} value={confirmPassword} onChange={event=>editPassword(event.target.value,true)} disabled={busy}/></label>
@@ -111,13 +121,13 @@ export function AuthPanel({ onBack }: { onBack: () => void }) {
     <label className="field">Email address<input name="email" type="email" autoComplete="email" spellCheck={false} required maxLength={254} value={email} onChange={event=>setEmail(event.target.value)} disabled={busy}/></label>
     <label className="field">Password<div className="password-field"><input type={showPassword?'text':'password'} autoComplete={mode==='signup'?'new-password':'current-password'} required minLength={mode==='signup'?8:undefined} maxLength={128} ref={passwordInput} name="password" aria-invalid={invalidPassword==='password'} aria-describedby={invalidPassword==='password'?'auth-error':undefined} value={password} onChange={event=>editPassword(event.target.value)} disabled={busy}/><button type="button" className="password-toggle" aria-label={showPassword?'Hide password':'Show password'} aria-pressed={showPassword} onClick={()=>setShowPassword(current=>!current)}>{showPassword?<EyeOff size={16}/>:<Eye size={16}/>}</button></div></label>
     {mode==='signup'&&<label className="field">Confirm password<input type={showPassword?'text':'password'} autoComplete="new-password" required minLength={8} maxLength={128} ref={confirmInput} name="confirm-password" aria-invalid={invalidPassword==='confirm'} aria-describedby={invalidPassword==='confirm'?'auth-error':undefined} value={confirmPassword} onChange={event=>editPassword(event.target.value,true)} disabled={busy}/></label>}
-    {mode==='signup'&&<p className="field-hint">Use at least 8 characters. We only use your email to manage your account and send account-related notices — no marketing email.</p>}
+    {mode==='signup'&&<p className="field-hint">Use at least 8 characters. We send account emails only—no marketing.</p>}
     <button className="button" disabled={busy}>{busy?(mode==='signup'?'Creating account…':'Signing in…'):mode==='signup'?'Create account':'Sign in'}</button>
     {mode==='signin'&&<button type="button" className="text-button" disabled={busy} onClick={()=>{setForgotPassword(true);setPassword('');resetFeedback();}}>Forgot password?</button>}
-    {status==='confirm-email'&&<div role="status" className="helper-box"><div><strong>Check your inbox if this is a new email address.</strong><p>If you have used ResumeStride before, no new account email will be sent. Go to Sign in and choose “Forgot password?” instead.</p><button type="button" className="text-button" onClick={()=>switchMode('signin')}>Go to sign in</button></div></div>}
+    {status==='confirm-email'&&<div role="status" className="helper-box"><div><strong>Check your inbox if this is a new email address.</strong><p>If you have used APWICO before, no new account email will be sent. Go to Sign in and choose “Forgot password?” instead.</p><button type="button" className="text-button" onClick={()=>switchMode('signin')}>Go to sign in</button></div></div>}
    </form>}
   </>}
   {(error||sessionError)&&<p id="auth-error" role="alert" className="field-error">{error||sessionError}</p>}
-  <p className="field-hint">Need help? <a href="mailto:support@resumestride.com">support@resumestride.com</a></p>
+  <p className="field-hint">Need help? <a href="mailto:support@apwico.com">support@apwico.com</a></p>
  </section></main>;
 }

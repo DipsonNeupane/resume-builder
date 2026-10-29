@@ -2,10 +2,10 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import type Stripe from 'stripe'
 import { billingConfig, createPassCheckout, createSubscriptionCheckout, stripeClient, verifyEvent, type BillingConfig, type RecurringBillingConfig } from '../../server/billing/stripe.ts'
-const env={BILLING_ENABLED:'true',STRIPE_MODE:'test',STRIPE_SECRET_KEY:'sk_test_fixture',STRIPE_WEBHOOK_SECRET:'whsec_fixture',STRIPE_ACCOUNT_ID:'acct_fixture',STRIPE_PASS_PRICE_ID:'price_fixture',APP_ORIGIN:'https://resumestride.com'}
+const env={BILLING_ENABLED:'true',STRIPE_MODE:'test',STRIPE_SECRET_KEY:'sk_test_fixture',STRIPE_WEBHOOK_SECRET:'whsec_fixture',STRIPE_ACCOUNT_ID:'acct_fixture',STRIPE_PASS_PRICE_ID:'price_fixture',APP_ORIGIN:'https://apwico.com'}
 test('billing fails closed when gated, incomplete or key mode mismatches',()=>{
   assert.throws(()=>billingConfig({}))
-  for (const change of [{BILLING_ENABLED:'false'},{STRIPE_MODE:'live'},{STRIPE_WEBHOOK_SECRET:''},{APP_ORIGIN:'https://resumestride.com/path'},{APP_ORIGIN:'http://resumestride.com'}]) assert.throws(()=>billingConfig({...env,...change}))
+  for (const change of [{BILLING_ENABLED:'false'},{STRIPE_MODE:'live'},{STRIPE_WEBHOOK_SECRET:''},{APP_ORIGIN:'https://apwico.com/path'},{APP_ORIGIN:'http://resumestride.com'}]) assert.throws(()=>billingConfig({...env,...change}))
   assert.equal(billingConfig(env).live,false)
 })
 test('webhook requires fresh genuine signature and correct account environment',()=>{
@@ -37,7 +37,7 @@ test('checkout sessions use Stripe dynamic payment methods for international eli
   captured.push(params)
   return {id:`cs_${captured.length}`,url:'https://checkout.stripe.com/c/pay/fixture',livemode:false}
  }}}} as unknown as Stripe
- const config: BillingConfig={secret:'sk_test_fixture',webhookSecret:'whsec_fixture',accountId:'acct_fixture',priceId:'price_manual',live:false,origin:'https://resumestride.com'}
+ const config: BillingConfig={secret:'sk_test_fixture',webhookSecret:'whsec_fixture',accountId:'acct_fixture',priceId:'price_manual',live:false,origin:'https://apwico.com'}
  const recurring: RecurringBillingConfig={...config,recurringPriceId:'price_recurring'}
  await createPassCheckout(stripe,config,'11111111-1111-4111-8111-111111111111','owner')
  await createSubscriptionCheckout(stripe,recurring,'22222222-2222-4222-8222-222222222222','owner')

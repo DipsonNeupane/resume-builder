@@ -7,5 +7,5 @@ import {exportDocument,type DocumentExportDependencies} from './document-handler
 const depsDefault:DocumentExportDependencies={authenticate,serviceDatabase,renderDocument:renderDocx}
 
 export function exportDocx(request:Request,env:NodeJS.ProcessEnv=process.env,deps:DocumentExportDependencies=depsDefault):Promise<Response>{
- return exportDocument({format:'docx',contentType:docxMimeType,filename:'ResumeStride.docx'},request,env,deps)
+ return exportDocument({format:'docx',contentType:docxMimeType,filename:'APWICO.docx'},request,env,deps)
 }

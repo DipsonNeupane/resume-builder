@@ -1,5 +1,5 @@
 /**
- * Development-only economics benchmark for ResumeStride's existing tailoring request.
+ * Development-only economics benchmark for APWICO's existing tailoring request.
  *
  * Default mode is deterministic and offline: it uses synthetic data, the production
  * request builder, reserveCost() and costMicroUsd(). It never reads production resumes,
@@ -8,7 +8,7 @@
  * Optional explicit modes:
  *   npm run benchmark:tailoring -- --count-input
  *     Makes exactly four non-generation calls to OpenAI's input-token count endpoint.
- *   RESUMESTRIDE_BENCHMARK_ALLOW_PAID=I_UNDERSTAND_THIS_MAKES_ONE_PAID_CALL \
+ *   APWICO_BENCHMARK_ALLOW_PAID=I_UNDERSTAND_THIS_MAKES_ONE_PAID_CALL \
  *     npm run benchmark:tailoring -- --live typical
  *     Makes exactly one paid generation call using the named synthetic scenario.
  *
@@ -28,7 +28,7 @@ import {
   reserveCost,
 } from '../server/ai/cost.ts';
 
-const PRO_PASS_USD = 19.99;
+const PRO_PASS_USD = 14.99;
 const INPUT_USD_PER_MILLION = 0.40;
 const OUTPUT_USD_PER_MILLION = 1.60;
 const liveAcknowledgement = 'I_UNDERSTAND_THIS_MAKES_ONE_PAID_CALL';
@@ -244,7 +244,7 @@ export function measureScenario(
 }
 
 function printReport(measurements: BenchmarkMeasurement[], providerCalls: number): void {
-  console.log(`# ResumeStride tailoring economics benchmark\n`);
+  console.log(`# APWICO tailoring economics benchmark\n`);
   console.log(`Model: ${AI_MODEL}`);
   console.log(`Pricing used: $${INPUT_USD_PER_MILLION.toFixed(2)}/1M input, $${OUTPUT_USD_PER_MILLION.toFixed(2)}/1M output`);
   console.log(`Provider calls made: ${providerCalls}\n`);
@@ -279,8 +279,9 @@ async function main(): Promise<void> {
   }
   const apiKey = process.env.OPENAI_API_KEY;
   if ((countInput || liveName) && !apiKey) throw new Error('OPENAI_API_KEY is required for an explicitly requested provider mode.');
-  if (liveName && process.env.RESUMESTRIDE_BENCHMARK_ALLOW_PAID !== liveAcknowledgement) {
-    throw new Error(`Set RESUMESTRIDE_BENCHMARK_ALLOW_PAID=${liveAcknowledgement} to authorize exactly one synthetic paid call.`);
+  const paidAcknowledgement = process.env.APWICO_BENCHMARK_ALLOW_PAID ?? process.env.RESUMESTRIDE_BENCHMARK_ALLOW_PAID;
+  if (liveName && paidAcknowledgement !== liveAcknowledgement) {
+    throw new Error(`Set APWICO_BENCHMARK_ALLOW_PAID=${liveAcknowledgement} to authorize exactly one synthetic paid call.`);
   }
   let providerCalls = 0;
   const exactCounts = new Map<BenchmarkScenario['name'], number>();

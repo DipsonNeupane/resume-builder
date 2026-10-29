@@ -1,5 +1,5 @@
 begin;
-select plan(24);
+select plan(25);
 
 insert into auth.users(id) values
  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
@@ -25,7 +25,10 @@ select throws_ok($$select public.job_tailoring_inputs('aaaaaaaa-aaaa-aaaa-aaaa-a
 reset role;
 
 set local role service_role;
-select throws_ok($$select public.job_resume_version_create('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','22222222-2222-2222-2222-222222222222','{}',repeat('b',64))$$,'P0001','Active Pro required','new version creation requires active Pro');
+select throws_ok($$select public.job_resume_version_create('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','22222222-2222-2222-2222-222222222222','{}',repeat('b',64))$$,'P0001','Saved job not found','another owner cannot create a version for this application');
+select public.applications_update('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','22222222-2222-2222-2222-222222222222',0,'{"stage":"closed","closedReason":"archived"}');
+select throws_ok($$select public.job_resume_version_create('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','22222222-2222-2222-2222-222222222222','{"name":"Master"}',repeat('a',64))$$,'P0001','Application closed','a closed application cannot start new preparation until reopened');
+select public.applications_update('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','22222222-2222-2222-2222-222222222222',1,'{"stage":"saved"}');
 select lives_ok($$select public.job_resume_version_create('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','22222222-2222-2222-2222-222222222222','{"name":"Master"}',repeat('a',64))$$,'Pro owner can create a job-specific version when tailoring begins');
 select is((select count(*) from public.job_resume_versions where owner_id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),1::bigint,'one version is created');
 select is((select source_master_resume_id from public.job_resume_versions where owner_id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),'11111111-1111-1111-1111-111111111111'::uuid,'source master identity is retained');

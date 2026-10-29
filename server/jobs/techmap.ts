@@ -84,7 +84,7 @@ function buildRequestUrl(config: TechmapConfig, params: JobSearchParams): URL {
   url.searchParams.set('page', String(params.page ?? 1))
   // Bounded, active, non-duplicate by construction: every Techmap request this adapter
   // issues asks the provider to pre-filter to currently active, provider-flagged
-  // non-duplicate postings. ResumeStride's own dedupeJobs() below still runs
+  // non-duplicate postings. APWICO's own dedupeJobs() below still runs
   // independently, because the September 24 benchmark could not confirm the provider
   // flag alone was authoritative (see HANDOFF.md).
   url.searchParams.set('isActive', 'true')

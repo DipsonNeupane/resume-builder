@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
@@ -12,9 +13,11 @@ import type { Connect } from 'vite';
 import middleware from '../../middleware';
 import { devSourceModules, seoPolicy } from '../../vite.config';
 import browserConfig from '../../playwright.config';
-import { initialPage, isPublicAttributionLocation, isPublicLocation, noindex, productionOrigin, publicPages, requestSeo, websiteSchema } from '../../src/seo/policy';
+import { initialPage, isPublicAttributionLocation, isPublicLocation, isPublicPath, noindex, productionOrigin, publicPages, requestSeo, websiteSchema } from '../../src/seo/policy';
 import { guides } from '../../src/content/guides';
 import { publicTools } from '../../src/content/tools';
+import { capabilities } from '../../src/content/capabilities';
+import { library } from '../../template-library/registry';
 const read = (file: string) => readFileSync(file, 'utf8');
 const policy = (path: string, production = true) => requestSeo(new URL(path, productionOrigin), production);
 const publicHtmlFile = (publicPath: string) => publicPath === '/' ? 'index.html' : publicPath.endsWith('/') ? `public${publicPath}index.html` : `public${publicPath}`;
@@ -56,6 +59,12 @@ test('Vite dev and preview register HTTP policy before the SPA fallback', () => 
      continue;
     }
     assert.equal(response.getHeader('X-Robots-Tag'), noindex, `${hook}: ${method} ${path}`);
+    if (hook === 'configureServer' && path.startsWith('/api/')) {
+     // Never the transformed server module: functions do not run under Vite.
+     assert.equal(response.statusCode, 404); assert.equal(continued, false); assert.equal(ended, true);
+     assert.equal(response.getHeader('Content-Type'), 'application/json');
+     continue;
+    }
     const expected = requestSeo(new URL(path, 'http://localhost'), false);
     assert.equal(response.statusCode, expected.status || 200);
     assert.equal(ended, Boolean(expected.status)); assert.equal(continued, !expected.status);
@@ -65,6 +74,19 @@ test('Vite dev and preview register HTTP policy before the SPA fallback', () => 
    }
   }
  }
+});
+
+test('hosting rewrites only the private application namespaces after middleware validation', () => {
+ const config = JSON.parse(read('vercel.json')) as { rewrites?: Array<{ source: string; destination: string }> };
+ assert.deepEqual(config.rewrites, [
+  { source: '/start/:path*', destination: '/index.html' },
+  { source: '/workspace', destination: '/index.html' },
+  { source: '/workspace/:path*', destination: '/index.html' },
+ ]);
+ for (const path of ['/start/import', '/start/build', '/start/job', '/start/sample', '/workspace', '/workspace/today', '/workspace/discover', '/workspace/applications', '/workspace/applications/33333333-3333-4333-8333-333333333333', '/workspace/resume', '/workspace/jobs', '/workspace/jobs/saved', '/workspace/account', '/workspace/pro']) {
+  assert.equal(policy(path).status, 0, `${path} must reach the hosting rewrite`);
+ }
+ assert.equal(policy('/workspace/unknown').status, 404, 'middleware must reject invalid routes before the broad namespace rewrite');
 });
 
 test('every module the browser app imports from outside src/ is served by the dev server', () => {
@@ -88,15 +110,21 @@ test('every module the browser app imports from outside src/ is served by the de
  assert.deepEqual([...escaping].sort(), [...devSourceModules].sort());
 });
 
-test('robots allows public crawling and directs crawlers to the exact public-only sitemap', () => {
+test('robots allows public crawling and the sitemap uses explicit source-owned modification dates', () => {
  const robots = read('public/robots.txt');
  assert.match(robots, /^User-agent: \*$/m); assert.match(robots, /^Allow: \/$/m);
  assert.doesNotMatch(robots, /^Disallow:\s*\//m);
- assert.match(robots, /^Sitemap: https:\/\/resumestride.com\/sitemap.xml$/m);
+ assert.match(robots, /^Sitemap: https:\/\/apwico.com\/sitemap.xml$/m);
  const xml = read('public/sitemap.xml');
  assert.match(xml, /<urlset xmlns="http:\/\/www.sitemaps.org\/schemas\/sitemap\/0.9">/);
- assert.deepEqual([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1]), Object.keys(publicPages).map(path => `${productionOrigin}${path}`));
- assert.doesNotMatch(xml.replace(/^<\?xml[^>]+>/, ''), /<lastmod>|\?|#|JobPosting/);
+ const entries = [...xml.matchAll(/<url><loc>([^<]+)<\/loc><lastmod>([^<]+)<\/lastmod><\/url>/g)].map(match => ({ loc: match[1], lastModified: match[2] }));
+ assert.deepEqual(entries, Object.entries(publicPages).map(([path, details]) => ({ loc: `${productionOrigin}${path}`, lastModified: details.lastModified })));
+ const today = new Date().toISOString().slice(0, 10);
+ for (const entry of entries) {
+  assert.match(entry.lastModified, /^2026-\d{2}-\d{2}$/);
+  assert.ok(entry.lastModified <= today, `future modification date: ${entry.lastModified}`);
+ }
+ assert.doesNotMatch(xml.replace(/^<\?xml[^>]+>/, ''), /\?|#|JobPosting/);
 });
 
 test('all public source HTML has unique, consistent metadata before JavaScript', () => {
@@ -105,7 +133,7 @@ test('all public source HTML has unique, consistent metadata before JavaScript',
   const html = read(publicHtmlFile(path));
   const title = html.match(/<title>(.*?)<\/title>/)?.[1];
   const description = html.match(/<meta name="description" content="([^"]+)"/ )?.[1];
-  assert.ok(title && title.includes('ResumeStride')); assert.ok(description && description.length > 60);
+  assert.ok(title && title.includes('APWICO')); assert.ok(description && description.length > 60);
   titles.add(title); descriptions.add(description);
   assert.equal((html.match(/rel="canonical"/g) || []).length, 1);
   assert.ok(html.includes(`rel="canonical" href="${productionOrigin}${path}"`));
@@ -114,31 +142,37 @@ test('all public source HTML has unique, consistent metadata before JavaScript',
   assert.ok(html.includes(`property="og:description" content="${description}"`));
   assert.match(html, /name="robots" content="index, follow"/);
   assert.match(html, /name="twitter:card" content="summary_large_image"/);
-  assert.match(html, /property="og:image" content="https:\/\/resumestride.com\/social-card.png"/);
+  assert.ok(html.includes(`property="og:image" content="${productionOrigin}${publicPages[path as keyof typeof publicPages].socialImage}"`));
+  assert.ok(html.includes(`name="twitter:image" content="${productionOrigin}${publicPages[path as keyof typeof publicPages].socialImage}"`));
+ assert.match(html, /property="og:image:alt" content="Abstract APWICO route card in wine, blush and gold"/);
+  assert.match(html, /rel="preload" href="\/fonts\/brand-sans\.woff2" as="font" type="font\/woff2" crossorigin/);
+  assert.match(html, /rel="stylesheet" href="\/fonts\.css"/);
   assert.match(html, /<script src="\/seo-guard.js"><\/script>/);
  }
  assert.equal(titles.size, Object.keys(publicPages).length); assert.equal(descriptions.size, Object.keys(publicPages).length);
- assert.equal(publicPages['/'].title, 'ResumeStride — Resume Builder, Job Match & Tailoring');
- assert.equal(publicPages['/'].description, 'Build a master resume, find relevant jobs, compare your evidence with each role, and create truthful job-specific versions without changing your original.');
+ assert.equal(publicPages['/'].title, 'APWICO — Find jobs, apply with confidence, track applications');
+ assert.equal(publicPages['/'].description, 'Find jobs you like, compare each one with evidence from your own resume, tailor a separate version, and track every application and next step in one place.');
 });
 
-test('structured data describes only the real website, with no unsupported product claims', () => {
- const html = read('index.html');
- const schemas = [...html.matchAll(/<script type="application\/ld\+json" data-seo-schema>(.*?)<\/script>/g)];
- assert.equal(schemas.length, 1);
- const schema = JSON.parse(schemas[0][1]);
- assert.deepEqual(schema, websiteSchema);
- assert.equal(schema['@context'], 'https://schema.org'); assert.equal(schema['@type'], 'WebSite');
- assert.equal(schema.url, `${productionOrigin}/`); assert.equal(schema.name, 'ResumeStride');
- assert.doesNotMatch(JSON.stringify(schema), /JobPosting|Review|aggregateRating|offers|price|award|SearchAction/);
- for (const file of ['public/privacy.html', 'public/terms.html']) assert.doesNotMatch(read(file), /application\/ld\+json/);
+test('structured data describes visible public pages without unsupported commercial or outcome claims', () => {
+ for (const [path, details] of Object.entries(publicPages)) {
+  const html = read(publicHtmlFile(path));
+  const schemas = [...html.matchAll(/<script type="application\/ld\+json" data-seo-schema>(.*?)<\/script>/g)];
+  assert.equal(schemas.length, 1, path);
+  const schema = JSON.parse(schemas[0][1]);
+  const nodes = schema['@graph'] ?? [schema];
+  assert.ok(nodes.some((node: Record<string, unknown>) => node['@type'] === 'WebPage' && node.url === `${productionOrigin}${path}` && node.name === details.title && node.dateModified === details.lastModified), path);
+  if (path === '/') assert.ok(nodes.some((node: Record<string, unknown>) => node['@type'] === 'WebSite' && node.url === `${productionOrigin}/` && node.name === websiteSchema.name));
+  assert.deepEqual([...new Set(nodes.map((node: Record<string, unknown>) => node['@type']))].sort(), path === '/' ? ['WebPage', 'WebSite'] : ['WebPage']);
+  assert.doesNotMatch(JSON.stringify(schema), /"@type":"(?:JobPosting|Review|AggregateRating|Offer|SearchAction)"|"(?:aggregateRating|offers|price|award)":/);
+ }
 });
 
 test('canonical public production URLs are indexable and crawlable, previews never are', () => {
  for (const path of Object.keys(publicPages)) {
   assert.equal(policy(path).status, 0); assert.equal(policy(path).headers['X-Robots-Tag'], undefined);
   assert.equal(policy(path, false).headers['X-Robots-Tag'], noindex);
-  for (const origin of ['https://preview.vercel.app', 'http://localhost:5173', 'https://resumestride.com.evil.test']) {
+  for (const origin of ['https://preview.vercel.app', 'http://localhost:5173', 'https://apwico.com.evil.test']) {
    const result = requestSeo(new URL(path, origin), true);
    assert.equal(result.headers['X-Robots-Tag'], noindex); assert.equal(result.status, 0);
   }
@@ -172,29 +206,113 @@ test('query states and private paths never enter the index, canonical or sitemap
   const result = policy(path); assert.equal(result.status, 404); assert.equal(result.headers['X-Robots-Tag'], noindex);
   assert.match(result.body, /Page not found/); assert.doesNotMatch(result.body, /rel="canonical"|application\/ld\+json/);
  }
+ const privateEntries = ['/start/import', '/start/build', '/start/job', '/start/sample', '/workspace/resume', '/workspace/jobs', '/workspace/jobs/saved', '/workspace/account', '/workspace/pro', '/workspace/jobs/11111111-1111-4111-8111-111111111111/match', '/workspace/resumes/11111111-1111-4111-8111-111111111111'];
+ for (const path of privateEntries) {
+  const result = policy(path);
+  assert.equal(result.status, 0); assert.equal(result.headers['X-Robots-Tag'], noindex);
+  assert.equal(result.headers['Cache-Control'], 'private, no-store');
+  assert.equal(result.body, '');
+  assert.equal(read('public/sitemap.xml').includes(path), false);
+ }
+ for (const path of ['/workspace/jobs/not-an-id/match', '/workspace/resumes/not-an-id', '/workspace/unknown']) {
+  assert.equal(policy(path).status, 404);
+ }
  for (const path of ['/api/tailor', '/api/export-pdf', '/api/jobs-account', '/extension-fixture/job-posting.html']) {
   assert.equal(policy(path).status, 0); assert.equal(policy(path).headers['X-Robots-Tag'], noindex);
  }
 });
 
-test('hostname and index aliases redirect once, preserving callback queries', () => {
- for (const url of ['http://resumestride.com/index.html?account=1&code=abc', 'https://www.resumestride.com/index.html?account=1&code=abc']) {
-  const result = requestSeo(new URL(url), true);
-  assert.equal(result.status, 308); assert.equal(result.headers.Location, 'https://resumestride.com/?account=1&code=abc');
+test('domain migration redirects only behind the launch gate and preserves paths and queries', () => {
+ for (const url of ['https://resumestride.com/index.html?account=1&code=abc', 'https://www.resumestride.com/index.html?account=1&code=abc']) {
+  assert.equal(requestSeo(new URL(url), true).status, 308);
+  const staged = requestSeo(new URL(url), true, true);
+  assert.equal(staged.status, 307); assert.equal(staged.headers['Cache-Control'], 'private, no-store');
+  const result = requestSeo(new URL(url), true, true, true);
+  assert.equal(result.status, 301); assert.equal(result.headers['Cache-Control'], 'public, max-age=300'); assert.equal(result.headers.Location, 'https://apwico.com/?account=1&code=abc');
   assert.equal(requestSeo(new URL(result.headers.Location!), true).status, 0);
  }
- assert.equal(policy('/index.html').headers.Location, `${productionOrigin}/`);
+ const nested = requestSeo(new URL('https://resumestride.com/resources/resume-keywords/?utm_source=legacy'), true, true, true);
+ assert.equal(nested.status, 301); assert.equal(nested.headers.Location, 'https://apwico.com/resources/resume-keywords/?utm_source=legacy');
+ assert.equal(requestSeo(new URL('https://apwico.com/resources/'), true, true).headers.Location, undefined);
+ const legacyApi = new URL('https://resumestride.com/api/export-pdf');
+ assert.equal(requestSeo(legacyApi, true, true, true, 'POST').status, 0);
+ assert.equal(requestSeo(legacyApi, true, true, true, 'GET').status, 0);
+ assert.equal(policy('/index.html').headers.Location, '/');
  assert.equal(policy('/').headers.Location, undefined);
 });
 
 test('favicon, app and social metadata refer to real assets without claiming an offline app', () => {
  const manifest = JSON.parse(read('public/site.webmanifest'));
- assert.equal(manifest.name, 'ResumeStride'); assert.equal(manifest.display, 'browser'); assert.equal(manifest.start_url, '/');
- for (const [file, width, height] of [['favicon.png', 32, 32], ['favicon-192.png', 192, 192], ['favicon-512.png', 512, 512], ['apple-touch-icon.png', 180, 180], ['social-card.png', 1200, 630]] as const) {
+ assert.equal(manifest.name, 'APWICO'); assert.equal(manifest.display, 'browser'); assert.equal(manifest.start_url, '/');
+ assert.equal(manifest.theme_color, '#2d0c1b'); assert.equal(manifest.background_color, '#faf7f5');
+ const faviconSource = read('public/favicon.svg');
+ for (const color of ['#2d0c1b', '#ffd0df', '#f2c84b']) assert.ok(faviconSource.includes(color));
+ assert.doesNotMatch(faviconSource, /#0b0a09|#de8044|#6ccfb6/i);
+ for (const [file, width, height] of [['favicon.png', 32, 32], ['favicon-192.png', 192, 192], ['favicon-512.png', 512, 512], ['apple-touch-icon.png', 180, 180]] as const) {
   const png = readFileSync(`public/${file}`); assert.equal(png.toString('ascii', 1, 4), 'PNG');
   assert.equal(png.readUInt32BE(16), width); assert.equal(png.readUInt32BE(20), height);
  }
- for (const asset of ['/favicon.ico', '/favicon.svg', '/favicon-192.png', '/favicon-512.png', '/seo-guard.js', '/content-analytics.js', '/resources.css', '/tools.css', '/tools/analysis.js', '/tools/public-tools.js', '/tools/tool-analytics.js', '/social-card.png', '/robots.txt', '/sitemap.xml']) assert.equal(policy(asset).status, 0);
+ const hashes = new Set<string>();
+ for (const details of Object.values(publicPages)) {
+  const png = readFileSync(`public${details.socialImage}`);
+  assert.equal(png.toString('ascii', 1, 4), 'PNG'); assert.equal(png.readUInt32BE(16), 1200); assert.equal(png.readUInt32BE(20), 630);
+  hashes.add(createHash('sha256').update(png).digest('hex'));
+  assert.equal(policy(details.socialImage).status, 0);
+ }
+ assert.equal(hashes.size, Object.keys(publicPages).length, 'each route receives a genuinely distinct social image');
+ assert.deepEqual(readFileSync('public/social-card.png'), readFileSync('public/social/home.png'), 'the default social card uses the current APWICO brand asset');
+ for (const asset of ['/favicon.ico', '/favicon.svg', '/favicon-192.png', '/favicon-512.png', '/seo-guard.js', '/content-analytics.js', '/resources.css', '/apwico-theme.css', '/features.css', '/fonts.css', '/fonts/brand-sans.woff2', '/tools.css', '/tools/analysis.js', '/tools/public-tools.js', '/tools/tool-analytics.js', '/templates.css', '/template-preview-renderers.css', '/templates-filter.js', '/robots.txt', '/sitemap.xml']) assert.equal(policy(asset).status, 0);
+});
+
+test('capability pages are permanent, useful and limited to implemented behavior', () => {
+ assert.equal(capabilities.length, 5);
+ const hub = read('public/features/index.html');
+ for (const capability of capabilities) {
+  const route = `/features/${capability.slug}/`;
+  assert.ok(Object.hasOwn(publicPages, route)); assert.ok(hub.includes(`href="${route}"`));
+  const html = read(publicHtmlFile(route));
+  assert.equal((html.match(/<h1>/g) || []).length, 1); assert.ok(html.includes(capability.promise));
+  assert.ok(capability.facts.length >= 3); assert.ok(capability.boundaries.length >= 3);
+  assert.doesNotMatch(html, /guarantee(?:d)? interview|ATS[- ]friendly|beat the ATS|hiring probability|we (?:apply|submit) for you/i);
+ }
+});
+
+test('font and cache delivery are local, bounded and safe for private state', () => {
+ assert.doesNotMatch(read('src/styles.css'), /fonts\.googleapis|fonts\.gstatic/);
+ assert.doesNotMatch(read('public/fonts.css'), /https?:\/\//);
+ assert.match(read('public/fonts.css'), /font-display:swap/);
+ assert.doesNotMatch(read('template-library/fonts/fonts.css'), /font-display:\s*block/);
+ assert.equal(policy('/assets/app-abc123.js').headers['Cache-Control'], 'public, max-age=31536000, immutable');
+ assert.equal(policy('/fonts/brand-sans.woff2').headers['Cache-Control'], 'public, max-age=604800, stale-while-revalidate=2592000');
+ assert.equal(policy('/social/home.png').headers['Cache-Control'], 'public, max-age=604800, stale-while-revalidate=2592000');
+ assert.equal(policy('/features/').headers['Cache-Control'], 'public, max-age=0, must-revalidate');
+ assert.equal(policy('/features/?code=secret').headers['Cache-Control'], 'private, no-store');
+ assert.equal(policy('/workspace/resume').headers['Cache-Control'], 'private, no-store');
+ const hosting = read('vercel.json');
+ assert.doesNotMatch(hosting, /fonts\.googleapis|fonts\.gstatic/); assert.match(hosting, /max-age=31536000, immutable/);
+});
+
+test('the technical quality gate runs on pull requests and a recurring schedule', () => {
+ const workflow = read('.github/workflows/quality-gate.yml');
+ assert.match(workflow, /pull_request:/); assert.match(workflow, /workflow_dispatch:/); assert.match(workflow, /schedule:/);
+ assert.match(workflow, /npm run quality:gate/); assert.match(workflow, /permissions:\n\s+contents: read/);
+});
+
+test('template routes mirror the verified registry and separate preview from purchase',()=>{
+ const detailPaths=Object.keys(publicPages).filter(path=>/^\/templates\/[^/]+\/$/.test(path));
+ assert.equal(detailPaths.length,library.length);
+ for(const item of library){
+  const path=`/templates/${item.id}/`;assert.ok(detailPaths.includes(path));
+  const html=read(publicHtmlFile(path));
+  assert.match(html,new RegExp(`>${item.tier==='free'?'Free':'Premium'}<`));
+  assert.ok(html.includes(`template-preview-${item.id}`));
+  // Occupation-appropriate fictional previews: academic templates show an academic CV.
+  assert.match(html,new RegExp(`Fictional [^"]+ resume rendered in the ${item.name} template`));
+  if(item.family==='academic'){assert.ok(html.includes('Fictional Dr. Tomasz'),item.id);assert.match(html,/Publications/);assert.match(html,/Teaching/);assert.doesNotMatch(html,/Alex Morgan/)}
+  assert.ok(html.includes(`href="/start/build?template=${item.id}"`));
+  assert.match(html,/Preview before you pay|Preview this template/);assert.doesNotMatch(html,/<button[^>]*>[^<]*(?:Buy|Purchase|Checkout)/i);
+ }
+ assert.equal(library.filter(item=>item.tier==='free').length,7);assert.equal(library.filter(item=>item.tier==='premium').length,20);
 });
 
 test('free tools are complete, private-by-design and distinct from paid Match', () => {
@@ -203,22 +321,30 @@ test('free tools are complete, private-by-design and distinct from paid Match', 
  for (const tool of publicTools) {
   const html = read(publicHtmlFile(tool.path));
   assert.equal((html.match(/<h1>/g) || []).length, 1);
-  assert.match(html, /No signup/); assert.match(html, /Processed only in this browser/);
-  assert.match(html, /not uploaded, saved, placed in the URL or sent to analytics/i);
+  assert.match(html, /Your text stays in this tab/);
+  if (tool.id === 'resume-job-match') {
+   assert.match(html, /not sent to APWICO or analytics/i);
+   assert.match(html, /job description is kept in this tab.*resume is not kept/i);
+  } else assert.match(html, /not uploaded or sent to analytics/i);
   assert.match(html, /data-tool-form/); assert.match(html, /data-tool-cta=/);
   assert.doesNotMatch(html, /(?:score|match)\s*(?:out of 100|\d+\s*%|percentage)|<meter|class="[^"]*score/i);
  }
  const controller = read('public/tools/public-tools.js');
- assert.doesNotMatch(controller, /\bfetch\s*\(|XMLHttpRequest|sendBeacon|localStorage|sessionStorage|console\./);
+ assert.doesNotMatch(controller, /\bfetch\s*\(|XMLHttpRequest|sendBeacon|localStorage|console\./);
+ assert.match(controller, /sessionStorage\.setItem\(pendingJobKey/);
+ assert.match(controller, /description: analyzedJobText/);
  assert.match(controller, /textContent/); assert.doesNotMatch(controller, /innerHTML|insertAdjacentHTML/);
  const analytics = read('public/tools/tool-analytics.js');
- assert.match(analytics, /tool_viewed/); assert.match(controller, /tool_started/); assert.match(controller, /tool_completed/); assert.match(analytics, /tool_cta_clicked/);
+ assert.match(analytics, /tool_viewed/); assert.match(controller, /tool_started/); assert.match(controller, /tool_completed/); assert.match(controller, /tool_result_reviewed/); assert.match(analytics, /tool_cta_clicked/);
+ assert.match(analytics, /attributionKeys/); assert.match(analytics, /eventKeys/);
  assert.doesNotMatch(analytics, /textarea|resume-text|job-description|FormData|innerText|textContent/);
+ const contentAnalytics = read('public/content-analytics.js');
+ assert.match(contentAnalytics, /attributionKeys/); assert.match(contentAnalytics, /Object\.entries\(parsed\)/);
 });
 
 test('resource content is complete, deliberate and free of disallowed claims', () => {
- assert.equal(guides.length, 8);
- assert.equal(new Set(guides.map(guide => guide.slug)).size, 8);
+ assert.equal(guides.length, 12);
+ assert.equal(new Set(guides.map(guide => guide.slug)).size, 12);
  for (const guide of guides) {
   assert.ok(guide.sections.length >= 5, guide.slug);
   assert.ok(guide.directAnswer.length > 100, guide.slug);
@@ -242,7 +368,7 @@ test('public pages have crawlable links connecting all three surfaces', () => {
  for (const path of Object.keys(publicPages).filter(path => path.startsWith('/resources/') && path !== '/resources/')) assert.ok(hub.includes(`href="${path}"`));
  for (const path of Object.keys(publicPages).filter(path => path.startsWith('/resources/'))) {
   const html = read(publicHtmlFile(path));
-  assert.match(html, /href="\/(?:\?builder=1|\?jobs=1|#templates|#pricing)/);
+  assert.match(html, /href="\/start\/(?:build|job)/);
   assert.ok(html.includes('href="/resources/"'));
  }
  const toolHub = read('public/tools/index.html');
@@ -256,15 +382,43 @@ test('public pages have crawlable links connecting all three surfaces', () => {
  }
 });
 
+test('every internal link, script, stylesheet and image in public HTML resolves', () => {
+ const runtimePaths = new Set(['/src/main.tsx', '/_vercel/insights/script.js', '/start/sample', '/start/build', '/start/job', '/workspace/resume', '/workspace/pro']);
+ for (const publicPath of Object.keys(publicPages)) {
+  const html = read(publicHtmlFile(publicPath));
+  const references = [...html.matchAll(/\b(?:href|src)="([^"]+)"/g)].map(match => match[1]);
+  assert.ok(references.length > 0, `${publicPath} has no public references to verify`);
+  for (const reference of references) {
+   if (/^(?:mailto:|tel:|data:)/.test(reference)) continue;
+   const resolved = new URL(reference, `${productionOrigin}${publicPath}`);
+   if (resolved.origin !== productionOrigin) continue;
+   if (reference.startsWith('#')) {
+    assert.match(html, new RegExp(`\\bid=["']${resolved.hash.slice(1)}["']`), `${publicPath} has a broken same-page link ${reference}`);
+    continue;
+   }
+   if (isPublicPath(resolved.pathname) || runtimePaths.has(resolved.pathname)) continue;
+   const candidate = path.join('public', resolved.pathname.replace(/^\//, ''));
+   assert.ok(existsSync(candidate) && statSync(candidate).isFile(), `${publicPath} references missing ${reference}`);
+  }
+ }
+});
+
 test('early head guard protects token fragments even before the auth client consumes them', () => {
  for (const [href, isPrivate, blocked] of [
-  ['https://resumestride.com/', false, false],
-  ['https://resumestride.com/#templates', false, false],
-  ['https://resumestride.com/#access_token=secret', true, true],
-  ['https://resumestride.com/?account=1&code=secret', true, true],
-  ['https://resumestride.com/?utm_source=google&utm_campaign=launch', false, false],
-  ['https://resumestride.com/resources/resume-keywords/#placement', false, false],
-  ['https://resumestride.com/resources/resume-keywords/#access_token-secret', true, true],
+  ['https://apwico.com/', false, false],
+  ['https://apwico.com/#templates', false, false],
+  ['https://apwico.com/#access_token=secret', true, true],
+  ['https://apwico.com/?account=1&code=secret', true, true],
+  ['https://apwico.com/?utm_source=google&utm_campaign=launch', false, false],
+  ['https://apwico.com/resources/resume-keywords/#placement', false, false],
+  ['https://apwico.com/resources/resume-keywords/#access_token-secret', true, true],
+  ['https://apwico.com/features/', false, false],
+  ['https://apwico.com/features/job-match/#boundaries-title', false, false],
+  ['https://apwico.com/templates/boardroom/', false, false],
+  ['https://apwico.com/pricing/#export-policy-title', false, false],
+  ['https://apwico.com/trust/#customer-proof-title', false, false],
+  ['https://apwico.com/workspace/resume', true, true],
+  ['https://apwico.com/start/job', true, true],
   ['https://preview.vercel.app/', false, true],
  ] as const) {
   const robots = { content: 'index, follow' }; const dataset: Record<string, string> = {}; let removed = 0;
@@ -294,7 +448,7 @@ test('Vercel middleware emits HTTP noindex, safe continuation, redirect and HEAD
   assert.equal(middleware(new Request(`${productionOrigin}/?code=secret`)).headers.get('X-Robots-Tag'), noindex);
   const missing = middleware(new Request(`${productionOrigin}/missing`, { method: 'HEAD' }));
   assert.equal(missing.status, 404); assert.equal(missing.body, null); assert.equal(missing.headers.get('x-middleware-next'), null);
-  assert.equal(middleware(new Request('https://www.resumestride.com/')).status, 308);
+  assert.equal(middleware(new Request('https://www.resumestride.com/')).status, 200);
   process.env.VERCEL_ENV = 'preview'; assert.equal(middleware(new Request(`${productionOrigin}/`)).headers.get('X-Robots-Tag'), noindex);
  } finally { if (before === undefined) delete process.env.VERCEL_ENV; else process.env.VERCEL_ENV = before; }
 });

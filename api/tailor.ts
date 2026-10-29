@@ -31,9 +31,21 @@ export function tailoringMatchContext(value:unknown):TailoringMatchContext|undef
   observations:analysis.observations.slice(0,3).map(item=>item.slice(0,1000)),
   relevantRequirements:analysis.requirements
    .filter(item=>item.status==='demonstrated'||item.status==='partially_demonstrated'||item.category==='required')
-   .slice(0,8).map(item=>({text:item.text,category:item.category,status:item.status,evidence:item.evidence.slice(0,3).map(e=>e.slice(0,1000))})),
+   .slice(0,8).map(item=>({id:item.id,text:item.text,category:item.category,status:item.status,evidence:item.evidence.slice(0,3).map(e=>e.slice(0,1000))})),
   areasWorthStrengthening:analysis.areasWorthStrengthening.slice(0,5).map(item=>item.slice(0,1000)),
  }
+}
+
+const monthDay=new Intl.DateTimeFormat('en-US',{month:'long',day:'numeric',timeZone:'UTC'})
+/** Budget and allowance refusals happen before any provider call, so nothing is used. */
+export function reservationError(error:{message:string;code?:string},now=new Date()):HttpError{
+ if(error.code!=='54000')return new HttpError(503,'AI accounting unavailable. Please try later.','ai_accounting')
+ if(error.message==='AI monthly budget reached'){
+  const reset=monthDay.format(new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth()+1,1)))
+  return new HttpError(503,`AI suggestions are paused for all accounts until the monthly AI budget resets on ${reset} (UTC). This request did not use your trial or hourly AI allowance. You can still edit this resume yourself.`,'ai_budget')
+ }
+ if(error.message==='AI attempt limit reached')return new HttpError(429,'Too many AI suggestion attempts in the last hour. Try again later. This request did not use your trial.','ai_limit')
+ return new HttpError(429,'You have reached the limit of 20 AI suggestion requests in an hour. Failed requests are not counted. Try again later. This request did not use your trial.','ai_limit')
 }
 
 export const tailorDependencies={authenticate,serviceDatabase,generateTailoringSuggestions}
@@ -66,11 +78,22 @@ export async function tailor(request:Request,env:NodeJS.ProcessEnv=process.env,d
   const config=tailoringConfig(env)
   const id=typeof body.requestId==='string'?body.requestId:randomUUID()
   const fingerprint=createHash('sha256').update(JSON.stringify(buildTailoringRequestBody(resume,jobDescription,matchAnalysis))).digest('hex')
-  const suggestions=await deps.generateTailoringSuggestions(config,{
-   consent:true,pro:inputs.data.isPro,
+  // A Free trial run is reserved before the provider call, so simultaneous requests cannot
+  // together exceed the trial, and released if the request fails, so a failure costs none.
+  const trialRun=!inputs.data.isPro&&inputs.data.trial===true
+  if(trialRun){
+   const reserved=await db.rpc('product_reserve_trial_run',{p_owner:owner,p_saved_job:body.savedJobId,p_request:id})
+   if(reserved.error)throw new HttpError(503,'Unable to check your Free trial. Nothing was used. Please try again.','ai_accounting')
+   if(reserved.data==='exhausted'||reserved.data==='unavailable')throw new HttpError(402,'Your Free tailoring trial has no AI suggestion runs left for this application. Upgrade to Pro for more, or keep editing this resume yourself.')
+  }
+  let suggestions:Awaited<ReturnType<Dependencies['generateTailoringSuggestions']>>
+  try{suggestions=await deps.generateTailoringSuggestions(config,{
+   // The one Free trial substitutes for Pro only for its bound application.
+   consent:true,pro:inputs.data.isPro||inputs.data.trial===true,
    reserve:async(maximum)=>observeOperation('ai_accounting', 'ai_reserve', async()=>{
     const reservation=await db.rpc('begin_ai_request',{p_request:id,p_owner:owner,p_max_micro_usd:maximum,p_feature:'tailoring',p_model:AI_MODEL,p_request_fingerprint:fingerprint})
-    if(reservation.error)throw new HttpError(429,'AI request limit reached. Try again later.', reservation.error.code==='54000' ? reservation.error.message==='AI monthly budget reached' ? 'ai_budget' : 'ai_limit' : 'ai_accounting')
+    if(reservation.error)throw reservationError(reservation.error)
+    if(reservation.data==='cooldown')throw new HttpError(409,'Your last request for this resume did not finish and may still have been processed. To avoid paying for it twice, try again in 10 minutes. It did not use your trial or hourly AI allowance.','ai_limit')
     if(reservation.data!=='reserved')throw new HttpError(409,'This tailoring request is already running or was recently completed.')
     return {
      start:async()=>observeOperation('ai_accounting','ai_start',async()=>{const result=await db.rpc('start_ai_request',{p_request:id});if(result.error)throw new HttpError(503,'AI accounting unavailable. Please try later.','ai_accounting')},'ai_accounting'),
@@ -84,7 +107,22 @@ export async function tailor(request:Request,env:NodeJS.ProcessEnv=process.env,d
     }
    },'ai_accounting')
   },resume,jobDescription,fetch,matchAnalysis)
-  return json(200,{suggestions,reviewRequired:true})
+  }catch(error){
+   if(trialRun)await db.rpc('product_release_trial_run',{p_owner:owner,p_request:id})
+   // No substitute output is ever returned: a failure is reported as a failure.
+   if(error instanceof HttpError&&error.status>=500&&error.category!=='ai_accounting'&&error.category!=='ai_budget')
+    throw new HttpError(error.status,`${error.message.replace(/\.$/,'')}. This failed request did not use your trial or hourly AI allowance.`,error.category)
+   throw error
+  }
+  // A trial run counts only after a successful response, keyed by the AI request id so
+  // a retried request is never counted twice. Accounting failure never hides results.
+  let trialRunsRemaining:number|undefined
+  if(trialRun){
+   await db.rpc('product_record_trial_run',{p_owner:owner,p_saved_job:body.savedJobId,p_request:id})
+   const status=await db.rpc('product_trial_status',{p_owner:owner,p_saved_job:body.savedJobId})
+   if(!status.error&&record(status.data)&&typeof status.data.runsRemaining==='number')trialRunsRemaining=status.data.runsRemaining
+  }
+  return json(200,{suggestions,reviewRequired:true,...(trialRunsRemaining===undefined?{}:{trial:{runsRemaining:trialRunsRemaining}})})
  }catch(error){return safeError(error)}
 }
 

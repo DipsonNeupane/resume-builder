@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { contentLength, type Resume } from '../model';
-import { createCloudResume, loadCloudResume, saveCloudResume, ResumeConflictError, type CloudResume } from '../services/resumes';
+import { createCloudResume, deleteCloudResume, loadCloudResume, saveCloudResume, ResumeConflictError, type CloudResume } from '../services/resumes';
 
 // Wrapping the server row in an object (rather than using `CloudResume | null`
 // directly) makes a real "the server resume is gone" conflict distinguishable
@@ -14,6 +14,8 @@ export type CloudResumeApi = {
  retryAfterStorageReview: () => void;
  linked: boolean;
  loading: boolean;
+ loadFailed: boolean;
+ retryLoad: () => void;
  consentPending: boolean;
  conflict: CloudConflict | null;
  statusText: string | null;
@@ -21,6 +23,7 @@ export type CloudResumeApi = {
  declineConsent: () => void;
  useServerVersion: () => void;
  keepMyEdits: () => void;
+ removeFromAccount: () => void;
  // Mirrors VITE_CLOUD_STORAGE_ENABLED so callers (AuthPanel's copy, tests)
  // can tell "cloud save is off" apart from "cloud save is on but idle"
  // without re-reading import.meta.env themselves.
@@ -85,6 +88,7 @@ export function useCloudResume(
  const [consentPending, setConsentPending] = useState(false);
  const [consentDeclined, setConsentDeclined] = useState(false);
  const [loadFailed, setLoadFailed] = useState(false);
+ const [loadRevision, setLoadRevision] = useState(0);
  const [conflict, setConflict] = useState<CloudConflict | null>(null);
  // True once the most recent autosave attempt failed for a reason other than
  // a revision conflict (network error) — lets `statusText` say so truthfully
@@ -96,7 +100,7 @@ export function useCloudResume(
   const value=error as {code?:unknown;message?:unknown};
   if(value.code!=='P0001' || typeof value.message!=='string' || !/^Account save-history (?:storage )?limit reached/.test(value.message)) return false;
   setSaveBlocked(true);
-  notify('Account storage limit reached. Your latest edits are not saved to your account. Keep this tab open and contact support@resumestride.com before leaving this page.');
+  notify('Account storage limit reached. Your latest edits are not saved to your account. Keep this tab open and contact support@apwico.com before leaving this page.');
   return true;
  };
  const resumeRef = useRef(resume);
@@ -137,7 +141,7 @@ export function useCloudResume(
   // below and overwrite the separately restored job draft. Incrementing the
   // epoch above also makes any load/save started just before the pause inert.
   if (paused) return;
-  if (!identityChanged && !resumed) return;
+  if (!identityChanged && !resumed && loadRevision === 0) return;
   setLinked(false); setConflict(null); setRevision(null); setLoadFailed(false); setSaveError(false); setSaveBlocked(false);
   if (identityChanged) setConsentDeclined(false);
   // What `resume` will actually hold once this effect's own synchronous work
@@ -179,7 +183,7 @@ export function useCloudResume(
     } else {
      setLinked(true); setRevision(existing.revision);
      setResume(existing.resume); setDirty(false);
-     notify('Loaded your saved resume from your ResumeStride account. Your local draft on this device is unchanged and returns if you sign out.');
+     notify('Loaded your saved resume from your APWICO account. Your local draft on this device is unchanged and returns if you sign out.');
     }
    }
   }).catch(() => {
@@ -194,7 +198,13 @@ export function useCloudResume(
   // Deliberately keyed only on account identity and the explicit pause state:
   // restoreGuestDraft/setResume/setDirty/notify are stable callbacks, and
   // resumeRef.current supplies the live resume when needed.
- }, [user?.id, paused]);
+ }, [user?.id, paused, loadRevision]);
+
+ const retryLoad = () => {
+  if (!user || loadingCloud) return;
+  setLoadFailed(false);
+  setLoadRevision(value => value + 1);
+ };
 
  // Offer to save the local draft once signed in, whenever there's content
  // worth asking about and the account has no cloud resume yet. Re-evaluated
@@ -351,6 +361,29 @@ export function useCloudResume(
   }
  };
 
+ const removeFromAccount = () => {
+  if (paused || !user || !linked || revision === null || savingRef.current || dirty || conflict) {
+   notify(dirty ? 'Wait for your latest account save to finish before removing the account copy.' : 'Resolve the account resume state before removing it.');
+   return;
+  }
+  const epoch=sessionEpoch.current;
+  const deletingRevision=revision;
+  savingRef.current=true;setSavingCloud(true);
+  deleteCloudResume(user.id,deletingRevision).then(deleted=>{
+   if(sessionEpoch.current!==epoch)return;
+   savingRef.current=false;setSavingCloud(false);
+   if(!deleted){setConflict({server:null});notify('The account resume changed or was removed elsewhere. Review the account state before trying again.');return;}
+   const guest=restoreGuestDraft();
+   setLinked(false);setRevision(null);setConflict(null);setConsentDeclined(true);
+   setResume(guest);setDirty(false);
+   notify('The account-saved master resume and its retained revisions were deleted. Your earlier local draft on this device is open again.');
+  }).catch(()=>{
+   if(sessionEpoch.current!==epoch)return;
+   savingRef.current=false;setSavingCloud(false);
+   notify('Could not remove the account-saved resume. Nothing was deleted; try again.');
+  });
+ };
+
  const statusText = paused || !user ? null
   : loadingCloud ? 'Checking your account…'
   : saveBlocked ? 'Not saved — account storage limit reached'
@@ -359,5 +392,5 @@ export function useCloudResume(
   : null;
 
  const retryAfterStorageReview=()=>{saveFailureCount.current=0;setSaveBlocked(false);};
- return { saveBlocked, retryAfterStorageReview, linked, loading: loadingCloud, consentPending, conflict, statusText, acceptConsent, declineConsent, useServerVersion, keepMyEdits, cloudStorageEnabled };
+ return { saveBlocked, retryAfterStorageReview, linked, loading: loadingCloud, loadFailed, retryLoad, consentPending, conflict, statusText, acceptConsent, declineConsent, useServerVersion, keepMyEdits, removeFromAccount, cloudStorageEnabled };
 }

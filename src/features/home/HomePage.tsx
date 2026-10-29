@@ -1,18 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight, Check, FileText, Search, Upload } from 'lucide-react';
 import { ResumePreview } from '../../components/ResumePreview';
 import { example, templates, type Resume } from '../../model';
 import { PatinaHero } from './PatinaHero';
 import { MatchShowcase } from './MatchShowcase';
+import { launchFacts } from '../../content/launchFacts';
 import './landing.css';
 
 const sample = example();
+const featuredTemplateIds: Resume['template'][] = ['modern', 'compact', 'boardroom', 'stackline', 'scholar', 'primer'];
+const featuredTemplates = templates.filter(template => featuredTemplateIds.includes(template.id));
 // The suggestion reworks the sample's own summary using only experience it already lists.
 const suggested = 'Customer experience specialist who supports customers across email, phone and live chat, simplifies everyday support processes, and helps new team members build confidence.';
-const connected = ['Your resume', 'Find or save a role', 'See the evidence', 'You decide', 'A separate version', 'Review each change', 'PDF or Word', 'Apply on the employer’s site'];
-type Props = { onBuild: () => void; onUpload: () => void; onJobs: () => void; onPro: () => void; onTemplate: (template: Resume['template']) => void };
+type Props = { onBuild: () => void; onUpload: () => void; onJobs: () => void; onCompare: () => void; onPro: () => void; onTemplate: (template: Resume['template']) => void; onFindJobs: () => void; onOrganize: () => void };
 
-export function HomePage({ onBuild, onUpload, onJobs, onPro, onTemplate }: Props) {
+export function HomePage({ onBuild, onUpload, onJobs, onCompare, onPro, onTemplate, onFindJobs, onOrganize }: Props) {
  const [previewTemplate, setPreviewTemplate] = useState<Resume['template']>('modern');
  const sheet = useRef<HTMLDivElement>(null);
  // The light sheet rises over the petrol Match section and its fold settles as it
@@ -34,22 +36,36 @@ export function HomePage({ onBuild, onUpload, onJobs, onPro, onTemplate }: Props
   kick();
   return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', kick); window.removeEventListener('resize', kick); };
  }, []);
- return <main className="landing" id="main-content">
-  <PatinaHero sample={sample} onBuild={onBuild} onUpload={onUpload} onJobs={onJobs}/>
+ return <main className="landing landing-approved-c landing-approved-wine" id="main-content">
+  <PatinaHero onBuild={onBuild} onFindJobs={onFindJobs} onOrganize={onOrganize}/>
+  <section className="landing-starts" aria-labelledby="start-heading">
+   <div className="landing-starts-heading"><p className="section-label">Start with what you have</p><h2 id="start-heading">Three clear ways in.</h2><p>Start with your resume, a blank page, or a job description. Your master resume stays unchanged.</p></div>
+   <div className="start-card-grid">
+    <article><Upload aria-hidden="true"/><h3>Upload my resume</h3><p>Upload a Word or text-based PDF. It is read in your browser and requires your review.</p><button className="text-button" onClick={onUpload}>Choose a resume file<ArrowRight size={16} aria-hidden="true"/></button></article>
+    <article><FileText aria-hidden="true"/><h3>Build from scratch</h3><p>Build a master resume with 7 Free templates, PDF, and editable Word export.</p><button className="text-button" onClick={onBuild}>Build a resume free<ArrowRight size={16} aria-hidden="true"/></button></article>
+    <article><Search aria-hidden="true"/><h3>Start with a job</h3><p>Paste a job description and compare each requirement with your resume.</p><a className="text-button" href="/tools/resume-job-match/" onClick={onCompare}>Compare resume and job<ArrowRight size={16} aria-hidden="true"/></a></article>
+   </div>
+   <ul className="product-proof-strip" aria-label="Product facts">
+    <li><Check aria-hidden="true"/>Your master stays unchanged</li>
+    <li><Check aria-hidden="true"/>PDF and editable Word</li>
+    <li><Check aria-hidden="true"/>No payment card to start</li>
+    <li><Check aria-hidden="true"/>A4, Letter and right-to-left</li>
+   </ul>
+  </section>
   <section className="evidence-story landing-match" id="how-it-works">
-   <div><p className="section-label">Match Analysis · requirement by requirement</p><h2>Evidence<br/>before effort.</h2><p>Pick a role. Each requirement sits beside the line of your resume that supports it, or an honest note that nothing does yet. Then you decide whether it deserves your evening. It reads evidence. It doesn’t predict hiring.</p><button className="button outline" onClick={onJobs}>Find jobs and see the match<ArrowRight size={16} aria-hidden="true"/></button></div>
-   <p className="landing-sources">Search from your resume or your own criteria. Opportunities are sourced across <strong>190+ job portals</strong> and employer career sites.</p>
+   <div><p className="section-label">Match Analysis · requirement by requirement</p><p>See each job requirement beside supporting resume evidence—or a clear note when none is shown. You decide whether the role deserves more effort.</p><a className="button outline" href="/tools/resume-job-match/" onClick={onCompare}>Compare my resume with a job<ArrowRight size={16} aria-hidden="true"/></a></div>
+   <p className="landing-sources">Search <strong>190+ job portals</strong> and employer career sites using your resume or your own criteria.</p>
    <MatchShowcase/>
    <dl className="evidence-key">
-    <div><dt><span className="evidence-dot strength"/>Clearly demonstrated</dt><dd>A line of your resume supports the requirement.</dd></div>
-    <div><dt><span className="evidence-dot review"/>Worth reviewing</dt><dd>Partly shown. A little more context may make it clear.</dd></div>
-    <div><dt><span className="evidence-dot unknown"/>Not demonstrated</dt><dd>Your resume doesn’t show it yet. That isn’t a verdict on you.</dd></div>
+    <div><dt><span className="evidence-dot strength"/>Evidence found</dt><dd>A line of your resume supports the requirement.</dd></div>
+    <div><dt><span className="evidence-dot review"/>Related evidence — review</dt><dd>Partly shown. A little more context may make it clear.</dd></div>
+    <div><dt><span className="evidence-dot unknown"/>No evidence found in this resume</dt><dd>Your resume doesn’t show it yet. That isn’t a verdict on you.</dd></div>
     <div><dt><span className="evidence-dot conflict"/>Confirmed incompatibility</dt><dd>Only when you’ve said you don’t have something the role requires.</dd></div>
    </dl>
   </section>
   <div className="landing-sheet" ref={sheet}>
   <section className="landing-tailor">
-   <div className="section-introduction"><p className="section-label">Only after you decide</p><h2>Worth it?<br/><em>Then tailor it.</em></h2><p>With Pro, a role you choose gets a separate version for this job. AI suggests changes that rework what you’ve already written. You accept, reject or rewrite each one. Your original resume stays unchanged.</p><button className="text-button" onClick={onPro}>Tailor a saved job with Pro<ArrowRight size={16} aria-hidden="true"/></button></div>
+   <div className="section-introduction"><h2>Tailor a separate resume for the roles you choose.</h2><p>Pro creates a separate resume for the job and suggests changes grounded in your existing content. Accept, reject, or edit each suggestion. Your master stays unchanged.</p><button className="text-button" onClick={onPro}>Tailor a saved job with Pro<ArrowRight size={16} aria-hidden="true"/></button></div>
    <div className="tailor-proof" aria-hidden="true">
     <div className="tailor-master"><span className="tailor-tag">Your original resume · unchanged</span><p>{sample.summary}</p></div>
     <div className="tailor-version">
@@ -62,22 +78,20 @@ export function HomePage({ onBuild, onUpload, onJobs, onPro, onTemplate }: Props
    </div>
   </section>
   <section className="landing-connected">
-   <p className="section-label">Kept connected</p>
-   <h2>Every step stays tied to the job it’s for.</h2>
-   <ol>{connected.map((step, i) => <li key={step} data-decide={step === 'You decide' || undefined}><span>0{i + 1}</span>{step}</li>)}</ol>
+   <h2>Resume → Job → Evidence → Your decision → Tailored version → Export and apply</h2>
    <div className="landing-connected-actions"><button className="text-button" onClick={onBuild}>Build my master resume<ArrowRight size={16} aria-hidden="true"/></button><button className="text-button" onClick={onJobs}>Find opportunities<ArrowRight size={16} aria-hidden="true"/></button></div>
   </section>
   <section className="landing-templates" id="templates">
-   <div className="section-introduction"><p className="section-label">Documents</p><h2>7 layouts.<br/>PDF + Word.</h2><p>All seven templates are Free, with A4, US Letter and right-to-left support.</p></div>
+   <div className="section-introduction"><p className="section-label">Documents</p><h2>Explore 27<br/>resume templates.</h2><p>Choose from 7 Free and 20 Premium designs. Every template supports A4, US Letter, and right-to-left text.</p><a className="text-button" href="/templates/">Browse all 27 templates<ArrowRight size={16} aria-hidden="true"/></a></div>
    <div className="template-specimen" aria-label={`Fictional sample in the ${previewTemplate} template`}><ResumePreview resume={{...sample,template:previewTemplate}}/></div>
-   <div className="template-gallery" aria-label="Choose a free resume template">{templates.map(t=><button className="template-choice" data-previewing={previewTemplate===t.id} onFocus={()=>setPreviewTemplate(t.id)} onMouseEnter={()=>setPreviewTemplate(t.id)} key={t.id} onClick={()=>onTemplate(t.id)}><span><strong>{t.label}</strong><small>{t.tagline}</small></span><ArrowRight size={16} aria-hidden="true"/></button>)}</div>
+   <div className="template-gallery" aria-label="Preview a curated selection of resume templates">{featuredTemplates.map(t=><button className="template-choice" data-previewing={previewTemplate===t.id} onFocus={()=>setPreviewTemplate(t.id)} onMouseEnter={()=>setPreviewTemplate(t.id)} key={t.id} onClick={()=>onTemplate(t.id)}><span><strong>{t.label}</strong><small>{t.tagline}</small></span><ArrowRight size={16} aria-hidden="true"/></button>)}</div>
   </section>
   </div>
   <section className="landing-pricing" id="pricing">
-   <div className="section-introduction"><p className="section-label">Free to build. Pro for an active search.</p><h2>Several openings.<br/><em>Limited evenings.</em></h2><p>Before you spend tonight rewriting resumes, see what your experience supports for each role, check what’s unclear, and prepare versions only for the ones you choose. Pro supports that stretch of your search.</p></div>
-   <div className="plan-comparison"><article><span className="section-label">Free</span><h3>Just need a resume? Build it free.</h3><p className="plan-price"><strong>$0</strong><span>to start</span></p><ul><li><Check aria-hidden="true"/>The complete builder and all 7 templates</li><li><Check aria-hidden="true"/>3 PDF or Word downloads per 30-day period</li><li><Check aria-hidden="true"/>1 job search every 24 hours, up to 5 results</li><li><Check aria-hidden="true"/>Save up to 3 jobs, with a Match Analysis preview</li></ul><p className="plan-note">A free account is required for downloads and jobs. PDF and Word share the same download allowance.</p><button className="button outline" onClick={onBuild}>Build my master resume<ArrowRight size={16} aria-hidden="true"/></button></article>
-   <article className="plan-pro"><span className="section-label">Pro</span><h3>From a promising role to a reviewed, job-specific resume.</h3><p className="plan-price"><strong>US$19.99</strong><span>/month</span></p><ul><li><Check aria-hidden="true"/>All Premium templates and generous document exports</li><li><Check aria-hidden="true"/>See the evidence behind every requirement before you commit</li><li><Check aria-hidden="true"/>A separate version for each saved job you decide to pursue</li><li><Check aria-hidden="true"/>Suggestions you accept, reject or rewrite, with your original resume untouched</li></ul><p className="plan-note">Renews automatically until cancelled. Cancel anytime; paid access continues through the billing period. Fair-use limits apply.</p><button className="button" onClick={onPro}>View Pro options<ArrowRight size={16} aria-hidden="true"/></button></article></div>
+   <div className="section-introduction"><h2>Choose the access<br/><em>you need.</em></h2></div>
+   <div className="plan-comparison"><article><span className="section-label">Free</span><h3>Build, compare, organize, and track.</h3><p className="plan-price"><strong>$0</strong><span>no subscription</span></p><ul><li><Check aria-hidden="true"/>The complete builder and all 7 Free templates</li><li><Check aria-hidden="true"/>{launchFacts.freeDownloads.count} PDF or Word downloads per rolling {launchFacts.freeDownloads.windowDays} days</li><li><Check aria-hidden="true"/>{launchFacts.freeManualRefreshes.count} job searches per rolling {launchFacts.freeManualRefreshes.windowHours} hours, up to {launchFacts.freeResultsPerRefresh} relevant results each, plus an optional daily refresh</li><li><Check aria-hidden="true"/>Track up to {launchFacts.freeApplications} applications, with a Match preview</li><li><Check aria-hidden="true"/>{launchFacts.freeTailoringTrials === 1 ? 'One complete tailoring trial' : `${launchFacts.freeTailoringTrials} complete tailoring trials`} for one application</li></ul><p className="plan-note">A free account is required for downloads and jobs. The browser-only evidence checker works without an account.</p><button className="button outline" onClick={onBuild}>Build my master resume<ArrowRight size={16} aria-hidden="true"/></button></article>
+   <article className="plan-pro"><span className="section-label">Pro</span><h3>Full Match Analysis and job-specific resumes.</h3><p className="plan-price"><strong>{launchFacts.proMonthlyPrice}</strong><span>/month</span></p><ul><li><Check aria-hidden="true"/>All 27 templates</li><li><Check aria-hidden="true"/>Full requirement-level Match Analysis</li><li><Check aria-hidden="true"/>Advanced job search and a separate resume for each saved job</li><li><Check aria-hidden="true"/>AI-assisted suggestions you accept, reject or rewrite</li></ul><p className="plan-note">Renews until cancelled; paid access continues through the billing period. New subscriptions are US-only. Fair-use limits apply.</p><button className="button" onClick={onPro}>View Pro options<ArrowRight size={16} aria-hidden="true"/></button></article></div>
   </section>
-  <footer className="landing-footer"><div><strong>ResumeStride<span aria-hidden="true">↗</span></strong><p>Evidence before effort.</p></div><div><a href="mailto:support@resumestride.com">support@resumestride.com</a><nav aria-label="Site links"><a href="/tools/">Free tools</a><a href="/resources/">Resources</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms &amp; refunds</a></nav></div></footer>
+  <footer className="landing-footer"><div><strong>APWICO</strong><p>Evidence before effort.</p></div><div><a href="mailto:support@apwico.com">support@apwico.com</a><nav aria-label="Site links"><a href="/features/">How it works</a><a href="/tools/">Free tools</a><a href="/resources/">Resources</a><a href="/pricing/">Pricing</a><a href="/trust/">Trust</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms &amp; refunds</a></nav></div></footer>
  </main>;
 }

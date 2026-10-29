@@ -1,3 +1,410 @@
+## October 28 (fourth pass) — Provenance, AI safeguards, checkpoint commit, staging review (local, not pushed or deployed)
+
+Branch `feat/apwico-launch-tracker`, one local checkpoint commit over `1a883b6` (not pushed). Package:
+`docs/launch-review/README.md` §0; staging plan rewritten in `docs/launch-review/STAGING.md`.
+
+- Migration `20261028100000_tailoring_provenance_ai_safeguards.sql`: `job_resume_versions.provenance` (copied into
+  kept documents only when the snapshot equals the version; cleared by reset); `product_settings.ai_monthly_budget_micro_usd`
+  (default/max 25000000); hourly AI allowance counts only running/succeeded requests (+60-attempt guard); cleanly
+  failed requests retry at once, timed-out/uncertain wait 10 min (`cooldown`); trial runs reserved before the provider
+  call and released on failure (closed a real over-count race).
+- `src/lib/tailoringProvenance.ts`, `ProvenanceList.tsx`; panel records provenance on accept/undo; `main.tsx` saves it
+  with each version update; kept-version view shows it read against the kept snapshot.
+- Tests: DB 801 ok; server 522/522; browser 115/42/98; `vercel build --standalone` + packaged-function check PASS.
+  `npm run test:db:concurrency` NOT RUN (no PostgreSQL binaries).
+- Staging findings: production `ggwwzwqykkncgupdimxp` has no migration ledger and (as of 2026-09-25) 24 pending
+  migrations; CSP hard-codes the production Supabase origin; all 29 Vercel variables are Production-scoped. Staging
+  targets identified, none created; awaiting owner confirmation. `docs/launch-review.zip` (owner's Finder archive)
+  left untouched and uncommitted.
+
+## October 28 (third pass) — Support-checked tailoring, PDF and auth journeys, review package (local branch, not deployed)
+
+Branch `feat/apwico-launch-tracker`, worktree `.claude/worktrees/apwico-launch`, base `1a883b6`. (Committed in the fourth pass.)
+Owner review package: `docs/launch-review/README.md` (checklist, limits, full test logs, screenshots, samples);
+staging commands and expected results: `docs/launch-review/STAGING.md` (not executed).
+
+- `src/lib/tailoringSupport.ts` (shared by server and panel) flags added numbers, added responsibility/seniority/
+  outcome/credential wording, dropped negation, job wording absent from the resume, negated or irrelevant quotes.
+  Unsupported suggestions have no Accept: the user adds a fact (re-checked) or writes their own wording; accepted
+  items are labelled by authorship. Heuristic — does not prove accuracy.
+- Fixed: timeline "Added as Preparing" (now "Job saved" / "Saved → Preparing"), "Save this job" on saved jobs,
+  duplicate download controls (one export path, re-confirm after accepting changes).
+- Journey D (PDF through real handler + renderer, parsed and rendered pages inspected, kept version re-rendered
+  identically) and journey E (stateful local Auth: signed out, sign-in return, logout revokes token, second
+  account isolated, draft recovered). Hosted Auth still unverified.
+- Renewal reminder: mechanism exists (cron → Resend); email now states the renewal date and never sends after
+  renewal; new `renewal_reminder.test.sql`. Delivery unverified → promise removed from `public/terms.html`.
+- `launch-facts.test.ts` now also checks search limits and the trial count, and blocks reminder promises.
+- Open: legal approval, staging rehearsal, live provider checks, AI monthly cap (US$25) decision.
+
+## October 27 (second pass) — Launch completion: traceable tailoring, preference ranking, connected journeys (local branch, not deployed)
+
+Branch `feat/apwico-launch-tracker`, worktree `.claude/worktrees/apwico-launch`, base `1a883b6`. Uncommitted.
+Full status, evidence and plans: `docs/apwico-implementation-progress.md`; terms review:
+`docs/policies/LAUNCH_TERMS_REVIEW.md`.
+
+- Tailoring suggestions now carry server-verified targeted requirement ids and quotes from the rewritten field;
+  anything unverifiable is shown as "Not grounded" ("Accept anyway").
+- Experience level and flexibility/stability/pay priorities rank results (shared `src/lib/jobPreferences.ts`);
+  progression/learning/impact removed from setup; dealbreakers stay the only hard filter.
+- Tracker migration is now expand/contract: legacy columns kept and synced by a trigger; drops moved to
+  `supabase/contract/` (not applied by `db push`). DB tests replay the contract and rerun everything.
+- New migration `20261027160000_saved_match_preview.sql` (trial application gets its full evidence).
+- Fixed: `{}` requirement-edits 503 and white screen; trial evidence hidden; manual applications unpreparable;
+  homepage "10 applications"; pricing page missing currency/refund block; home start screen with a draft;
+  nondeterministic list order. Added read-only "View exact version" for kept documents.
+- Terms rewritten for launch (100 applications, 1 trial, 7/7 downloads, Pro limits, renewal, cancellation,
+  data access; retired products removed) — **pending owner/legal approval**.
+- Results: server 505/505, DB PASS (incl. contract replay), SEO 30/30, build/perf/brand PASS,
+  default browser 115/115 (was 62/53), paid 95/95 (incl. 3 connected journeys), auth 42/42.
+- Not done: staging rehearsal, any live verification, assistive-technology testing.
+
+## October 27 — Launch tracker, Today, preferences, Discover cards (local branch, not deployed)
+
+Implemented the owner brief `docs/APWICO-CLAUDE-IMPLEMENTATION.txt` on branch
+`feat/apwico-launch-tracker` (worktree `.claude/worktrees/apwico-launch`, based on
+`feat/apwico-v2-pricing` 1a883b6). Full detail, decisions, owner-review items, rollout order and demo
+script: `docs/apwico-implementation-progress.md`.
+
+Shipped locally: one application record per saved job (manual/pasted-URL/imported/discovered) with a
+single stage + separate closed reason, event history, next actions, immutable kept documents and
+explicit "record as applied"; Today, My applications (filters, quick add, CSV import/export) and
+detail record; Today/Discover/My applications navigation with retained old links; two homepage
+paths and short skippable preferences; Discover list and one-at-a-time card views with undo; shared
+requirement extraction (paragraph postings fixed) and per-application requirement review; consistent
+7-per-rolling-7-day download facts (terms corrected) and accurate reset time; www→apex 301; truthful
+draft status; Free cap 100 applications and one server-enforced tailoring trial; occupation-specific
+template previews; privacy notice updated for the new stored data.
+
+Verification: client/server TypeScript PASS; server 493/493; DB replay + pgTAP PASS; SEO 30/30;
+build PASS; performance budgets and brand check PASS; paid browser 92/92; auth 42/42; default
+browser 62 pass / 53 fail, where all 53 fail identically on the untouched baseline (stale builder
+journey tests and others listed in the progress doc). Nothing committed, pushed, deployed or migrated
+remotely; no Stripe/Supabase/provider change. Four new migrations await owner-approved staging.
+
+## October 10 — Task 63 no-cost restore assessment
+
+Rechecked the remaining recovery gate against the live plan and current official Supabase
+documentation. The source uses daily physical backups, which Supabase does not make directly
+downloadable. A local `db dump`/`pg_dump` restore would create and test a different logical
+backup, not recover the retained post-canary physical snapshot; local `--from-backup` has no
+downloadable source artifact. Preview branches incur usage-billed compute, restoring over
+the recovery project would destroy the comparison source, and production restore is
+prohibited. No paid resource, subscription change, restore, fixture write or production
+mutation occurred. Task 63 remains Validation Pending on the already-identified temporary
+US$9.68/month isolated restore destination. Full evidence is in
+`docs/redesign/TASK_63_HOSTED_CLOUD_VALIDATION_2026-10-07.md`.
+
+## October 7 — Task 63 final backup drill paused at provider cost boundary
+
+The authenticated Supabase flow confirms the actual plan mechanism: daily physical
+database backups, seven visible daily snapshots, and managed restore to a new project.
+The existing isolated recovery project has post-canary snapshots suitable for the populated
+drill. Opening the latest snapshot's restore flow showed a required new isolated project at
+US$9.68/month compute plus US$0 disk. No financial authorization was provided, so the flow
+was stopped before Continue; no project, restore, production mutation or customer-data
+access occurred. Task 63 remains Validation Pending. The exact transferred/manual scopes,
+limitations, completion procedure and no-cost logical-dump alternative are recorded in
+`docs/redesign/TASK_63_HOSTED_CLOUD_VALIDATION_2026-10-07.md`.
+
+## October 7 — Task 63 hosted cloud validation
+
+Ran the non-destructive Task 63 matrix against production Supabase with two dedicated
+fictional accounts while public cloud saving remained disabled. The guarded direct-hosted
+suite passed 14/14 and the three-context real-browser exercise passed 8/8, covering explicit
+save, fresh-session recovery, two-account RLS isolation, account switching, revision
+conflicts, interrupted-save retry, browser/cloud separation, deletion and fixture cleanup.
+The authenticated dashboard confirms daily physical backups and a non-destructive
+restore-to-new-project route. Task 63 remains **Validation Pending** only because the
+established cloud acceptance gate requires a populated backup restore into an isolated
+hosted project with verified ownership/content and measured recovery objectives; that
+provider operation was not performed. Detailed evidence:
+`docs/redesign/TASK_63_HOSTED_CLOUD_VALIDATION_2026-10-07.md`.
+
+## October 7 — Tasks 20–22 real-world validation closed
+
+Closed the three findings from the October 5 physical validation without reopening Task
+19 or unrelated work. The already-prepared URL-cleanup and mobile document-identity fixes
+are live in the current APWICO production release. Supabase custom SMTP now reloads with
+sender name **APWICO** instead of ResumeStride. A fresh real recovery email displayed the
+APWICO sender, opened the production new-password flow in a new tab and left no consumed
+`code` in the visible URL.
+
+On a physical iPhone, the owner identified the active master and local browser-session
+storage without coaching, then correctly understood from the isolated fictional sample
+that tailoring creates a separate version while the master remains unchanged. A real
+VoiceOver traversal announced the active-document state and primary editing controls in
+usable order without trapping. Tasks 20, 21 and 22 are now COMPLETE; all three previous
+issues are resolved. No Chrome extension, international-payment, UI/copy/design or
+unrelated production behavior changed.
+
+## October 7 — Wine + Blush website brand assets
+
+Aligned the APWICO website's shared brand assets with the approved production Wine +
+Blush identity while preserving the logo geometry. Rebuilt and visually checked the
+SVG/PNG/ICO favicon suite, Apple touch icon, PWA icons, manifest colours, default social
+card and all generated route social cards. The stale ResumeStride default social card and
+all targeted orange/teal shared web-asset colours were removed; the Chrome extension and
+its store submission were not changed.
+
+Verification: production build PASS; SEO suite 22/22; brand, social-image parity and static
+performance budgets PASS; 32/64/180/192/512px icon dimensions and 1200x630 social images
+verified; the 32px favicon and default social image were inspected at rendered size. The
+bounded source deployment `dpl_8DK9pwZiWpaLSic1ha9ttcT9Wwtq` is READY and aliased to
+`apwico.com`; apex and `www` return 200, and every deployed icon/manifest/default-social
+asset is byte-identical to the verified local artifact. No provider, DNS, page UI/copy,
+redirect, ResumeStride environment or Chrome extension/store setting was changed.
+
+## October 6 — APWICO extension 0.2.3 submitted
+
+Submitted APWICO Job Capture 0.2.3 to the existing Chrome Web Store item after a
+real Chrome side-panel defect exposed the old fixed-width layout. The correction
+uses a fluid single-column panel and passes the 43/43 serial installed-extension
+suite at 160–360px, including overflow, input/button width, keyboard focus and
+axe checks. LinkedIn remains intentionally unsupported, matching the published
+scope.
+
+With owner approval, the listing's prior icon, screenshot and small promo tile
+were replaced with verified Wine + Blush APWICO assets; the optional marquee
+remains empty. The dashboard confirmed `Your extension was submitted for review`
+with automatic publication selected. Task 37 remains **Validation Pending /
+External Review** until Google approves 0.2.3 and the public version is verified.
+Artifact SHA-256: `0d6ef646ba6bcb0d58d01d2ed47ebfc7f5dbd31f3b657e634150037d7e7f2019`.
+
+## October 5 — Tasks 19–22 consolidated real-world validation
+
+Task 19 is COMPLETE after live desktop and owner-performed physical mobile Back/Forward
+passed across public matcher and master/jobs workspace transitions. A real production
+password-recovery email also opened APWICO in a new Chrome tab and established the
+recovery session. The session found three bounded issues: the consumed recovery code
+remained in the production URL, the provider email sender display name remained
+ResumeStride, and the active-document/storage panel overlapped on a physical phone so
+the owner could not identify the document being edited.
+
+The isolated branch now removes the consumed recovery code once the session exists and
+stacks the mobile document identity in one readable flow. Focused recovery checks pass
+3/3 and the 320/390/768/1440/1920 responsive/axe matrix passes 5/5; the 320px capture was
+visually inspected. Production/provider configuration was not changed. Tasks 20–22 stay
+VALIDATION PENDING until the code fixes are deployed, the sender display name is corrected,
+and production comprehension plus one real screen-reader path pass. Canonical evidence:
+`docs/redesign/TASKS_19_22_REAL_WORLD_VALIDATION_2026-10-05.md`.
+
+## October 4 — APWICO Chrome Web Store submission
+
+Submitted APWICO Job Capture 0.2.2 to the existing Chrome Web Store item
+`hkingihhmkmhnikmcoeeamceoelcbhjn`. The dashboard now reports **Pending review**
+and automatic publication after approval is selected. The existing public 0.2.0
+version is not claimed as the APWICO release; Task 37 is **Validation Pending /
+External Review** until Google approves and the public listing/version is
+verified.
+
+Before submission, the exact hashed ZIP was rebuilt and package-checked, and the
+complete serial extension suite passed 42/42 without retries. Dashboard listing,
+privacy justifications, verified APWICO site/home/support links and reviewer
+instructions were reconciled to actual behavior. With owner approval, the five
+stale ResumeStride screenshots and stale small/marquee promo assets were removed;
+the verified APWICO screenshot and small promo tile were uploaded. Artifact:
+`dist/apwico-extension.zip`, SHA-256
+`68aed591fc416092b138fc2dee0dfe9036679d7a8465e6776a1ae410d633bafe`.
+
+## October 4 — backlog closure and first production measurement review
+
+Reconciled all original 65 blueprint tasks and Group 9 against repository and
+live-provider evidence. The canonical count is 51 Complete / 9 Validation Pending /
+4 Partial / 0 Not Started / 1 Blocked. Group 9 is complete for the APWICO web
+product/provider migration; ResumeStride redirects remain intentionally disabled.
+Details and current task boundaries are in `docs/redesign/BLUEPRINT_STATUS.md`.
+
+Production measurement was corrected without a deployment or destructive change.
+Four already-tested additive migrations for evidence/conversion measurement,
+application workflow, voluntary outcomes, and APWICO support identity were applied
+in order to the existing Supabase project and recorded in migration history. The
+required tables/RPCs exist and each new outcome table has an honest zero-row
+baseline. Seven-day Vercel analytics, available Speed Insights, Search Console's
+processing/no-data state, and the absence of Vercel error logs are recorded in
+`docs/redesign/PRODUCTION_VALIDATION_2026-10-04.md`; no content or raw owner IDs
+were read.
+
+Prepared a fail-closed international billing mode, but production remains U.S.-only:
+international mode cannot activate unless automatic tax is explicitly enabled, and
+Checkout then requires billing address collection, customer address/name update and
+tax-ID collection. Tax registrations, qualified jurisdiction review, provider setup
+and separately authorized acceptance remain external gates. See
+`docs/redesign/INTERNATIONAL_PAYMENTS_READINESS_2026-10-04.md`.
+
+Prepared the unpublished APWICO Job Capture 0.2.0 store candidate with APWICO visual
+identity, padded icons, a real controlled-fixture screenshot, promo tile, factual
+listing/privacy copy, a reviewed ZIP allowlist and store-asset/package checks. Store
+enrollment/payment, 2FA, policy certification, real-site acceptance and explicit
+submission/publication remain owner/external gates; no public install URL is claimed.
+Tasks 58–61 now have bounded privacy-safe operating foundations in
+`docs/redesign/G8_POST_LAUNCH_OPERATING_FOUNDATIONS_2026-10-04.md`; real people,
+agreements, pilots, samples and findings remain post-launch external work.
+
+Verification for this closure batch: international billing catalog 6/6; server
+TypeScript PASS; extension controlled/installed suite 42/42; extension package
+and store-asset checks 3/3; production schema/RPC and aggregate-zero checks PASS;
+required `graphify update .` PASS. The first parallel extension run exposed only
+cold synchronized-filesystem timeouts; the bounded serial rerun passed completely
+after raising the extension gate's cold-start budget without changing behavior.
+
+## October 2 — approved landing hero exploration (local preview only)
+
+The owner selected Cobalt & Citron from the temporary landing colour study. The homepage
+hero now uses that direction only: its previous layered role/resume/evidence/decision scene
+is replaced by one compact fictional requirement → resume evidence → user decision story.
+The approved headline and primary/secondary journeys remain. The WebGL/parallax hero work
+was removed, mobile recomposes the same three-step story into one bounded panel, and the
+rest of the landing page plus every other route retains the existing Patina tokens. Desktop
+and mobile rendered review pass with no console warning or horizontal overflow. This work
+is local-preview-only; no deployment, provider, DNS, redirect or production change occurred.
+
+## October 1 — final rendered visual/UI audit (no cutover)
+
+Completed a separate visual-design audit of the isolated APWICO candidate: 26 logical
+pages/sections/states across 78 rendered captures at representative 320/390/768/1366/1440/
+1920 widths. Fixed five objective hierarchy/responsive issues: the dense/inconsistent home
+template showcase, placeholder-feeling customer-proof heading, default-expanded saved-job
+evidence depth, phone preview-control occlusion, and offscreen active journey stage. An
+independent second pass inspected all captures and found no remaining release-blocking visual
+issue after recapture. Detailed coverage and evidence are in
+`docs/redesign/FINAL_VISUAL_UI_AUDIT_2026-10-01.md`; the one-session physical acceptance
+checklist is consolidated in `PRE_RELEASE_BLOCKER_CLEARANCE_2026-10-01.md`.
+
+The complete recurring release gate passed all 13 stages, and the complete paid browser
+suite passed 82/82 after the visual fixes. Static performance budgets, generated SEO parity,
+axe/keyboard/overflow checks, saved-object ownership, cloud recovery and export smoke checks
+all remain green.
+
+No production deployment, provider configuration, DNS/redirect change, push, merge, or
+cutover occurred. Human/physical acceptance and the separately authorized controlled cutover
+remain outstanding.
+
+## October 1 — APWICO pre-release blocker clearance (no cutover)
+
+Completed the remaining agent-executable clearance work on `redesign/shared-route-state`.
+APWICO apex/`www` DNS now resolves through two public resolvers to the existing Vercel
+project with valid TLS; the alternate host remains `noindex` and intentionally serves the
+live ResumeStride artifact/canonical until an authorized candidate deployment. Search
+Console ownership is verified, exact APWICO Supabase callbacks coexist with legacy ones,
+and Resend reports `auth.apwico.com` verified. Stripe was audited read-only; no live brand,
+return, webhook, product, Price, customer or subscription mutation was made.
+
+Reconciled stale browser tests with permanent workspace/account routes, the default-open
+full-evidence disclosure, explicit pursue-before-tailoring policy and current document
+identity copy. Final verification: auth 41/41, paid 82/82, server/billing 448/448,
+database replay/pgTAP PASS, recurring quality gate 13/13 stages, extension 42/42 plus
+package checks, brand check and production dependency audit PASS. Local/account retention
+rehearsal proves same-origin legacy keys, owner-scoped cloud/job/version data, account-switch
+fail-closed behavior, preserved Stripe/database references and no cross-origin content
+bridge. Full evidence and the single remaining physical/human acceptance script are in
+`docs/redesign/PRE_RELEASE_BLOCKER_CLEARANCE_2026-10-01.md`.
+
+Release remains NOT READY only because the consolidated physical/human acceptance has not
+been performed and the controlled cutover validations/migrations require separate explicit
+authorization. No push, merge, production deployment, redirect activation, hosted migration,
+Supabase Site URL/sender switch, Stripe mutation or destructive action occurred.
+
+## September 30 — Group 9 APWICO repository migration (isolated redesign only)
+
+APWICO is now the product identity on the isolated redesign branch; `apwico.com` and
+`support@apwico.com` are the public defaults. Persistent browser/protocol/provider IDs are
+deliberately retained, legacy extension/header compatibility is bounded, and old-domain
+301s exist only behind a default-off release flag. No production/provider/DNS action was
+taken. Full inventory, cutover ordering, local-origin state limitation, rollback and owner
+actions: `docs/redesign/G9_APWICO_BRAND_MIGRATION_2026-09-30.md`. Group 9 is separate from
+the unchanged 65-task blueprint ledger. Production migration remains validation pending.
+
+## September 30 — G6/G7 technical and evidence-first acquisition batch (isolated redesign only)
+
+Integrated G6 and G7 on `redesign/shared-route-state`; production, hosted data, push,
+merge, release and deployment were untouched. Tasks 38–44, 47–50 and 54 are complete;
+45, 46 and 56 are validation pending; 51–53 and 55 remain evidence-bounded partial.
+The exhaustive status is 41 complete / 8 validation pending / 6 partial / 9 not started /
+1 blocked. Permanent capability/search URLs, truthful sitemap/schema/social/font/cache
+delivery, seven audience-problem clusters, substantive resources, safe occupation/regional
+hubs, internal links and the search review process share one checked public architecture.
+
+Unified SEO/content checks pass 27/27, the production build and client types pass, static
+performance budgets pass, and serial all-public-route axe/responsive/index/privacy checks
+pass 4/4 after resolving two cross-branch guard/contrast findings. Exact evidence, Claude
+reviews, honest content limits and the preserved parallel-browser saturation result are in
+`docs/redesign/G6_COMPLETION_2026-09-30.md`, `G7_CONTENT_SEARCH_2026-09-30.md` and
+`G6_G7_INTEGRATION_2026-09-30.md`.
+
+## September 30 — parallel G4/G5 product-core batch (isolated redesign only)
+
+Integrated the independently reviewed `redesign/g4-trust-pricing` and
+`redesign/g5-jobs-match` workstreams into `redesign/shared-route-state`. Production,
+hosted data, provider calls, push, merge and deployment were untouched.
+
+- G4 tasks 23–30 are complete: verified three-path commerce, individual-template and
+  cancellation/export terms, adjacent unchecked recurring consent, factual trust,
+  unpublished-by-default proof architecture, and permanent `/pricing/` + `/trust/` routes.
+- G5 tasks 32–36 are complete: requirement evidence, explicit owner decision, manual
+  application history, notes/contact and opt-in workspace follow-up dates retain
+  owner/privacy and master-resume boundaries and pass the integrated private-route check.
+- Task 37 is blocked only because repository evidence says the extension is unpublished and
+  provides no verified public store/install URL or released version. No public claim was
+  invented.
+- Independent Claude reviews produced ten G4 and twelve G5 actionable findings; all were
+  resolved. Exact findings, architecture and branch-level test evidence are in
+  `docs/redesign/G4_BATCH_2026-09-30.md` and `docs/redesign/G5_BATCH_2026-09-30.md`.
+
+The exhaustive status is now 29 complete / 6 validation pending / 10 partial / 19 not
+started / 1 blocked. Consolidated verification after integration: production build/client
+TypeScript PASS; server TypeScript PASS; database replay/pgTAP PASS; SEO 19/19;
+commercial contract 4/4; G4 built-preview + public route quality 6/6; G5 public continuation
+1/1 and private workflow 1/1; performance budgets and diff check PASS. Regenerate and rerun
+these gates again before any future release action.
+
+## September 29 — shared discovery foundations (isolated redesign only)
+
+Completed G2 tasks 12–14 and implementation-level G3 task 15 on
+`redesign/shared-route-state`; advanced tasks 19–20 to validation pending. Production,
+hosted data, provider calls, push, merge and deployment were untouched.
+
+- Added permanent static `/templates/`, 27 registry-backed detail routes and `/pricing/`,
+  with truthful filters/facts, preview-before-purchase boundaries, canonical/sitemap policy,
+  keyboard/mobile behavior, and the existing route-quality/performance enforcement.
+- Added direct pasted-job onboarding using the existing matcher extraction architecture.
+  Its bounded session-only content state survives import/build review, converges on the
+  shared workspace, never enters URLs/analytics, and fails closed across owner changes.
+- Bounded auth/recovery returns to a content-free enum, corrected checkout-cancel returns,
+  and covered safe reload/Back, invalid object, noindex, owner isolation and new-tab fallback
+  behavior. Real provider links, physical mobile devices and assistive technology remain
+  validation pending rather than implementation gaps.
+- Claude's independent adversarial pass produced ten actionable findings; all were resolved
+  and rerun. Detailed evidence is in
+  `docs/redesign/SHARED_DISCOVERY_BATCH_2026-09-29.md`; the exhaustive 65-task truth is in
+  `docs/redesign/BLUEPRINT_STATUS.md`.
+
+Verification: production build/client TypeScript PASS; server TypeScript PASS; targeted
+server/SEO 22/22; shared-discovery browser 4/4; navigation 5/5; public route
+quality PASS across 320/1440 widths; sample/performance 5/5; artifact budgets and diff check
+PASS. No production field metric is claimed.
+
+## September 29 — Group 3 onboarding and workspace foundation (isolated redesign only)
+
+Implemented the first shared G3 batch on `redesign/g3-onboarding-workspace`, based on the
+typed route/state contract. No production checkout, deployment, hosted data, provider call,
+push or merge was touched.
+
+- `/start/import`, `/start/build`, `/start/job` and `/start/sample` now present distinct,
+  truthful onboarding guidance while converging on the existing Builder/Jobs workspaces.
+  Import discloses local best-effort parsing and mandatory review; build starts with content;
+  job-first explains explicit save/account retention and master safety; the fictional sample
+  is isolated and never mutates the live draft.
+- Active document identity and storage scope now remain visible in both Builder and Jobs:
+  master versus job-specific draft/version, local browsing-session versus account-saved,
+  and the existing save status are separate concepts. Job-specific work continues to preserve
+  the master and retains the explicit return path.
+- Typed journey helpers and focused server/browser tests cover route convergence, Back/reload
+  draft preservation, direct journey entries, sample isolation and automated accessibility.
+- Blueprint status is intentionally partial: pasted job-description onboarding, anonymous
+  evidence results, complete interactive sample, saved-object URL restoration and the full
+  responsive/screen-reader workflow still remain.
+
 ## September 27 — task #77: public favicon identity
 
 Replaced the weak 32px-only fallback setup with a complete public favicon asset suite using
@@ -3832,3 +4239,241 @@ rows, so it has no present material data effect. All eight later migrations (16�
 absent. Production's validator permits only modern/classic/minimal, so compact/bold/executive/ledger
 cloud writes fail. It is safe to take the pre-migration backup next, but not to apply migrations
 until history reconciliation and the historical migration-5 source discrepancy are resolved.
+## September 29 — redesign Group 1 foundation isolated and started
+
+Production remains live and unchanged at commit `16e03e3` / Vercel deployment
+`dpl_9FFi7Wzw99Tm5BFisx7abZbSuJhH`. The redesign is isolated from the heavily dirty
+owner checkout: `redesign/integration` points at the exact production commit and the
+active clean worktree uses `redesign/g1-strategy-measurement`. No push, preview,
+production deployment, database change, billing change, or extension change occurred.
+
+Added `docs/redesign/` with the production isolation record, all-eight-group dependency
+and parallel-work map, Group 1 positioning/vocabulary/claims/journey decisions, a
+privacy-safe event contract, and a dated pre-redesign production baseline. The live
+seven-day dashboard snapshot was 41 visitors, 76 page views and 63% bounce; the top
+visible custom events and device/page/referrer breakdowns are recorded in the baseline.
+Desktop Speed Insights showed a Real Experience Score of 71 from 83 displayed events;
+mobile had no collected events. The sample includes owner/test/launch traffic and is
+not treated as a demand or outcome claim.
+
+Initial redesign-only instrumentation now distinguishes the three selected entry
+journeys, first useful manual/import input, import start/success/bounded failure,
+usable-master confirmation, requirement extraction, deliberate requirement-level evidence review,
+clarify/tailor decisions, committed job-specific version creation, reviewed changes,
+and master versus job-specific export start/success/failure. The analytics property
+schema remains a closed set of bounded categories; hostile/free-form values are
+rejected. At that commit, the north-star `application_package_exported` event was
+defined but not emitted because Vercel aggregate events could not reliably prove a
+same-job review. The following Group 1 batch resolves that historical blocker with a
+server-only durable record.
+
+Verification after the current code state: client TypeScript PASS, server TypeScript
+PASS, focused observability/analytics tests 12/12 PASS, production build PASS, and
+`git diff --check` PASS. Nothing in this entry authorizes a merge
+to `master` or a production deployment.
+
+## September 29 — Group 1 locked decisions implemented
+
+The owner selected durable, owner-scoped, content-free north-star measurement and a
+behavior-based Free Match review boundary. The redesign branch now registers only
+bounded server-issued match identities, records `limited` or `full` review after an
+actual requirement ledger reaches the viewport, and creates one conversion row only
+when an account-owned job-specific PDF/DOCX export commits for that same job. The
+conversion completion and export accounting share one database transaction; retries
+cannot create another row. Browser analytics receives only closed categories.
+
+The measurement tables contain internal owner/export/version/review identifiers,
+one-way bounded job/analysis keys, closed scope/format values and timestamps. They do
+not contain resume text, job text, job URLs, titles, employer names, email addresses,
+prompts, model output or free-form errors. Browser roles cannot read or write them.
+
+See `docs/redesign/BLUEPRINT_STATUS.md` for the truthful task ledger. No merge, push,
+preview, deployment, migration application or production setting change occurred.
+
+## September 29 — redesign Group 2 homepage and navigation batch
+
+On `redesign/g2-home-navigation`, the public first screen now leads with “Find the roles
+worth your effort,” one evidence-led primary action and a truthful Free builder secondary
+action. The Patina demonstration was reduced to one fictional role and three requirement
+states. Directly below it, three equal start cards cover local Word/text-PDF import, build
+from scratch and the current Jobs & Match flow. A five-item proof strip is limited to
+implemented facts: requirement evidence rather than a score, master-resume safety,
+PDF/editable Word, no card to start, and A4/Letter/right-to-left support.
+
+`PublicNavigation` now centralizes the public header. Resume Builder and Jobs & Match use
+the shared `/start/build` and `/start/job` contract; Free Tools and Resources remain real
+public URLs; Templates and Pricing deliberately remain homepage anchors until they have
+meaningful static pages. Ordinary same-tab clicks keep SPA behavior and bounded journey
+analytics, while the anchors retain real `href` values for new tabs. The expanded mobile
+menu retains Escape close/focus restoration and larger touch targets.
+
+The job-first card does not claim pasted-job support because that flow does not yet exist.
+Task 7 and Task 9 therefore remain partial, as do full static discovery navigation and
+hero performance measurement. No template browsing, broad content, pricing, commerce,
+provider, entitlement, database or production behavior was changed. See
+`docs/redesign/BLUEPRINT_STATUS.md` for exact G2 task status.
+
+## September 29 — redesign technical quality gate foundation
+
+Added a single fail-fast local/PR gate for Group 6 task 46 without creating new public
+content or changing production. `npm run quality:gate` composes the production build,
+client/server TypeScript, generated SEO/canonical/robots/sitemap/JSON-LD checks, a static
+public-link crawl, typed route/request boundaries, public-page console and same-origin
+request failures, 320/1440 overflow, axe, keyboard/focus, reduced-motion, mocked PDF/Word
+delivery, DOCX round trip and real local generated-PDF text extraction. Static-only and
+browser-only profiles are available for focused reruns. A pull-request workflow runs the
+complete gate with read-only repository permissions and no production credentials.
+
+Task 46 remains partial rather than complete: local/CI checks cannot establish field Core
+Web Vitals, physical-device/screen-reader behavior or hosted PDF runtime fidelity. Those
+remain later owner-approved release checks. Task 38 also remains partial: the current
+public/private route policy is protected, but no capability URL is exposed before it has
+meaningful static HTML. See `docs/redesign/TECHNICAL_QUALITY_GATE.md`.
+
+The initial exact SEO run reached all three generators and then stalled while loading the
+TypeScript/Vite test graph in the macOS Documents worktree; it was interrupted after no
+test result, consistent with the known filesystem environment issue. Verification should
+be completed against the exact commit in a disposable `/tmp` checkout. No merge, push,
+deployment, hosted setting, provider call or production action occurred.
+
+## September 29 — saved-object, fictional-sample and performance consolidation
+
+The isolated redesign now restores `/workspace/jobs/saved`, owner-scoped Match Analysis
+and owner-scoped job-specific resume URLs. UUIDs are selectors, never authorization.
+Missing, deleted and unauthorized references share one content-free fallback; transient
+account-load failures use a content-free retry state. Object restoration waits for the
+account master, consent/conflict/rescue state and identity to settle before loading a
+version, so a blank or guest draft cannot become the protected master snapshot. A local
+job draft no longer displaces or blocks an object URL: it is set aside intact with an
+explicit resume action. Clean version-to-version history transitions close the previous
+version before restoring the next; unsaved transitions return to the active version.
+Meaningful transitions use browser history; search fields, editor tabs, template choices
+and dialogs remain local state.
+
+`/start/sample` is a storage-free fictional sandbox with direct, adjacent and unknown
+evidence, an explicit user decision, grounded accept/reject suggestions, a visibly
+separate job-specific version, an unchanged fictional master, reset, and transitions to
+real resume/job input. It receives no real Resume, owner, storage or persistence object.
+
+The public quality contract now has hard built-artifact ceilings, separate lazy chunks
+for Jobs/sample/export/PDF/DOCX, a production-preview lab LCP/CLS/navigation check,
+idle-only WebGL, complete static/data-saver/low-core fallback and reduced-motion loop
+coverage. Production field data remains only the previously captured bounded snapshot;
+unavailable LCP/INP/CLS values were not invented.
+
+Verification at this batch boundary: TypeScript PASS; fixture-enabled production build
+PASS; typed route/request tests 6/6 PASS; static performance budgets PASS; built public
+sample and performance tests 5/5 PASS; mocked owner-scoped object tests 7/7 PASS;
+cloud-master restoration/failure-retry tests 2/2 PASS; `git diff --check` PASS; and
+`graphify update .` PASS (AST-only, 2,922 nodes / 6,288 edges / 189 communities). The
+focused private restoration suites are part of `quality:gate:browser`, not manual-only
+evidence. Claude CLI independently reviewed routing/ownership/history, sample
+isolation/a11y/privacy and performance enforcement; its material master-load race,
+endless-loader, transient-version retry, local-draft precedence, focus/live-region,
+modulepreload, version-to-version deadlock, active-local-draft blocker and missing-gate
+findings were resolved and reverified. No live provider, push, merge, deployment,
+production branch or production setting was touched.
+
+## September 30 — Group 8 pre-launch foundation
+
+The isolated redesign now has a permanent public Match methodology that agrees with the
+deterministic saved/public analyzers; a versioned, explicit-consent, owner-scoped and
+content-free voluntary outcome store plus workspace form; and a self-service deletion
+path for the account-saved master resume and retained revisions. Observed conversions
+remain separate from self-reports, report corrections do not inflate sample rows, and no
+interview/offer causality or statistics are claimed.
+
+Paid access remains accurately U.S.-only and USD-only. Pricing now states that compatible
+methods are whatever configured Stripe Checkout actually displays and does not promise
+automatic tax, tax-inclusive pricing or invoices before provider validation. Interface
+localization has an English-only explicit allowlist and formatting boundary with no IP,
+billing-country or browser-language inference; resume language, editable headings,
+Unicode and LTR/RTL remain independent document settings. No translation, APWICO
+identifier, advisory participant, partnership, distribution program or original research
+was invented.
+
+Tasks 57, 62 and 65 are COMPLETE. Tasks 63–64 are implementation-complete and
+VALIDATION PENDING on the later hosted/provider migration. Tasks 58–61 remain explicit
+post-launch work. Exact audits, verification and the completed read-only Claude review
+are in `docs/redesign/G8_PRELAUNCH_2026-09-30.md`. Production, provider configuration,
+push, merge, release and deployment remain untouched.
+
+Final G8 verification passed: database policies including 19/19 outcome assertions;
+SEO 30/30; focused G8/jobs/observability 36/36; server and client TypeScript;
+production bundle; static performance budgets; and focused Chromium accessibility,
+canonical/indexing and 320px overflow checks. The build identified and resolved one
+closed-vocabulary diagnostic omission for account-master deletion. The remaining Task
+63 and 64 work is hosted/provider validation, not incomplete implementation.
+# Final pre-release rehearsal (2026-10-01)
+
+- Completed the non-live APWICO cutover, provider, compatibility and full 65-task release audit on `redesign/shared-route-state`; no deploy, DNS/provider mutation, redirect activation, merge or push occurred.
+- Release decision is **NOT READY**: `apwico.com` still serves GoDaddy and is not attached to the existing Vercel project; provider callbacks/email/Stripe, hosted two-account recovery, browser-only retention, and physical accessibility/mobile/low-power acceptance remain required-before-production gates.
+- Status: **47 COMPLETE / 13 VALIDATION PENDING / 0 PARTIAL / 4 NOT STARTED / 1 BLOCKED**. Tasks 58–61 are legitimate post-launch; Task 37 remains blocked on a real published extension listing and is not claimed.
+- Added the single ordered owner/provider checklist and rollback runbook in `docs/redesign/APWICO_PRODUCTION_CUTOVER_RUNBOOK.md`; audit/evidence and A/B/C classification are in `docs/redesign/FINAL_PRE_RELEASE_REHEARSAL_2026-10-01.md`.
+- The redirect remains default-off. Authorized rollout must use the no-store 307 stage before the separately gated bounded-cache 301. Old-tab API writes are not redirected; only exact legacy origins are accepted by the existing strict mutation guard during coexistence.
+- Independent review findings were resolved: API-method redirect safety, explicit browser-only state transition UX, realistic cached-301 rollback limits, and explicit missing-original-blueprint evidence limitation.
+# 2026-10-02 — Final pre-deployment UX/UI correction batch
+
+- Locked Wine + Blush as the release palette while preserving the approved simplified landing composition.
+- Corrected the public bullet checker, counters, work-arrangement extraction, evidence vocabulary, sample entry, public navigation, and task-first copy.
+- Replaced all 27 template gallery/detail abstractions with fictional resumes rendered by the real builder template components and retained preview-before-purchase behavior.
+- Closed independent-review findings for noun-fragment rewrites, canonical evidence vocabulary, public navigation, task-first public hierarchy, mobile workspace density, Wine + Blush leakage, and public stylesheet routing.
+- Detailed implementation, verification, and the 12-item deferred P2 backlog are in `docs/final-correction-batch.md`.
+
+# 2026-10-07 — Job search and Match quality correction
+
+- Added a server-side occupational relevance gate before result limiting: Free/Pro
+  allowances are maxima and unrelated provider candidates no longer fill empty seats.
+- Replaced shared-token title claims with concrete title/occupation evidence, normalized
+  collapsed camel-case role text, and gated seniority observations on an established
+  occupational relationship.
+- Corrected requirement extraction for responsibility headings, markdown residue,
+  heading-only labels and ordinary duties; strengthened evidence matching so common
+  words and plain `security` cannot establish security-clearance evidence.
+- Bumped saved Match analysis to version 2 with explicit database invalidation of stale
+  analyses. User clarification remains the only path to confirmed incompatibility.
+- Added six regression groups with 23 explicit cases covering the reported Java results plus healthcare,
+  education, operations, creative and trades. See
+  `docs/job-match-quality-audit-2026-10-07.md` for evidence. Production was not changed.
+
+# 2026-10-07 — Public matcher corrective patch
+
+- Production verification exposed that the anonymous matcher uses the separate
+  generated browser analyzer and had not inherited the authenticated Match fixes.
+- Aligned public heading cleanup, qualification classification, substantive
+  evidence thresholds and security-clearance handling with the authenticated
+  safety boundary. Added exact fixtures in unit, rendered-browser and server tests.
+- Real-provider relevance verification remains pending until the legitimate Free
+  refresh allowance resets; no quota or customer limit was bypassed.
+- Rollback is not recommended because the preceding deployment has the same public
+  defect and lacks the authenticated corrections. No corrective deployment was
+  performed. See `docs/public-matcher-corrective-patch-2026-10-07.md`.
+- Verification: public tool unit/browser 18/18; focused matcher 34/34; full server
+  457/457; complete release gate 13/13; Graphify rebuilt 3,410 nodes / 7,091 edges.
+## October 10 — Task 37 version 0.2.4 prepared; public trader contacts need owner action
+
+The Chrome Web Store listing and publisher settings were audited read-only. The public
+listing exposes the verified individual trader's legal name, residential address and phone;
+the dashboard confirms these values come from the Google Payments verification profile.
+Chrome requires trader address and phone disclosures. No legal/trader/profile value was
+changed. A truthful non-residential business/service address and owner-controlled SMS-capable
+business phone are required before the owner authorizes Payments-profile/reverification work.
+
+The 0.2.3 layout regression was traced to percentage-only root sizing on a toolbar action
+popup, which gave Chrome no intrinsic width and collapsed to min-content. Candidate 0.2.4
+uses a bounded 360px preferred popup width with fluid internal controls. The packaged real
+Chrome toolbar path measured a 375px viewport/360px body with no horizontal overflow and
+322.5px inputs/actions. Targeted layout/accessibility 3/3, capture/boundary 21/21 and package
+security/assets 4/4 pass. The refreshed Store screenshot reflects the real popup width.
+Nothing was uploaded or submitted; 0.2.3 remains public and Task 37 remains Validation
+Pending. Full evidence: `docs/redesign/TASK_37_EXTENSION_024_CORRECTION_2026-10-10.md`.
+# Extension 0.2.5 major-board capture release candidate
+
+The isolated `feat/extension-job-board-capture-0.2.5` branch adds user-initiated capture for Greenhouse, Lever, and conservative Workday/generic structured-data pages. LinkedIn and Indeed use a compact paste/review fallback after their published restrictions were rechecked; their page content is not read. The candidate also adds explicit selection on permitted public pages, Capture → Review → Send UX, bounded retry/reload continuity, and no new broad host permissions. Evidence and limitations are in `docs/EXTENSION_MAJOR_BOARD_CAPTURE_025.md`. This release candidate has not been submitted or deployed.
+## October 13 — APWICO V2 Free + Pro release candidate (isolated, not deployed)
+
+Prepared the owner-approved two-plan commercial model on `feat/apwico-v2-pricing` without changing production or live Stripe. New customer paths now show Free and Pro only; Pro is fixed at US$14.99/month in the verified server catalog and includes all 27 templates. Individual US$1.99 template checkout is rejected server-side and removed from public/upgrade surfaces, while active legacy template subscriptions remain entitled, manageable, cancellable, and renewal-compatible. Existing US$19.99 Pro renewals reconcile against their trusted stored immutable Price ID and are not silently migrated.
+
+Free now receives up to 10 relevant results once every 24 hours from exactly one provider page, plus 10 saved/tracked applications; browser-only evidence checking and 3 generated downloads per fixed 30-day period are unchanged. The cost audit recommends a 500-request global Free ceiling (maximum US$24 Basic-plan overage) but leaves the choice to the owner; no arbitrary global cap or unverified export-cost claim was introduced. Full evidence, alternatives, release sequencing, and provider/storage boundaries are in `docs/V2_PRICING_FREE_EXPERIENCE_2026-10-13.md`.
+
+No Stripe object, price, subscription, entitlement, DNS, Supabase production schema, provider configuration, deployment, merge, or push was changed. Controlled release still requires the owner-selected global provider ceiling, an additive live US$14.99 Stripe Price, test-mode billing acceptance, and separate deployment authorization.

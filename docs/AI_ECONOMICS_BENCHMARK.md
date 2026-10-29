@@ -38,12 +38,12 @@ The live path calls the existing `generateTailoringSuggestions()` implementation
 
 Provider calls made: **0**.
 
-| Scenario | Serialized bytes | Estimated input tokens | Assumed output tokens | Input cost | Output cost | Estimated total | Existing reservation | Reserve / estimate | Per-request % of $19.99 |
+| Scenario | Serialized bytes | Estimated input tokens | Assumed output tokens | Input cost | Output cost | Estimated total | Existing reservation | Reserve / estimate | Per-request % of $14.99 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Light | 5,622 | 1,406 | 350 | $0.000563 | $0.000560 | $0.001123 | $0.008688 | 7.7× | 0.0056% |
-| Typical | 13,036 | 3,259 | 700 | $0.001304 | $0.001120 | $0.002424 | $0.011653 | 4.8× | 0.0121% |
-| Heavy | 30,222 | 7,556 | 1,200 | $0.003023 | $0.001920 | $0.004943 | $0.018528 | 3.7× | 0.0247% |
-| Near maximum | 39,936 | 9,984 | 1,800 | $0.003994 | $0.002880 | $0.006874 | $0.022413 | 3.3× | 0.0344% |
+| Light | 5,622 | 1,406 | 350 | $0.000563 | $0.000560 | $0.001123 | $0.008688 | 7.7× | 0.0075% |
+| Typical | 13,036 | 3,259 | 700 | $0.001304 | $0.001120 | $0.002424 | $0.011653 | 4.8× | 0.0162% |
+| Heavy | 30,222 | 7,556 | 1,200 | $0.003023 | $0.001920 | $0.004943 | $0.018528 | 3.7× | 0.0330% |
+| Near maximum | 39,936 | 9,984 | 1,800 | $0.003994 | $0.002880 | $0.006874 | $0.022413 | 3.3× | 0.0459% |
 
 The existing reservation assumes every UTF-8 byte could be one input token, adds 4,096 input-token headroom, and reserves all 3,000 output tokens. It is deliberately much larger than these English planning estimates.
 
@@ -51,12 +51,12 @@ The existing reservation assumes every UTF-8 byte could be one input token, adds
 
 | Operations | Typical estimated cost (% of pass) | Heavy estimated cost (% of pass) | Near-maximum reservation exposure (% of pass) |
 |---:|---:|---:|---:|
-| 25 | $0.060600 (0.303%) | $0.123575 (0.618%) | $0.560325 (2.803%) |
-| 50 | $0.121200 (0.606%) | $0.247150 (1.236%) | $1.120650 (5.606%) |
-| 100 | $0.242400 (1.213%) | $0.494300 (2.473%) | $2.241300 (11.212%) |
-| 250 | $0.606000 (3.032%) | $1.235750 (6.182%) | $5.603250 (28.030%) |
-| 500 | $1.212000 (6.063%) | $2.471500 (12.364%) | $11.206500 (56.061%) |
-| 1,000 | $2.424000 (12.126%) | $4.943000 (24.727%) | $22.413000 (112.121%) |
+| 25 | $0.060600 (0.404%) | $0.123575 (0.824%) | $0.560325 (3.738%) |
+| 50 | $0.121200 (0.809%) | $0.247150 (1.649%) | $1.120650 (7.476%) |
+| 100 | $0.242400 (1.617%) | $0.494300 (3.298%) | $2.241300 (14.952%) |
+| 250 | $0.606000 (4.043%) | $1.235750 (8.244%) | $5.603250 (37.380%) |
+| 500 | $1.212000 (8.085%) | $2.471500 (16.488%) | $11.206500 (74.760%) |
+| 1,000 | $2.424000 (16.171%) | $4.943000 (32.975%) | $22.413000 (149.520%) |
 
 ## Interpretation and limitations
 

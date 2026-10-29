@@ -9,10 +9,15 @@ import { databaseConfig, serviceDatabase } from '../database.ts'
 import { contentLength, isResume, maxContentChars, type Resume } from '../../src/model.ts'
 import { parseSearchCriteria, type SearchCriteria } from './criteria.ts'
 import { safeJobUrl } from './url.ts'
-import { analysisView, analyzeJob, matchHash, parseClarifications, parseFullMatchAnalysis, parseResumeEvidence, type MatchResult, type ResumeEvidence } from './match.ts'
+import { analysisView, analyzeJob, matchHash, parseClarifications, parseFullMatchAnalysis, parseRequirementEdits, parseResumeEvidence, type MatchResult, type RequirementEdits, type ResumeEvidence } from './match.ts'
 import type { Confidence, EmploymentType, FieldProvenance, JobLocation, NormalizedJob, SalaryNormalized, Workplace } from './types.ts'
+import { handleApplicationAction, listApplications } from './applications.ts'
+import { OUTCOME_CONSENT_VERSION, parseOutcomeReport, parseOutcomeReportInput } from './outcomes.ts'
+import { launchFacts } from '../../src/content/launchFacts.ts'
+import { parseProvenance, readProvenance } from '../../src/lib/tailoringProvenance.ts'
 
-export const FREE_SAVED_JOB_LIMIT = 3
+/** Launch default; the enforced value is public.product_settings.free_application_limit. */
+export const FREE_SAVED_JOB_LIMIT = launchFacts.freeApplications
 /** Effectively unlimited for normal use while retaining a hard abuse/storage bound. */
 export const PRO_SAVED_JOB_SAFETY_LIMIT = 10_000
 const MAX_BODY_BYTES = 1_000_000
@@ -54,6 +59,8 @@ function jobResumeVersion(value: unknown): Record<string, unknown> {
     sourceMasterResumeId: typeof value.source_master_resume_id === 'string' ? value.source_master_resume_id : null,
     sourceMasterRevision: typeof value.source_master_revision === 'number' ? value.source_master_revision : null,
     sourceMasterFingerprint: value.source_master_fingerprint, resume, revision: value.revision,
+    // Validated on every save; a stored record that cannot be read is returned as empty.
+    provenance: readProvenance(value.provenance ?? []) ?? [],
     createdAt: value.created_at, updatedAt: value.updated_at,
   }
 }
@@ -73,7 +80,8 @@ export type SavedJobSnapshot = {
   descriptionText: string
   postedAt: string | null
   expiry: NormalizedJob['expiry']
-  sourceUrl: string
+  /** null only for a manually added application without a job link. */
+  sourceUrl: string | null
   portal: string | null
   source: string | null
   retrievedAt: string
@@ -119,7 +127,7 @@ function isoDate(value: unknown): value is string {
 }
 function provenance<T extends string>(value: unknown, allowed: readonly T[]): value is FieldProvenance<T> {
   if (!record(value) || typeof value.value !== 'string' || !allowed.includes(value.value as T)) return false
-  return (value.source === 'provider' || value.source === 'inferred' || value.source === 'unknown')
+  return (value.source === 'provider' || value.source === 'inferred' || value.source === 'unknown' || value.source === 'user')
     && typeof value.confidence === 'string' && CONFIDENCE.includes(value.confidence as Confidence)
 }
 
@@ -130,7 +138,7 @@ export function parseSavedJobSnapshot(value: unknown): SavedJobSnapshot {
   const location = value.location
   if (!record(location) || !record(location.value)
     || !nullableString(location.value.city, 200) || !nullableString(location.value.region, 200) || !nullableString(location.value.country, 200)
-    || (location.source !== 'provider' && location.source !== 'inferred' && location.source !== 'unknown')
+    || (location.source !== 'provider' && location.source !== 'inferred' && location.source !== 'unknown' && location.source !== 'user')
     || typeof location.confidence !== 'string' || !CONFIDENCE.includes(location.confidence as Confidence)) throw bad()
   if (!provenance(value.workplace, WORKPLACES) || !provenance(value.employmentType, EMPLOYMENT_TYPES)) throw bad()
   const salary = value.salary
@@ -145,7 +153,7 @@ export function parseSavedJobSnapshot(value: unknown): SavedJobSnapshot {
   if (!boundedString(value.id, 241) || !boundedString(value.provider, 40) || !boundedString(value.providerJobId, 200)
     || value.id !== `${value.provider}:${value.providerJobId}` || typeof value.dedupeKey !== 'string' || !/^[0-9a-f]{64}$/.test(value.dedupeKey)
     || !boundedString(value.title, 300) || !boundedString(value.company, 300) || typeof value.descriptionText !== 'string' || value.descriptionText.length > 12000
-    || (value.postedAt !== null && !isoDate(value.postedAt)) || !isSafeUrl(value.sourceUrl)
+    || (value.postedAt !== null && !isoDate(value.postedAt)) || !(isSafeUrl(value.sourceUrl) || (value.sourceUrl === null && value.provider === 'manual'))
     || !nullableString(value.portal, 200) || !nullableString(value.source, 200) || !isoDate(value.retrievedAt)
     || (value.matchLabel !== 'strong' && value.matchLabel !== 'good' && value.matchLabel !== 'stretch')
     || !Array.isArray(value.matchReasons) || value.matchReasons.length > 5
@@ -163,7 +171,7 @@ function normalizedJob(job: SavedJobSnapshot): NormalizedJob {
     title: job.title, company: job.company, location: job.location, workplace: job.workplace,
     employmentType: job.employmentType, salary: job.salary, descriptionText: job.descriptionText,
     postedAt: job.postedAt, expiry: job.expiry, directness: { value: null, source: 'unknown', confidence: 'low' },
-    sourceUrl: job.sourceUrl, portal: job.portal, source: job.source, retrievedAt: job.retrievedAt,
+    sourceUrl: job.sourceUrl ?? '', portal: job.portal, source: job.source, retrievedAt: job.retrievedAt,
   }
 }
 
@@ -172,13 +180,15 @@ function normalizedJob(job: SavedJobSnapshot): NormalizedJob {
  * raw payload, so Pro-only requirement depth never crosses the API boundary. */
 export function shapeAccountSnapshot(value: Record<string, unknown>): Record<string, unknown> {
   const isPro = value.isPro === true
+  // The one Free tailoring trial includes the full evidence view for its application.
+  const trialJob = record(value.tailoringTrial) && typeof value.tailoringTrial.savedJobId === 'string' ? value.tailoringTrial.savedJobId : null
   if (!Array.isArray(value.savedJobs)) return value
   return {
     ...value,
     savedJobs: value.savedJobs.map(item => {
       if (!record(item)) return item
       const persisted = item.matchAnalysis == null ? null : parseFullMatchAnalysis(item.matchAnalysis)
-      return { ...item, matchAnalysis: persisted ? analysisView(persisted, isPro) : null }
+      return { ...item, matchAnalysis: persisted ? analysisView(persisted, isPro || item.id === trialJob) : null }
     }),
   }
 }
@@ -191,14 +201,16 @@ async function savedReanalysis(owner: string, savedJobId: string, evidence: Resu
   const job = parseSavedJobSnapshot(input.data.snapshot)
   let criteria: SearchCriteria
   let clarifications
+  let edits: RequirementEdits
   try {
     criteria = input.data.criteria == null ? { title: job.title } : parseSearchCriteria(input.data.criteria)
     clarifications = parseClarifications(input.data.clarifications)
+    edits = parseRequirementEdits(input.data.requirementEdits)
   } catch { throw new HttpError(503, 'Unable to refresh this saved analysis') }
-  const analysis = analyzeJob(evidence, normalizedJob(job), criteria, clarifications).analysis
+  const analysis = analyzeJob(evidence, normalizedJob(job), criteria, clarifications, edits).analysis
   const stored = await db.rpc('jobs_replace_match_analysis', { p_owner: owner, p_saved_job: savedJobId, p_analysis: analysis })
   if (stored.error || stored.data !== true) throw new HttpError(503, 'Unable to refresh this saved analysis')
-  return analysisView(analysis, input.data.isPro)
+  return analysisView(analysis, input.data.isPro || input.data.trial === true)
 }
 
 export const accountDependencies = { authenticate, serviceDatabase }
@@ -212,10 +224,26 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
     const body = await jsonBody(request, MAX_BODY_BYTES)
     const action = body.action
     if (typeof action !== 'string') throw new HttpError(400, 'Saved-job action is required')
-    if (action === 'reanalyze' || action === 'clarification') setRequestFeature('match')
+    if (action === 'reanalyze' || action === 'clarification' || action === 'record_evidence_review') setRequestFeature('match')
     if (action === 'capture_save') setRequestFeature('extension')
-    if (['create_job_resume', 'get_job_resume', 'update_job_resume', 'reset_job_resume'].includes(action)) setRequestFeature('cloud')
+    if (['create_job_resume', 'get_job_resume', 'update_job_resume', 'reset_job_resume', 'report_outcome'].includes(action) || action.startsWith('application')) setRequestFeature('cloud')
     const db = deps.serviceDatabase(env)
+    const tracked = await handleApplicationAction(action, body, owner, db)
+    if (tracked) return tracked
+
+    if (action === 'record_evidence_review') {
+      if (typeof body.jobKey !== 'string' || !/^[0-9a-f]{64}$/.test(body.jobKey)
+        || typeof body.analysisKey !== 'string' || !/^[0-9a-f]{64}$/.test(body.analysisKey)
+        || (body.reviewScope !== 'limited' && body.reviewScope !== 'full')) {
+        throw new HttpError(400, 'Evidence review is invalid')
+      }
+      const result = await db.rpc('product_record_evidence_review', {
+        p_owner: owner, p_job_key: body.jobKey, p_analysis_key: body.analysisKey, p_scope: body.reviewScope,
+      })
+      if (result.error || !record(result.data) || (result.data.scope !== 'limited' && result.data.scope !== 'full')
+        || typeof result.data.newlyRecorded !== 'boolean') throw new HttpError(503, 'Unable to record this evidence review')
+      return json(200, { recorded: true, reviewScope: result.data.scope, newlyRecorded: result.data.newlyRecorded })
+    }
 
     if (action === 'load') {
       const evidence = body.evidence === undefined ? null : parseResumeEvidence(body.evidence)
@@ -226,7 +254,36 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
       if (result.error || !record(result.data)) throw new HttpError(503, 'Unable to load saved jobs')
       const versions = await db.rpc('job_resume_versions_list', { p_owner: owner })
       if (versions.error || !Array.isArray(versions.data)) throw new HttpError(503, 'Unable to load job-specific resumes')
-      return json(200, { ...shapeAccountSnapshot(result.data), jobResumeVersions: versions.data })
+      // null (not []) tells the client tracker data is temporarily unavailable.
+      const applications = await listApplications(owner, db)
+      const outcomes = await db.rpc('product_outcome_reports_list', { p_owner: owner })
+      let outcomeReports: ReturnType<typeof parseOutcomeReport>[] | null = null
+      if (!outcomes.error && Array.isArray(outcomes.data)) {
+        try { outcomeReports = outcomes.data.map(parseOutcomeReport) } catch { outcomeReports = null }
+      }
+      const automatic = await db.rpc('jobs_auto_refresh_result', { p_owner: owner })
+      return json(200, { ...shapeAccountSnapshot(result.data), jobResumeVersions: versions.data, applications, outcomeReports,
+        autoRefreshResult: automatic.error ? null : automatic.data })
+    }
+    if (action === 'report_outcome') {
+      if (typeof body.savedJobId !== 'string' || !SAVED_JOB_ID.test(body.savedJobId)) throw new HttpError(400, 'Saved job is invalid')
+      const report = parseOutcomeReportInput(body.report)
+      const result = await db.rpc('product_outcome_report', {
+        p_owner: owner,
+        p_saved_job: body.savedJobId,
+        p_outcome: report.outcome,
+        p_occurred_on: report.occurredOn,
+        p_time_saved_bucket: report.timeSavedBucket,
+        p_clarity_rating: report.clarityRating,
+        p_confidence_rating: report.confidenceRating,
+        p_consent: true,
+        p_consent_version: OUTCOME_CONSENT_VERSION,
+      })
+      if (result.error) {
+        if (result.error.message.includes('Saved job not found')) throw new HttpError(404, 'This saved job is no longer available.')
+        throw new HttpError(503, 'Unable to save this voluntary outcome')
+      }
+      return json(200, { report: parseOutcomeReport(result.data) })
     }
     if (action === 'create_job_resume') {
       if (typeof body.savedJobId !== 'string' || !SAVED_JOB_ID.test(body.savedJobId)) throw new HttpError(400, 'Saved job is invalid')
@@ -237,6 +294,7 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
       if (result.error) {
         if (result.error.message.includes('Active Pro required')) throw new HttpError(403, 'An active Pro pass is required to start new AI tailoring. Existing job-specific resumes remain available.')
         if (result.error.message.includes('Saved job not found')) throw new HttpError(404, 'Save this job before starting tailoring.')
+        if (result.error.message.includes('Application closed')) throw new HttpError(409, 'This application is closed. Reopen it before preparing a new job-specific resume.')
         throw new HttpError(503, 'Unable to start this job-specific resume')
       }
       if (!record(result.data) || typeof result.data.created !== 'boolean') throw new HttpError(503, 'Unable to start this job-specific resume')
@@ -258,6 +316,10 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
         p_owner: owner, p_version: body.versionId, p_expected_revision: body.expectedRevision, p_data: resume,
       }
       if (action === 'reset_job_resume') args.p_fingerprint = resumeFingerprint(resume)
+      else if (body.provenance !== undefined) {
+        try { args.p_provenance = parseProvenance(body.provenance) }
+        catch { throw new HttpError(400, 'The tailoring record for this resume is invalid') }
+      }
       const result = await db.rpc(rpc, args)
       if (result.error) {
         if (result.error.message.includes('conflict')) {
@@ -278,7 +340,7 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
       if (!evidence && body.evidence === undefined && !captured) {
         const legacy = await db.rpc('jobs_save', { p_owner: owner, p_job: job })
         if (legacy.error) {
-          if (legacy.error.message.includes('Free saved-job limit reached')) throw new HttpError(403, 'Free accounts can save up to 3 jobs. Your existing saved jobs are kept; upgrade to Pro to save more.')
+          if (legacy.error.message.includes('Free application limit reached')) throw new HttpError(403, 'Free accounts can track up to 100 applications. Every existing record stays available; upgrade to Pro to add more.')
           if (legacy.error.message.includes('Saved-job safety limit reached')) throw new HttpError(409, 'Saved-job safety limit reached. Existing saved jobs are unchanged.')
           throw new HttpError(503, 'Unable to save this job')
         }
@@ -298,8 +360,8 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
         ? await db.rpc('jobs_save', { p_owner: owner, p_job: job })
         : await db.rpc('jobs_save_v2', { p_owner: owner, p_job: job, p_analysis: analysis })
       if (result.error) {
-        if (result.error.message.includes('Free saved-job limit reached')) {
-          throw new HttpError(403, 'Free accounts can save up to 3 jobs. Your existing saved jobs are kept; upgrade to Pro to save more.')
+        if (result.error.message.includes('Free application limit reached')) {
+          throw new HttpError(403, 'Free accounts can track up to 100 applications. Every existing record stays available; upgrade to Pro to add more.')
         }
         if (result.error.message.includes('Saved-job safety limit reached')) throw new HttpError(409, 'Saved-job safety limit reached. Existing saved jobs are unchanged.')
         throw new HttpError(503, 'Unable to save this job')
@@ -311,6 +373,17 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
         await savedReanalysis(owner, result.data.savedJobId, evidence, db)
       }
       return json(200, result.data)
+    }
+    if (action === 'requirement_edits') {
+      if (typeof body.savedJobId !== 'string' || !SAVED_JOB_ID.test(body.savedJobId)) throw new HttpError(400, 'Saved job is invalid')
+      let edits: RequirementEdits
+      try { edits = parseRequirementEdits(body.edits) } catch { throw new HttpError(400, 'Requirement edits are invalid') }
+      const evidence = parseResumeEvidence(body.evidence)
+      if (!evidence) throw new HttpError(400, 'Resume evidence is required')
+      const stored = await db.rpc('applications_set_requirement_edits', { p_owner: owner, p_saved_job: body.savedJobId, p_edits: edits })
+      if (stored.error) throw new HttpError(stored.error.message.includes('Saved job not found') ? 404 : 503, stored.error.message.includes('Saved job not found') ? 'This saved job is no longer available.' : 'Unable to save requirement edits')
+      const matchAnalysis = await savedReanalysis(owner, body.savedJobId, evidence, db)
+      return json(200, { saved: true, matchAnalysis })
     }
     if (action === 'reanalyze') {
       if (typeof body.savedJobId !== 'string' || !SAVED_JOB_ID.test(body.savedJobId)) throw new HttpError(400, 'Saved job is invalid')
@@ -329,7 +402,9 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
       if (typeof body.autoRefresh !== 'boolean') throw new HttpError(400, 'Auto Refresh preference is invalid')
       let criteria: SearchCriteria | null = null
       if (body.criteria !== null && body.criteria !== undefined) criteria = parseSearchCriteria(body.criteria)
-      const result = await db.rpc('jobs_set_preferences', { p_owner: owner, p_criteria: criteria, p_auto_refresh: body.autoRefresh })
+      const evidence = body.autoRefresh ? parseResumeEvidence(body.evidence) : null
+      if (body.autoRefresh && !evidence) throw new HttpError(400, 'Resume evidence is required for background refresh')
+      const result = await db.rpc('jobs_set_preferences_v2', { p_owner: owner, p_criteria: criteria, p_auto_refresh: body.autoRefresh, p_evidence: evidence })
       if (result.error) throw new HttpError(503, 'Unable to save job preferences')
       return json(200, { saved: true })
     }

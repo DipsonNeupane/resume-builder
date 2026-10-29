@@ -8,6 +8,17 @@ chrome.alarms.onAlarm.addListener(alarm => { if (alarm.name === 'expire-capture'
 // Delivery belongs to the worker, so closing the popup does not cancel an accepted send.
 // One session-only capture survives worker shutdown for explicit retry; never an automatic queue.
 let sending = false;
+async function waitForDestination(tabId: number, origin: string): Promise<boolean> {
+ const deadline = Date.now() + 8_000;
+ while (Date.now() < deadline) {
+  try {
+   const tab = await chrome.tabs.get(tabId);
+   if (tab.url && new URL(tab.url).origin === origin && tab.status === 'complete') return true;
+  } catch { return false; }
+  await new Promise(resolve => setTimeout(resolve, 100));
+ }
+ return false;
+}
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
  if (sender.id !== chrome.runtime.id || sender.url !== chrome.runtime.getURL('popup.html')) return false;
  if (!message || message.type !== 'resumestride:send-reviewed-job') return false;
@@ -22,9 +33,10 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
   const started = performance.now();
   let received = false;
   try {
-   await keepPending(payload);
-   const tab = await chrome.tabs.create({url:url.toString(),active:false});
+   await keepPending(payload, true);
+   const tab = await chrome.tabs.create({url:url.toString(),active:true});
    if (typeof tab.id !== 'number') throw new Error('No destination');
+   if (!await waitForDestination(tab.id, url.origin)) throw new Error('Destination did not finish loading');
    const id = crypto.randomUUID();
    for(let attempt=0;attempt<3 && !received;attempt++){
     try { const results=await chrome.scripting.executeScript<boolean>({target:{tabId:tab.id},func:deliverReviewedJob,args:[payload,id,url.origin]}); received=results.some(result=>result.frameId===0 && result.result===true); } catch { /* bounded navigation retry */ }

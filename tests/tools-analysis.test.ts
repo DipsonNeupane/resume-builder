@@ -37,8 +37,38 @@ We value curiosity and welcome many backgrounds.`);
   assert.ok(results.some(item => item.category === 'other' && /support/i.test(item.text)));
 });
 
+test('public matcher rejects posting headings, duty prose, and weak security overlap', () => {
+  const posting = `Keyholder Full Time
+**ESSENTIAL FUNCTIONS/DUTIES**
+Notifies supervisor if major repairs are required.
+**Essential Duties and Responsibilities:**
+Serve customers and operate register.
+**Required:**
+Security clearance required.
+Qualifications
+2+ years of retail supervisory experience required.`;
+  const extracted = extractJobRequirements(posting);
+  assert.doesNotMatch(JSON.stringify(extracted), /ESSENTIAL FUNCTIONS|Essential Duties|Required:\*\*|Qualifications/);
+  assert.equal(extracted.find(item => /Notifies supervisor/i.test(item.text))?.category, 'other');
+  assert.equal(extracted.find(item => /Serve customers/i.test(item.text))?.category, 'other');
+  assert.equal(extracted.find(item => /security clearance/i.test(item.text))?.category, 'required');
+  assert.equal(extracted.find(item => /retail supervisory/i.test(item.text))?.category, 'required');
+
+  const weakResume = `Java Full Stack Developer
+Built Java and Spring Boot services for secure financial applications.
+Implemented application security controls and REST APIs with React.`;
+  const weak = compareResumeToJob(weakResume, posting);
+  const clearance = weak.find(item => /security clearance/i.test(item.text));
+  assert.equal(clearance?.status, 'not_demonstrated');
+  assert.equal(clearance?.resumeEvidence, null);
+
+  const clearedResume = `${weakResume}\nMaintained an active Secret security clearance for classified systems.`;
+  const meaningful = compareResumeToJob(clearedResume, posting);
+  assert.equal(meaningful.find(item => /security clearance/i.test(item.text))?.status, 'demonstrated');
+});
+
 test('bounds tool inputs and rejects empty or oversized content', () => {
-  assert.throws(() => validateToolText('', 'Job description', TOOL_LIMITS.job, 40), /more detail/);
+  assert.throws(() => validateToolText('', 'Job description', TOOL_LIMITS.job, 40), /Paste more/);
   assert.throws(() => validateToolText('x'.repeat(TOOL_LIMITS.job + 1), 'Job description', TOOL_LIMITS.job, 40), /20,000/);
   assert.doesNotThrow(() => validateToolText('x'.repeat(40), 'Job description', TOOL_LIMITS.job, 40));
 });
@@ -76,6 +106,29 @@ test('bullet feedback is dimensional and never manufactures facts', () => {
   assert.ok(result.prompts.some(prompt => /result only if you can support it/i.test(prompt)));
   const serialized = JSON.stringify(result);
   assert.doesNotMatch(serialized, /\d+%|increased by|reduced by/i);
+});
+
+test('bullet checker asks for evidence instead of degrading vague input', () => {
+  for (const source of [
+    'Helped customers.',
+    'Supported clients.',
+    'Assisted users.',
+    'Helped customers with billing requests.',
+    'Various administrative duties for the regional office.',
+    'Was responsible for customer account records.',
+  ]) {
+    const result = analyzeResumeBullet(source);
+    assert.equal(result.dimensions.find(item => item.id === 'specificity')?.state, 'review');
+    assert.equal(result.strongerStructure, null);
+    assert.ok(result.prompts.length > 0);
+  }
+  const quantified = analyzeResumeBullet('Resolved 24 customer cases each week using Zendesk');
+  assert.equal(quantified.dimensions.find(item => item.id === 'specificity')?.state, 'clear');
+  const contextual = analyzeResumeBullet('Coordinated onboarding with sales and support');
+  assert.equal(contextual.dimensions.find(item => item.id === 'context')?.state, 'clear');
+  assert.equal(contextual.strongerStructure, null);
+  const contextRich = analyzeResumeBullet('Responsible for coordinating onboarding across three regions using Salesforce');
+  assert.equal(contextRich.strongerStructure, 'Coordinating onboarding across three regions using Salesforce');
 });
 
 test('hostile HTML remains inert source text in deterministic results', () => {

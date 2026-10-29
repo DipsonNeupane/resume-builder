@@ -6,7 +6,7 @@ for (const width of [320, 390, 768, 1440, 1920]) test(`premium public and docume
  await page.setViewportSize({width,height:900});
  await page.addInitScript(draft=>sessionStorage.setItem('resumestride.resume.v1',JSON.stringify(draft)),example());
  await page.goto('/');
- await expect(page.getByRole('heading',{name:/Stop searching everywhere/})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Find jobs you like. Apply with confidence. Know what happens next.'})).toBeVisible();
  const templateHeadingRatio=await page.locator('.template-specimen .resume-paper').evaluate(paper=>parseFloat(getComputedStyle(paper.querySelector('h2')!).fontSize)/parseFloat(getComputedStyle(paper).fontSize));
  expect(templateHeadingRatio).toBeCloseTo(.9,1);
  expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
@@ -15,16 +15,25 @@ for (const width of [320, 390, 768, 1440, 1920]) test(`premium public and docume
  if(width<560){
   await page.getByRole('button',{name:'Toggle navigation'}).click();
   await page.getByRole('link',{name:'Templates',exact:true}).click();
-  await expect(page.getByRole('button',{name:'Toggle navigation'})).toHaveAttribute('aria-expanded','false');
+  await expect(page).toHaveURL(/\/templates\/$/);
+  await page.goBack();
+  await expect(page.getByRole('heading',{name:'Find jobs you like. Apply with confidence. Know what happens next.'})).toBeVisible();
  }
- await page.getByRole('button',{name:'Build my master resume',exact:true}).first().click();
- await expect(page.getByRole('region',{name:'Active document'})).toContainText('Master resume');
+ await page.goto('/workspace/resume');
+ const activeDocument=page.getByRole('region',{name:'Active document'});
+ await expect(activeDocument).toContainText('Master resume');
+ if(width<560){
+  const identity=await activeDocument.locator(':scope > div').boundingBox();
+  const explanation=await activeDocument.locator(':scope > p').boundingBox();
+  expect(identity).not.toBeNull();expect(explanation).not.toBeNull();
+  expect(identity!.y+identity!.height).toBeLessThanOrEqual(explanation!.y);
+ }
  expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
  await page.screenshot({path:`/tmp/rs-premium-builder-${width}.png`});
  await page.getByRole('button',{name:'Preview resume',exact:true}).click();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
- await page.getByRole('button',{name:'ResumeStride home'}).click();
+ await page.getByRole('button',{name:'APWICO home'}).click();
  await page.getByRole('button',{name:'View Pro options',exact:true}).click();
  expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

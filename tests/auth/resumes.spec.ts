@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { createHash } from 'node:crypto';
 
 // These tests fake an already-established Supabase session by seeding the
 // exact localStorage shape @supabase/auth-js reads on `getSession()` (see
@@ -9,7 +10,7 @@ import { test, expect, type Page } from '@playwright/test';
 
 const userId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 const userIdB = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
-const blankNamed = (name: string) => ({version:1,name,headline:'',email:'',phone:'',location:'',website:'',summary:'',skills:'',profileHeading:'Profile',skillsHeading:'Skills & languages',sections:[{id:'s1',title:'Experience',entries:[]},{id:'s2',title:'Education',entries:[]}],template:'modern',paper:'A4',accent:'#20594a',direction:'ltr',language:'en'});
+const blankNamed = (name: string) => ({version:1,name,headline:'',email:'',phone:'',location:'',website:'',summary:'',skills:'',profileHeading:'Profile',skillsHeading:'Skills & languages',sections:[{id:'s1',title:'Experience',entries:[]},{id:'s2',title:'Education',entries:[]}],template:'modern',paper:'A4',accent:'#20594a',direction:'ltr',language:'en',noExperience:false});
 
 function sessionFor(id: string, email: string) {
  return {
@@ -85,7 +86,7 @@ test('signed-in user with local content is asked before saving to the cloud, and
  });
  await seedSignedIn(page, 'Local Guest Person');
  await page.goto('/');
- await expect(page.getByText('Save your local resume to your ResumeStride account?')).toBeVisible();
+ await expect(page.getByText('Save your local resume to your APWICO account?')).toBeVisible();
  const originalGuestDraft = await page.evaluate(() => sessionStorage.getItem('resumestride.resume.v1'));
  await page.getByRole('button', { name: 'Save to my account' }).click();
  await page.getByRole('button', { name: /Build my resume|Continue my resume/ }).first().click();
@@ -107,9 +108,9 @@ test('declining consent keeps working locally without creating a cloud resume', 
  });
  await seedSignedIn(page, 'Declined Consent Person');
  await page.goto('/');
- await expect(page.getByText('Save your local resume to your ResumeStride account?')).toBeVisible();
+ await expect(page.getByText('Save your local resume to your APWICO account?')).toBeVisible();
  await page.getByRole('button', { name: 'Not now' }).click();
- await expect(page.getByText('Save your local resume to your ResumeStride account?')).toHaveCount(0);
+ await expect(page.getByText('Save your local resume to your APWICO account?')).toHaveCount(0);
  await page.getByRole('button', { name: /Build my resume|Continue my resume/ }).first().click();
  await expectLocalDraftName(page,'Declined Consent Person');
  expect(insertCount, 'declining must never create a cloud resume').toBe(0);
@@ -124,7 +125,7 @@ test('an existing cloud resume loads automatically, the local guest draft is nev
  await page.route('**/auth/v1/logout**', route => route.fulfill({ status: 204, body: '' }));
  await seedSignedIn(page, 'Guest Device Draft');
  await page.goto('/');
- await expect(page.getByText('Loaded your saved resume from your ResumeStride account.', { exact: false })).toBeVisible();
+ await expect(page.getByText('Loaded your saved resume from your APWICO account.', { exact: false })).toBeVisible();
  await page.getByRole('button', { name: /Build my resume|Continue my resume/ }).first().click();
  await expect(page.getByRole('textbox', { name: 'Full name', exact: true })).toHaveValue('Cloud Person');
  expect(await page.evaluate(() => JSON.parse(sessionStorage.getItem('resumestride.resume.v1')!).name), 'loading the account resume must not touch the local guest draft on disk').toBe('Guest Device Draft');
@@ -134,6 +135,41 @@ test('an existing cloud resume loads automatically, the local guest draft is nev
  await page.getByRole('button', { name: 'Back to home', exact: true }).click();
  await page.getByRole('button', { name: /Build my resume|Continue my resume/ }).first().click();
  await expect(page.getByRole('textbox', { name: 'Full name', exact: true }), 'signing out must hand back the original local guest draft, not leave the account resume showing').toHaveValue('Guest Device Draft');
+});
+
+test('a job-specific deep link waits for the account master before capturing its protected base snapshot', async ({ page }) => {
+ const cloudMaster = { ...blankNamed('Cloud Master'), headline: 'Cloud operations lead' };
+ const guest = blankNamed('Guest Device Draft');
+ const savedJobId = '99999999-9999-4999-8999-999999999999';
+ const versionId = '88888888-8888-4888-8888-888888888888';
+ let releaseCloud!: () => void;
+ const cloudGate = new Promise<void>(resolve => { releaseCloud = resolve; });
+ await page.route('**/rest/v1/resumes**', async route => {
+  await cloudGate;
+  await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([{ data: cloudMaster, revision: 4, updated_at: new Date().toISOString() }]) });
+ });
+ let accountLoads = 0;
+ let versionGets = 0;
+ const version = { id: versionId, savedJobId, jobSnapshot: { title: 'Fictional private role', company: 'Fixture Co', descriptionText: '' },
+  sourceMasterResumeId: null, sourceMasterRevision: 4, sourceMasterFingerprint: createHash('sha256').update(JSON.stringify(cloudMaster)).digest('hex'),
+  resume: { ...cloudMaster, name: 'Separate Version' }, revision: 2, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+ await page.route('**/api/jobs-account', route => {
+  const body = route.request().postDataJSON();
+  if (body.action === 'get_job_resume') { versionGets++; return route.fulfill({ json: { version } }); }
+  accountLoads++;
+  return route.fulfill({ json: { isPro: true, saveLimit: 10000, savedJobs: [], jobResumeVersions: [{ ...version, resume: undefined, savedJobExists: true }], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } } });
+ });
+ await seedSignedIn(page, guest.name);
+ await page.goto(`/workspace/resumes/${versionId}`, { waitUntil: 'domcontentloaded' });
+ await expect(page.getByText(/Waiting for your master resume to be ready/)).toBeVisible();
+ expect(accountLoads).toBe(0);
+ releaseCloud();
+ await expect.poll(() => accountLoads).toBe(1);
+ await expect.poll(() => versionGets).toBe(1);
+ await expect(page.getByText(/Job-specific resume — Tailored for Fictional private role/)).toBeVisible();
+ await page.getByRole('button', { name: 'Return to master resume' }).click();
+ await expect(page.getByRole('textbox', { name: 'Full name', exact: true })).toHaveValue('Cloud Master');
+ expect(JSON.parse(await page.evaluate(() => sessionStorage.getItem('resumestride.resume.v1')!)).name).toBe('Guest Device Draft');
 });
 
 test('a stale cloud save surfaces as a conflict instead of silently overwriting, and both resolution paths work', async ({ page }) => {
@@ -285,7 +321,7 @@ test('switching to a different signed-in account mid-session cannot leak the pre
  await page.route('**/auth/v1/logout**', route => route.fulfill({ status: 204, body: '' }));
  await seedSignedIn(page, 'Original Guest Draft', userId);
  await page.goto('/');
- await expect(page.getByText('Loaded your saved resume from your ResumeStride account.', { exact: false })).toBeVisible();
+ await expect(page.getByText('Loaded your saved resume from your APWICO account.', { exact: false })).toBeVisible();
  await page.getByRole('button', { name: 'Continue my resume' }).click();
  await expect(page.getByRole('textbox', { name: 'Full name', exact: true })).toHaveValue('Cloud A');
  const guestDraftBeforeSwitch = await page.evaluate(() => sessionStorage.getItem('resumestride.resume.v1'));
@@ -310,16 +346,27 @@ test('switching to a different signed-in account mid-session cannot leak the pre
 });
 
 test('a failed initial cloud-resume check never offers to save the local draft, since it could silently overwrite an account resume the check failed to find', async ({ page }) => {
+ test.setTimeout(60_000);
+ let getAttempts = 0;
  await page.route('**/rest/v1/resumes**', async route => {
-  if (route.request().method() === 'GET') { await route.fulfill({ status: 500, contentType: 'application/json', body: '{"message":"server error"}' }); return; }
+  if (route.request().method() === 'GET') {
+   getAttempts += 1;
+   await route.fulfill(getAttempts === 1
+    ? { status: 500, contentType: 'application/json', body: '{"message":"server error"}' }
+    : { status: 200, contentType: 'application/json', body: '[]' });
+   return;
+  }
   await route.fulfill({ status: 404, body: '{}' });
  });
  await seedSignedIn(page, 'Local Draft With Content');
- await page.goto('/');
+ await page.goto('/', { waitUntil: 'domcontentloaded' });
  await expect(page.getByText('Could not check your account for a saved resume', { exact: false })).toBeVisible();
- await expect(page.getByText('Save your local resume to your ResumeStride account?')).toHaveCount(0);
+ await expect(page.getByText('Save your local resume to your APWICO account?')).toHaveCount(0);
  await page.getByRole('button', { name: 'Continue my resume' }).click();
- await expect(page.getByText('Save your local resume to your ResumeStride account?'), 'a failed check must never be treated as confirmation that there is nothing to overwrite').toHaveCount(0);
+ await expect(page.getByText('Save your local resume to your APWICO account?'), 'a failed check must never be treated as confirmation that there is nothing to overwrite').toHaveCount(0);
+ await page.getByRole('button', { name: 'Retry account resume check' }).click();
+ await expect.poll(() => getAttempts).toBe(2);
+ await expect(page.getByText('Save your local resume to your APWICO account?'), 'consent is safe only after retry confirms the account has no resume').toBeVisible();
 });
 
 test('a conflict where the account resume itself is gone is an explicit, recoverable state, not silently indistinguishable from "no conflict"', async ({ page }) => {
@@ -385,7 +432,7 @@ test('a delayed initial account-creation save does not mark a newer edit clean, 
  });
  await seedSignedIn(page, 'Local Guest Person');
  await page.goto('/');
- await expect(page.getByText('Save your local resume to your ResumeStride account?')).toBeVisible();
+ await expect(page.getByText('Save your local resume to your APWICO account?')).toBeVisible();
  await page.getByRole('button', { name: 'Save to my account' }).click();
  await page.getByRole('button', { name: 'Continue my resume' }).click();
  // The create POST above is now in flight and deliberately slow. Typing a
@@ -620,7 +667,7 @@ test('a job draft restores after a reload under the real signed-in account that 
  await page.goto('/',{waitUntil:'domcontentloaded'});
  // Confirms cloud.loading has resolved (no cloud resume yet for A) and cloud.linked is false —
  // the state startJobDraft requires to allow an already-signed-in user to start a draft.
- await expect(page.getByText('Save your local resume to your ResumeStride account?')).toBeVisible();
+ await expect(page.getByText('Save your local resume to your APWICO account?')).toBeVisible();
  await page.getByRole('button',{name:'Continue my resume',exact:true}).click();
  await page.evaluate(()=>window.postMessage({type:'resumestride:job-import',payload:{title:'Role',company:'Co',description:'Duties',sourceUrl:'',capturedAt:new Date().toISOString()}},location.origin));
  await page.getByRole('button',{name:'Start job-specific draft'}).click();
@@ -643,7 +690,6 @@ test('a job draft restores after a reload under the real signed-in account that 
  await expect(page.getByText(/was restored in this browser after reload/)).toHaveCount(0);
  await expect(page.getByRole('status').filter({hasText:/Job-specific draft — Tailored for/})).toHaveCount(0);
  expect(await page.evaluate(()=>localStorage.getItem('resumestride.jobDraft')),'a foreign-account draft must be discarded, not left around, once a different real account reloads').toBeNull();
- await page.getByRole('button',{name:'Continue my resume',exact:true}).click();
  await expect(page.getByRole('textbox',{name:'Full name',exact:true}),'account B must see its own cloud resume, never account A\'s job-draft content').toHaveValue('Cloud B');
 });
 

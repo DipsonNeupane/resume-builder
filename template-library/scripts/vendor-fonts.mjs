@@ -40,7 +40,7 @@ for (const [prefix, cssFiles] of plan) {
    if (!/-latin-(?:ext-)?(?:\d|wght|opsz|wdth|standard)/.test(woff2)) continue;
    await copyFile(path.join(pkg, 'files', woff2), path.join(out, woff2));
    // One src only (woff2), relative to fonts.css; strip the woff fallback.
-   faces.push(face.replace(/src:[^;]+;/, `src: url(./${woff2}) format('woff2');`).replace(/font-display:\s*\w+;/, 'font-display: block;').replace(/ Variable'/, "'"));
+   faces.push(face.replace(/src:[^;]+;/, `src: url(./${woff2}) format('woff2');`).replace(/font-display:\s*\w+;/, 'font-display: swap;').replace(/ Variable'/, "'"));
   }
  }
 }

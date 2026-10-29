@@ -1,0 +1,19 @@
+{
+  "project": "ntrqseoiwyrvdsobwxaj",
+  "ownerId": "c79033b7-eac4-479b-a4fe-a7acb85e9543",
+  "createdAt": "2026-09-20T22:39:24.013Z",
+  "purpose": "Fictional populated backup restore specimen. Retain until snapshot restore verification; not a real signup.",
+  "currentRevision": 2,
+  "currentSha256": "e41a8f42a97294ee98a71301035acc4c012cb31fb9325c686b97d9311093da47",
+  "history": [
+    {
+      "revision": 1,
+      "sha256": "b113c48f4493b89e6b9329bdcc5b94f93c9668b78f2da51a0c75529aed49cfb0"
+    },
+    {
+      "revision": 2,
+      "sha256": "e41a8f42a97294ee98a71301035acc4c012cb31fb9325c686b97d9311093da47"
+    }
+  ],
+  "status": "Post-canary physical snapshots exist; managed restore awaits financial authorization"
+}

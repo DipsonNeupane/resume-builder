@@ -44,7 +44,7 @@ export function TemplatePicker({ resume, accessState, onSelect, onUnlock, onView
     const active = premium && entitled.has(template.id);
     const locked = premium && accessState.status === 'ready' && !access?.isPro && !active;
     const subscription = premium ? access?.subscriptions.find(item => item.kind === 'template' && item.templateId === template.id && item.currentPeriodEnd) : undefined;
-    const accessLabel = !premium ? 'Free / Included' : access?.isPro ? 'Included with Pro' : active ? 'Premium · Active' : accessState.status === 'ready' ? 'Premium · $1.99/month' : 'Premium · Checking access';
+    const accessLabel = !premium ? 'Free / Included' : access?.isPro ? 'Included with Pro' : active ? subscription?.cancelAtPeriodEnd ? 'Premium · Legacy renewal off' : 'Premium · Active legacy access' : accessState.status === 'ready' ? 'Premium · Included with Pro' : 'Premium · Checking access';
     const throughDate = subscription?.currentPeriodEnd ? new Date(subscription.currentPeriodEnd) : null;
     const through = throughDate && Number.isFinite(throughDate.getTime()) ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(throughDate) : null;
     return <li key={template.id} className="template-picker-card">
@@ -52,7 +52,7 @@ export function TemplatePicker({ resume, accessState, onSelect, onUnlock, onView
       <span className="template-option-preview" aria-hidden="true" inert><ResumePreview resume={{ ...resume, template: template.id }} /></span>
       <span className="template-option-copy"><span><strong>{template.label}</strong>{selected && <span className="template-current"><Check size={13} aria-hidden="true" />Previewing</span>}</span><span className="template-access-label">{locked && <Lock size={12} aria-hidden="true" />}{accessLabel}</span>{isNew(template.releasedAt) && <span className="template-discovery-label">NEW</span>}<small>{template.tagline}{locked ? ' · Full preview available' : ''}{active && through ? ` · Access through ${through}` : ''}</small></span>
      </button>
-     {locked && <div className="template-option-actions"><button className="button" type="button" onClick={()=>{setOpen(false);onUnlock(template.id as PremiumTemplateId);}}>Unlock for $1.99/month</button><button className="text-button" type="button" onClick={()=>{setOpen(false);onViewPro();}}>Get Pro — all Premium templates</button></div>}
+     {locked && <div className="template-option-actions"><button className="button" type="button" onClick={()=>{setOpen(false);onUnlock(template.id as PremiumTemplateId);}}>Use with Pro</button><button className="text-button" type="button" onClick={()=>{setOpen(false);onViewPro();}}>Review Pro — all 27 templates</button></div>}
     </li>;
    })}</ul>
   </Modal>}

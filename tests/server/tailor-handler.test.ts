@@ -11,7 +11,7 @@ import { example } from '../../src/model.ts'
 const owner='11111111-1111-1111-1111-111111111111'
 const savedJobId='22222222-2222-2222-2222-222222222222'
 const versionId='33333333-3333-3333-3333-333333333333'
-const env={APP_ORIGIN:'https://resumestride.com',SUPABASE_URL:'https://fixture.supabase.co',SUPABASE_PUBLISHABLE_KEY:'public',SUPABASE_SERVICE_ROLE_KEY:'secret',AI_ENABLED:'true',OPENAI_API_KEY:'sk-fixture'}
+const env={APP_ORIGIN:'https://apwico.com',SUPABASE_URL:'https://fixture.supabase.co',SUPABASE_PUBLISHABLE_KEY:'public',SUPABASE_SERVICE_ROLE_KEY:'secret',AI_ENABLED:'true',OPENAI_API_KEY:'sk-fixture'}
 const job:NormalizedJob={
  id:'techmap:one',provider:'techmap',providerJobId:'one',title:'Customer Experience Specialist',company:'Example',
  location:{value:{city:'Nairobi',region:null,country:'KE'},source:'provider',confidence:'medium'},workplace:{value:'remote',source:'provider',confidence:'high'},
@@ -23,7 +23,7 @@ const job:NormalizedJob={
 const snapshot=savedJobSnapshot(job,{label:'good',reasons:['Relevant support evidence.']})
 const evidence={headline:'Customer Experience Specialist',summary:'Supports customers',skills:'CRM systems',roles:[],qualifications:[]}
 const analysis=analyzeJob(evidence,job,{title:job.title}).analysis
-function request(body:unknown){return new Request('https://resumestride.com/api/tailor',{method:'POST',headers:{origin:env.APP_ORIGIN,'content-type':'application/json',authorization:'Bearer fixture'},body:JSON.stringify(body)})}
+function request(body:unknown){return new Request('https://apwico.com/api/tailor',{method:'POST',headers:{origin:env.APP_ORIGIN,'content-type':'application/json',authorization:'Bearer fixture'},body:JSON.stringify(body)})}
 
 function fixture(input:unknown, failure?:{name:string;message:string;code?:string}){
  const calls:{name:string;args:Record<string,unknown>}[]=[]

@@ -12,8 +12,12 @@ export function json(status: number, body: unknown): Response {
 
 export function requirePost(request: Request, appOrigin: string): void {
   if (request.method !== 'POST') throw new HttpError(405, 'Method not allowed')
-  // Browser mutations must originate at the configured app, never forwarded Host.
-  if (request.headers.get('origin') !== new URL(appOrigin).origin) throw new HttpError(403, 'Origin not allowed')
+  // Browser mutations must originate at the configured app or one exact owner-controlled
+  // legacy origin during the APWICO coexistence window, never forwarded Host. Keeping
+  // these exact origins compatible lets an already-open ResumeStride tab safely finish
+  // an authenticated save/export without redirecting its POST body or bearer token.
+  const allowedOrigins = new Set([new URL(appOrigin).origin, 'https://resumestride.com', 'https://www.resumestride.com'])
+  if (!allowedOrigins.has(request.headers.get('origin') ?? '')) throw new HttpError(403, 'Origin not allowed')
   if (request.headers.get('content-type')?.split(';')[0].trim().toLowerCase() !== 'application/json') {
     throw new HttpError(415, 'JSON required')
   }

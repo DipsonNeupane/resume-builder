@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 280">
+  <rect width="440" height="280" fill="#2d0c1b"/>
+  <circle cx="386" cy="30" r="130" fill="#ffd0df" opacity=".12"/>
+  <circle cx="35" cy="260" r="110" fill="#b72f45" opacity=".22"/>
+  <g transform="translate(36 36)">
+    <rect width="64" height="64" rx="12" fill="#18060f" stroke="#ffd0df" stroke-opacity=".35"/>
+    <path d="M12 50 25 14h9L21 50Z" fill="#ffd0df"/>
+    <path d="M30 50 43 14h9L39 50Z" fill="#f2c84b"/>
+  </g>
+  <text x="36" y="134" fill="#fff8fa" font-family="Arial, sans-serif" font-size="32" font-weight="700">APWICO Job Capture</text>
+  <text x="36" y="169" fill="#e8c6d2" font-family="Arial, sans-serif" font-size="16">Capture one public job. Review it.</text>
+  <text x="36" y="194" fill="#e8c6d2" font-family="Arial, sans-serif" font-size="16">Send it to your evidence-first workspace.</text>
+  <rect x="36" y="222" width="198" height="34" rx="17" fill="#f2c84b"/>
+  <text x="55" y="244" fill="#261c00" font-family="Arial, sans-serif" font-size="13" font-weight="700">REVIEW BEFORE SENDING</text>
+</svg>

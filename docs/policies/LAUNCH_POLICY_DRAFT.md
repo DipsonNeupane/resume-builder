@@ -1,5 +1,7 @@
 # ResumeStride policy draft — not published
 
+> **Superseded (2026-10-27).** The authoritative public terms are `public/terms.html`. This historical draft still describes retired ResumeStride passes and prices; do not publish it.
+
 Prepared for owner review. This is a product-specific draft, not a claim of universal legal compliance. Do not publish placeholders or enable purchases until the operator identity, applicable tax treatment and refund commitment are confirmed. User asked for conventional policies; that is not evidence of a legal entity or jurisdiction.
 
 ## Proposed terms text
@@ -8,7 +10,7 @@ ResumeStride helps you create resumes and prepare application materials. You rem
 
 You retain your rights to your resume and application content. You allow ResumeStride and its service providers to process it only as needed to provide the features you choose. AI suggestions must be reviewed; they can be inaccurate and must not be used to invent qualifications or experience.
 
-Free accounts receive three app-generated resume PDF downloads in each 30-day period measured from signup. Ordinary browser printing and JSON backups do not use this allowance. Paid Pro access costs USD 19.99 for 30 days. Manual purchases do not renew automatically. A purchase made during existing paid access adds 30 days after the current paid-through time. Expired users can buy a new pass. Existing content is not deleted merely because Pro expires.
+Free accounts receive seven successful app-generated PDF or Word downloads in any rolling seven-day period; failed downloads do not count (superseded 2026-10-27 to match the enforced launch allowance). Ordinary browser printing and JSON backups do not use this allowance. Paid Pro access costs USD 19.99 for 30 days. Manual purchases do not renew automatically. A purchase made during existing paid access adds 30 days after the current paid-through time. Expired users can buy a new pass. Existing content is not deleted merely because Pro expires.
 
 Automatic renewal is optional, off by default, and must be explicitly enabled. Its price, next charge date and cancellation controls must be shown before consent. Turning renewal off stops future renewal charges while preserving time already purchased. These statements must be backed by working billing implementation before publication.
 

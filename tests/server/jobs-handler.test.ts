@@ -6,7 +6,7 @@ import { HttpError } from '../../server/http/security.ts'
 import type { NormalizedJob } from '../../server/jobs/types.ts'
 
 const env = {
-  APP_ORIGIN: 'https://resumestride.com',
+  APP_ORIGIN: 'https://apwico.com',
   TECHMAP_API_KEY: 'x'.repeat(20),
   SUPABASE_URL: 'https://fixture.supabase.co',
   SUPABASE_PUBLISHABLE_KEY: 'public',
@@ -61,6 +61,7 @@ function fixture(options: { isPro?: boolean; page1?: NormalizedJob[]; page2?: No
     serviceDatabase: ((..._args: unknown[]) => { dbCalls.push('serviceDatabase'); return {
       rpc: async (name: string, args?: Record<string, unknown>) => {
         rpcCalls.push({ name, args })
+        if (name === 'jobs_reserve_provider_request') return { data: { allowed:true, used:1, remaining:499, resetsAt:'2026-10-01T00:00:00.000Z' }, error:null }
         return name === 'jobs_reserve_recommendation_refresh'
           ? { data: options.isPro
             ? { allowed: true, isPro: true, reservedAt: null, previousRefreshAt: null, nextRefreshAt: null }
@@ -77,7 +78,7 @@ function fixture(options: { isPro?: boolean; page1?: NormalizedJob[]; page2?: No
 const evidence = { headline: 'Senior Software Engineer', skills: 'TypeScript, PostgreSQL', roles: [] }
 
 function request(body: unknown): Request {
-  return new Request('https://resumestride.com/api/jobs-search', {
+  return new Request('https://apwico.com/api/jobs-search', {
     method: 'POST',
     headers: { origin: env.APP_ORIGIN, 'content-type': 'application/json' },
     body: JSON.stringify(body),
@@ -93,6 +94,24 @@ test('Free accounts see at most FREE_JOB_LIMIT real jobs, with an honest availab
   assert.equal(body.isPro, false)
   assert.equal(body.jobs.length, FREE_JOB_LIMIT)
   assert.equal(body.availableCount, 12)
+})
+
+test('Free search returns fewer than five rather than padding Java results with unrelated jobs', async () => {
+  const candidates = [
+    job({ id: 'techmap:java', title: 'Senior Java Software Engineer', company: 'Software One', descriptionText: 'Build Java and Spring services.' }),
+    job({ id: 'techmap:application', title: 'Senior Application Developer – Securitized Products (Java & .NET)', company: 'Finance Tech', descriptionText: 'Develop Java and .NET applications.' }),
+    job({ id: 'techmap:keyholder', title: 'Keyholder Full Time', company: 'Retail Co', descriptionText: 'Open and close the retail store.' }),
+    job({ id: 'techmap:maintenance', title: 'Maintenance Tech / Facilities Engineer', company: 'Facilities Co', descriptionText: 'Repair building equipment and HVAC systems.' }),
+    job({ id: 'techmap:chef', title: 'Sous Chef', company: 'Restaurant Co', descriptionText: 'Prepare food and lead kitchen service.' }),
+  ]
+  const javaEvidence = { headline: 'Java Full StackDeveloper', skills: 'Java, Spring Boot, React, SQL', roles: [] }
+  const { deps } = fixture({ isPro: false, page1: candidates })
+  const response = await searchJobs(request({ criteria: { title: `Java Full Stack Developer ${uniqueTitle()}` }, evidence: javaEvidence }), env, deps)
+  assert.equal(response.status, 200)
+  const body = await response.json()
+  assert.equal(body.availableCount, 2)
+  assert.deepEqual(body.jobs.map((item: { id: string }) => item.id).sort(), ['techmap:application', 'techmap:java'])
+  assert.equal(body.jobs.some((item: { matchReasons: string[] }) => item.matchReasons.some(reason => /Keyholder|Maintenance|Sous Chef/.test(reason))), false)
 })
 
 test('bounded resume evidence stays server-side and is never forwarded to Techmap', async () => {
@@ -121,6 +140,7 @@ test('Pro accounts see up to PRO_JOB_LIMIT jobs, never more', async () => {
 
 test('retrieves at most two Techmap pages per search, deduping the combined result', async () => {
   const { deps, calls } = fixture({
+    isPro: true,
     page1: [job({ id: 'techmap:1' }), job({ id: 'techmap:2' })],
     hasMore: true,
     page2: [job({ id: 'techmap:2' }), job({ id: 'techmap:3' })], // job 2 duplicated across pages
@@ -129,6 +149,23 @@ test('retrieves at most two Techmap pages per search, deduping the combined resu
   const body = await response.json()
   assert.equal(calls.length, 2)
   assert.equal(body.availableCount, 3) // 1, 2, 3 -- duplicate collapsed
+})
+
+test('Free uses one provider page even when more pages exist', async () => {
+  const { deps, calls } = fixture({ isPro: false, page1: [job()], hasMore: true, page2: [job({ id: 'techmap:second' })] })
+  const response = await searchJobs(request({ criteria: { title: uniqueTitle() }, evidence }), env, deps)
+  assert.equal(response.status, 200)
+  assert.deepEqual(calls.map(call => call.page), [1])
+})
+
+test('a Free page-one cache cannot suppress the second page of a later Pro search', async () => {
+  const title = uniqueTitle()
+  const free = fixture({ isPro: false, page1: [job({ id: 'techmap:free-first' })], hasMore: true })
+  assert.equal((await searchJobs(request({ criteria: { title }, evidence }), env, free.deps)).status, 200)
+  const pro = fixture({ isPro: true, page1: [job({ id: 'techmap:pro-first' })], hasMore: true, page2: [job({ id: 'techmap:pro-second' })] })
+  const response = await searchJobs(request({ criteria: { title }, evidence }), env, pro.deps)
+  assert.equal(response.status, 200)
+  assert.deepEqual(pro.calls.map(call => call.page), [1, 2])
 })
 
 test('does not fetch a second page when the first page reports no more results', async () => {
@@ -153,9 +190,22 @@ test('forwards expiry provenance so inferred staleness cannot become provider un
   })
 })
 
+test('registers only bounded owner-scoped identities for issued Free Match results', async () => {
+  const { deps, rpcCalls } = fixture({ page1: [job({ dedupeKey: 'a'.repeat(64) })], owner: 'owner-review-proof' })
+  const response = await searchJobs(request({ criteria: { title: uniqueTitle() }, evidence }), env, deps)
+  assert.equal(response.status, 200)
+  const issued = rpcCalls.find(call => call.name === 'product_register_match_results')
+  assert.equal(issued?.args?.p_owner, 'owner-review-proof')
+  assert.equal(issued?.args?.p_scope, 'limited')
+  assert.match(String((issued?.args?.p_job_keys as string[])[0]), /^[0-9a-f]{64}$/)
+  assert.match(String((issued?.args?.p_analysis_keys as string[])[0]), /^[0-9a-f]{64}$/)
+  assert.equal(JSON.stringify(issued?.args).includes('Required:'), false)
+  assert.equal(JSON.stringify(issued?.args).includes('https://'), false)
+})
+
 test('waits at least 1100ms via the injectable delay before an optional second page, and never for a single-page search', async () => {
   const delays: number[] = []
-  const { deps } = fixture({ page1: [job()], hasMore: true, page2: [job({ id: 'techmap:2' })] })
+  const { deps } = fixture({ isPro: true, page1: [job()], hasMore: true, page2: [job({ id: 'techmap:2' })] })
   deps.delay = async (ms: number) => { delays.push(ms) }
   await searchJobs(request({ criteria: { title: uniqueTitle() }, evidence }), env, deps)
   assert.deepEqual(delays, [1100])
@@ -169,7 +219,7 @@ test('waits at least 1100ms via the injectable delay before an optional second p
 
 test('a 429 on the optional second page still returns the first page results rather than failing', async () => {
   const rateLimitError = new HttpError(429, 'Job search rate limit reached. Try again later.')
-  const { deps, calls } = fixture({ page1: [job()], hasMore: true, page2Error: rateLimitError })
+  const { deps, calls } = fixture({ isPro: true, page1: [job()], hasMore: true, page2Error: rateLimitError })
   const response = await searchJobs(request({ criteria: { title: uniqueTitle() }, evidence }), env, deps)
   assert.equal(response.status, 200)
   assert.equal(calls.length, 2)
@@ -258,7 +308,7 @@ test('an authoritative Free cadence rejection returns the next refresh time with
   const response = await searchJobs(request({ criteria: { title: uniqueTitle() }, evidence }), env, deps)
   assert.equal(response.status, 429)
   assert.deepEqual(await response.json(), {
-    error: 'Free recommendations can refresh once every 24 hours. Your existing recommendations and saved jobs are still available.',
+    error: 'Free accounts can refresh three times in a rolling 24-hour window. Your existing recommendations and saved jobs are still available.',
     retryAt: '2026-09-27T12:00:00.000Z',
   })
   assert.equal(calls.length, 0)
@@ -323,9 +373,9 @@ test('rejects a request missing resume evidence', async () => {
 
 test('rejects a request with an invalid origin or method', async () => {
   const { deps } = fixture()
-  const badOrigin = new Request('https://resumestride.com/api/jobs-search', { method: 'POST', headers: { origin: 'https://evil.example', 'content-type': 'application/json' }, body: JSON.stringify({ criteria: { title: uniqueTitle() }, evidence }) })
+  const badOrigin = new Request('https://apwico.com/api/jobs-search', { method: 'POST', headers: { origin: 'https://evil.example', 'content-type': 'application/json' }, body: JSON.stringify({ criteria: { title: uniqueTitle() }, evidence }) })
   assert.equal((await searchJobs(badOrigin, env, deps)).status, 403)
-  const badMethod = new Request('https://resumestride.com/api/jobs-search', { method: 'GET', headers: { origin: env.APP_ORIGIN } })
+  const badMethod = new Request('https://apwico.com/api/jobs-search', { method: 'GET', headers: { origin: env.APP_ORIGIN } })
   assert.equal((await searchJobs(badMethod, env, deps)).status, 405)
 })
 
@@ -333,13 +383,13 @@ test('an invalid origin or method never reaches authentication, provider config,
   const { deps, calls, dbCalls } = fixture()
   let techmapConfigTouched = false
   const badEnv = { ...env, get TECHMAP_API_KEY(): string { techmapConfigTouched = true; return env.TECHMAP_API_KEY } }
-  const badOrigin = new Request('https://resumestride.com/api/jobs-search', { method: 'POST', headers: { origin: 'https://evil.example', 'content-type': 'application/json' }, body: JSON.stringify({ criteria: { title: uniqueTitle() }, evidence }) })
+  const badOrigin = new Request('https://apwico.com/api/jobs-search', { method: 'POST', headers: { origin: 'https://evil.example', 'content-type': 'application/json' }, body: JSON.stringify({ criteria: { title: uniqueTitle() }, evidence }) })
   await searchJobs(badOrigin, badEnv as unknown as typeof env, deps)
   assert.equal(dbCalls.length, 0, 'authenticate/serviceDatabase must never be called for a rejected origin')
   assert.equal(calls.length, 0, 'the provider must never be called for a rejected origin')
   assert.equal(techmapConfigTouched, false, 'TECHMAP_API_KEY must never even be read for a rejected origin')
 
-  const badMethod = new Request('https://resumestride.com/api/jobs-search', { method: 'GET', headers: { origin: env.APP_ORIGIN } })
+  const badMethod = new Request('https://apwico.com/api/jobs-search', { method: 'GET', headers: { origin: env.APP_ORIGIN } })
   await searchJobs(badMethod, badEnv as unknown as typeof env, deps)
   assert.equal(dbCalls.length, 0, 'authenticate/serviceDatabase must never be called for a rejected method')
   assert.equal(calls.length, 0, 'the provider must never be called for a rejected method')
@@ -388,4 +438,27 @@ test('Free responses contain only bounded analysis previews while Pro receives f
   assert.deepEqual(proBody.jobs[0].matchAnalysis.fullAnalysis.requirements.map((item: { category: string }) => item.category), ['required', 'preferred', 'nice_to_have'])
   assert.equal(proBody.jobs[0].matchAnalysis.fullAnalysis.tailoringAction, 'Tailor my resume for this job')
   assert.doesNotMatch(JSON.stringify(proBody.jobs[0].matchAnalysis), /\d+%|hiring probability/i)
+})
+
+test('experience level and priorities reorder results within a label; they never hide one and unstated data is neutral', async () => {
+  const candidates = [
+    job({ id: 'techmap:51', title: 'Senior Software Engineer', company: 'A', portal: 'pa', workplace: { value: 'onsite', source: 'provider', confidence: 'high' } }),
+    job({ id: 'techmap:52', title: 'Software Engineer', company: 'B', portal: 'pb' }),
+    job({ id: 'techmap:53', title: 'Junior Software Engineer', company: 'C', portal: 'pc', workplace: { value: 'remote', source: 'provider', confidence: 'high' } }),
+  ]
+  const order = async (extra: Record<string, unknown>) => {
+    const { deps } = fixture({ isPro: true, page1: candidates })
+    const response = await searchJobs(request({ criteria: { title: uniqueTitle(), ...extra }, evidence: { headline: 'Software Engineer', skills: 'TypeScript, PostgreSQL', roles: [] } }), env, deps)
+    assert.equal(response.status, 200)
+    return (await response.json()).jobs.map((card: { id: string }) => card.id)
+  }
+  const entry = await order({ experienceLevel: 'entry' })
+  const senior = await order({ experienceLevel: 'senior' })
+  assert.equal(entry.length, 3); assert.equal(senior.length, 3)
+  assert.ok(entry.indexOf('techmap:53') < entry.indexOf('techmap:51'), `entry level ranks the junior role above the senior one: ${entry}`)
+  assert.ok(senior.indexOf('techmap:51') < senior.indexOf('techmap:53'), `senior level ranks the senior role above the junior one: ${senior}`)
+  // 'unsure' and no preference produce the same order.
+  assert.deepEqual(await order({ experienceLevel: 'unsure' }), await order({}))
+  const flexible = await order({ experienceLevel: 'senior', priorities: ['flexibility'] })
+  assert.equal(flexible.length, 3)
 })

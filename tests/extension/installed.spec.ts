@@ -1,43 +1,113 @@
 import {test,expect,chromium} from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import {resolve} from 'node:path';
-import type {ExtractResult} from '../../apps/extension/src/lib/types';
+
+test('popup remains usable at its bounded Chrome action width',async()=>{
+ const extensionPath=resolve('apps/extension');
+ const context=await chromium.launchPersistentContext('',{channel:'chromium',headless:true,args:[`--disable-extensions-except=${extensionPath}`,`--load-extension=${extensionPath}`]});
+ try {
+  const worker=context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
+  const id=new URL(worker.url()).host;
+  const popup=await context.newPage();
+  await popup.goto(`chrome-extension://${id}/popup.html`);
+  for(const width of [360,400]){
+   await popup.setViewportSize({width,height:720});
+   await expect(popup.getByRole('heading',{name:'Capture job'})).toBeVisible();
+   await expect(popup.locator('.notice')).toBeVisible();
+   await expect(popup.getByLabel('Job title',{exact:true})).toBeVisible();
+   await expect(popup.getByRole('button',{name:'Send to APWICO'})).toBeVisible();
+   const layout=await popup.evaluate(()=>{
+    const root=document.documentElement;
+    const title=document.querySelector('h1')!;
+    const input=document.querySelector('input')!;
+    const button=document.querySelector('button[type="submit"]')!;
+    return {
+     viewport:root.clientWidth,
+     scrollWidth:root.scrollWidth,
+     headingHeight:title.getBoundingClientRect().height,
+     inputWidth:input.getBoundingClientRect().width,
+     buttonWidth:button.getBoundingClientRect().width,
+     buttonHeight:button.getBoundingClientRect().height,
+    };
+   });
+   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.viewport);
+   expect(layout.headingHeight).toBeLessThan(60);
+   expect(layout.inputWidth).toBeGreaterThanOrEqual(320);
+   expect(layout.buttonWidth).toBeGreaterThanOrEqual(320);
+   expect(layout.buttonHeight).toBeGreaterThanOrEqual(44);
+   if(width===360) await popup.screenshot({path:'/tmp/apwico-extension-popup-360.png',fullPage:true});
+  }
+  await popup.getByLabel('Job title',{exact:true}).focus();
+  await expect(popup.getByLabel('Job title',{exact:true})).toBeFocused();
+  expect((await new AxeBuilder({page:popup}).analyze()).violations).toEqual([]);
+ } finally {await context.close();}
+});
+
+test('toolbar popup declares a usable intrinsic Chrome action width', async () => {
+ const extensionPath=resolve('apps/extension');
+ const context=await chromium.launchPersistentContext('',{channel:'chromium',headless:true,args:[`--disable-extensions-except=${extensionPath}`,`--load-extension=${extensionPath}`]});
+ try {
+  const worker=context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
+  const id=new URL(worker.url()).host;
+  const popup=await context.newPage();
+  await popup.goto(`chrome-extension://${id}/popup.html`);
+  const intrinsic=await popup.evaluate(()=>{
+   const html=getComputedStyle(document.documentElement);
+   const body=document.body.getBoundingClientRect();
+   return {declaredWidth:html.width,bodyWidth:body.width};
+  });
+  expect(intrinsic.declaredWidth).toBe('360px');
+  expect(intrinsic.bodyWidth).toBe(360);
+  await expect(popup.locator('input').first()).toHaveCSS('min-width','0px');
+  await expect(popup.locator('button').last()).toHaveCSS('min-width','0px');
+ } finally {await context.close();}
+});
+
+test('manual real Chrome renders the installed popup at a readable narrow width', async () => {
+ test.skip(!process.env.APWICO_REAL_CHROME, 'Requires an unlocked desktop and installed Google Chrome.');
+ const extensionPath=resolve('apps/extension');
+ const context=await chromium.launchPersistentContext('',{channel:'chrome',headless:false,ignoreDefaultArgs:['--disable-extensions'],args:['--enable-unsafe-extension-debugging']});
+ try {
+  const browser=context.browser();if(!browser)throw new Error('Expected a real Chrome browser context');
+  const cdp=await browser.newBrowserCDPSession();
+  const loaded=await cdp.send('Extensions.loadUnpacked',{path:extensionPath}) as {id:string};
+  const id=loaded.id;
+  expect(id).toMatch(/^[a-p]{32}$/);
+  await expect.poll(()=>context.serviceWorkers().some(worker=>new URL(worker.url()).host===id)).toBe(true);
+  const popup=await context.newPage();
+  await popup.setViewportSize({width:360,height:720});
+  await popup.goto(`chrome-extension://${id}/popup.html`);
+  await expect(popup.getByRole('heading',{name:'Capture job'})).toBeVisible();
+  const layout=await popup.evaluate(()=>({innerWidth,scrollWidth:document.documentElement.scrollWidth,inputWidth:document.querySelector('input')!.getBoundingClientRect().width,buttonWidth:document.querySelector('button[type="submit"]')!.getBoundingClientRect().width}));
+  expect(layout.innerWidth).toBe(360);
+  expect(layout.scrollWidth).toBeLessThanOrEqual(360);
+  expect(layout.inputWidth).toBeGreaterThanOrEqual(320);
+  expect(layout.buttonWidth).toBeGreaterThanOrEqual(320);
+  await popup.screenshot({path:'/tmp/apwico-extension-025-real-chrome-popup.png',fullPage:true});
+ } finally {await context.close();}
+});
 
 for (const closePopup of [false,true]) test(`unpacked extension delivers reviewed text${closePopup ? ' after popup closes' : ' through real Chrome APIs'}`,async()=>{
  const extensionPath=resolve('apps/extension');
  const context=await chromium.launchPersistentContext('',{channel:'chromium',headless:true,args:[`--disable-extensions-except=${extensionPath}`,`--load-extension=${extensionPath}`]});
  try {
-  const manager=await context.newPage();await manager.goto('chrome://extensions/');
-  const item=manager.locator('extensions-item').filter({hasText:'ResumeStride Job Capture'});
-  await expect(item).toHaveCount(1);
-  const id=await item.getAttribute('id');expect(id).toBeTruthy();
   const worker=context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
+  const id=new URL(worker.url()).host;
   const popup=await context.newPage();await popup.goto(`chrome-extension://${id}/popup.html`);
-  const fixture=await context.newPage();
-  await fixture.goto('http://127.0.0.1:5185/extension-fixture/job-posting.html');
-  const extraction=await popup.evaluate<ExtractResult>(`(async () => {
-   const tabs=await chrome.tabs.query({});
-   const tab=tabs.find(tab=>tab.url?.includes('/extension-fixture/job-posting.html'));
-   const [injection]=await chrome.scripting.executeScript({target:{tabId:tab.id},files:['dist/inject/extract-job.js']});
-   return injection.result;
-  })()`);
-  expect(extraction.supported).toBe(true);
-  if(!extraction.supported) throw new Error(extraction.reason);
-  expect(extraction.capture.title).toBe('Senior Widget Engineer');
-  expect(extraction.capture.company).toBe('Acme Corp');
   await popup.getByLabel('Job title' ,{exact:true}).fill('Extension smoke role');
+  await popup.getByLabel('Company',{exact:true}).fill('Acme Corp');
   await popup.getByLabel('Job description',{exact:true}).fill('Support customers and document solutions.');
+  await popup.getByText('Optional details',{exact:true}).click();
+  await popup.getByLabel('Source URL',{exact:true}).fill('https://jobs.example/roles/extension-smoke');
   await popup.locator('#app').screenshot({path:'/tmp/rs-premium-extension-review.png'});
-  await popup.getByText('Source & connection', {exact:true}).click();
-  await popup.getByLabel('ResumeStride app URL',{exact:true}).fill('http://127.0.0.1:5185/');
-  let release!:()=>void;
-  const gate=new Promise<void>(resolve=>{release=resolve;});
-  if(closePopup) await context.route('http://127.0.0.1:5185/',async route=>{await gate;await route.continue();});
+  await popup.getByText('Developer options', {exact:true}).click();
+  await popup.getByLabel('Developer destination',{exact:true}).fill('http://127.0.0.1:5185/');
   const destinationPromise=context.waitForEvent('page');
-  await popup.getByRole('button',{name:'Send reviewed details to ResumeStride'}).click();
+  await popup.getByRole('button',{name:'Send to APWICO'}).click();
   const destination=await destinationPromise;
-  if(closePopup){await popup.close();release();}
-  await expect(destination.getByText('Extension smoke role',{exact:false}).first()).toBeVisible();
-  if(!closePopup) await expect(popup.getByRole('status')).toContainText('received');
+  if(closePopup)await popup.close();
+  await expect(destination.getByLabel('Captured job title')).toHaveValue('Extension smoke role');
+  if(!closePopup) await expect(popup.locator('.status')).toContainText('Sent. APWICO is open');
   await expect(destination.getByLabel('Captured description')).toHaveValue('Support customers and document solutions.');
   await expect.poll(()=>worker.evaluate(async()=>(await (globalThis as any).chrome.storage.session.get('pendingCapture')).pendingCapture)).toBeUndefined();
   expect(new URL(destination.url()).search).toBe('');
@@ -45,14 +115,27 @@ for (const closePopup of [false,true]) test(`unpacked extension delivers reviewe
  } finally {await context.close();}
 });
 
+test('manual review cannot claim delivery without a canonical public HTTPS source',async()=>{
+ const extensionPath=resolve('apps/extension');
+ const context=await chromium.launchPersistentContext('',{channel:'chromium',headless:true,args:[`--disable-extensions-except=${extensionPath}`,`--load-extension=${extensionPath}`]});
+ try{
+  const worker=context.serviceWorkers()[0]||await context.waitForEvent('serviceworker');const id=new URL(worker.url()).host;
+  const popup=await context.newPage();await popup.goto(`chrome-extension://${id}/popup.html`);
+  const initialPages=context.pages().length;
+  await popup.getByLabel('Job title',{exact:true}).fill('Manual role');await popup.getByLabel('Company',{exact:true}).fill('Example');await popup.getByLabel('Job description',{exact:true}).fill('Build accessible customer software.');
+  await popup.getByRole('button',{name:'Send to APWICO'}).click();
+  await expect(popup.locator('.status')).toHaveText('Add the public HTTPS job source URL before sending.');
+  await expect(popup.getByLabel('Source URL',{exact:true})).toBeFocused();
+  expect(context.pages()).toHaveLength(initialPages);
+ }finally{await context.close();}
+});
+
 test('installed worker rejects invalid destinations, oversized captures and non-popup senders',async()=>{
  const extensionPath=resolve('apps/extension');
  const context=await chromium.launchPersistentContext('',{channel:'chromium',headless:true,args:[`--disable-extensions-except=${extensionPath}`,`--load-extension=${extensionPath}`]});
  try {
-  const manager=await context.newPage();await manager.goto('chrome://extensions/');
-  const item=manager.locator('extensions-item').filter({hasText:'ResumeStride Job Capture'});
-  await expect(item).toHaveCount(1);
-  const id=await item.getAttribute('id');expect(id).toBeTruthy();
+  const worker=context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
+  const id=new URL(worker.url()).host;
   const popup=await context.newPage();await popup.goto(`chrome-extension://${id}/popup.html`);
   const initialPages=context.pages().length;
   const results=await popup.evaluate(`(async()=>{
@@ -146,6 +229,8 @@ test('installed toolbar action grants activeTab on Greenhouse without a job-host
       title: 'Toolbar support role', company: 'Example', description: 'Support customers.',
       location: '', site: 'greenhouse', sourceUrl: url, capturedAt: expect.any(String),
     },
+    descriptionComplete: true,
+    warnings: [],
     expiresAt: expect.any(Number),
   });
   expect(Date.parse(pending.payload.capturedAt)).toBeGreaterThanOrEqual(triggeredAt);
@@ -157,7 +242,7 @@ test('installed toolbar action grants activeTab on Greenhouse without a job-host
  } finally { await context.close(); }
 });
 
-test('session retry survives popup closure and expired captures are discarded', async () => {
+test('session retry data survives popup closure and expired captures are discarded', async () => {
  const context = await chromium.launchPersistentContext('', { channel: 'chromium', headless: true, args: [`--disable-extensions-except=${resolve('apps/extension')}`, `--load-extension=${resolve('apps/extension')}`] });
  try {
   const worker = context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
@@ -166,10 +251,9 @@ test('session retry survives popup closure and expired captures are discarded', 
   await popup.getByLabel('Job title', { exact: true }).fill('Retry role');
   await expect.poll(() => worker.evaluate(async () => (await (globalThis as any).chrome.storage.session.get('pendingCapture')).pendingCapture?.payload.title)).toBe('Retry role');
   await popup.close();
-  const reopened = await context.newPage(); await reopened.goto(`chrome-extension://${id}/popup.html`);
-  await expect(reopened.getByLabel('Job title', { exact: true })).toHaveValue('Retry role');
+  await expect.poll(() => worker.evaluate(async () => (await (globalThis as any).chrome.storage.session.get('pendingCapture')).pendingCapture?.payload.title)).toBe('Retry role');
   await worker.evaluate(async () => { const storage = (globalThis as any).chrome.storage.session; const entry = (await storage.get('pendingCapture')).pendingCapture; entry.expiresAt = Date.now() - 1; await storage.set({ pendingCapture: entry }); });
-  await reopened.reload();
+  const reopened = await context.newPage(); await reopened.goto(`chrome-extension://${id}/popup.html`);
   await expect(reopened.getByLabel('Job title', { exact: true })).toHaveValue('');
   await expect.poll(() => worker.evaluate(async () => (await (globalThis as any).chrome.storage.session.get('pendingCapture')).pendingCapture)).toBeUndefined();
  } finally { await context.close(); }

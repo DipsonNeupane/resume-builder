@@ -7,10 +7,10 @@ import type { NormalizedJob } from '../../server/jobs/types.ts'
 import { blank } from '../../src/model.ts'
 
 const owner = '11111111-1111-1111-1111-111111111111'
-const env = { APP_ORIGIN: 'https://resumestride.com', SUPABASE_URL: 'https://fixture.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'public', SUPABASE_SERVICE_ROLE_KEY: 'secret' }
+const env = { APP_ORIGIN: 'https://apwico.com', SUPABASE_URL: 'https://fixture.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'public', SUPABASE_SERVICE_ROLE_KEY: 'secret' }
 
 function request(body: unknown, origin = env.APP_ORIGIN): Request {
-  return new Request('https://resumestride.com/api/jobs-account', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify(body) })
+  return new Request('https://apwico.com/api/jobs-account', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify(body) })
 }
 
 const job: NormalizedJob = {
@@ -48,26 +48,32 @@ test('builds and validates a bounded normalized snapshot with provenance', () =>
 
 test('loads only the authenticated owner account snapshot and ignores browser ownership fields', async () => {
   const expected = { isPro: false, saveLimit: 3, savedJobs: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }
-  const { deps, calls } = fixture(async name => ({ data: name === 'job_resume_versions_list' ? [] : expected, error: null }))
+  const { deps, calls } = fixture(async name => ({ data: ['job_resume_versions_list','applications_list','product_outcome_reports_list'].includes(name) ? [] : name === 'jobs_auto_refresh_result' ? null : expected, error: null }))
   const response = await jobsAccount(request({ action: 'load', owner: 'attacker-controlled' }), env, deps)
   assert.equal(response.status, 200)
-  assert.deepEqual(await response.json(), { ...expected, jobResumeVersions: [] })
+  assert.deepEqual(await response.json(), { ...expected, jobResumeVersions: [], applications: [], outcomeReports: [], autoRefreshResult: null })
   assert.deepEqual(calls, [
     { name: 'jobs_account_snapshot', args: { p_owner: owner } },
     { name: 'job_resume_versions_list', args: { p_owner: owner } },
+    { name: 'applications_list', args: { p_owner: owner } },
+    { name: 'product_outcome_reports_list', args: { p_owner: owner } },
+    { name: 'jobs_auto_refresh_result', args: { p_owner: owner } },
   ])
 })
 
 test('account reload reconstructs Pro depth from persisted analysis while Free reload omits it', async () => {
   for (const isPro of [true, false]) {
     const stored = { id: savedJobId, snapshot: analyzedSnapshot, providerAvailable: true, availabilityCheckedAt: '2026-09-24T00:00:00Z', unavailableAt: null, savedAt: '2026-09-24T00:00:00Z', matchAnalysis: persistedAnalysis, analysisCurrent: true, analysisInvalidationReason: null }
-    const { deps } = fixture(async name => ({ data: name === 'job_resume_versions_list' ? [] : { isPro, saveLimit: isPro ? 10000 : 3, savedJobs: [stored], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }, error: null }))
+    const { deps } = fixture(async name => ({ data: ['job_resume_versions_list','applications_list','product_outcome_reports_list'].includes(name) ? [] : { isPro, saveLimit: isPro ? 10000 : 100, savedJobs: [stored], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }, error: null }))
     const response = await jobsAccount(request({ action: 'load', evidence }), env, deps)
     assert.equal(response.status, 200)
     const body = await response.json()
-    assert.equal(body.savedJobs[0].matchAnalysis.additionalAreasAnalyzed, 2)
+    assert.equal(body.savedJobs[0].matchAnalysis.additionalAreasAnalyzed, isPro ? 2 : 1)
     if (isPro) assert.equal(body.savedJobs[0].matchAnalysis.fullAnalysis.requirements.length, 2)
-    else assert.equal(body.savedJobs[0].matchAnalysis.fullAnalysis, undefined)
+    else {
+      assert.equal(body.savedJobs[0].matchAnalysis.fullAnalysis, undefined)
+      assert.equal(body.savedJobs[0].matchAnalysis.limitedAnalysis.requirements.length, 1)
+    }
   }
 })
 
@@ -92,6 +98,15 @@ test('creates one account-owned job resume only when tailoring begins and never 
   assert.equal(calls[1].args.p_saved_job, savedJobId)
   assert.deepEqual(calls[1].args.p_data, resume)
   assert.match(String(calls[1].args.p_fingerprint), /^[0-9a-f]{64}$/)
+})
+
+test('maps the server-side closed-application gate without creating a job-specific resume', async () => {
+  const blocked = fixture(async name => name === 'job_resume_master'
+    ? { data: null, error: null }
+    : { data: null, error: { message: 'Application closed' } })
+  const response = await jobsAccount(request({ action: 'create_job_resume', savedJobId, resume: blank() }), env, blocked.deps)
+  assert.equal(response.status, 409)
+  assert.match((await response.json()).error, /Reopen it/i)
 })
 
 test('cloud-backed master is authoritative when a browser starts a job-specific version', async () => {
@@ -143,17 +158,59 @@ test('saves the validated snapshot and maps the Free ceiling to truthful upgrade
   assert.equal(success.calls[0].args.p_owner, owner)
   assert.deepEqual(success.calls[0].args.p_job, snapshot)
 
-  const limited = fixture(async () => ({ data: null, error: { message: 'Free saved-job limit reached' } }))
+  const limited = fixture(async () => ({ data: null, error: { message: 'Free application limit reached' } }))
   const blocked = await jobsAccount(request({ action: 'save', job: snapshot }), env, limited.deps)
   assert.equal(blocked.status, 403)
-  assert.match((await blocked.json()).error, /existing saved jobs are kept/i)
+  assert.match((await blocked.json()).error, /up to 100 applications\. Every existing record stays available/i)
 })
 
 test('persists bounded preferences and explicit Auto Refresh opt-out', async () => {
   const { deps, calls } = fixture(async () => ({ data: null, error: null }))
   const response = await jobsAccount(request({ action: 'preferences', criteria: { title: 'Nurse', countryCode: 'GB' }, autoRefresh: false }), env, deps)
   assert.equal(response.status, 200)
-  assert.deepEqual(calls[0], { name: 'jobs_set_preferences', args: { p_owner: owner, p_criteria: { title: 'Nurse', countryCode: 'GB' }, p_auto_refresh: false } })
+  assert.deepEqual(calls[0], { name: 'jobs_set_preferences_v2', args: { p_owner: owner, p_criteria: { title: 'Nurse', countryCode: 'GB' }, p_auto_refresh: false, p_evidence: null } })
+})
+
+test('Auto Refresh opt-in stores only validated non-contact evidence and cannot be enabled without it', async () => {
+  const { deps, calls } = fixture(async () => ({ data: true, error: null }))
+  const response = await jobsAccount(request({ action:'preferences', criteria:{title:'Engineer'}, autoRefresh:true,
+    evidence:{ headline:'Engineer', summary:'Builds systems', skills:'TypeScript', roles:[], qualifications:[], email:'must-not-store@example.com' } }),env,deps)
+  assert.equal(response.status,200)
+  assert.deepEqual(calls[0],{name:'jobs_set_preferences_v2',args:{p_owner:owner,p_criteria:{title:'Engineer'},p_auto_refresh:true,
+    p_evidence:{headline:'Engineer',summary:'Builds systems',skills:'TypeScript',roles:[],qualifications:[]}}})
+  const missing=await jobsAccount(request({action:'preferences',criteria:{title:'Engineer'},autoRefresh:true}),env,deps)
+  assert.equal(missing.status,400)
+})
+
+test('records only bounded owner-scoped evidence-review metadata', async () => {
+  const { deps, calls } = fixture(async name => name === 'product_record_evidence_review'
+    ? { data: { scope: 'limited', newlyRecorded: true }, error: null }
+    : { data: null, error: { message: `unexpected ${name}` } })
+  const jobKey = 'd'.repeat(64)
+  const analysisKey = 'e'.repeat(64)
+  const response = await jobsAccount(request({ action: 'record_evidence_review', jobKey, analysisKey, reviewScope: 'limited', owner: 'forged', jobText: 'must not persist' }), env, deps)
+  assert.equal(response.status, 200)
+  assert.deepEqual(await response.json(), { recorded: true, reviewScope: 'limited', newlyRecorded: true })
+  assert.deepEqual(calls, [{ name: 'product_record_evidence_review', args: { p_owner: owner, p_job_key: jobKey, p_analysis_key: analysisKey, p_scope: 'limited' } }])
+  assert.equal((await jobsAccount(request({ action: 'record_evidence_review', jobKey: 'not-a-key', analysisKey, reviewScope: 'full' }), env, deps)).status, 400)
+  assert.equal((await jobsAccount(request({ action: 'record_evidence_review', jobKey, analysisKey, reviewScope: 'preview' }), env, deps)).status, 400)
+})
+
+test('records only an explicitly consented, content-free self-reported outcome for the authenticated owner', async () => {
+  const report = {
+    id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', savedJobId, outcome: 'interview_received', provenance: 'self_reported',
+    occurredOn: '2026-09-30', timeSavedBucket: '15_to_30_minutes', clarityRating: 4, confidenceRating: 3,
+    consentVersion: 'outcomes-v1', consentedAt: '2026-09-30T16:00:00Z', methodologyVersion: 'outcomes-v1',
+    reportedAt: '2026-09-30T16:00:00Z', updatedAt: '2026-09-30T16:00:00Z',
+  }
+  const { deps, calls } = fixture(async name => name === 'product_outcome_report'
+    ? { data: report, error: null }
+    : { data: null, error: { message: `unexpected ${name}` } })
+  const response = await jobsAccount(request({ action:'report_outcome', savedJobId, owner:'forged', resumeText:'must not persist', jobUrl:'https://private.example', report:{ outcome:'interview_received', occurredOn:'2026-09-30', timeSavedBucket:'15_to_30_minutes', clarityRating:4, confidenceRating:3, consent:true, consentVersion:'outcomes-v1' } }),env,deps)
+  assert.equal(response.status,200)
+  assert.deepEqual((await response.json()).report,report)
+  assert.deepEqual(calls,[{name:'product_outcome_report',args:{p_owner:owner,p_saved_job:savedJobId,p_outcome:'interview_received',p_occurred_on:'2026-09-30',p_time_saved_bucket:'15_to_30_minutes',p_clarity_rating:4,p_confidence_rating:3,p_consent:true,p_consent_version:'outcomes-v1'}}])
+  assert.equal((await jobsAccount(request({action:'report_outcome',savedJobId,report:{outcome:'offer_received',occurredOn:null,timeSavedBucket:null,clarityRating:null,confidenceRating:null,consent:false,consentVersion:'outcomes-v1'}}),env,deps)).status,400)
 })
 
 test('recomputes versioned saved analysis server-side and persists explicit clarification for the authenticated owner', async () => {
@@ -165,7 +222,7 @@ test('recomputes versioned saved analysis server-side and persists explicit clar
   assert.equal(response.status, 200)
   const persisted = calls.find(call => call.name === 'jobs_save_v2')
   assert.equal(persisted?.args.p_owner, owner)
-  assert.equal((persisted?.args.p_analysis as { version: number }).version, 1)
+  assert.equal((persisted?.args.p_analysis as { version: number }).version, 2)
   assert.equal(JSON.stringify(persisted?.args.p_analysis).includes('fabricated'), false)
   assert.doesNotMatch(JSON.stringify(persisted?.args.p_analysis), /\d+%|probability/i)
 

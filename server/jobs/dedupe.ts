@@ -12,7 +12,7 @@ function foldDescription(value: string): string {
   return fold(value).slice(0, 2000)
 }
 
-/** Canonical fingerprint for ResumeStride's own deduplication, independent of any
+/** Canonical fingerprint for APWICO's own deduplication, independent of any
  * `isDuplicate`-style flag a provider reports (the September 24 Techmap benchmark could
  * not confirm that flag alone was authoritative). Requires the *full* location
  * (including country) plus a description fingerprint to agree — title/company alone is

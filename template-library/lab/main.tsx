@@ -119,7 +119,7 @@ function App() {
   try {
    const parsed = JSON.parse(importText);
    const candidate = migrate(parsed && typeof parsed === 'object' && 'resume' in parsed ? (parsed as { resume: unknown }).resume : parsed);
-   if (!isResume(candidate)) throw new Error('That JSON is not a valid ResumeStride resume.');
+   if (!isResume(candidate)) throw new Error('That JSON is not a valid APWICO resume.');
    setCustom(candidate); setImportError('');
   } catch (error) { setImportError(error instanceof Error ? error.message : 'Could not read JSON.'); }
  };
