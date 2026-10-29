@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Check, FileText, Search, Upload } from 'lucide-react';
-import { ResumePreview } from '../../components/ResumePreview';
+import { PaginatedResumePreview } from '../../components/ResumePreview';
 import { example, templates, type Resume } from '../../model';
 import { PatinaHero } from './PatinaHero';
 import { MatchShowcase } from './MatchShowcase';
 import { launchFacts } from '../../content/launchFacts';
+import { fixtures } from '../../../template-library/fixtures';
 import './landing.css';
 
 const sample = example();
+const previewSamples = Object.fromEntries(fixtures.map(fixture => [fixture.id, fixture.resume()]));
+const previewFamilies: Partial<Record<Resume['template'], string>> = { boardroom: 'executive', stackline: 'engineer', scholar: 'academic', primer: 'graduate' };
 const featuredTemplateIds: Resume['template'][] = ['modern', 'compact', 'boardroom', 'stackline', 'scholar', 'primer'];
 const featuredTemplates = templates.filter(template => featuredTemplateIds.includes(template.id));
 // The suggestion reworks the sample's own summary using only experience it already lists.
@@ -16,6 +19,7 @@ type Props = { onBuild: () => void; onUpload: () => void; onJobs: () => void; on
 
 export function HomePage({ onBuild, onUpload, onJobs, onCompare, onPro, onTemplate, onFindJobs, onOrganize }: Props) {
  const [previewTemplate, setPreviewTemplate] = useState<Resume['template']>('modern');
+ const previewResume = { ...(previewSamples[previewFamilies[previewTemplate] ?? ''] ?? sample), template: previewTemplate };
  const sheet = useRef<HTMLDivElement>(null);
  // The light sheet rises over the petrol Match section and its fold settles as it
  // lands. Under reduced motion it simply sits in place.
@@ -83,14 +87,14 @@ export function HomePage({ onBuild, onUpload, onJobs, onCompare, onPro, onTempla
   </section>
   <section className="landing-templates" id="templates">
    <div className="section-introduction"><p className="section-label">Documents</p><h2>Explore 27<br/>resume templates.</h2><p>Choose from 7 Free and 20 Premium designs. Every template supports A4, US Letter, and right-to-left text.</p><a className="text-button" href="/templates/">Browse all 27 templates<ArrowRight size={16} aria-hidden="true"/></a></div>
-   <div className="template-specimen" aria-label={`Fictional sample in the ${previewTemplate} template`}><ResumePreview resume={{...sample,template:previewTemplate}}/></div>
-   <div className="template-gallery" aria-label="Preview a curated selection of resume templates">{featuredTemplates.map(t=><button className="template-choice" data-previewing={previewTemplate===t.id} onFocus={()=>setPreviewTemplate(t.id)} onMouseEnter={()=>setPreviewTemplate(t.id)} key={t.id} onClick={()=>onTemplate(t.id)}><span><strong>{t.label}</strong><small>{t.tagline}</small></span><ArrowRight size={16} aria-hidden="true"/></button>)}</div>
+   <figure className="home-template-preview" aria-label={`Fictional sample in the ${previewTemplate} template`}><div className="template-first-page" aria-hidden="true" inert><PaginatedResumePreview resume={previewResume}/></div><figcaption>Fictional sample · First page</figcaption><button className="text-button" onClick={()=>onTemplate(previewTemplate)}>Use this template<ArrowRight size={16} aria-hidden="true"/></button></figure>
+   <div className="template-gallery" aria-label="Preview a curated selection of resume templates">{featuredTemplates.map(t=><button className="template-choice" data-previewing={previewTemplate===t.id} aria-pressed={previewTemplate===t.id} aria-label={`Preview ${t.label}`} key={t.id} onClick={()=>setPreviewTemplate(t.id)}><span><strong>{t.label}</strong><small>{t.tagline}</small></span><ArrowRight size={16} aria-hidden="true"/></button>)}</div>
   </section>
   </div>
   <section className="landing-pricing" id="pricing">
-   <div className="section-introduction"><h2>Choose the access<br/><em>you need.</em></h2></div>
-   <div className="plan-comparison"><article><span className="section-label">Free</span><h3>Build, compare, organize, and track.</h3><p className="plan-price"><strong>$0</strong><span>no subscription</span></p><ul><li><Check aria-hidden="true"/>The complete builder and all 7 Free templates</li><li><Check aria-hidden="true"/>{launchFacts.freeDownloads.count} PDF or Word downloads per rolling {launchFacts.freeDownloads.windowDays} days</li><li><Check aria-hidden="true"/>{launchFacts.freeManualRefreshes.count} job searches per rolling {launchFacts.freeManualRefreshes.windowHours} hours, up to {launchFacts.freeResultsPerRefresh} relevant results each, plus an optional daily refresh</li><li><Check aria-hidden="true"/>Track up to {launchFacts.freeApplications} applications, with a Match preview</li><li><Check aria-hidden="true"/>{launchFacts.freeTailoringTrials === 1 ? 'One complete tailoring trial' : `${launchFacts.freeTailoringTrials} complete tailoring trials`} for one application</li></ul><p className="plan-note">A free account is required for downloads and jobs. The browser-only evidence checker works without an account.</p><button className="button outline" onClick={onBuild}>Build my master resume<ArrowRight size={16} aria-hidden="true"/></button></article>
-   <article className="plan-pro"><span className="section-label">Pro</span><h3>Full Match Analysis and job-specific resumes.</h3><p className="plan-price"><strong>{launchFacts.proMonthlyPrice}</strong><span>/month</span></p><ul><li><Check aria-hidden="true"/>All 27 templates</li><li><Check aria-hidden="true"/>Full requirement-level Match Analysis</li><li><Check aria-hidden="true"/>Advanced job search and a separate resume for each saved job</li><li><Check aria-hidden="true"/>AI-assisted suggestions you accept, reject or rewrite</li></ul><p className="plan-note">Renews until cancelled; paid access continues through the billing period. New subscriptions are US-only. Fair-use limits apply.</p><button className="button" onClick={onPro}>View Pro options<ArrowRight size={16} aria-hidden="true"/></button></article></div>
+   <div className="section-introduction"><h2>Start free.<br/><em>Make it yours with Pro.</em></h2></div>
+   <div className="plan-comparison"><article><span className="section-label">Free</span><h3>Get your job search organized.</h3><p className="plan-price"><strong>$0</strong><span>no subscription</span></p><ul><li><Check aria-hidden="true"/>Resume builder and 7 free templates</li><li><Check aria-hidden="true"/>{launchFacts.freeDownloads.count} PDF or Word downloads per rolling {launchFacts.freeDownloads.windowDays} days</li><li><Check aria-hidden="true"/>{launchFacts.freeManualRefreshes.count} job searches per rolling {launchFacts.freeManualRefreshes.windowHours} hours, up to {launchFacts.freeResultsPerRefresh} results each</li><li><Check aria-hidden="true"/>Track up to {launchFacts.freeApplications} applications</li><li><Check aria-hidden="true"/>One tailoring trial for one job, with {launchFacts.freeTrialAiRuns} successful AI runs</li></ul><p className="plan-note">No payment card needed. Create a free account to search for jobs, save applications, and download your resume.</p><button className="button outline" onClick={onBuild}>Build my master resume<ArrowRight size={16} aria-hidden="true"/></button></article>
+   <article className="plan-pro"><span className="section-label">Pro</span><h3>Tailor your resume for each job.</h3><p className="plan-price"><strong>{launchFacts.proMonthlyPrice}</strong><span>/month</span></p><ul><li><Check aria-hidden="true"/>All 27 templates</li><li><Check aria-hidden="true"/>See how your experience matches each job requirement</li><li><Check aria-hidden="true"/>Up to {launchFacts.proResultsPerSearch} results per search and a separate resume for each saved job</li><li><Check aria-hidden="true"/>Review, edit, or reject every AI suggestion</li></ul><p className="plan-note">Billed monthly. Cancel anytime and keep Pro until the end of your billing period. Available in the US. Fair-use limits apply.</p><button className="button" onClick={onPro}>View Pro options<ArrowRight size={16} aria-hidden="true"/></button></article></div>
   </section>
   <footer className="landing-footer"><div><strong>APWICO</strong><p>Evidence before effort.</p></div><div><a href="mailto:support@apwico.com">support@apwico.com</a><nav aria-label="Site links"><a href="/features/">How it works</a><a href="/tools/">Free tools</a><a href="/resources/">Resources</a><a href="/pricing/">Pricing</a><a href="/trust/">Trust</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms &amp; refunds</a></nav></div></footer>
  </main>;
