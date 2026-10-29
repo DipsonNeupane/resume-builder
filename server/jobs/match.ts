@@ -134,6 +134,15 @@ function analyzeJobInternal(evidence:ResumeEvidence,job:NormalizedJob,criteria:S
  if(titleSource)observations.push(`Your “${titleSource}” title relates directly to this “${job.title}” role.`);if(matchedSkills.length)observations.push(`Resume evidence also named in the posting: ${matchedSkills.slice(0,5).join(', ')}.`);observations.push(...constraints);if(!observations.length)observations.push('The role’s main focus is not demonstrated in your current resume — a stretch, not a role that is off-limits to you.')
  const importantWarning=incompatible[0]?`Confirmed incompatibility: ${incompatible[0].text}`:unknownRequired[0]?`Important required qualification not demonstrated: ${unknownRequired[0].text}`:null,seniority=seniorityMessage(evidence,job,relevance.eligible),whyPromising=label==='strong'?'Several important parts of the role are clearly supported by your resume.':label==='good'?'Your resume shows relevant evidence, with some areas still worth reviewing.':'The role has limited demonstrated alignment or an important constraint to review.'
  const analysis:FullMatchAnalysis={version:MATCH_ANALYSIS_VERSION,label,resumeHash:matchHash(evidence),jobHash:jobMatchHash(job),contextHash:matchHash(edits===EMPTY_REQUIREMENT_EDITS?{criteria,clarifications}:{criteria,clarifications,edits}),whyPromising,observations:observations.slice(0,3),importantWarning,seniorityMessage:seniority,requirements,strengths:[...observations,...demonstrated.slice(0,5).map(r=>`Demonstrated: ${r.text}`)].slice(0,8),buriedEvidence:partial.map(r=>`Related evidence exists, but could be clearer: ${r.text}`).slice(0,8),areasWorthStrengthening:requirements.filter(r=>r.status==='not_demonstrated').map(r=>`${r.category==='required'?'Required':r.category==='preferred'?'Preferred':'Nice to have'} — not demonstrated: ${r.text}`).slice(0,10),constraints,deeperExplanation:`${whyPromising} ${unknownRequired.length?`${unknownRequired.length} required ${unknownRequired.length===1?'area is':'areas are'} not demonstrated, which is unknown rather than proof you lack them.`:'No required qualification extracted from the posting is currently unresolved.'}`}
+ if (!job.descriptionText.trim()) {
+   const missing = 'Add the job description before reviewing alignment. There is not enough posting information to assess this role.';
+   analysis.whyPromising = missing;
+   analysis.observations = [missing];
+   analysis.importantWarning = null;
+   analysis.seniorityMessage = null;
+   analysis.strengths = [];
+   analysis.deeperExplanation = missing;
+ }
  return{label,reasons:analysis.observations,analysis,rank,confirmedIncompatibility:incompatible.length>0,searchEligible:relevance.eligible}
 }
 export function matchJob(evidence:ResumeEvidence,job:NormalizedJob):MatchResult{return analyzeJob(evidence,job)}

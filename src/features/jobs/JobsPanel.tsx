@@ -390,7 +390,7 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
   const [results, setResults] = useState<{ jobs: JobCard[]; isPro: boolean; availableCount: number; proLimit: number } | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
-  const [saveLimit, setSaveLimit] = useState(10);
+  const [saveLimit, setSaveLimit] = useState(100);
   const [accountIsPro, setAccountIsPro] = useState(false);
   const [trial, setTrial] = useState<{ available: boolean; savedJobId: string | null; runsAllowed: number } | null>(null);
   const [accountLoaded, setAccountLoaded] = useState(false);
@@ -486,7 +486,7 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
     setOutcomeReportsAvailable(true);
     setOutcomeBusyId(null);
     setRestoreFailure(null);
-    setSaveLimit(10);
+    setSaveLimit(100);
     setAccountIsPro(false);
     setTrial(null);
     setAccountLoaded(false);
@@ -865,6 +865,10 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
       setMessage('This application is closed. Reopen it before preparing a new job-specific resume.');
       return;
     }
+    if (typeof saved.snapshot.descriptionText !== 'string' || !saved.snapshot.descriptionText.trim()) {
+      setMessage('This saved role has no job description. Add a role with its posting text in My applications before starting tailoring. Your tailoring trial has not been used.');
+      return;
+    }
     if (!accountIsPro && !trialAppliesTo(saved.id)) { onViewPro(); return; }
     const requestedOwner = ownerId;
     try {
@@ -1008,8 +1012,8 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
     {target.kind === 'jobs' && !results && !busy && savedJobs.length === 0 && <div className="empty-state"><strong>Your experience is the starting point.</strong><p>Choose a suggested role or enter your own criteria, then search. You’ll see why each opportunity may fit before deciding what to save.</p></div>}
 
     <section className="saved-jobs-section" aria-labelledby="saved-jobs-heading">
-      <div className="saved-jobs-heading"><h2 id="saved-jobs-heading">Saved to My applications</h2><span>{savedJobs.length}{accountIsPro ? '' : ` of ${saveLimit}`}</span></div>
-      {savedJobs.length === 0 ? <div className="empty-state"><strong>Keep the roles worth a second look.</strong><p>Choose “Save job” on a result to keep it and its match evidence here, even if the listing closes{accountIsPro ? ' or your Pro access ends' : ''}.{accountIsPro ? '' : ` Free accounts can save up to ${saveLimit}.`}</p></div> :
+      <div className="saved-jobs-heading"><h2 id="saved-jobs-heading">Saved to My applications</h2><span>{accountLoaded ? `${savedJobs.length}${accountIsPro ? '' : ` of ${saveLimit}`}` : 'Loading…'}</span></div>
+      {!accountLoaded ? <p role="status">Loading your applications…</p> : savedJobs.length === 0 ? <div className="empty-state"><strong>Keep the roles worth a second look.</strong><p>Choose “Save job” on a result to keep it and its match evidence here, even if the listing closes{accountIsPro ? ' or your Pro access ends' : ''}.{accountIsPro ? '' : ` Free accounts can save up to ${saveLimit}.`}</p></div> :
 	        <ul className="jobs-results" aria-label="Saved jobs">{savedJobs.map(saved => {
 	          const job = saved.snapshot;
 	          const application = applications.find(item => item.savedJobId === saved.id) ?? emptyApplication(saved.id);

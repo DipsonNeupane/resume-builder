@@ -144,3 +144,15 @@ test('bullet checker does not turn vague input into a noun fragment and counters
   await expect(page.locator('.structure-card')).toContainText('There is not enough detail to suggest a stronger version yet.');
   await expect(page.locator('[data-tool-output]')).not.toContainText(/^Customers\.?$/);
 });
+
+test('extractor carries only the posting into same-tab comparison', async ({ page }) => {
+ const posting = 'Strong written English is required. Candidates must build accessible React interfaces.';
+ await page.goto('/tools/job-requirement-extractor/');
+ await page.locator('#job-description').fill(posting);
+ await page.getByRole('button', { name: 'Extract requirements' }).click();
+ await page.getByRole('link', { name: 'Compare these requirements with your resume' }).click();
+ await expect(page.locator('#job-description')).toHaveValue(posting);
+ await expect(page.locator('#resume-text')).toHaveValue('');
+ await page.getByRole('button', { name: 'Clear private text' }).click();
+ await expect(page.locator('#job-description')).toHaveValue('');
+});

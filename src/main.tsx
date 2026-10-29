@@ -286,6 +286,7 @@ function App(){
   setResume(baseSnapshot);setConfirmed(false);setJobContext(null);setBaseSnapshot(null);setJobDraftOwnerId(null);
   setActiveJobVersion(null);jobVersionRevision.current=null;setJobVersionMasterChanged(false);setJobVersionConflict(null);
   setDirty(false);setErrors({});setPreviewMode(false);
+  setSaveState(sessionDraftLabel);
   setMessage('Closed the saved job-specific resume. Your master resume remains unchanged.');
  },[route.path,activeJobVersion?.id,dirty]);
  // A browser-local job draft must not block an owner-scoped Jobs/Match/version URL.

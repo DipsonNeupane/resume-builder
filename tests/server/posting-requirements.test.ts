@@ -96,3 +96,24 @@ test('negated, values and labelled single items do not leak scope', () => {
     ['Spanish language proficiency', 'preferred'], ['Experience with Zendesk administration', 'required'],
   ]);
 });
+
+ test('explicit language requirements survive paragraph extraction without company promotion', () => {
+ const result = extractPostingRequirements("Strong written English is required. Our work directly impacts the experience of millions of users relying on Cisco wireless infrastructure. Join one of the world's most renowned global banks and trusted brand with over 200 years of continuously evolving financial services worldwide.");
+ assert.equal(result.length, 1);
+ assert.equal(result[0].category, 'required');
+ assert.match(result[0].text, /English/);
+ });
+
+test('missing posting reports insufficient information instead of negative alignment', () => {
+    const job = { id: 'manual:x', provider: 'manual', providerJobId: 'x', title: 'Customer Support Specialist', company: 'Example Company',
+      location: { value: { city: null, region: null, country: null }, source: 'unknown', confidence: 'low' },
+      workplace: { value: 'unknown', source: 'unknown', confidence: 'low' }, employmentType: { value: 'unknown', source: 'unknown', confidence: 'low' },
+      salary: null, descriptionText: '', postedAt: null, expiry: { expiresAt: null, isLikelyExpired: false, confidence: 'low', source: 'unknown' },
+      directness: { value: null, source: 'unknown', confidence: 'low' }, sourceUrl: 'https://example.com/jobs/1', portal: null, source: null,
+      dedupeKey: '0'.repeat(64), retrievedAt: '2026-10-27T00:00:00.000Z' } satisfies NormalizedJob;
+    const evidence: ResumeEvidence = { headline: 'Customer support specialist', skills: 'Salesforce', roles: [{ title: 'Customer support specialist', description: resume }] };
+ const result = analyzeJob(evidence, job);
+ assert.match(result.analysis.whyPromising, /not enough posting information/);
+ assert.equal(result.analysis.importantWarning, null);
+ assert.deepEqual(result.analysis.strengths, []);
+});

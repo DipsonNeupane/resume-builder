@@ -2,6 +2,7 @@ import { TOOL_LIMITS, analyzeResumeBullet, compareResumeToJob, extractJobRequire
 
 type ToolId = 'job-requirement-extractor' | 'resume-job-match' | 'resume-bullet-checker';
 type ToolAnalytics = { event: (name: 'tool_started' | 'tool_completed' | 'tool_result_reviewed', data?: Record<string, string>) => void };
+const comparisonKey = 'apwico.requirementComparison.v1';
 const pendingJobKey = 'resumestride.pendingJobFirst.v1';
 
 const root = document.querySelector<HTMLElement>('[data-public-tool]');
@@ -149,6 +150,24 @@ function initialize(): void {
   if (!root) return;
   const tool = root.dataset.publicTool as ToolId;
   const form = element<HTMLFormElement>('[data-tool-form]');
+  if (tool === 'resume-job-match') {
+    try {
+      const raw = sessionStorage.getItem(comparisonKey);
+      sessionStorage.removeItem(comparisonKey);
+      const saved = raw ? JSON.parse(raw) : null;
+      if (saved && typeof saved.text === 'string' && saved.text.length <= TOOL_LIMITS.job && typeof saved.createdAt === 'number' && Date.now() >= saved.createdAt && Date.now() - saved.createdAt < 30 * 60 * 1000) element<HTMLTextAreaElement>('#job-description').value = saved.text;
+    } catch { /* Private storage may be unavailable; manual paste remains available. */ }
+  }
+  if (tool === 'job-requirement-extractor') {
+    document.querySelector<HTMLAnchorElement>('[data-tool-cta="resume_job_match"]')?.addEventListener('click', event => {
+      try {
+        sessionStorage.setItem(comparisonKey, JSON.stringify({ text: analyzedJobText, createdAt: Date.now() }));
+      } catch {
+        event.preventDefault();
+        setError('This browser could not keep the job description for the next step. Copy it before opening the comparison tool.');
+      }
+    });
+  }
   form.addEventListener('input', updateCounts);
   form.addEventListener('submit', event => {
     event.preventDefault();
@@ -158,6 +177,7 @@ function initialize(): void {
       if (tool === 'job-requirement-extractor') {
         const results = extractJobRequirements(element<HTMLTextAreaElement>('#job-description').value);
         if (!results.length) throw new Error('No explicit requirements or responsibility signals were found. Try including the qualifications and responsibilities sections.');
+        analyzedJobText = element<HTMLTextAreaElement>('#job-description').value.trim();
         renderRequirements(results, output);
       } else if (tool === 'resume-job-match') {
         const jobText = element<HTMLTextAreaElement>('#job-description').value;
@@ -199,6 +219,7 @@ function initialize(): void {
   element<HTMLButtonElement>('[data-clear-tool]').addEventListener('click', () => {
     reviewObserver?.disconnect();
     analyzedJobText = '';
+    try { sessionStorage.removeItem(comparisonKey); } catch { /* Storage unavailable. */ }
     if (tool === 'resume-job-match') sessionStorage.removeItem(pendingJobKey);
     form.reset(); clearResult(); setError(''); updateCounts();
     form.querySelector<HTMLTextAreaElement>('textarea')?.focus();

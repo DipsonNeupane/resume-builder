@@ -1,4 +1,5 @@
 import { TOOL_LIMITS, analyzeResumeBullet, compareResumeToJob, extractJobRequirements } from './analysis.js';
+const comparisonKey = 'apwico.requirementComparison.v1';
 const pendingJobKey = 'resumestride.pendingJobFirst.v1';
 const root = document.querySelector('[data-public-tool]');
 const analytics = () => window.rsToolAnalytics;
@@ -146,6 +147,27 @@ function initialize() {
         return;
     const tool = root.dataset.publicTool;
     const form = element('[data-tool-form]');
+    if (tool === 'resume-job-match') {
+        try {
+            const raw = sessionStorage.getItem(comparisonKey);
+            sessionStorage.removeItem(comparisonKey);
+            const saved = raw ? JSON.parse(raw) : null;
+            if (saved && typeof saved.text === 'string' && saved.text.length <= TOOL_LIMITS.job && typeof saved.createdAt === 'number' && Date.now() >= saved.createdAt && Date.now() - saved.createdAt < 30 * 60 * 1000)
+                element('#job-description').value = saved.text;
+        }
+        catch { /* Private storage may be unavailable; manual paste remains available. */ }
+    }
+    if (tool === 'job-requirement-extractor') {
+        document.querySelector('[data-tool-cta="resume_job_match"]')?.addEventListener('click', event => {
+            try {
+                sessionStorage.setItem(comparisonKey, JSON.stringify({ text: analyzedJobText, createdAt: Date.now() }));
+            }
+            catch {
+                event.preventDefault();
+                setError('This browser could not keep the job description for the next step. Copy it before opening the comparison tool.');
+            }
+        });
+    }
     form.addEventListener('input', updateCounts);
     form.addEventListener('submit', event => {
         event.preventDefault();
@@ -158,6 +180,7 @@ function initialize() {
                 const results = extractJobRequirements(element('#job-description').value);
                 if (!results.length)
                     throw new Error('No explicit requirements or responsibility signals were found. Try including the qualifications and responsibilities sections.');
+                analyzedJobText = element('#job-description').value.trim();
                 renderRequirements(results, output);
             }
             else if (tool === 'resume-job-match') {
@@ -206,6 +229,10 @@ function initialize() {
     element('[data-clear-tool]').addEventListener('click', () => {
         reviewObserver?.disconnect();
         analyzedJobText = '';
+        try {
+            sessionStorage.removeItem(comparisonKey);
+        }
+        catch { /* Storage unavailable. */ }
         if (tool === 'resume-job-match')
             sessionStorage.removeItem(pendingJobKey);
         form.reset();
