@@ -14,7 +14,7 @@ export function PatinaHero({ onBuild, onFindJobs, onOrganize }: Props) {
  return <section className={`pt-hero pt-hero-approved ${entered ? 'is-in' : ''}`}>
   <div className="pt-hero-copy">
    <p className="pt-hero-kicker"><span className="pt-dot" aria-hidden="true"/>Job search, organized</p>
-   <h1 className="pt-hero-title"><span>Find jobs you like.</span> <span><em>Apply with confidence.</em></span> <span>Know what happens next.</span></h1>
+   <h1 className="pt-hero-title"><span>Find jobs you like.</span> <span><em><span className="brand-initial-glow">Ap</span>ply <span className="brand-initial-glow">wi</span>th <span className="brand-initial-glow">co</span>nfidence.</em></span> <span>Know what happens next.</span></h1>
    <p className="hero-deck">Save roles you find here or anywhere else, see what each one asks for against your own resume, and keep every application, date and next step in one place.</p>
    <div className="hero-actions">
     <a className="button large" href="/workspace/preferences" onClick={event => { event.preventDefault(); onFindJobs(); }}>Find my jobs<ArrowRight size={18} aria-hidden="true"/></a>

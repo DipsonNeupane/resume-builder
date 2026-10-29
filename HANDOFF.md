@@ -4497,3 +4497,7 @@ Added a service-only, owner-filtered additive RPC to fill a blank saved posting 
 ## October 29 — Homepage template previews and pricing copy
 
 Fixed the homepage's clipped template specimens by using the existing paginated renderer at a proportional page scale, isolated from legacy specimen styles. Each selection now previews on click (including touch/keyboard); the separate Use this template button opens the editor. Scholar, Boardroom, Stackline and Primer use occupation-appropriate fictional fixtures. First-page labeling makes multi-page samples explicit. Pricing copy is shorter, retains rolling allowances, includes three successful trial runs, and preserves price, recurring billing, cancellation and US availability. Added desktop/mobile regression coverage for all six previews, page geometry, academic sample content and explicit editor navigation. Build and performance budgets pass. Local headless Chromium cannot launch in this sandbox (MachPort permission); browser inspection works and CI must pass before merge.
+
+## October 29 — Hero initials glow
+
+Added a restrained static blush halo to Ap, wi and co in the existing hero phrase. Current font, letter fill and underline retained; no animation or layout changes.
