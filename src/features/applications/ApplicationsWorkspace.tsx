@@ -4,7 +4,7 @@ import {
   type ApplicationEvent, type ApplicationPatch, type ApplicationRecord, type Stage,
 } from '../../lib/applications';
 import { CsvError, IMPORT_FIELDS, IMPORT_FIELD_LABELS, applicationsToCsv, guessMapping, mapRows, parseCsv, type ColumnMapping } from '../../lib/applicationCsv';
-import { confirmSubmitted, importApplications, loadApplicationDocument, type ImportRowResult, type StoredDocument, type TrackedJob } from '../../services/applicationsApi';
+import { fillMissingPosting, confirmSubmitted, importApplications, loadApplicationDocument, type ImportRowResult, type StoredDocument, type TrackedJob } from '../../services/applicationsApi';
 import { isResume, type Resume } from '../../model';
 import { trackProductEvent } from '../../services/analytics';
 import { launchFacts } from '../../content/launchFacts';
@@ -372,6 +372,15 @@ type DetailProps = {
 
 function ApplicationDetail({ row, ownerId, busy, statusLine, headingRef, onUpdate, onBack, onPrepare, onReplaced }: DetailProps) {
   const { job, application } = row;
+  const [posting, setPosting] = useState('');
+  const [postingBusy, setPostingBusy] = useState(false);
+  const [postingError, setPostingError] = useState('');
+  async function savePosting() {
+    setPostingBusy(true); setPostingError('');
+    try { await fillMissingPosting(ownerId, application.savedJobId, posting); onReplaced(); }
+    catch (error) { setPostingError(error instanceof Error ? error.message : 'Unable to save posting.'); }
+    finally { setPostingBusy(false); }
+  }
   const [notes, setNotes] = useState(application.notes);
   const [contactName, setContactName] = useState(application.contactName);
   const [contactDetails, setContactDetails] = useState(application.contactDetails);
@@ -392,6 +401,7 @@ function ApplicationDetail({ row, ownerId, busy, statusLine, headingRef, onUpdat
     <div className="tracker-heading"><div><span className="section-label">{STAGE_LABELS[application.stage]}{application.closedReason ? ` · ${CLOSED_REASON_LABELS[application.closedReason]}` : ''}</span><h1 id="application-title" ref={headingRef} tabIndex={-1}>{job.title}</h1><p>{job.company}{job.location ? ` · ${job.location}` : ''}</p></div>
       <div className="tracker-heading-actions">{application.stage !== 'closed' && <button className="button" onClick={onPrepare}>Prepare my application</button>}</div></div>
     {statusLine}
+    {!job.descriptionAvailable && <section className="tracker-card" aria-label="Add missing job description"><h2>Add the job description</h2><p>Enable matching and tailoring for this application. Previously exported or submitted documents stay unchanged.</p><label className="field"><span>Job description</span><textarea rows={5} maxLength={12000} value={posting} onChange={event => setPosting(event.target.value)} /></label>{postingError && <p role="alert">{postingError}</p>}<button className="button" disabled={postingBusy || !posting.trim()} onClick={() => void savePosting()}>{postingBusy ? 'Saving posting…' : 'Save job description'}</button></section>}
     <div className="detail-grid">
       <section aria-labelledby="detail-overview" className="tracker-card"><h2 id="detail-overview">Overview</h2>
         <StageControl application={application} busy={busy} onChange={onUpdate} />
