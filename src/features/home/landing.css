@@ -527,7 +527,7 @@
  color:var(--hero-ink);
  text-shadow:none;
 }
-.landing-approved-c .pt-hero-approved .pt-hero-title>span:nth-child(2) { padding-left:0; }
+.landing-approved-c .pt-hero-approved .pt-hero-title>span { white-space:normal; overflow-wrap:break-word; padding-left:0; }
 .landing-approved-c .pt-hero-approved .pt-hero-title em {
  color:var(--citron);
  text-decoration:underline;
