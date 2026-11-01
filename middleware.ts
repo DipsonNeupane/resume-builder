@@ -152,8 +152,9 @@ export function requestSeo(url: URL, production: boolean, domainMigrationEnabled
  if (url.pathname === '/index.html') return { status: 308, headers: { ...headers, Location: `/${url.search}` }, body: '' };
  const asset = ['/robots.txt', '/sitemap.xml', '/favicon.ico', '/favicon.svg', '/favicon.png', '/favicon-192.png', '/favicon-512.png', '/apple-touch-icon.png', '/social-card.png', '/site.webmanifest', '/seo-guard.js', '/resources.css', '/apwico-theme.css', '/content-analytics.js', '/tools.css', '/tools/analysis.js', '/tools/posting-requirements.js', '/tools/public-tools.js', '/tools/tool-analytics.js', '/templates.css', '/template-preview-renderers.css', '/templates-filter.js', '/features.css', '/fonts.css'].includes(url.pathname) || /^\/(?:fonts|social)\/[a-z0-9._-]+$/.test(url.pathname);
  // The extension fixture remains reachable for local installed-extension tests,
- // but must never be an indexable job page.
+ // but is not part of the production website.
  const fixture = url.pathname.startsWith('/extension-fixture/');
+ if (fixture && production) return { status: 404, headers: { ...headers, 'X-Robots-Tag': noindex, 'Content-Type': 'text/html; charset=utf-8' }, body: notFoundHtml };
  if (isPrivateAppPath(url.pathname)) return { status: 0, headers: { ...headers, 'X-Robots-Tag': noindex, 'Cache-Control': 'private, no-store' }, body: '' };
  if (!url.search) {
   if (/^\/assets\/[a-zA-Z0-9._-]+$/.test(url.pathname)) headers['Cache-Control'] = 'public, max-age=31536000, immutable';

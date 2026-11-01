@@ -241,7 +241,7 @@ test('manually refreshes stale saved analysis from the owner snapshot and curren
   assert.equal(response.status, 200)
   const body = await response.json()
   assert.equal(body.matchAnalysis.fullAnalysis.requirements.length, 2)
-  assert.ok(body.matchAnalysis.fullAnalysis.constraints.some((item: string) => /workplace preference/i.test(item)))
+  assert.ok(body.matchAnalysis.fullAnalysis.constraints.some((item: string) => /remote preference/i.test(item)))
   assert.deepEqual(calls[0], { name: 'jobs_saved_match_inputs', args: { p_owner: owner, p_saved_job: savedJobId } })
   assert.equal(calls[1].args.p_owner, owner)
   assert.equal(calls[1].args.p_saved_job, savedJobId)

@@ -29,7 +29,9 @@ const OTHER = 'b2b2b2b2-b2b2-4b2b-8b2b-b2b2b2b2b2b2';
 const ACCOUNTS: Record<string, { id: string; password: string }> = { 'fixture@example.com': { id: FREE, password: 'fixture-pass-1' }, 'second@example.com': { id: OTHER, password: 'fixture-pass-2' } };
 const env = { APP_ORIGIN: ORIGIN, SUPABASE_URL: 'https://fixture.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'public', SUPABASE_SERVICE_ROLE_KEY: 'fixture',
   TECHMAP_API_KEY: 'x'.repeat(20), AI_ENABLED: 'true', OPENAI_API_KEY: 'sk-fixture', EXPORTS_ENABLED: 'true' } as unknown as NodeJS.ProcessEnv;
-const shot = (page: Page, name: string) => page.screenshot({ path: `test-results/journeys/${name}.png`, fullPage: true });
+// Screenshots are supporting evidence, not part of the journey itself. A
+// browser/font-renderer stall must not consume the full test timeout.
+const shot = (page: Page, name: string) => page.screenshot({ path: `test-results/journeys/${name}.png`, fullPage: true, timeout: 15_000 }).catch(() => undefined);
 
 const POSTING = ['Customer Support Specialist at Fixture Outfitters.', 'Requirements:', '- Experience supporting customers across email, phone and live chat.',
   '- Fluency in Spanish.', '- Experience with Zendesk.', 'Preferred:', '- Experience helping new team members build product knowledge.'].join('\n');
@@ -165,7 +167,7 @@ test('Journey A (browser, connected): preferences → discovery → save → cor
   await expect(match).toBeVisible({ timeout: 60_000 });
   const savedJobId = new URL(page.url()).pathname.split('/')[3];
   // Before the trial is bound, a Free saved job offers an explicit comparison.
-  await match.getByRole('button', { name: 'Show what my resume shows' }).click();
+  await match.getByRole('button', { name: 'Show match' }).click();
   await expect(match.getByRole('heading', { name: 'What your resume shows' })).toBeVisible();
   await shot(page, 'a4-match-free-preview');
 
@@ -188,7 +190,7 @@ test('Journey A (browser, connected): preferences → discovery → save → cor
   await shot(page, 'a6-requirements-corrected');
 
   // Clarify evidence: the owner confirms a fact the resume does not state.
-  await page.getByRole('button', { name: 'I can demonstrate this' }).first().click();
+  await page.getByRole('button', { name: 'I have this' }).first().click();
   await expect(page.getByRole('region', { name: 'Match Analysis' })).toContainText('Match Analysis updated with your answer', { timeout: 30_000 });
   await shot(page, 'a7-evidence-clarified');
   const stored = (await pg.query<{ a: { requirements: { text: string; status: string }[] } }>(`select match_analysis as a from public.saved_jobs where id = $1`, [savedJobId])).rows[0].a.requirements;
@@ -197,22 +199,23 @@ test('Journey A (browser, connected): preferences → discovery → save → cor
 
   // Tailor: a traceable suggestion (requirement + quoted resume fact), accepted into the version.
   await expect(page.getByRole('button', { name: 'View the full evidence analysis with Pro' })).toHaveCount(0);
-  await expect(page.getByText('Full evidence analysis', { exact: true })).toBeVisible();
+  await expect(page.getByText('See all requirements', { exact: true })).toBeVisible();
   // Already saved: the footer points to preparing, never to saving it again.
-  await expect(page.getByRole('region', { name: 'Match Analysis' })).toContainText('Choose “Prepare my application” to start a separate job-specific resume.');
+  await expect(page.getByRole('region', { name: 'Match Analysis' })).toContainText('Choose “Prepare my application” to create a separate resume.');
   await expect(page.getByRole('region', { name: 'Match Analysis' })).not.toContainText('Save this job to start');
   await page.getByRole('button', { name: 'Open job-specific resume' }).click();
   await expect(page.getByRole('region', { name: 'Active document' })).toContainText('Job-specific resume', { timeout: 60_000 });
   await page.getByRole('button', { name: 'Design & format' }).click();
   await page.getByRole('button', { name: 'Confirm' }).click();
-  await page.getByRole('checkbox', { name: /I consent to sending this saved job-specific resume/ }).check();
+  await page.getByRole('checkbox', { name: /I agree to send my resume and job description to OpenAI for suggestions/ }).check();
   await page.getByRole('button', { name: 'Get tailoring suggestions' }).click();
   const card = page.getByRole('article', { name: 'Suggestion 1', exact: true });
   await expect(card.locator('.suggestion-trace')).toContainText('Experience supporting customers across email, phone and live chat', { timeout: 60_000 });
   await expect(card.locator('.suggestion-trace')).toContainText('“Support customers across email, phone, and live chat” — Experience · Customer Experience Specialist, Example Company');
   await shot(page, 'a8-traceable-suggestion');
   await card.getByRole('button', { name: 'Accept', exact: true }).click();
-  await expect(card).toContainText('Accepted and saved to this job-specific resume');
+  await expect(card).toContainText('Accepted · AI wording');
+  await expect(card).toContainText('Saved to this job resume.');
   const version = (await pg.query<{ data: { sections: { entries: { description: string }[] }[] } }>(`select data from public.job_resume_versions where saved_job_id = $1`, [savedJobId])).rows[0].data;
   await expect.poll(async () => (await pg.query<{ d: string }>(`select data#>>'{sections,0,entries,0,description}' as d from public.job_resume_versions where saved_job_id = $1`, [savedJobId])).rows[0].d).toContain('Support customers by email, phone and live chat');
   expect(version).toBeTruthy();
@@ -225,7 +228,7 @@ test('Journey A (browser, connected): preferences → discovery → save → cor
   await expect(page.getByRole('group', { name: 'Document downloads' })).toHaveCount(1);
   const downloads = page.getByRole('group', { name: 'Document downloads' });
   await downloads.getByRole('checkbox', { name: /I consent to uploading my resume content/ }).check();
-  await expect(downloads.getByRole('checkbox', { name: /Keep a copy of this exact version/ })).toBeChecked();
+  await expect(downloads.getByRole('checkbox', { name: /Save this exact file to the application record/ })).toBeChecked();
   const [download] = await Promise.all([page.waitForEvent('download'), downloads.getByRole('button', { name: 'Download Word (.docx)' }).click()]);
   expect(download.suggestedFilename()).toMatch(/\.docx$/);
   await download.saveAs('test-results/journeys/sample-job-specific.docx');
@@ -422,7 +425,7 @@ test('Journey D (browser, connected): job-specific PDF export → rendered pages
   const downloads = page.getByRole('group', { name: 'Document downloads' });
   await expect(downloads).toHaveCount(1);
   await downloads.getByRole('checkbox', { name: /I consent to uploading my resume content/ }).check();
-  await expect(downloads.getByRole('checkbox', { name: /Keep a copy of this exact version/ })).toBeChecked();
+  await expect(downloads.getByRole('checkbox', { name: /Save this exact file to the application record/ })).toBeChecked();
   const [download] = await Promise.all([page.waitForEvent('download', { timeout: 90_000 }), downloads.getByRole('button', { name: 'Download PDF', exact: true }).click()]);
   expect(download.suggestedFilename()).toMatch(/\.pdf$/);
   const file = 'test-results/journeys/sample-job-specific.pdf';
@@ -556,7 +559,7 @@ test('Journey E (browser, connected): genuinely signed out → sign in and retur
   await page.waitForTimeout(3000);
   await expect(page.getByText(draft)).toHaveCount(0);
   expect(await draftInFields()).toBe(false);
-  await expect(page.getByText('This workspace item is unavailable.')).toBeVisible();
+  await expect(page.getByText('This item is unavailable.')).toBeVisible();
   await shot(page, 'e4-second-account-isolated');
 
   // 6. Switch back: sign out B, sign in A on the version link, and the draft is recovered.

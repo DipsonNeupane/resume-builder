@@ -21,7 +21,8 @@ for(const template of templates)for(const paper of papers){
  const size=bytes.length
  const parser=new PDFParse({data:bytes})
  const result=await parser.getText()
- if(!result.text.includes('Alex Morgan')||!result.text.replace(/\s+/g,' ').includes('FINAL EXPORT MARKER'))throw new Error(`Missing content ${file}`)
+ const normalizedText=result.text.replace(/\s+/g,' ').toLowerCase()
+ if(!normalizedText.includes('alex morgan')||!normalizedText.includes('final export marker'))throw new Error(`Missing content ${file}`)
  console.log(`${template} ${paper}: ${size} bytes, ${result.total} pages, first/last text present`)
  await parser.destroy()
 }

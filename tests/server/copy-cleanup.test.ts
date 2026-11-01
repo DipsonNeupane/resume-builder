@@ -38,16 +38,17 @@ test('customer-facing static output excludes audited internal and removed copy',
 test('protected public disclosures and canonical evidence language remain', () => {
  const pricing = read('public/pricing/index.html');
  const trust = read('public/trust/index.html');
+ const terms = read('public/terms.html');
  const methodology = read('public/features/match-methodology/index.html');
+ assert.match(pricing, /New paid subscriptions are currently available only in the United States\./);
+ assert.match(terms, /renews automatically each month until cancelled/);
  for (const phrase of [
-  'New paid subscriptions are currently available only in the United States.',
-  'Paid subscriptions renew monthly until cancelled.',
   'Cancellation stops future renewal.',
   'Stripe handles checkout; APWICO does not receive or store your full card number.',
-  'PDF preserves the selected resume design.',
-  'Word (.docx) is a clean, editable content document',
   'A recurring paid action requires an explicit consent checkbox',
- ]) assert.match(`${pricing} ${trust}`, new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+ ]) assert.ok(pricing.includes(phrase), `missing pricing disclosure: ${phrase}`);
+ assert.match(trust, /PDF preserves the selected resume design\./);
+ assert.match(trust, /Word \(\.docx\) is a clean, editable content document/);
  for (const label of ['Evidence found', 'Related evidence — review', 'No evidence found in this resume', 'Confirmed incompatibility']) {
   assert.match(methodology, new RegExp(label));
  }

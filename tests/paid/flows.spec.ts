@@ -85,14 +85,14 @@ test('an individually subscribed Premium template is active through its paid dat
  await expect(active).toContainText('Premium · Legacy renewal off');await expect(active).toContainText(/Access through Oct 2[89], 2026/);await active.click();
  await expect(page.getByText('Previewing Boardroom — Premium',{exact:true})).toHaveCount(0);await expect(page.locator('.site-header').getByRole('button',{name:'Download',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Back to editing',exact:true}).click();await page.getByRole('button',{name:'Design & format',exact:true}).click();await page.getByRole('button',{name:'Confirm',exact:true}).click();
- await expect(page.getByText('Generous document downloads are included with your active subscription.',{exact:false})).toBeVisible();await page.getByRole('checkbox',{name:'I consent to uploading my resume content',exact:false}).check();await page.getByRole('button',{name:'Download PDF',exact:true}).click();await page.getByRole('button',{name:'Download Word (.docx)',exact:true}).click();await expect.poll(()=>exported).toEqual(['pdf','docx']);
+ await expect(page.getByRole('group',{name:'Document downloads'})).toBeVisible();await page.getByRole('checkbox',{name:'I consent to uploading my resume content',exact:false}).check();await page.getByRole('button',{name:'Download PDF',exact:true}).click();await page.getByRole('button',{name:'Download Word (.docx)',exact:true}).click();await expect.poll(()=>exported).toEqual(['pdf','docx']);
 });
 test('Pro marks every Premium template included and removes individual upsells',async({page})=>{
  await seed(page);await page.route('**/api/subscription-status',route=>route.fulfill({json:{isPro:true,activeTemplates:[],salesAvailable:false,subscriptions:[{subscriptionId:'sub_pro',offerKey:'pro:monthly',kind:'pro',templateId:null,status:'active',cancelAtPeriodEnd:false,currentPeriodEnd:'2026-11-01T00:00:00Z'}]}}));
  await page.route('**/api/export-status*',route=>route.fulfill({json:{isPro:true,hasPaidAccess:true,remaining:7,resetsAt:'2026-10-19T12:00:00Z'}}));
  await page.goto('/',{waitUntil:'commit'});await page.getByRole('button',{name:'Continue my resume',exact:true}).first().click();await page.getByRole('button',{name:'Preview resume'}).click();await page.getByRole('button',{name:'Templates Modern',exact:true}).click();const dialog=page.getByRole('dialog',{name:'Choose your layout'});const included=dialog.getByRole('button',{name:/^Boardroom/});
  await expect(included).toContainText('Included with Pro');await expect(dialog.getByRole('button',{name:/Unlock for/})).toHaveCount(0);await expect(dialog.getByRole('button',{name:/Get Pro/})).toHaveCount(0);await included.click();
- await expect(page.getByText('Previewing Boardroom — Premium',{exact:true})).toHaveCount(0);await expect(page.locator('.site-header').getByRole('button',{name:'Download',exact:true})).toBeVisible();await page.getByRole('button',{name:'Back to editing',exact:true}).click();await page.getByRole('button',{name:'Design & format',exact:true}).click();await page.getByRole('button',{name:'Confirm',exact:true}).click();await expect(page.getByText('Generous document downloads are included with your active subscription.',{exact:false})).toBeVisible();await expect(page.getByRole('button',{name:'Download PDF',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Download Word (.docx)',exact:true})).toBeVisible();
+ await expect(page.getByText('Previewing Boardroom — Premium',{exact:true})).toHaveCount(0);await expect(page.locator('.site-header').getByRole('button',{name:'Download',exact:true})).toBeVisible();await page.getByRole('button',{name:'Back to editing',exact:true}).click();await page.getByRole('button',{name:'Design & format',exact:true}).click();await page.getByRole('button',{name:'Confirm',exact:true}).click();await expect(page.getByRole('group',{name:'Document downloads'})).toBeVisible();await expect(page.getByRole('button',{name:'Download PDF',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Download Word (.docx)',exact:true})).toBeVisible();
 });
 test('locked Premium preview and unlock actions remain clear on mobile',async({page})=>{
  await page.setViewportSize({width:390,height:844});await seed(page);await page.goto('/workspace/resume',{waitUntil:'commit'});await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toBeVisible({timeout:30_000});await page.getByRole('button',{name:'Preview resume'}).click();await page.getByRole('button',{name:'Templates Modern'}).click();
@@ -211,7 +211,7 @@ test('signed-in builder header links to a profile with plan management and omits
  profile=header.getByRole('button',{name:'Open profile for fixture',exact:true});
  await profile.click();
  await expect(page.getByRole('heading',{name:'Your profile'})).toBeVisible();
- await expect(page.getByText('You’re on the Free plan.',{exact:true})).toBeVisible();
+ await expect(page.getByText('Your plan: Free.',{exact:true})).toBeVisible();
 });
 test('already signed-in user starts separate captured job draft without replacing base',async({page})=>{
  await seed(page);await builder(page);
@@ -249,10 +249,10 @@ for (const width of [320, 390, 768, 1920]) test(`upgrade dialog keyboard contain
  await seed(page);
  await page.route('**/api/export-status*',route=>route.fulfill({status:503,json:{}}));
  await builder(page);
- const opener=page.getByText('Free downloads exhausted?',{exact:false}).getByRole('button',{name:'View Pro options',exact:true});
+ const opener=page.getByText('Download allowance unavailable.',{exact:false}).getByRole('button',{name:'View Pro',exact:true});
  await opener.focus();await page.keyboard.press('Enter');
- const dialog=page.getByRole('dialog',{name:'Keep downloading with Pro'});
- const proceed=dialog.getByRole('button',{name:'View Pro options',exact:true});
+ const dialog=page.getByRole('dialog',{name:'More downloads with Pro'});
+ const proceed=dialog.getByRole('button',{name:'View Pro',exact:true});
  const cancel=dialog.getByRole('button',{name:'Not now',exact:true});
  await expect(proceed).toBeFocused();
  await page.keyboard.press('Shift+Tab');await expect(cancel).toBeFocused();
@@ -273,7 +273,7 @@ test('async allowance dialog returns focus to downloads when its original action
  await page.route('**/api/export-status*',route=>route.fulfill({json:{isPro:false,hasPaidAccess:false,remaining:0,resetsAt:'2026-10-19T12:00:00Z'}}));
  const download=page.getByRole('button',{name:'Download PDF',exact:true});
  await download.focus();await page.keyboard.press('Enter');
- const dialog=page.getByRole('dialog',{name:'Keep downloading with Pro'});
+ const dialog=page.getByRole('dialog',{name:'More downloads with Pro'});
  await expect(dialog).toBeVisible();
  await page.keyboard.press('Escape');
  await expect(dialog).toHaveCount(0);

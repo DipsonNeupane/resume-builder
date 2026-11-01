@@ -37,7 +37,7 @@ test('download allowance: legal and public copy agree with the launch facts', ()
   }
   assert.match(commercialPolicy.freeDownloads, /7 successful PDF or Word downloads in a rolling 7-day window/);
   const free = commercialPlans.find(plan => plan.id === 'free');
-  assert.ok(free?.includes.includes('7 PDF or Word downloads in any 7-day period'));
+  assert.ok(free?.includes.includes('7 PDF or Word downloads per 7 days'));
   assert.equal(commercialPlans.find(plan => plan.id === 'pro')?.price, 'US$14.99');
 });
 
@@ -47,7 +47,7 @@ test('Pro trial, checkout and temporary access use the shared 30-day offer', () 
   assert.match(read('public/terms.html'), /Pro includes a 30-day free trial.*A payment method is collected at checkout.*Cancel before the trial ends to avoid the monthly charge/);
   assert.match(read('public/pricing/index.html'), /Pro trial/);
   assert.match(read('server/billing/offer-handlers.ts'), /trial_period_days: launchFacts\.proTrialDays/);
-  assert.match(read('supabase/migrations/20261101011826_pro_trial_access.sql'), /s\.status='trialing'.*s\.current_period_end>now\(\)/s);
+  assert.match(read('supabase/migrations/20261101012316_pro_trial_access.sql'), /s\.status='trialing'.*s\.current_period_end>now\(\)/s);
 });
 
 test('application, trial and Pro limits: enforcement, terms and pricing agree with the launch facts', async () => {
@@ -80,5 +80,6 @@ test('search and trial-count limits: enforcement, terms and pricing agree with t
   assert.equal(FREE_JOB_LIMIT, launchFacts.freeResultsPerRefresh);
   assert.match(read('supabase/migrations/20261027120000_application_tracker.sql'), new RegExp(`free_tailoring_trials integer not null default ${launchFacts.freeTailoringTrials}\\b`));
   assert.match(read('public/terms.html'), /three \(3\) manual job-search refreshes in any rolling twenty-four-hour period, with up to ten \(10\) relevant results per refresh/);
-  assert.ok(read('public/pricing/index.html').includes(`Search up to ${count} times in ${windowHours} hours, with up to ${launchFacts.freeResultsPerRefresh} results each time`));
+  assert.ok(read('public/pricing/index.html').includes(`${count} searches per ${windowHours} hours`));
+  assert.ok(read('public/pricing/index.html').includes(`up to ${launchFacts.freeResultsPerRefresh} results each`));
 });

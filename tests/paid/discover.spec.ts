@@ -106,7 +106,7 @@ test('list and card views share results and actions; undo, session-only pass and
   expect(state.removes).toBe(1);
   await results.getByRole('button', { name: 'Save job' }).click();
   await results.getByRole('button', { name: 'Pass on Support role 2' }).click();
-  await expect(results.getByText('You’ve reviewed this batch.')).toBeVisible();
+  await expect(results.getByText('You’ve reviewed these jobs.')).toBeVisible();
 
   // Back in the list: the saved job cannot be saved twice; the pass is session-only and reversible.
   await results.getByText('List', { exact: true }).click();

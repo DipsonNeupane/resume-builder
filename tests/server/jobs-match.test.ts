@@ -53,11 +53,12 @@ test('matchJob labels good with only a title overlap or only one skill', () => {
   assert.equal(skillOnly.label, 'good')
 })
 
-test('matchJob labels stretch and never claims the user lacks anything, only "not demonstrated"', () => {
+test('matchJob labels stretch without claiming the user lacks a qualification', () => {
   const result = matchJob({ headline: 'Marketing Manager', skills: 'Photoshop, Copywriting', roles: [] }, job())
   assert.equal(result.label, 'stretch')
   assert.ok(result.reasons.every(reason => !/you lack|you don'?t have/i.test(reason)))
-  assert.ok(result.reasons.some(reason => reason.includes('not demonstrated')))
+  assert.match(result.analysis.whyPromising, /not shown in your resume yet/i)
+  assert.doesNotMatch(result.analysis.whyPromising, /you lack|you don'?t have/i)
 })
 
 test('matchJob never uses percentages and stays deterministic across repeated calls', () => {
@@ -184,7 +185,7 @@ test('absence is unknown/not demonstrated while an explicit clarification can co
 
 test('seniority is neutral and never blocks analysis', () => {
   const result = analyzeJob({ headline: 'Software Engineer', skills: 'TypeScript', roles: [] }, job({ title: 'Principal Software Engineer' }))
-  assert.equal(result.analysis.seniorityMessage, 'This role appears more senior than the experience currently demonstrated in your resume.')
+  assert.equal(result.analysis.seniorityMessage, 'This role appears more senior than the experience your resume currently shows.')
   assert.ok(result.analysis.observations.length > 0)
 })
 

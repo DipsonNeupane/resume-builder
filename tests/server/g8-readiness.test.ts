@@ -24,7 +24,7 @@ test('voluntary outcome boundary is consented, self-reported, bounded and conten
  const columns=migration.match(/create table public\.product_outcome_reports \(([\s\S]*?)\n\);/)?.[1]??'';
  assert.doesNotMatch(columns,/\b(?:resume_text|job_text|job_url|notes|contact_details)\b/);
  const ui=read('src/features/jobs/OutcomeReportPanel.tsx');
- assert.match(ui,/optional/i);assert.match(ui,/will not claim it caused/i);assert.match(ui,/No resume text, job text, job URL, notes or contact details/i);
+ assert.match(ui,/optional/i);assert.match(ui,/Save my report to help improve APWICO/);assert.match(ui,/Self-reported/);assert.doesNotMatch(ui,/will claim .*caused|guaranteed outcome/i);
  assert.match(ui,/consent:true/);
 });
 

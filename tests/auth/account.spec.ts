@@ -17,8 +17,8 @@ test('create account and sign in use genuinely distinct in-app Supabase auth cal
  await page.getByLabel('Password',{exact:true}).fill('correct-horse-1');
  await page.getByLabel('Confirm password').fill('correct-horse-1');
  await page.locator('form').getByRole('button',{name:'Create account',exact:true}).click();
- await expect(page.getByText('Check your inbox if this is a new email address.',{exact:false})).toBeVisible();
- await expect(page.getByText('If you have used APWICO before, no new account email will be sent.',{exact:false})).toBeVisible();
+ await expect(page.getByText('Check your inbox to confirm your email.',{exact:false})).toBeVisible();
+ await expect(page.getByText('Already have an account? Sign in or reset your password.',{exact:false})).toBeVisible();
  expect(signups[0].email).toBe('test@example.com');
  expect(signups[0].password).toBe('correct-horse-1');
 
@@ -97,7 +97,7 @@ test('forgot password sends a recovery link without creating another account',as
  await page.getByRole('button',{name:'Forgot password?'}).click();
  await page.getByLabel('Email address').fill('legacy@example.com');
  await page.getByRole('button',{name:'Send password-reset link'}).click();
- await expect(page.getByText('If an account exists for this address',{exact:false})).toBeVisible();
+ await expect(page.getByText('If an account exists, check your inbox for a reset link.',{exact:false})).toBeVisible();
  expect(requests[0].email).toBe('legacy@example.com');
  expect(redirect).toBe('http://127.0.0.1:5174/workspace/account?reset=1');
 });

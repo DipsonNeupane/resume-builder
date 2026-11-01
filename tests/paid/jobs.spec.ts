@@ -133,7 +133,8 @@ for (const isPro of [false, true]) for (const alreadySaved of [false, true]) tes
   const result = await requestUniversalSave(page, `universal-${isPro}-${alreadySaved}`);
   expect(result).toMatchObject({ status: alreadySaved ? 'already_saved' : 'saved' });
   await expect(page.getByRole('heading', { level: 1, name: 'Find jobs', exact: true })).toBeVisible();
-  await expect(page.getByText('Saved job URL · Details pending')).toBeVisible();
+  await expect(page.getByRole('heading', { level: 3, name: 'Job details pending', exact: true })).toBeVisible();
+  await expect(page.getByText('Captured job · Availability not verified', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'View job' })).toHaveAttribute('href', 'https://www.linkedin.com/jobs/view/123');
   await expect(page.getByRole('button', { name: /Tailor my resume/ })).toHaveCount(0);
   await expect(page.getByText(alreadySaved ? 'This job was already saved.' : 'Job saved to your account.', { exact: true })).toBeVisible();
@@ -197,7 +198,7 @@ test('saved Match keeps job wording and resume evidence connected while the owne
 
 test('signed-out users see a sign-in prompt instead of the search form', async ({ page }) => {
   await openJobs(page);
-  await expect(page.getByText('Sign in to search for jobs and save opportunities.')).toBeVisible();
+  await expect(page.getByText('Sign in to search and save jobs.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Search jobs' })).toHaveCount(0);
 });
 
@@ -222,8 +223,8 @@ test('saved Match Analysis has a reload-safe URL, predictable history, and a con
   await expect(page.getByRole('heading', { name: 'What your resume shows' })).toBeVisible();
 
   await page.goto('/workspace/jobs/77777777-7777-4777-8777-777777777777/match', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByText('This workspace item is unavailable.')).toBeVisible();
-  await expect(page.getByText(/belong to another account/)).toBeVisible();
+  await expect(page.getByText('This job is unavailable.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'My applications', exact: true })).toBeVisible();
   await expect(page.getByText('Customer Experience Specialist at Acme Support Co')).toHaveCount(0);
 });
 
@@ -326,9 +327,9 @@ test('a transient job-specific version failure has a bounded retry without expos
     return route.fulfill({ json: { isPro: true, saveLimit: 10000, savedJobs: [], jobResumeVersions: [{ ...version, resume: undefined, savedJobExists: true }], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } } });
   });
   await page.goto(`/workspace/resumes/${versionId}`, { waitUntil: 'domcontentloaded' });
-  await expect(page.getByText('This version is temporarily unavailable.')).toBeVisible();
+  await expect(page.getByText('This resume is unavailable.')).toBeVisible();
   await expect(page.getByText('Separate version wording.')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Retry' }).click();
+  await page.getByRole('button', { name: 'Try again' }).click();
   await expect(page.getByText(/Job-specific resume — Tailored for Customer Experience Specialist/)).toBeVisible();
   expect(attempts).toBe(2);
 });
@@ -337,7 +338,7 @@ test('private object routes reveal no saved content before authentication', asyn
   const savedJobId = '99999999-9999-4999-8999-999999999999';
   await page.goto(`/workspace/jobs/${savedJobId}/match`, { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { level: 1, name: 'Match Analysis' })).toBeVisible();
-  await expect(page.getByText(/Sign in to restore this workspace state/)).toBeVisible();
+  await expect(page.getByText('Sign in to view this saved job and resume.')).toBeVisible();
   await expect(page.getByText('Customer Experience Specialist')).toHaveCount(0);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
 });
@@ -346,8 +347,8 @@ test('saved-object restoration failure leaves a content-free retry path instead 
   await seed(page);
   await page.route('**/api/jobs-account', route => route.fulfill({ status: 503, json: { error: 'fixture unavailable' } }));
   await page.goto('/workspace/jobs/99999999-9999-4999-8999-999999999999/match', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByText('This workspace item is temporarily unavailable.')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+  await expect(page.getByText('This item is unavailable.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
   await expect(page.getByText('Customer Experience Specialist')).toHaveCount(0);
 });
 
@@ -509,7 +510,7 @@ test('saving a visible clarification updates its analysis without another provid
   await openJobs(page);
   await page.getByRole('button', { name: 'Search jobs' }).click();
   await page.getByRole('button', { name: 'I don’t have this' }).click();
-  await expect(page.getByText(/confirmed incompatibility/i)).toBeVisible();
+  await expect(page.getByText('You marked a mismatch', { exact: true })).toBeVisible();
   await expect(page.getByText(/didn.t use a job search/i)).toBeVisible();
   expect(searchCalls).toBe(1);
 });
@@ -621,9 +622,9 @@ test('Free accounts see an honest available-count summary, a ten-item limit, and
   await page.route('**/api/jobs-search', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(sampleResponse) }));
   await openJobs(page);
   await page.getByRole('button', { name: 'Search jobs' }).click();
-  await expect(page.getByText('Showing 1 of 8 matching jobs.')).toBeVisible();
+  await expect(page.getByText('Showing 1 of 8 jobs.')).toBeVisible();
   await expect(page.getByText('Pro shows up to 20 per search.', { exact: false })).toBeVisible();
-  await page.getByText('Showing 1 of 8 matching jobs.').getByRole('button', { name: 'View Pro options' }).click();
+  await page.getByText('Showing 1 of 8 jobs.').getByRole('button', { name: 'View Pro options' }).click();
   await expect(page.getByRole('heading', { name: 'Get APWICO Pro' })).toBeVisible();
 });
 
@@ -636,7 +637,7 @@ test('a Free account never sees more than ten real job cards even when more are 
   await page.getByRole('button', { name: 'Search jobs' }).click();
   await expect(page.locator('.job-card')).toHaveCount(10);
   await expect(page.getByRole('heading', { level: 2, name: 'Role 0', exact: true })).toBeVisible();
-  await expect(page.getByText('Showing 10 of 30 matching jobs.')).toBeVisible();
+  await expect(page.getByText('Showing 10 of 30 jobs.')).toBeVisible();
 });
 
 test('a Pro account sees its full available set up to the Pro limit, with no upgrade prompt', async ({ page }) => {
@@ -648,7 +649,7 @@ test('a Pro account sees its full available set up to the Pro limit, with no upg
   await page.getByRole('button', { name: 'Search jobs' }).click();
   await expect(page.locator('.job-card')).toHaveCount(20);
   await expect(page.getByRole('heading', { level: 2, name: 'Role 19', exact: true })).toBeVisible();
-  await expect(page.getByText('Showing 20 of 20 matching jobs.')).toBeVisible();
+  await expect(page.getByText('Showing 20 of 20 jobs.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'View Pro options' })).toHaveCount(0);
 });
 
@@ -752,7 +753,7 @@ test('Pro has no Free manual-refresh restriction while retaining server-side bac
   }) }));
   await page.route('**/api/jobs-search', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...sampleResponse, isPro: true }) }));
   await openJobs(page);
-  await expect(page.getByRole('checkbox', { name: 'Auto Refresh (fresh listings about every 24 hours)' })).not.toBeChecked();
+  await expect(page.getByRole('checkbox', { name: 'Refresh jobs daily' })).not.toBeChecked();
   await page.getByRole('button', { name: 'Search jobs' }).click();
   const refresh = page.getByRole('button', { name: 'Refresh', exact: true });
   await expect(refresh).toBeEnabled();
@@ -766,7 +767,7 @@ test('a second account signing in on the same browser never inherits the first a
   await page.route('**/api/jobs-search', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(sampleResponse) }));
   await openJobs(page);
   await page.getByRole('button', { name: 'Search jobs' }).click();
-  await page.getByRole('checkbox', { name: 'Auto Refresh (fresh listings about every 24 hours)' }).check();
+  await page.getByRole('checkbox', { name: 'Refresh jobs daily' }).check();
 
   // Simulate a second account signing in on the same browser: re-seed with a different
   // user id and reload so the app picks up the new session.
@@ -774,7 +775,7 @@ test('a second account signing in on the same browser never inherits the first a
   await page.reload();
   await expect(page).toHaveURL('/workspace/discover');
   await expect(page.getByRole('heading', { level: 1, name: 'Find jobs', exact: true })).toBeVisible();
-  const toggle = page.getByRole('checkbox', { name: 'Auto Refresh (fresh listings about every 24 hours)' });
+  const toggle = page.getByRole('checkbox', { name: 'Refresh jobs daily' });
   await expect(toggle).not.toBeChecked();
 });
 
@@ -793,6 +794,7 @@ test('a second account never inherits the first account saved match analysis', a
   });
   await openJobs(page);
   await expect(page.locator('.saved-job-card')).toHaveCount(1);
+  await page.getByText('Match preview', { exact: true }).click();
   await expect(page.getByRole('heading', { name: 'What your resume shows' })).toBeVisible();
 
   await seed(page, otherOwner);
@@ -800,7 +802,7 @@ test('a second account never inherits the first account saved match analysis', a
   await expect(page).toHaveURL('/workspace/discover');
   await expect(page.getByRole('heading', { level: 1, name: 'Find jobs', exact: true })).toBeVisible();
   await expect(page.locator('.saved-job-card')).toHaveCount(0);
-  await expect(page.getByText(/keep it and its match evidence here/i)).toBeVisible();
+  await expect(page.getByText('Save jobs to revisit them here.', { exact: true })).toBeVisible();
 });
 
 test('the jobs panel passes an automated accessibility scan and works at a mobile viewport', async ({ page }) => {
@@ -902,6 +904,7 @@ for (const fromCapture of [false, true]) test(`${fromCapture ? 'extension captur
     await page.getByLabel('Captured description').fill('Help customers with care.');
     const captureAxe = await new AxeBuilder({ page }).include('.captured-job-review').analyze(); expect(captureAxe.violations).toEqual([]);
     await page.getByRole('button', { name: 'Save job and see how I match' }).click();
+    await page.getByText('Match preview', { exact: true }).click();
     await expect(page.getByRole('heading', { name: 'What your resume shows' })).toBeVisible();
     expect(created).toBe(false);
     expect(searches).toBe(0);
@@ -920,12 +923,12 @@ for (const fromCapture of [false, true]) test(`${fromCapture ? 'extension captur
   expect(master.summary).toBe(example().summary);
   await page.getByRole('button', { name: 'Design & format' }).click();
   await page.getByRole('button', { name: 'Confirm' }).click();
-  await page.getByRole('checkbox', { name: /I consent to sending this saved job-specific resume/ }).check();
+  await page.getByRole('checkbox', { name: /I agree to send my resume and job description to OpenAI for suggestions/ }).check();
   await page.getByRole('button', { name: 'Get tailoring suggestions' }).click();
-  await expect(page.locator('.tailoring-why')).toContainText('Why this helps:');
+  await expect(page.locator('.tailoring-why')).toContainText('Why:');
   await expect(page.locator('.tailoring-why')).toContainText('customer-support evidence');
   const trace = page.locator('.suggestion-trace');
-  await expect(trace).toContainText('Targets job requirement');
+  await expect(trace).toContainText('Job requirements');
   await expect(trace).toContainText('Help customers with care. (Required · Evidence found)');
   await expect(trace).toContainText('“customer-support profile” — Summary');
   if (fromCapture) {

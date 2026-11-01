@@ -217,9 +217,12 @@ test('query states and private paths never enter the index, canonical or sitemap
  for (const path of ['/workspace/jobs/not-an-id/match', '/workspace/resumes/not-an-id', '/workspace/unknown']) {
   assert.equal(policy(path).status, 404);
  }
- for (const path of ['/api/tailor', '/api/export-pdf', '/api/jobs-account', '/extension-fixture/job-posting.html']) {
+ for (const path of ['/api/tailor', '/api/export-pdf', '/api/jobs-account']) {
   assert.equal(policy(path).status, 0); assert.equal(policy(path).headers['X-Robots-Tag'], noindex);
  }
+ assert.equal(policy('/extension-fixture/job-posting.html').status, 404);
+ assert.equal(policy('/extension-fixture/job-posting.html').headers['X-Robots-Tag'], noindex);
+ assert.equal(policy('/extension-fixture/job-posting.html', false).status, 0);
 });
 
 test('domain migration redirects only behind the launch gate and preserves paths and queries', () => {

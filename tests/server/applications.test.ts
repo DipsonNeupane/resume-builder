@@ -32,7 +32,7 @@ test('quick add needs only company, role and stage, and the owner comes from the
 
 test('pasted URLs are validated and normalized without any server fetch', async () => {
   assert.equal(normalizePastedJobUrl('https://boards.greenhouse.io/acme/jobs/123?gh_jid=123&utm_source=x'), 'https://boards.greenhouse.io/acme/jobs/123?gh_jid=123')
-  assert.equal(normalizePastedJobUrl('https://www.linkedin.com/jobs/view/support-specialist-4012345678/?trk=abc'), 'https://www.linkedin.com/jobs/view/4012345678/')
+  assert.equal(normalizePastedJobUrl('https://www.linkedin.com/jobs/view/support-specialist-4012345678/?trk=abc'), 'https://www.linkedin.com/jobs/view/support-specialist-4012345678')
   for (const unsafe of ['http://jobs.acme.com/1', 'https://user:pw@jobs.acme.com/1', 'https://10.0.0.5/jobs', 'https://localhost/jobs', 'https://jobs.acme.com:8443/1', 'https://intranet/jobs', 'javascript:alert(1)', 'https://[::1]/x']) {
     assert.equal(normalizePastedJobUrl(unsafe), null, unsafe)
   }
