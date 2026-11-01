@@ -4874,13 +4874,30 @@ This section supersedes older extension-origin and migration-source notes above.
 - Supabase hosted account-isolation acceptance still requires two dedicated test accounts. Stripe
   end-to-end acceptance needs a test-mode connection. The shared live pilot code cannot be tied to
   individual friends without their APWICO/Stripe customer identities. Owner also needs to enable
-  leaked-password protection and sign into GitHub to change repository default branch from `master`
-  to `main`; Vercel production is already configured for `main`.
+  leaked-password protection in Supabase Auth settings and use an authenticated GitHub dashboard
+  session to change the repository default branch from `master` to `main`; Vercel production is
+  already configured for `main`.
 
 Verification in this work session: `npm run build` PASS; `npm run test:extension` PASS 55/55;
 `npm run test:server` PASS 535/535; `npm run test:db` PASS across all SQL contract suites;
 `npm audit --json` PASS with 0 findings; `npm run check:extension-package` PASS; extension package
 integrity and APWICO branding checks PASS; `git diff --check` PASS. The app build emits the current
 Vite large-chunk advisory for the PDF worker and main bundle. Graph refresh is required after this
-session's changes. Do not describe the full hosted security/acceptance audit as complete until the
+session's changes. `graphify update .` refreshed the graph to 4,349 nodes / 8,749 edges / 324
+communities. Do not describe the full hosted security/acceptance audit as complete until the
 remaining account and dashboard checks above are resolved.
+
+Live follow-up after commit `88b1c2d`: Vercel production deployment `dpl_ijTk82DJHWnMJZUc3mVssFU9toib`
+reports Ready for the exact commit and has the APWICO and legacy-domain aliases. In the existing
+signed-in `dipson.n77` browser session, confirmed applications list, manual add, stage transition
+to Applied, saved next action, Today reminder display, clearing the reminder, Discover results,
+and continued sign-in after page reload. The temporary test record `APWICO QA Test / Support
+Specialist` remains in this account because the detail/list UI offers no application-delete action;
+its reminder was cleared. No searches were started and no billing was changed. During alias
+switching, an already-open page briefly failed to load an old hashed lazy chunk; opening the route
+again loaded Discover successfully. This looks transient to the deploy transition; verify again if
+customers report persistent blank pages after a release.
+
+The 104 paid/browser end-to-end suite also passed 104/104 in this session, and the auth browser
+suite passed 42/42. These use controlled fixtures, except for the separately noted signed-in
+browser checks; neither replaces two-account hosted isolation or Stripe test-mode acceptance.
