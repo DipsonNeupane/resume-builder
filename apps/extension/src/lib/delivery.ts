@@ -1,4 +1,4 @@
-// Self-contained: Chrome serializes this function into the official ResumeStride tab's
+// Self-contained: Chrome serializes this function into the official APWICO tab's
 // isolated world. The page performs the authenticated save; no token enters the extension.
 export async function requestJobSave(payload: unknown, requestId: string, expectedOrigin: string): Promise<{ status: string; message?: string } | null> {
   if (window.location.origin !== expectedOrigin) return null;

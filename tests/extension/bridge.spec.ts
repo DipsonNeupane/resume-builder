@@ -10,9 +10,9 @@ test('destination agrees with manifest hosts and rejects credentials and unrelat
 });
 
 test('exact production origin is allowed only at its root and rejects look-alike hosts',async()=>{
- expect(productionAppOrigin).toBe('https://resumestride.com');
- expect(isAllowedAppUrl(new URL('https://resumestride.com/'))).toBe(true);
- for(const url of ['http://resumestride.com/','https://resumestride.com/other','https://resumestride.com/?token=secret','https://resumestride.com/#payload','https://user:pass@resumestride.com/','https://resumestride.com.evil.test/','https://evil-resumestride.com/','https://resumestride.com:8443/']) expect(isAllowedAppUrl(new URL(url)),url).toBe(false);
+ expect(productionAppOrigin).toBe('https://apwico.com');
+ expect(isAllowedAppUrl(new URL('https://apwico.com/'))).toBe(true);
+ for(const url of ['http://apwico.com/','https://apwico.com/other','https://apwico.com/?token=secret','https://apwico.com/#payload','https://user:pass@apwico.com/','https://apwico.com.evil.test/','https://evil-apwico.com/','https://apwico.com:8443/','https://resumestride.com/']) expect(isAllowedAppUrl(new URL(url)),url).toBe(false);
 });
 test('save bridge retries until receiver is ready and returns only a bounded result',async({page})=>{
  await page.goto('/',{waitUntil:'domcontentloaded'});

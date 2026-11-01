@@ -10,7 +10,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
  if (sending) { respond({status:'error',message:'A save is already in progress.'}); return false; }
  const { capture, appUrl: rawUrl } = message;
  let url: URL;
- try { url = new URL(rawUrl); } catch { respond({status:'error',message:'ResumeStride could not be opened.'}); return false; }
+ try { url = new URL(rawUrl); } catch { respond({status:'error',message:'APWICO could not be opened.'}); return false; }
  if (!isAllowedAppUrl(url) || !isJobCapture(capture)) { respond({status:'error',message:'This job link could not be saved.'}); return false; }
  sending = true;
  void (async()=>{
@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
    }
    received=result!==null;
    respond({status:result?.status??'error',message:result?.message,tabId:tab.id});
-  } catch { respond({status:'error',message:'Could not reach ResumeStride. Try again.'}); }
+  } catch { respond({status:'error',message:'Could not reach APWICO. Try again.'}); }
   finally { recordBridgeDelivery(received, performance.now() - started); sending=false; }
  })();
  return true;

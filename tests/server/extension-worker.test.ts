@@ -16,14 +16,14 @@ Reflect.set(globalThis, 'chrome', {
 await import('../../apps/extension/src/background/worker.ts')
 const capture = { title: '', company: '', description: '', site: 'linkedin', sourceUrl: 'https://www.linkedin.com/jobs/view/123', capturedAt: new Date().toISOString() }
 const sender = { id: 'extension-fixture', url: 'chrome-extension://extension-fixture/popup.html' }
-const message = { type: 'resumestride:save-job', capture, appUrl: 'https://resumestride.com/' }
+const message = { type: 'resumestride:save-job', capture, appUrl: 'https://apwico.com/' }
 const send = (data: unknown) => new Promise<Response>(resolve => listener(data, sender, resolve))
 
 test('worker rejects foreign senders, unsafe destinations, private URLs and malformed captures before opening a tab', async () => {
-  for (const badSender of [{ ...sender, id: 'other' }, { ...sender, url: sender.url + '?bad' }, { ...sender, url: 'https://resumestride.com/' }]) {
+  for (const badSender of [{ ...sender, id: 'other' }, { ...sender, url: sender.url + '?bad' }, { ...sender, url: 'https://apwico.com/' }]) {
     assert.equal(listener(message, badSender, () => assert.fail('must not respond to foreign sender')), false)
   }
-  for (const appUrl of ['https://evil.test/','https://resumestride.com.evil.test/','https://user@resumestride.com/','https://resumestride.com/path','https://resumestride.com/?secret=1','http://127.0.0.1:9999/']) assert.equal((await send({ ...message, appUrl })).status, 'error')
+  for (const appUrl of ['https://evil.test/','https://apwico.com.evil.test/','https://user@apwico.com/','https://apwico.com/path','https://apwico.com/?secret=1','http://127.0.0.1:9999/']) assert.equal((await send({ ...message, appUrl })).status, 'error')
   for (const change of [{ title: 42 }, { authToken: 'secret' }, { sourceUrl: 'https://127.0.0.1/job' }, { sourceUrl: 'javascript:alert(1)' }]) assert.equal((await send({ ...message, capture: { ...capture, ...change } })).status, 'error')
   assert.equal(tabCount, 0)
 })

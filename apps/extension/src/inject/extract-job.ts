@@ -49,7 +49,9 @@
   function knownDetailSite(): Site | null {
     const host = location.hostname.toLowerCase();
     if ((host === 'www.linkedin.com' || host.endsWith('.linkedin.com')) && /^\/jobs\/view\/(?:[^/]*-)?\d+\/?$/.test(location.pathname)) return 'linkedin';
-    if (/(^|\.)indeed\.[a-z.]+$/.test(host) && /^\/(?:m\/)?viewjob\/?$/i.test(location.pathname) && !!(new URLSearchParams(location.search).get('jk') || new URLSearchParams(location.search).get('vjk'))) return 'indeed';
+    // Accept Indeed's apex/www country domains, but never lookalike suffixes
+    // such as indeed.com.attacker.example.
+    if (/^(?:www\.)?indeed\.(?:com|[a-z]{2,3})(?:\.[a-z]{2})?$/.test(host) && /^\/(?:m\/)?viewjob\/?$/i.test(location.pathname) && !!(new URLSearchParams(location.search).get('jk') || new URLSearchParams(location.search).get('vjk'))) return 'indeed';
     if ((host === 'ziprecruiter.com' || host.endsWith('.ziprecruiter.com')) && (/^\/jobs\/[^/]+\/[^/]+/.test(location.pathname) || /^\/c\/[^/]+\/Job\/[^/]+/.test(location.pathname) || /^[A-Za-z0-9_-]{3,200}$/.test(new URLSearchParams(location.search).get('lvk') || ''))) return 'ziprecruiter';
     if (['job-boards.greenhouse.io', 'boards.greenhouse.io'].includes(host) && /^\/[A-Za-z0-9_-]{1,100}\/jobs\/[0-9]{1,20}\/?$/.test(location.pathname)) return 'greenhouse';
     if (['jobs.lever.co', 'jobs.eu.lever.co'].includes(host) && uuidPath.test(location.pathname)) return 'lever';

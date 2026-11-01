@@ -6,14 +6,14 @@ async function extensionContext() {
   return chromium.launchPersistentContext('', { channel: 'chromium', headless: true, args: [`--disable-extensions-except=${resolve('apps/extension')}`, `--load-extension=${resolve('apps/extension')}`] });
 }
 
-test('installed extension saves through the ResumeStride page without receiving authentication data', async () => {
+test('installed extension saves through the APWICO page without receiving authentication data', async () => {
   const context = await extensionContext();
   try {
     await context.addInitScript(() => window.addEventListener('message', event => {
       if (event.source === window && event.data?.type === 'resumestride:job-save-request') window.postMessage({ type: 'resumestride:job-save-result', requestId: event.data.requestId, status: 'saved' }, location.origin);
     }));
     const manager = await context.newPage(); await manager.goto('chrome://extensions/');
-    const item = manager.locator('extensions-item').filter({ hasText: 'ResumeStride Job Capture' });
+    const item = manager.locator('extensions-item').filter({ hasText: 'APWICO Job Capture' });
     const id = await item.getAttribute('id'); expect(id).toBeTruthy();
     const popup = await context.newPage(); await popup.goto(`chrome-extension://${id}/popup.html`);
     await expect(popup.getByRole('heading', { name: 'No job detected on this page' })).toBeVisible();
@@ -32,7 +32,7 @@ test('installed worker rejects unsafe destinations, private URLs, malformed capt
   const context = await extensionContext();
   try {
     const manager = await context.newPage(); await manager.goto('chrome://extensions/');
-    const item = manager.locator('extensions-item').filter({ hasText: 'ResumeStride Job Capture' });
+    const item = manager.locator('extensions-item').filter({ hasText: 'APWICO Job Capture' });
     const id = await item.getAttribute('id'); expect(id).toBeTruthy();
     const popup = await context.newPage(); await popup.goto(`chrome-extension://${id}/popup.html`);
     const initialPages = context.pages().length;

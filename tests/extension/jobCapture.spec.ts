@@ -70,7 +70,7 @@ test.describe('extension extraction (runs the compiled injected script exactly a
 });
 
 test.describe('web app job-import receiver (src/services/extensionImport.ts)', () => {
-  test('universal save requests keep authentication in ResumeStride and return signed-out without exposing account data', async ({ page }) => {
+  test('universal save requests keep authentication in APWICO and return signed-out without exposing account data', async ({ page }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     const result = await page.evaluate(() => new Promise(resolve => {
       const requestId = 'signed-out-save';

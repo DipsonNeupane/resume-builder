@@ -23,7 +23,7 @@ export async function saveExternalJob(capture: JobCapturePayload, resume: Resume
     return { status: response.status === 401 ? 'signed_out' : 'error', message };
   }
   if (!result || typeof result !== 'object' || typeof (result as Record<string, unknown>).savedJobId !== 'string' || typeof (result as Record<string, unknown>).alreadySaved !== 'boolean') {
-    return { status: 'error', message: 'ResumeStride returned an unexpected response. Try again.' };
+    return { status: 'error', message: 'APWICO returned an unexpected response. Try again.' };
   }
   return { status: (result as Record<string, unknown>).alreadySaved ? 'already_saved' : 'saved' };
 }

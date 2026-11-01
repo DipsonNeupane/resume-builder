@@ -1,15 +1,15 @@
-# ResumeStride Job Capture — 0.2.1 update candidate
+# APWICO Job Capture — 0.2.4 update candidate
 
-Version 0.2.0 is published. Version 0.2.1 is a prepared universal-job-save update and has
+Version 0.2.3 is published. Version 0.2.4 is a prepared APWICO-origin update and has
 **not** been uploaded, submitted, or published in the Chrome Web Store.
 
-On a plausible individual job page, click the extension and choose **Save to ResumeStride**.
-The authenticated ResumeStride web app saves the normalized source URL into the same account-owned
-Saved Jobs model used by jobs found inside ResumeStride. Reliable page data is attached when
+On a plausible individual job page, click the extension and choose **Save to APWICO**.
+The authenticated APWICO web app saves the normalized source URL into the same account-owned
+Saved Jobs model used by jobs found inside APWICO. Reliable page data is attached when
 available; otherwise the URL is saved with **Details pending**. Duplicate URLs return **Already
 saved**. Match, evidence, job-specific versions, tailoring, and export remain web-app features.
 
-The extension never receives ResumeStride tokens, resume data, account identity, entitlement,
+The extension never receives APWICO tokens, resume data, account identity, entitlement,
 payment data, or AI credentials.
 
 ## Detection and enrichment matrix
@@ -46,10 +46,10 @@ accounts, and account ownership isolation.
 - LinkedIn, Indeed, and ZipRecruiter use safe URL-pattern recognition only. The extension does not
   extract their restricted page content.
 - Enriched descriptions are inert bounded text. Remote scripts are never downloaded or executed.
-- Saving opens an inactive official ResumeStride tab and uses a bounded message bridge. The page
+- Saving opens an inactive official APWICO tab and uses a bounded message bridge. The page
   performs authenticated saving with its existing session; secrets never enter extension space.
 - URL-only saves do not invent job facts or Match results. They remain **Details pending** until
-  ResumeStride or the user can safely confirm details, and tailoring stays unavailable without a
+  APWICO or the user can safely confirm details, and tailoring stays unavailable without a
   description.
 - Existing Saved Jobs ownership, row security, Free/Pro limits, and deduplication apply unchanged.
 
@@ -64,7 +64,7 @@ npm run package:extension
 npm run check:extension-package
 ```
 
-Packaging writes `dist/extension/`, `dist/resumestride-extension.zip`, and
+Packaging writes `dist/extension/`, `dist/apwico-extension.zip`, and
 `dist/extension-package-report.json`, verifies the allowlisted folder and extracted ZIP, and never
 installs, uploads, submits, or publishes. Load `dist/extension/` in a disposable Chrome profile for
 acceptance. Never upload the developer folder.
@@ -73,13 +73,13 @@ acceptance. Never upload the developer folder.
 
 - `activeTab`: temporary access to the page selected by the user's toolbar click.
 - `scripting`: run the packaged detector in that tab and the save bridge in the official app tab.
-- `https://resumestride.com/*`: reach only the official web app for the user-requested save.
+- `https://apwico.com/*`: reach only the official web app for the user-requested save.
 
 There is no `tabs`, `storage`, `alarms`, `history`, `cookies`, `webRequest`, `<all_urls>`, clipboard,
 authentication, or AI permission. The extension has no durable capture queue or local job store.
 
 ## Release boundary
 
-The 0.2.1 ZIP is a candidate only. Store upload, submission, and publication require explicit owner
+The 0.2.4 ZIP is a candidate only. Store upload, submission, and publication require explicit owner
 approval. See `docs/chrome-web-store/RELEASE_PACKET.md` for the exact candidate inventory and
 reviewer instructions.

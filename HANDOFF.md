@@ -4837,3 +4837,50 @@ Owner decision required: re-verify the five vendors' pricing sources and update 
 remove the pricing-kind claims. Live signed-in journeys were **not** tested: no test-account
 credentials are available in this session, and the agent does not enter passwords on production.
 Graphify: 4,032 nodes / 8,444 edges.
+
+## October 31 — hosted audit follow-up and APWICO extension candidate
+
+This section supersedes older extension-origin and migration-source notes above.
+
+- Restored `supabase/migrations/20261029050415_fill_missing_posting.sql` from the already-applied
+  hosted production function definition, including its `SECURITY DEFINER`, empty search path, and
+  `service_role`-only execute grant. Production's migration ledger already includes this version;
+  do not reapply it. Added `supabase/tests/fill_missing_posting.test.sql` to lock down the grant,
+  blank-only fill, owner boundary, trimming, and matching job-resume snapshot update.
+- The live Supabase Security Advisor reports 43 INFO rows for server-only tables with RLS but no
+  browser policy; the queried tables have no grants to `anon` or `authenticated`. It also reports
+  leaked-password protection disabled (owner must enable it in Supabase Auth settings). Performance
+  Advisor findings (unindexed FKs, auth RLS init plans, and unused indexes) remain separate review
+  work; no speculative performance migration was applied.
+- Stripe live inspection found the shared 100%-off, three-redemption pilot coupon has one
+  redemption. The handler validates the pilot against the live promotion and shares the
+  account-scoped 10-per-hour checkout-attempt throttle. Do not publish the code in source or rotate
+  it based on the previous grep false positive; the exact live value was not found in tracked
+  source. Existing Stripe connection is live-mode, so no stateful checkout test was performed.
+- Fixed the extension's Indeed hostname matcher: the old suffix pattern also classified lookalike
+  hosts such as `indeed.com.evil.test` as Indeed. The matcher now accepts only apex/`www` Indeed
+  domains and bounded country suffix forms. Extension tests verify URL-only behavior without
+  scraping restricted page text. Updated stale board tests to match the implemented URL-only flow.
+- Prepared APWICO Job Capture 0.2.4 source and candidate package with APWICO copy, APWICO-only
+  production host permission, and no legacy ResumeStride destination. `npm run package:extension`,
+  `npm run check:extension-package`, and the branding migration check pass. Candidate ZIP is
+  `dist/apwico-extension.zip`; 14 files / 49,538 unpacked bytes / 25,148 archive bytes;
+  SHA-256 `21c7660e1ef3ae072b548833531618a2022f47cee88793492ad3a4069c98b8f8`. This is not installed,
+  uploaded, submitted, or published in the Chrome Web Store.
+- Production CSP still includes `style-src 'unsafe-inline'`; React uses runtime inline style values,
+  so removal needs a scoped refactor and regression check. Legacy domain redirects remain; do not
+  remove old-origin support until owner confirms it is no longer needed. Extension runtime now
+  targets APWICO only.
+- Supabase hosted account-isolation acceptance still requires two dedicated test accounts. Stripe
+  end-to-end acceptance needs a test-mode connection. The shared live pilot code cannot be tied to
+  individual friends without their APWICO/Stripe customer identities. Owner also needs to enable
+  leaked-password protection and sign into GitHub to change repository default branch from `master`
+  to `main`; Vercel production is already configured for `main`.
+
+Verification in this work session: `npm run build` PASS; `npm run test:extension` PASS 55/55;
+`npm run test:server` PASS 535/535; `npm run test:db` PASS across all SQL contract suites;
+`npm audit --json` PASS with 0 findings; `npm run check:extension-package` PASS; extension package
+integrity and APWICO branding checks PASS; `git diff --check` PASS. The app build emits the current
+Vite large-chunk advisory for the PDF worker and main bundle. Graph refresh is required after this
+session's changes. Do not describe the full hosted security/acceptance audit as complete until the
+remaining account and dashboard checks above are resolved.
