@@ -271,9 +271,14 @@
 .landing .template-gallery { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; border:0; }
 .landing .template-choice { min-height:0; padding:12px 14px; gap:10px; border:1px solid var(--rs-line); border-radius:10px; background:var(--pt-paper); color:var(--rs-heading); }
 .landing .template-choice:hover,.landing .template-choice[data-previewing=true] { background:var(--rs-selected); }
+.landing .template-choice-copy { min-width:0; flex:1; display:grid; gap:5px; }
+.landing .template-choice-heading { display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; }
 .landing .template-choice strong { font:700 16px/1.2 var(--pt-display); letter-spacing:-.01em; }
 .landing .template-choice small { color:var(--rs-slate); font-size:12px; }
 .landing .template-choice svg { color:var(--rs-action); flex:none; }
+.landing .template-access-badge { display:inline-flex; align-items:center; min-height:20px; padding:3px 7px; border:1px solid var(--rs-line); border-radius:999px; color:var(--rs-slate); background:var(--rs-canvas); font:700 10px/1.15 var(--pt-mono); letter-spacing:.04em; white-space:nowrap; }
+.landing .template-access-badge[data-access=free],.landing .template-access-badge[data-access=active],.landing .template-access-badge[data-access=pro] { color:var(--pt-mint-ink); border-color:#2f6d5b55; background:#dff2e9; }
+.landing .template-access-badge[data-access=locked] { color:var(--rs-action); border-color:#a9572f55; background:#f8e9df; }
 
 .landing .landing-pricing { max-width:none; background:var(--rs-canvas); color:var(--rs-heading); padding:96px var(--gut) 110px; border-top:1px solid var(--rs-line); }
 .landing .landing-pricing>* { max-width:1400px; margin-inline:auto; }
@@ -452,6 +457,7 @@
  .pt-decision-head { font-size:16px; margin-bottom:4px; }
  .pt-evidence-state { font-size:9.5px; }
  .landing .landing-match .evidence-key { grid-template-columns:1fr; }
+ .landing .template-gallery { grid-template-columns:1fr; }
 }
 @media (prefers-reduced-motion:reduce) {
  .pt-hero .pt-layer { opacity:1!important; animation:none!important; }

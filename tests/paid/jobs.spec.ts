@@ -100,6 +100,46 @@ const sampleResponse = {
   isPro: false, availableCount: 8, proLimit: 20,
 };
 
+async function requestUniversalSave(page: Page, requestId: string) {
+  return page.evaluate(requestId => new Promise<Record<string, unknown>>(resolve => {
+    const receive = (event: MessageEvent) => {
+      if (event.source === window && event.data?.type === 'resumestride:job-save-result' && event.data.requestId === requestId) {
+        window.removeEventListener('message', receive); resolve(event.data);
+      }
+    };
+    window.addEventListener('message', receive);
+    window.postMessage({ type: 'resumestride:job-save-request', requestId, payload: { title: '', company: '', description: '', site: 'linkedin', sourceUrl: 'https://www.linkedin.com/jobs/view/123', capturedAt: new Date().toISOString() } }, location.origin);
+  }), requestId);
+}
+
+for (const isPro of [false, true]) for (const alreadySaved of [false, true]) test(`universal URL save continues into the ${isPro ? 'Pro' : 'Free'} Saved Jobs model (${alreadySaved ? 'duplicate' : 'new'})`, async ({ page }) => {
+  await seed(page);
+  const savedJobId = '99999999-9999-9999-9999-999999999999';
+  const capture = { title: '', company: '', description: '', site: 'linkedin', sourceUrl: 'https://www.linkedin.com/jobs/view/123', capturedAt: '2026-09-29T00:00:00Z' };
+  const snapshot = { ...sampleResponse.jobs[0].savedSnapshot, id: `extension:${'a'.repeat(64)}`, provider: 'extension', providerJobId: 'a'.repeat(64), title: 'Job details pending', company: 'LinkedIn', descriptionText: '', sourceUrl: 'https://www.linkedin.com/jobs/view/123', portal: 'www.linkedin.com', source: 'extension:linkedin', capture };
+  let saves = 0;
+  await page.route('**/api/jobs-account', route => {
+    const body = route.request().postDataJSON();
+    if (body.action === 'capture_save') {
+      saves++;
+      expect(body.capture).toMatchObject({ title: '', company: '', description: '', site: 'linkedin', sourceUrl: 'https://www.linkedin.com/jobs/view/123' });
+      expect(body.owner).toBeUndefined();
+      return route.fulfill({ status: 200, json: { savedJobId, alreadySaved } });
+    }
+    if (body.action === 'load') return route.fulfill({ status: 200, json: { isPro, saveLimit: isPro ? 10000 : 3, savedJobs: [{ id: savedJobId, snapshot, providerAvailable: true, availabilityCheckedAt: '2026-09-29T00:00:00Z', unavailableAt: null, savedAt: '2026-09-29T00:00:00Z', matchAnalysis: null, analysisCurrent: true }], jobResumeVersions: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } } });
+    return route.fulfill({ status: 200, json: { saved: true } });
+  });
+  await openBuilder(page);
+  const result = await requestUniversalSave(page, `universal-${isPro}-${alreadySaved}`);
+  expect(result).toMatchObject({ status: alreadySaved ? 'already_saved' : 'saved' });
+  await expect(page.getByRole('heading', { level: 1, name: 'Find jobs', exact: true })).toBeVisible();
+  await expect(page.getByText('Saved job URL · Details pending')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'View job' })).toHaveAttribute('href', 'https://www.linkedin.com/jobs/view/123');
+  await expect(page.getByRole('button', { name: /Tailor my resume/ })).toHaveCount(0);
+  await expect(page.getByText(alreadySaved ? 'This job was already saved.' : 'Job saved to your account.', { exact: true })).toBeVisible();
+  expect(saves).toBe(1);
+});
+
 const sampleMatchAnalysis = {
   version: 2 as const, label: 'good' as const, resumeHash: 'a'.repeat(64), jobHash: 'b'.repeat(64), contextHash: 'c'.repeat(64),
   whyPromising: 'Your resume shows relevant evidence, with some areas still worth reviewing.',

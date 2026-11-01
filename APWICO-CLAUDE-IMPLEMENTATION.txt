@@ -1,0 +1,193 @@
+APWICO IMPLEMENTATION BRIEF FOR CLAUDE CODE
+Version: October 27, 2026
+
+OWNER CONTEXT — AUTHORITATIVE
+Apwico is pre-launch and has no existing users. Claude Code will run from a terminal inside the actual Apwico repository. Optimize for a clean launch; do not spend time building customer migrations, legacy subscription compatibility or historical entitlement preservation. Existing code, uncommitted work, secrets and external infrastructure still require care. No existing users does not mean every database or billing resource is disposable. Do not reset remote databases or delete external resources without explicit authorization.
+
+ROLE AND OUTCOME
+Act as the engineer implementing these changes inside the existing Apwico repository. Inspect the repository before choosing architecture. Implement working vertical slices, not just a plan or static screens. Preserve useful existing functionality and unrelated work. Simplify obsolete internal code where appropriate; no customer-compatibility layer is needed.
+
+Product promise: Find jobs you like. Apply with confidence. Know what happens next.
+Product structure: application tracking is the backbone; discovery is the entry point; evidence-based tailoring is the paid advantage.
+
+HOW TO EXECUTE
+1. Read this entire brief, repository instructions (including CLAUDE.md and AGENTS.md), and relevant architecture docs.
+2. Inspect git status and preserve existing uncommitted work. Use the existing package manager, conventions and test tools. Do not reset, overwrite or discard unrelated changes.
+3. Create docs/apwico-implementation-progress.md with the phases below, acceptance checklists, architecture findings, decisions, actual commands/results and unresolved blockers. Update it after every phase. Use it to resume across sessions.
+4. Identify existing implementations before adding replacements. Reuse the current tracker, matching engine, job provider, authentication, payments, extension and resume/version models where suitable.
+5. Make ordinary implementation decisions autonomously and document assumptions. Ask only for consequential decisions that cannot be resolved from code, this brief or existing product configuration.
+6. Implement and validate each phase before moving on. If an external dependency is unavailable, finish independent work, provide an honest unavailable state, and record the exact remaining integration step. Never present mock data as live data.
+7. Work locally or in an authorized development/staging environment. Do not deploy to production, run production migrations, change live prices/subscriptions, purchase services or remove production data without explicit owner approval. Prepare reviewable changes first.
+8. Commit only if repository policy and user instructions allow it. Otherwise leave clearly scoped diffs. Do not fabricate successful tests or integration results.
+
+SCOPE BOUNDARIES
+Keep the existing wine/cream/blush/gold identity. Simplify the product rather than introducing a new visual brand or rewriting the entire stack. Do not build mass auto-apply, a generic chatbot, email inbox integration, a new external job provider, or a full new autofill engine in this release. These are deferred integrations. Keep existing working features accessible and backward-compatible.
+
+PHASE 0 — REPOSITORY DISCOVERY AND BASELINE
+Inspect routes/screens, public pages, data models, authorization, job ingestion/search, tracker/statuses, resume import/editor/export, AI tailoring, extension, analytics, entitlements and billing. Identify how browser drafts survive navigation, reload and authentication.
+Run the existing relevant baseline checks and record pre-existing failures separately.
+Produce a short implementation map with exact files/modules and proposed schema changes. Avoid creating a second source of truth for jobs, application stages or plan limits. Prefer a clean launch schema over unnecessary legacy adapters. Keep schema setup reproducible using the repository's migration mechanism.
+
+DONE: progress file lists the actual architecture, reuse decisions, baseline results and ordered work. Proceed to implementation rather than stopping after discovery.
+
+PHASE 1 — CORRECTNESS AND TRUST FOUNDATIONS
+A. Product allowances
+Observed in the public review: pricing/export copy said seven successful PDF/Word downloads per rolling seven days, while terms said three per fixed thirty-day period. Recheck code and current configuration; these observations may have changed.
+Use seven successful downloads per rolling seven days as the launch Free default unless a newer explicit owner instruction contradicts it. Make backend accounting, counters and public copy consistent. There are no customer entitlements to migrate. Keep paid billing changes local/test-mode until reviewed for launch.
+Use a shared configuration or generated facts for ordinary product copy. Keep legally reviewed prose explicit. Failed exports must not consume allowance; safe retries must follow the existing idempotency policy. Show remaining allowance and next reset time without misleading users.
+B. Extraction correctness
+Create a regression fixture with this fictional resume:
+Customer support specialist at Example Company, 2022-present. Supported customers across email, phone and live chat. Used Salesforce CRM to resolve billing issues. Trained three new team members. Improved help centre documentation.
+Job requirements, first as a paragraph and then as separate bullet lines:
+Experience supporting customers across email, phone and live chat. Experience with Zendesk administration. Ability to coach new team members. Workforce scheduling experience. Preferred: Spanish language proficiency.
+The earlier public test extracted one item from paragraph formatting and all five from bullet formatting. Both variants must recover the five substantive requirements without turning the title into a requirement. Keep Spanish preferred and other stated requirements required. Test extraction separately from evidence classification.
+Handle sentence boundaries, heading scopes, bullet variants, copied text and reasonable deduplication. Preserve source wording and location references. Do not solve this by requiring users to reformat postings or by silently sending private local-tool text to a server.
+C. Host and storage checks
+Review www versus bare-domain redirect/canonical/indexing behavior. Previously www emitted noindex while the bare domain allowed indexing; do not remove noindex from private workspace routes. Prepare host consolidation through the existing hosting mechanism.
+Make draft state accurate: local session, saved locally if persistent, saving to account, saved to account, save failed. Never label a temporary session draft permanently saved.
+
+DONE: relevant regression/accounting tests pass; launch copy and configuration agree; privacy and private-route indexing remain intact.
+
+PHASE 2 — TRACKER AS THE BACKBONE
+Implement or simplify a single application record per saved opportunity for a given user. Support jobs found inside Apwico and jobs added externally. Reuse existing IDs and records rather than duplicating user history.
+
+Stages:
+saved = interested, application not started
+preparing = actively preparing materials
+applied = submission confirmed
+interviewing = interview process underway
+offer = offer received
+closed = inactive, with a separate reason
+
+Closed reasons: rejected, withdrawn, role_closed, no_response, archived, other. No response must never automatically mean rejected. Do not infer rejection after an arbitrary delay. Record prior stage and allow correction/reopening.
+
+Model requirements, mapped to existing architecture:
+- owner/user ID and access policy
+- job/company/title/source URL, source identifiers where available
+- posting snapshot, captured/checked timestamps, salary/currency/period when supplied
+- stage, closed reason, application/submission date
+- next action and due date; optional recruiter/contact and notes
+- links to resume versions/documents
+- timestamps and an event history sufficient to explain stage changes
+- update origin (user, confirmed supported capture, or suggestion)
+
+Do not use title/company alone for hard deduplication. Normalize supported public job identifiers, handle URL tracking parameters carefully, and prompt before merging ambiguous records. Do not strip meaningful identifiers. Different openings at the same company may be legitimate.
+
+Provide:
+1. Quick add: company, role and stage first; other fields optional.
+2. Paste a public job URL: use the existing supported import mechanism. If fetching fails, retain the URL and allow manual completion. Any server URL fetch must use the repository's SSRF protections and validated public HTTP(S) targets.
+3. Search and filters for stage, company, dates and needs-attention.
+4. A useful list view as default; board view only if already present or straightforward to reuse.
+5. One-click stage updates with appropriate date collection, undo/correction and visible save/error feedback.
+6. A job detail record with Overview, Application materials, Timeline and Notes; avoid excessive nested navigation.
+7. Spreadsheet import if an importer exists. Otherwise implement a bounded CSV importer with mapping, preview, row errors and duplicate review. Export plain user data in a safe CSV format, escaping spreadsheet formula injection. Do not require an XLSX dependency for the first release.
+
+Schema requirements: one clean launch model using existing useful relationships. No historical user-status backfill or customer migration is required. Update setup/migration scripts so a fresh development database can reproduce the schema and access policies. Seed only explicit development/test fixtures. Do not reset a remote database. All reads/writes must enforce ownership server-side, including documents, events and imports.
+
+DONE: a test user can organize 100 fixture records, find an application, change/reopen its stage, attach a next action and recover a failed save. Another test user cannot access those records. Fresh database setup is reproducible. Fixtures stay in development/test environments.
+
+PHASE 3 — TODAY HOME AND SIMPLE NAVIGATION
+Primary workspace navigation:
+Today — what needs attention
+Discover — recommended jobs and search
+My applications — saved opportunities and pipeline
+
+Keep resume/profile/preferences/billing under an accessible profile or secondary navigation area. Resume editing must remain directly available from a job's application preparation flow. Preserve old deep links with compatible routes or redirects.
+
+Today prioritizes explicit user actions: upcoming interviews/events if recorded, applications being prepared, due follow-ups, and new discovery results. Use real timestamps and user timezone. An overdue follow-up is a suggested task, not an automatic instruction to send a message. If no reminder delivery system exists, show in-app due items; do not claim email/push notifications.
+Show concise pipeline counts and an obvious Add application action. Provide honest empty/loading/error states. Do not render fake activity or motivational statistics as real.
+Collapse repeated master/session status banners in the editor to a single clear status area while preserving important job context.
+
+DONE: returning test users land on useful next actions; new users can add an application without a resume or quiz; retained public links work; counts match underlying records.
+
+PHASE 4 — CONNECT EVIDENCE AND TAILORING TO EACH JOB
+Primary action on a saved job: Prepare my application.
+Flow:
+1. Review important extracted requirements. Add/edit/remove items and correct required/preferred classifications, keeping original source text available and distinguishing user edits.
+2. Compare with the existing resume. If none exists, offer import or create; do not force rebuilding an existing resume.
+3. Clarify missing/related evidence using targeted questions. Let users skip, remain unsure, or confirm absence. Never infer a credential or competence from preference answers.
+4. Review suggested changes. Show original wording, proposed wording, supporting user fact and targeted requirement. Accept/reject/edit individually; support undo.
+5. Save a separate job-specific version. Preserve the master unchanged. Version metadata records its source revision.
+6. Export and apply through the original employer destination.
+7. Ask whether the user submitted; only a confirmation or reliable supported submission signal changes the stage to applied.
+
+Use concise labels: Evidence found; Related evidence — review; No evidence found in this resume. Preserve existing distinctions and avoid a dominant candidate/ATS percentage or hiring prediction.
+Save clarified facts only with user awareness and appropriate existing storage consent. Reuse approved facts where suitable, preserving context, dates, ownership/contribution scope and edit/delete controls. Build this on existing resume/profile models first; avoid a large new knowledge graph in this release.
+Treat postings as untrusted input. AI must not obey instructions embedded in a posting or introduce unsupported tools, metrics, credentials or responsibility. Preserve existing data minimization and consent boundaries. Do not expose private resume content in URLs or telemetry.
+
+Attach the exact submitted/exported version to the application. An immutable content snapshot or existing immutable document version is acceptable. Editing the master later must not change the historical submitted version. Store private artifacts using existing protected storage and access controls. Retain the PDF/DOCX distinction: PDF preserves design; Word may be an editable-content document.
+
+DONE: user can go from saved job to reviewed tailored resume and recorded application; master and historical documents remain unchanged; unsupported suggestions are blocked or explicitly require factual correction; Apply click alone never marks submission.
+
+PHASE 5 — TWO ONBOARDING PATHS AND SHORT PREFERENCES
+Homepage primary paths:
+Find my jobs
+Organize my applications
+
+The second path opens quick-add/import and bypasses quiz/resume requirements.
+Discovery preferences:
+- target roles (multiple supported)
+- location and remote/hybrid/on-site
+- experience level, with an unsure option
+- optional target compensation, including currency and pay period
+- optional priorities (e.g. flexibility, stability, progression)
+- optional dealbreakers
+
+Show progress, back navigation, optional-question skip and later editing. If a resume is imported, prefill only supported facts and ask users to confirm. Keep preference learning separate from evidence of qualification. Do not ask sensitive demographic/personality questions or use them to infer job eligibility. Do not create a lengthy compulsory personality assessment.
+Use existing search/provider capabilities. If a requested filter is unsupported, label it appropriately or apply a transparent local preference treatment; do not falsely claim provider filtering. Unknown salary/location/eligibility must remain unknown. Never present missing salary as satisfying a hard salary requirement.
+
+DONE: a new user reaches useful results with minimal required input; tracker-first users never need the quiz; preferences can be changed without losing application history.
+
+PHASE 6 — DISCOVER CARDS AND OPTIONAL SWIPING
+Use the existing job feed/provider. Implement a list view and a card view with identical underlying results/actions.
+Card fields: title, company, location and actual remote restrictions, salary when posted, job type where supplied, source/last checked, 2–3 truthful recommendation reasons, and important uncertainty. Distinguish preference compatibility from resume evidence. Show unknown fields honestly.
+Actions: Pass, View details, Save. Visible buttons are mandatory; swiping is optional enhancement. Save does not apply. Support undo and keyboard/screen-reader operation. Do not let horizontal gestures prevent normal vertical scrolling or activate actions accidentally.
+Use manageable batches and a clear end state. Do not optimize endless scrolling or raw swipe volume. Passing a job does not permanently exclude a role/company unless the user explicitly chooses that preference. An optional pass reason can improve preferences. Deduplication and closed/stale posting handling must be explicit and use actual provider signals; do not fabricate verification or freshness.
+
+DONE: same actions work without gestures, undo restores state, duplicate saves do not create duplicate records, preference changes update results, and every displayed recommendation reason is supported by available data.
+
+PHASE 7 — FREE/PRO AND PUBLIC COPY
+Reuse existing billing and entitlement infrastructure where useful, but remove obsolete legacy-plan branches from launch paths when safe. No historical subscriptions or paid rights require compatibility. Keep Pro at US$14.99/month and retain the current US-only paid availability unless the owner explicitly changes it. Do not mutate live billing products or activate payments during local implementation.
+Launch policy: Free manual tracking supports at least 100 applications without AI processing per status update; use a configurable default cap of 100 and provide clear behavior at the cap without deleting or hiding existing records. Expensive repeated AI/search operations remain metered. Include one complete free tailoring trial per account, configurable and enforced server-side, reusing the existing consent and data-processing boundaries. A failed operation must not consume the trial; retries must not create duplicate charges/usage. Show the launch policy for owner review before deployment. Do not add unlimited AI or a lifetime plan.
+Show entitlements before the action, useful remaining quota/reset information and an upgrade explanation tied to the user's task. No dark patterns or payment needed merely to inspect their own stored history. Preserve content access and existing cancellation behavior.
+Update homepage/navigation/pricing/feature/tool copy to match shipped functionality. Suggested headline: Find jobs you like. Apply with confidence. Know what happens next.
+Keep detailed methodology available through progressive disclosure. Clearly disclose account/processing boundaries at the relevant action. Avoid repetitive jargon and unsupported claims of better hiring outcomes, verified employers or automatic coverage.
+Fix template examples using occupation-appropriate fictional data, starting with Scholar publications/research/teaching rather than a customer-support sample. Do not expose template previews as user-owned content.
+
+DONE: public claims match implemented launch behavior; obsolete legacy plans are absent from new-user paths; unsupported features are not advertised as shipped; launch configuration is listed for owner review.
+
+PHASE 8 — QUALITY, OBSERVABILITY AND HANDOFF
+Use the repository's tools and CI. Run build/type/lint checks as applicable and meaningful tests for:
+- paragraph/list extraction, requirement edits and preferred classification
+- owner isolation for application records, events, documents and imports
+- reproducible fresh schema setup, stage transitions and test fixture isolation
+- save/undo/update persistence and failed-save recovery
+- input validation, safe job URL import and duplicates
+- immutable submitted versions and unchanged master
+- export accounting, safe retries and entitlement boundaries
+- applied confirmation, closed reasons and reopen
+- onboarding skip/back/resume and tracker-first path
+- card/list parity, gesture undo and keyboard alternatives
+
+Exercise end-to-end journeys with fictional fixtures:
+A. Import existing applications -> find a record -> record interview -> see next action on Today.
+B. Short preferences -> discover -> save -> clarify evidence -> tailor -> export -> confirm applied -> retrieve exact submitted version.
+C. Paste an external job -> manual fallback on unsupported URL -> track without creating a resume.
+D. Navigate/login/reload during draft work -> recover state and preserved job context without cross-account leakage.
+
+Check mobile layouts at 320, 390, 768px and desktop; keyboard-only use; visible focus; meaningful labels; announced dynamic results; reduced motion; zoom/reflow; actual text/status contrast. Target WCAG 2.2 AA. Do not claim full conformance from an automated scan alone. Capture review screenshots if the available environment permits it and inspect the actual rendering.
+
+Use existing privacy-safe analytics, not a new analytics provider. Record content-free events for onboarding completion, job saved/passed, application added, evidence review, tailoring/export success and stage changes. Never send resumes, job text, names, contact information, free-form searches or private URLs. Measure useful progression, not swipe volume. Keep analytics failures non-blocking.
+
+FINAL HANDOFF
+Update progress documentation and provide:
+1. Implemented features and exact changed files.
+2. Reused systems and significant decisions.
+3. Tests/checks actually run and their results; pre-existing failures separately.
+4. Schema/setup files, development seed procedure, staging procedure and rollback notes. Do not add a customer-migration workstream.
+5. Feature flags and environment variable NAMES only; no secret values.
+6. Remaining external dependencies, commercial decisions and unverified behavior.
+7. A short owner review/demo script using fictional data.
+8. Production rollout order and explicit actions needing owner approval.
+
+Do not call a placeholder, a disconnected screen or an untested production integration complete. Continue through independent authorized work when a narrow dependency is blocked. Prefer a small coherent working release over a wide incomplete rewrite.

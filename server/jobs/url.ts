@@ -16,6 +16,8 @@ export function safeJobUrl(raw: unknown): string | null {
   try { url = new URL(trimmed) } catch { return null }
   if (url.protocol !== 'https:') return null
   if (url.username || url.password) return null
-  if (!url.hostname) return null
+  if (!url.hostname || url.port || url.hostname.includes(':')) return null
+  const hostname = url.hostname.toLowerCase().replace(/\.$/, '')
+  if (hostname.split('.').length < 2 || /(^|\.)(localhost|local|internal|lan|home)$/.test(hostname) || /^\d+(?:\.\d+){3}$/.test(hostname)) return null
   return url.toString()
 }

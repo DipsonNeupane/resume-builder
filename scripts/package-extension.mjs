@@ -1,10 +1,12 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cp, lstat, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, lstat, mkdir, mkdtemp, readFile, rm, utimes, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { inspectPackage, packageFiles } from './check-extension-package.mjs';
+
+const reproducibleTimestamp = new Date('2000-01-01T00:00:00.000Z');
 
 export async function packageExtension(source, destination) {
   await rm(destination, { recursive: true, force: true });
@@ -27,6 +29,11 @@ export async function packageExtension(source, destination) {
     const text = await readFile(path, 'utf8');
     if (text.split(before).length !== 2) throw new Error(`Production replacement changed; review ${file}`);
     await writeFile(path, text.replace(before, after));
+  }
+  // zip records file modification times even with -X. Normalize every archived file so
+  // rebuilding identical source produces identical archive bytes and checksums.
+  for (const file of packageFiles) {
+    await utimes(join(destination, file), reproducibleTimestamp, reproducibleTimestamp);
   }
   return inspectPackage(destination);
 }

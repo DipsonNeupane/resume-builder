@@ -1,50 +1,34 @@
-import { deliverReviewedJob } from '../lib/delivery.js';
+import { requestJobSave } from '../lib/delivery.js';
 import { isAllowedAppUrl } from '../lib/config.js';
 import { isJobCapture } from '../lib/capture.js';
-import { keepPending, clearPending, readPending } from '../lib/pending.js';
 import { recordBridgeDelivery } from '../lib/diagnostics.js';
-chrome.alarms.onAlarm.addListener(alarm => { if (alarm.name === 'expire-capture') void readPending(); });
 
-// Delivery belongs to the worker, so closing the popup does not cancel an accepted send.
-// One session-only capture survives worker shutdown for explicit retry; never an automatic queue.
 let sending = false;
-async function waitForDestination(tabId: number, origin: string): Promise<boolean> {
- const deadline = Date.now() + 8_000;
- while (Date.now() < deadline) {
-  try {
-   const tab = await chrome.tabs.get(tabId);
-   if (tab.url && new URL(tab.url).origin === origin && tab.status === 'complete') return true;
-  } catch { return false; }
-  await new Promise(resolve => setTimeout(resolve, 100));
- }
- return false;
-}
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
  if (sender.id !== chrome.runtime.id || sender.url !== chrome.runtime.getURL('popup.html')) return false;
- if (!message || message.type !== 'resumestride:send-reviewed-job') return false;
- if (sending) { respond({received:false}); return false; }
+ if (!message || message.type !== 'resumestride:save-job') return false;
+ if (sending) { respond({status:'error',message:'A save is already in progress.'}); return false; }
  const { capture, appUrl: rawUrl } = message;
  let url: URL;
- try { url = new URL(rawUrl); } catch { respond({received:false}); return false; }
- if (!isAllowedAppUrl(url) || !isJobCapture(capture)) { respond({received:false}); return false; }
- const payload = capture;
+ try { url = new URL(rawUrl); } catch { respond({status:'error',message:'ResumeStride could not be opened.'}); return false; }
+ if (!isAllowedAppUrl(url) || !isJobCapture(capture)) { respond({status:'error',message:'This job link could not be saved.'}); return false; }
  sending = true;
  void (async()=>{
   const started = performance.now();
   let received = false;
   try {
-   await keepPending(payload, true);
-   const tab = await chrome.tabs.create({url:url.toString(),active:true});
+   const tab = await chrome.tabs.create({url:url.toString(),active:false});
    if (typeof tab.id !== 'number') throw new Error('No destination');
-   if (!await waitForDestination(tab.id, url.origin)) throw new Error('Destination did not finish loading');
-   const id = crypto.randomUUID();
-   for(let attempt=0;attempt<3 && !received;attempt++){
-    try { const results=await chrome.scripting.executeScript<boolean>({target:{tabId:tab.id},func:deliverReviewedJob,args:[payload,id,url.origin]}); received=results.some(result=>result.frameId===0 && result.result===true); } catch { /* bounded navigation retry */ }
-    if(!received) await new Promise(resolve=>setTimeout(resolve,250));
+   const id=crypto.randomUUID();
+   let result:{status:string;message?:string}|null=null;
+   for(let attempt=0;attempt<3 && !result;attempt++){
+    try { const results=await chrome.scripting.executeScript<{status:string;message?:string}|null>({target:{tabId:tab.id},func:requestJobSave,args:[capture,id,url.origin]}); result=results.find(item=>item.frameId===0)?.result??null; } catch { /* bounded navigation retry */ }
+    if(!result) await new Promise(resolve=>setTimeout(resolve,300));
    }
-   if (received) await clearPending(payload);
-  } catch { /* Keep the bounded session capture for explicit retry. */ }
-  finally { recordBridgeDelivery(received, performance.now() - started); sending=false; respond({received}); }
+   received=result!==null;
+   respond({status:result?.status??'error',message:result?.message,tabId:tab.id});
+  } catch { respond({status:'error',message:'Could not reach ResumeStride. Try again.'}); }
+  finally { recordBridgeDelivery(received, performance.now() - started); sending=false; }
  })();
  return true;
 });

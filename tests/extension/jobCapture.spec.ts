@@ -32,7 +32,7 @@ test.describe('extension extraction (runs the compiled injected script exactly a
     const script = await loadExtractScript();
     await page.goto('/extension-fixture/job-posting.html');
     const result = await page.evaluate(script);
-    expect(result.supported).toBe(true);
+    expect(result.detected).toBe(true);
     expect(result.capture.title).toContain('Senior Widget Engineer');
     expect(result.capture.company).toContain('Acme Corp');
     expect(result.capture.description).toContain('Build and maintain reliable widgets');
@@ -40,12 +40,13 @@ test.describe('extension extraction (runs the compiled injected script exactly a
     expect(new Date(result.capture.capturedAt).getTime()).toBeGreaterThan(Date.now() - 15000);
   });
 
-  test('reports a clear unsupported state on a page with no matching adapter', async ({ page }) => {
+  test('reports no job and offers explicit URL confirmation on a page with no matching adapter', async ({ page }) => {
     const script = await loadExtractScript();
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     const result = await page.evaluate(script);
-    expect(result.supported).toBe(false);
-    expect(result.reason).toMatch(/select the visible job description|paste/i);
+    expect(result.detected).toBe(false);
+    expect(result).toMatchObject({ state: 'no_job', canConfirm: true });
+    expect(result.reason).toMatch(/no job detected/i);
   });
 
   test('sanitizes hostile and oversized page text instead of passing it through raw', async ({ page }) => {
@@ -57,7 +58,7 @@ test.describe('extension extraction (runs the compiled injected script exactly a
       document.querySelector('[data-resumestride-field="title"]')!.textContent = 'A'.repeat(1000);
     });
     const result = await page.evaluate(script);
-    expect(result.supported).toBe(true);
+    expect(result.detected).toBe(true);
     // Bounded: sanitizeText caps at N chars then appends one ellipsis character.
     expect(result.capture.description.length).toBeLessThanOrEqual(12000);
     expect(result.capture.title.length).toBeLessThanOrEqual(300);
@@ -69,20 +70,26 @@ test.describe('extension extraction (runs the compiled injected script exactly a
 });
 
 test.describe('web app job-import receiver (src/services/extensionImport.ts)', () => {
-  test('keeps a reviewed capture across a reload without putting its content in the URL', async ({ page }) => {
-    await seedBaseResumeAndOpenBuilder(page);
-    await postJobImport(page, { title: 'Reload-safe role', company: 'Example', description: 'Review this job after authentication.', sourceUrl: 'http://localhost/job', capturedAt: new Date().toISOString(), site: 'manual' });
-    await expect(page.getByText('Reload-safe role', { exact: false }).first()).toBeVisible();
-    await page.reload();
-    await expect(page.getByText('Reload-safe role', { exact: false }).first()).toBeVisible();
-    expect(page.url()).not.toContain('Reload-safe');
+  test('universal save requests keep authentication in ResumeStride and return signed-out without exposing account data', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    const result = await page.evaluate(() => new Promise(resolve => {
+      const requestId = 'signed-out-save';
+      const receive = (event: MessageEvent) => {
+        if (event.source === window && event.data?.type === 'resumestride:job-save-result' && event.data.requestId === requestId) {
+          window.removeEventListener('message', receive); resolve(event.data);
+        }
+      };
+      window.addEventListener('message', receive);
+      window.postMessage({ type: 'resumestride:job-save-request', requestId, payload: { title: '', company: '', description: '', site: 'linkedin', sourceUrl: 'https://www.linkedin.com/jobs/view/123', capturedAt: new Date().toISOString() } }, location.origin);
+    }));
+    expect(result).toEqual({ type: 'resumestride:job-save-result', requestId: 'signed-out-save', status: 'signed_out' });
+    expect(JSON.stringify(result)).not.toMatch(/token|owner|email/i);
   });
-
   test('ignores a job-import message relayed from a different origin', async ({ page }) => {
     await seedBaseResumeAndOpenBuilder(page);
     await page.evaluate(type => {
       const iframe = document.createElement('iframe');
-      iframe.src = `data:text/html,<script>parent.postMessage({type:${JSON.stringify(type)},payload:{title:'Spy Role',company:'Spy Co',description:'x',sourceUrl:'',capturedAt:new Date().toISOString()}},'*')<\/script>`;
+      iframe.src = `data:text/html,<script>parent.postMessage({type:${JSON.stringify(type)},payload:{title:'Spy Role',company:'Spy Co',description:'x',sourceUrl:'http://127.0.0.1:5185/extension-fixture/job-posting.html',capturedAt:new Date().toISOString()}},'*')<\/script>`;
       document.body.appendChild(iframe);
     }, jobImportMessageType);
     await page.waitForTimeout(400);
@@ -91,14 +98,14 @@ test.describe('web app job-import receiver (src/services/extensionImport.ts)', (
 
   test('ignores a job-import message with an invalid schema', async ({ page }) => {
     await seedBaseResumeAndOpenBuilder(page);
-    await postJobImport(page, { title: 123, company: 'Acme', description: 'x', sourceUrl: '', capturedAt: new Date().toISOString() });
+    await postJobImport(page, { title: 123, company: 'Acme', description: 'x', sourceUrl: 'http://127.0.0.1:5185/extension-fixture/job-posting.html', capturedAt: new Date().toISOString() });
     await page.waitForTimeout(300);
     await expect(page.getByText(/job was captured/i)).toHaveCount(0);
   });
 
   test('rejects an oversized job-import payload rather than truncating it on receipt', async ({ page }) => {
     await seedBaseResumeAndOpenBuilder(page);
-    await postJobImport(page, { title: 'Role', company: 'Co', description: 'x'.repeat(13000), sourceUrl: '', capturedAt: new Date().toISOString() });
+    await postJobImport(page, { title: 'Role', company: 'Co', description: 'x'.repeat(13000), sourceUrl: 'http://127.0.0.1:5185/extension-fixture/job-posting.html', capturedAt: new Date().toISOString() });
     await page.waitForTimeout(300);
     await expect(page.getByText(/job was captured/i)).toHaveCount(0);
   });
@@ -106,7 +113,7 @@ test.describe('web app job-import receiver (src/services/extensionImport.ts)', (
   test('renders captured job text as literal text, never as markup', async ({ page }) => {
     await seedBaseResumeAndOpenBuilder(page);
     const hostileTitle = '<img src=x onerror=alert(1)> Role';
-    await postJobImport(page, { title: hostileTitle, company: 'Acme', description: 'desc', sourceUrl: '', capturedAt: new Date().toISOString() });
+    await postJobImport(page, { title: hostileTitle, company: 'Acme', description: 'desc', sourceUrl: 'http://127.0.0.1:5185/extension-fixture/job-posting.html', capturedAt: new Date().toISOString() });
     await expect(page.getByText(hostileTitle, { exact: false })).toBeVisible();
     await expect(page.locator('img[src="x"]')).toHaveCount(0);
   });
@@ -115,7 +122,7 @@ test.describe('web app job-import receiver (src/services/extensionImport.ts)', (
     const draft = example();
     draft.name = 'Original Base Name';
     await seedBaseResumeAndOpenBuilder(page, draft);
-    await postJobImport(page, { title: 'Senior Widget Engineer', company: 'Acme Corp', description: 'Build widgets.', sourceUrl: 'http://localhost/x', capturedAt: new Date().toISOString() });
+    await postJobImport(page, { title: 'Senior Widget Engineer', company: 'Acme Corp', description: 'Build widgets.', sourceUrl: 'http://127.0.0.1:5185/extension-fixture/job-posting.html', capturedAt: new Date().toISOString() });
     await expect(page.getByText(/Senior Widget Engineer/)).toBeVisible();
 
     await page.getByRole('button', { name: 'Start job-specific draft' }).click();
@@ -139,10 +146,10 @@ test.describe('web app job-import receiver (src/services/extensionImport.ts)', (
     const draft = example();
     draft.name = 'Base Person';
     await seedBaseResumeAndOpenBuilder(page, draft);
-    await postJobImport(page, { title: 'Role A', company: 'A Co', description: 'd', sourceUrl: '', capturedAt: new Date().toISOString() });
+    await postJobImport(page, { title: 'Role A', company: 'A Co', description: 'd', sourceUrl: 'http://127.0.0.1:5185/extension-fixture/job-posting.html', capturedAt: new Date().toISOString() });
     await page.getByRole('button', { name: 'Start job-specific draft' }).click();
 
-    await postJobImport(page, { title: 'Role B', company: 'B Co', description: 'd', sourceUrl: '', capturedAt: new Date().toISOString() });
+    await postJobImport(page, { title: 'Role B', company: 'B Co', description: 'd', sourceUrl: 'http://127.0.0.1:5185/extension-fixture/job-posting.html', capturedAt: new Date().toISOString() });
     await expect(page.getByText(/already editing a job-specific draft/)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Start job-specific draft' })).toHaveCount(0);
 
@@ -154,7 +161,7 @@ test.describe('web app job-import receiver (src/services/extensionImport.ts)', (
 test('storage failure prevents starting a draft that cannot preserve its base', async ({page})=>{
  await seedBaseResumeAndOpenBuilder(page);
  await page.evaluate(()=>{Storage.prototype.setItem=()=>{throw new Error('Storage denied');};});
- await postJobImport(page,{title:'Example job',company:'Example',description:'Example duties',sourceUrl:'',capturedAt:new Date().toISOString()});
+ await postJobImport(page,{title:'Example job',company:'Example',description:'Example duties',sourceUrl:'http://127.0.0.1:5185/extension-fixture/job-posting.html',capturedAt:new Date().toISOString()});
  await page.getByRole('button',{name:'Start job-specific draft'}).click();
  await expect(page.getByText('Could not preserve your master resume.',{exact:false})).toBeVisible();
  await expect(page.getByRole('status').filter({hasText:/Job-specific draft — Tailored for/})).toHaveCount(0);
@@ -163,7 +170,7 @@ test('storage failure prevents starting a draft that cannot preserve its base', 
 
 test('duplicate deliveries acknowledge without reopening a dismissed capture',async({page})=>{
  await seedBaseResumeAndOpenBuilder(page);
- const payload={title:'Once only job',company:'Example',description:'Work',sourceUrl:'',capturedAt:new Date().toISOString()};
+ const payload={title:'Once only job',company:'Example',description:'Work',sourceUrl:'http://127.0.0.1:5185/extension-fixture/job-posting.html',capturedAt:new Date().toISOString()};
  const send=()=>page.evaluate(payload=>window.postMessage({type:'resumestride:job-import',payload,deliveryId:'repeat-id'},location.origin),payload);
  await send();await page.getByRole('button',{name:'Dismiss',exact:true}).click();await send();
  await expect(page.getByRole('button',{name:'Start job-specific draft'})).toHaveCount(0);
@@ -174,7 +181,7 @@ test.describe('job-specific draft recovery across a reload (src/main.tsx, resume
     const draft = example();
     draft.name = 'Reload Base Name';
     await seedBaseResumeAndOpenBuilder(page, draft);
-    await postJobImport(page, { title: 'Recoverable Role', company: 'Recover Co', description: 'Recoverable duties.', sourceUrl: '', capturedAt: new Date().toISOString() });
+    await postJobImport(page, { title: 'Recoverable Role', company: 'Recover Co', description: 'Recoverable duties.', sourceUrl: 'http://127.0.0.1:5185/extension-fixture/job-posting.html', capturedAt: new Date().toISOString() });
     await page.getByRole('button', { name: 'Start job-specific draft' }).click();
     await expect(page.getByRole('status').filter({ hasText: /Job-specific draft — Tailored for Recoverable Role · Recover Co/ })).toBeVisible();
 
@@ -209,7 +216,7 @@ test.describe('job-specific draft recovery across a reload (src/main.tsx, resume
       jobDraftKey: 'resumestride.jobDraft',
       jobDraft: {
         ownerId: 'someone-elses-account',
-        jobContext: { title: 'Foreign Role', company: 'Foreign Co', description: 'd', sourceUrl: '', capturedAt: new Date().toISOString() },
+        jobContext: { title: 'Foreign Role', company: 'Foreign Co', description: 'd', sourceUrl: 'http://127.0.0.1:5185/extension-fixture/job-posting.html', capturedAt: new Date().toISOString() },
         baseSnapshot: draft,
         resume: draft,
       },

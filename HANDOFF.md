@@ -1,3 +1,9 @@
+## October 31 — working branch consolidation in progress
+
+Canonical working branch: `feat/apwico-launch-tracker`, the existing branch tracked by the APWICO production source. The primary checkout’s local Chrome extension, documentation, and marketing work was checkpointed as `4e5539c`; the APWICO checkout’s local launch, billing, content, and UI work was checkpointed as `7cf12f6`. Both histories are being preserved in the merge. The extension updates were integrated with the current APWICO app, including its authenticated save bridge and URL-only saved-job handling. URL identity is validated through the shared capture URL canonicalizer.
+
+Verification after integration: `npm run build:extension`, `npm run check:server`, and `npm run build` pass. No end-to-end test suite was run during branch consolidation. `graphify update .` refreshed the local graph.
+
 ## October 31 — Site-wide UI copy cleanup and compact saved-job cards (deployed)
 
 Worktree: `.claude/worktrees/apwico-launch`, branch `feat/apwico-launch-tracker`.

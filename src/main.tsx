@@ -41,7 +41,8 @@ import { authConfigured, supabase } from './services/supabase';
 import { useSession } from './hooks/useSession';
 import { useCloudResume } from './hooks/useCloudResume';
 import { applyInterfaceLocale } from './i18n/locale';
-import { clearPendingJobImport, isJobCapturePayload, listenForJobImport, loadPendingJobImport, storePendingJobImport, type JobCapturePayload } from './services/extensionImport';
+import { clearPendingJobImport, isJobCapturePayload, listenForJobImport, listenForJobSaveRequests, loadPendingJobImport, storePendingJobImport, type JobCapturePayload } from './services/extensionImport';
+import { saveExternalJob } from './services/externalJobSave';
 import { clearPendingJob, loadPendingJob, savePendingJob } from './features/onboarding/jobFirstState';
 // docx/pdf import parsing is only needed inside uploadResume() below, so it is
 // dynamically imported there instead of shipped in the initial bundle.
@@ -109,6 +110,7 @@ function App(){
  const jobVersionSaving=useRef(false);
  const liveResume=useRef(resume);liveResume.current=resume;
  const session=useSession();
+ const liveOwner=useRef<string|null>(null);liveOwner.current=session.loading?null:session.user?.id??null;
  const templateAccessState=useTemplateAccess(session.user?.id??null,page==='builder');
  const templateAccess=templateAccessState.access;
  const selectedTemplate=templates.find(item=>item.id===resume.template)!;
@@ -214,6 +216,14 @@ function App(){
  const [captureKey,setCaptureKey]=useState(0);
  const [capturedJobsRevision,setCapturedJobsRevision]=useState(0);
  useEffect(()=>listenForJobImport(capture=>{captureSequence.current++;setCaptureKey(captureSequence.current);try{storePendingJobImport(sessionStorage,capture,currentCaptureOwner.current);}catch{/* session storage optional */}setIncomingJobCapture(capture);}),[]);
+ useEffect(()=>listenForJobSaveRequests(async capture=>{
+  const result=await saveExternalJob(capture,liveResume.current,liveOwner.current);
+  if(result.status==='saved'||result.status==='already_saved'){
+   setCapturedJobsRevision(value=>value+1);setPage('jobs');
+   setMessage(result.status==='already_saved'?'This job was already saved.':'Job saved to your account.');
+  }else if(result.status==='signed_out')setPage('account');
+  return result;
+ }),[]);
  useEffect(()=>{
   if(session.loading)return;
   const next=session.user?.id??null;

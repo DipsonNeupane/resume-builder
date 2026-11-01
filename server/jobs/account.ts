@@ -1,6 +1,6 @@
 /** Authenticated saved-job and preference API. Ownership always comes from the
  * verified access token; no owner field from the browser is accepted or forwarded. */
-import { normalizeCapture } from './capture.ts'
+import { captureHasDetails, normalizeCapture } from './capture.ts'
 import { isJobCapture, type JobCapture } from '../../apps/extension/src/lib/capture.ts'
 import { createHash } from 'node:crypto'
 import { authenticate, HttpError, json, jsonBody, requirePost, safeError } from '../http/security.ts'
@@ -337,6 +337,16 @@ export async function jobsAccount(request: Request, env: NodeJS.ProcessEnv = pro
       const captured = action === 'capture_save' ? normalizeCapture(body.capture) : null
       const job = captured ? { ...savedJobSnapshot(captured, { label: 'stretch', reasons: [] }), capture: captured.capture } : parseSavedJobSnapshot(body.job)
       const evidence = parseResumeEvidence(body.evidence)
+      if (captured && !captureHasDetails(captured.capture)) {
+        const result = await db.rpc('jobs_save', { p_owner: owner, p_job: job })
+        if (result.error) {
+          if (result.error.message.includes('Free saved-job limit reached')) throw new HttpError(403, 'Free accounts can save up to 3 jobs. Your existing saved jobs are kept; upgrade to Pro to save more.')
+          if (result.error.message.includes('Saved-job safety limit reached')) throw new HttpError(409, 'Saved-job safety limit reached. Existing saved jobs are unchanged.')
+          throw new HttpError(503, 'Unable to save this job')
+        }
+        if (!record(result.data) || typeof result.data.savedJobId !== 'string' || !SAVED_JOB_ID.test(result.data.savedJobId) || typeof result.data.alreadySaved !== 'boolean') throw new HttpError(503, 'Unable to save this job')
+        return json(200, result.data)
+      }
       if (!evidence && body.evidence === undefined && !captured) {
         const legacy = await db.rpc('jobs_save', { p_owner: owner, p_job: job })
         if (legacy.error) {

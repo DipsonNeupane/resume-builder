@@ -1,0 +1,8 @@
+channel,base_url,utm_source,utm_medium,utm_campaign,utm_content,campaign_url
+X,https://resumestride.com/,x,social,product-demo-launch,master-versions,https://resumestride.com/?utm_source=x&utm_medium=social&utm_campaign=product-demo-launch&utm_content=master-versions
+LinkedIn,https://resumestride.com/,linkedin,social,product-demo-launch,evidence-match,https://resumestride.com/?utm_source=linkedin&utm_medium=social&utm_campaign=product-demo-launch&utm_content=evidence-match
+Product Hunt,https://resumestride.com/,product_hunt,launch,product-demo-launch,product-workflow,https://resumestride.com/?utm_source=product_hunt&utm_medium=launch&utm_campaign=product-demo-launch&utm_content=product-workflow
+Indie Hackers,https://resumestride.com/,indie_hackers,community,product-demo-launch,founder-launch,https://resumestride.com/?utm_source=indie_hackers&utm_medium=community&utm_campaign=product-demo-launch&utm_content=founder-launch
+Hacker News,https://resumestride.com/,hacker_news,community,product-demo-launch,show-hn,https://resumestride.com/?utm_source=hacker_news&utm_medium=community&utm_campaign=product-demo-launch&utm_content=show-hn
+Chrome Web Store,https://resumestride.com/,chrome_web_store,extension,extension_launch,store-listing,https://resumestride.com/?utm_source=chrome_web_store&utm_medium=extension&utm_campaign=extension_launch&utm_content=store-listing
+

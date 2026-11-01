@@ -7,6 +7,9 @@ export type { JobCapture as JobCapturePayload } from '../../apps/extension/src/l
 import type { JobCapture as JobCapturePayload } from '../../apps/extension/src/lib/capture';
 
 export const jobImportMessageType = 'resumestride:job-import' as const;
+export const jobSaveRequestType = 'resumestride:job-save-request' as const;
+export const jobSaveResultType = 'resumestride:job-save-result' as const;
+export type JobSaveOutcome = { status: 'saved' | 'already_saved' | 'signed_out' | 'error'; message?: string };
 // The exact production origin the extension is allowed to deliver into (apps/extension/src/lib/config.ts
 // carries the matching constant on the extension side). Hardcoded, not derived from window.location,
 // so this boundary can't be widened by a misconfigured deployment.
@@ -70,6 +73,33 @@ export function listenForJobImport(onCapture: (payload: JobCapturePayload) => vo
       }
       window.postMessage({type:'resumestride:job-import-ack',deliveryId},window.location.origin);
     } else { onCapture(message.payload); recordBrowserDiagnostic('extension', 'bridge_receive', 'ok'); }
+  };
+  window.addEventListener('message', handler);
+  return () => window.removeEventListener('message', handler);
+}
+
+// The extension supplies only untrusted job data. Authentication and ownership remain
+// inside this page and the server; the result exposes no access token or account data.
+export function listenForJobSaveRequests(onSave: (payload: JobCapturePayload) => Promise<JobSaveOutcome>): () => void {
+  const isDevLocal = import.meta.env.DEV && window.location.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(window.location.hostname) && ['5173','5174','5181','5183','5185'].includes(window.location.port);
+  const isProduction = window.location.origin === productionOrigin;
+  if (!isDevLocal && !isProduction) return () => {};
+  const requests = new Map<string, Promise<JobSaveOutcome>>();
+  const handler = (event: MessageEvent) => {
+    if (event.source !== window || event.origin !== window.location.origin || !event.data || typeof event.data !== 'object') return;
+    const message = event.data as Record<string, unknown>;
+    if (message.type !== jobSaveRequestType) return;
+    const requestId = message.requestId;
+    if (typeof requestId !== 'string' || !/^[a-zA-Z0-9-]{1,80}$/.test(requestId) || !isJobCapturePayload(message.payload)) {
+      recordBrowserDiagnostic('extension', 'bridge_receive', 'bridge_rejected'); return;
+    }
+    if (!requests.has(requestId)) {
+      if (requests.size >= 100) { recordBrowserDiagnostic('extension', 'bridge_receive', 'rate_limit'); return; }
+      requests.set(requestId, onSave(message.payload).catch(() => ({ status: 'error', message: 'Could not save this job. Try again.' })));
+    }
+    void requests.get(requestId)!.then(result => {
+      window.postMessage({ type: jobSaveResultType, requestId, status: result.status, ...(result.message ? { message: result.message.slice(0, 300) } : {}) }, window.location.origin);
+    });
   };
   window.addEventListener('message', handler);
   return () => window.removeEventListener('message', handler);
