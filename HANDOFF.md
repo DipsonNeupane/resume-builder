@@ -4754,6 +4754,35 @@ the current Stripe setup is rechecked. The currently deployed feature set is sou
 verified, but this worktree remains dirty and was deployed directly through Vercel; nothing was
 committed or pushed. The original checkout at `/Users/dipson/ResumeStride` remains untouched.
 
+## October 31 — canonical main and production verification
+
+Merged the APWICO launch fixes into local `main` at `86b12ebe0cd75638e5554ae206c2d6b902faac96`
+and pushed the same commit to `origin/main`. Vercel's production branch is set to `main`; the
+GitHub repository default branch still reports `master` because the settings page is signed out.
+Production was manually deployed from this exact source as `dpl_4eLQueAGMKA1Zhn7qAn5VijXJF6Y`,
+Vercel status Ready, aliased to `apwico.com`, `www.apwico.com`, and the Vercel domains. The live
+Today page was reloaded and its updated follow-up copy confirmed. A test-only assertion refresh
+was added after the deploy and is being pushed separately; it does not change production app
+source.
+
+Verification after refreshing stale UI assertions: `npm run test:paid` PASS 104/104, including
+five connected browser journeys (discovery/tailoring/export, tracker/import/reminders, reload and
+session recovery, PDF export, sign-in/account isolation) and mobile layouts. `npm run check:server`,
+`npm run build:extension`, `npm run build`, `npm audit --omit=optional` (0 findings), server/auth/
+SEO/database suites, and generated-PDF checks also passed earlier in this session. `graphify
+update .` completed. The browser journeys use controlled test fixtures; they do not establish
+live Stripe charge behavior or hosted Supabase cross-account isolation.
+
+Security and release follow-ups remain; do not report the audit as fully clear. Specifically:
+`npm run check:hosted-isolation` could not run without the dedicated hosted test credentials;
+Stripe acceptance was not run because it can mutate billing state; CSP still permits
+`style-src 'unsafe-inline'`; the pilot is a shared code rather than per-person access; legacy
+ResumeStride origins and extension branding/package checks remain; and the applied production
+migration `20261029050415` has no matching local SQL source for provenance review. A zero-finding
+`npm audit --omit=optional` covers only that dependency-audit scope and does not close these
+application, configuration, or hosted-verification gaps. The extension package checker still
+expects the old `resumestride.com` origin while runtime uses `apwico.com`.
+
 ## October 31 — homepage hero wrapping correction deployed
 
 Compared the owner's mobile screenshot with the production homepage and current source. The

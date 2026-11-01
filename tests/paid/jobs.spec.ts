@@ -986,7 +986,7 @@ test('an existing version detects master changes and offers non-destructive keep
   await expect(page.getByRole('button', { name: 'Update from master' })).toBeVisible();
   await page.getByRole('button', { name: 'Design & format' }).click();
   await page.getByRole('button', { name: 'Confirm' }).click();
-  await expect(page.getByText(/no description available/i)).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Add a job description to get suggestions.' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Get tailoring suggestions' })).toBeDisabled();
   expect(tailorCalls).toBe(0);
   await page.getByRole('button', { name: 'Back to editing' }).click();
@@ -1143,7 +1143,7 @@ test('unsupported AI wording cannot be accepted in one step; a fact or the perso
   await page.getByRole('button',{name:'Open tailored resume',exact:true}).click();
   await page.getByRole('button',{name:'Keep this version'}).click();
   await page.getByRole('button',{name:'Preview resume',exact:true}).click();
-  await page.getByRole('checkbox',{name:/I consent to sending/}).check();
+  await page.getByRole('checkbox',{name:/I agree to send my resume and job description to OpenAI for suggestions/}).check();
   await page.getByRole('button',{name:'Get tailoring suggestions'}).click();
   await expect(page.locator('.tailoring-panel').getByRole('status').filter({hasText:'paused for all accounts'})).toHaveText(paused);
   await expect(page.locator('.suggestion-card')).toHaveCount(0);
@@ -1151,17 +1151,17 @@ test('unsupported AI wording cannot be accepted in one step; a fact or the perso
   await page.getByRole('button',{name:'Get tailoring suggestions'}).click();
   const first=page.getByRole('article',{name:'Suggestion 1',exact:true});
   const second=page.getByRole('article',{name:'Suggestion 2',exact:true});
-  await expect(first.getByRole('note')).toContainText('Needs your support.');
+  await expect(first.getByRole('note')).toContainText('Needs more support before use.');
   await expect(page.getByText('paused for all accounts')).toHaveCount(0);
   await expect(first.getByRole('note')).toContainText('It uses “complaints” from the job, which your resume does not say.');
-  await expect(first.getByRole('note')).toContainText('They cannot confirm that any wording is true.');
+  await expect(first.getByRole('note')).toContainText('Check each claim before using it.');
   await expect(second.getByRole('note')).toContainText('It adds “managed”');
   for (const card of [first, second]) await expect(card.getByRole('button',{name:/^Accept/})).toHaveCount(0);
   expect((await new AxeBuilder({page}).include('.tailoring-panel').analyze()).violations).toEqual([]);
 
   // A fact the person writes resolves only what it covers.
-  await first.getByText('Add a fact that supports this').click();
-  await first.getByRole('textbox',{name:'What in your experience supports the proposed wording?'}).fill('I resolve customer complaints about late orders every week.');
+  await first.getByText('Add a supporting fact',{exact:true}).click();
+  await first.getByRole('textbox',{name:'What experience supports this?'}).fill('I resolve customer complaints about late orders every week.');
   await first.getByRole('button',{name:'Check again'}).click();
   await expect(first.getByRole('note')).toHaveCount(0);
   await expect(first.locator('.suggestion-trace')).toContainText('Fact you added');
@@ -1170,12 +1170,12 @@ test('unsupported AI wording cannot be accepted in one step; a fact or the perso
   await expect.poll(()=>working.sections[0].entries[0].description).toContain('Resolve customer complaints across email');
 
   // A fact that does not cover "managed" leaves it blocked; the person's own wording is labelled as theirs.
-  await second.getByText('Add a fact that supports this').click();
-  await second.getByRole('textbox',{name:'What in your experience supports the proposed wording?'}).fill('I worked closely with colleagues on busy days.');
+  await second.getByText('Add a supporting fact',{exact:true}).click();
+  await second.getByRole('textbox',{name:'What experience supports this?'}).fill('I worked closely with colleagues on busy days.');
   await second.getByRole('button',{name:'Check again'}).click();
-  await expect(second.getByRole('status')).toContainText('Your fact does not cover everything flagged above.');
+  await expect(second.getByRole('status')).toContainText('Add more support or edit the wording.');
   await expect(second.getByRole('button',{name:/^Accept/})).toHaveCount(0);
-  await second.getByText('Write your own wording instead',{exact:true}).click();
+  await second.getByText('Write your own wording',{exact:true}).click();
   const own=second.getByRole('textbox',{name:'Your wording'});
   await expect(second.getByRole('button',{name:'Use my wording'})).toHaveCount(0);
   await own.fill(role2.description.replace('coordinated with colleagues','worked with colleagues'));
@@ -1228,7 +1228,7 @@ for (const width of [320, 390, 768, 1440, 1920]) test(`premium opportunity and t
   await openJobs(page);
   await page.getByRole('button',{name:'Search jobs',exact:true}).click();
   await expect(page.locator('.discover-deck .deck-card')).toHaveCount(3);
-  await page.locator('.saved-job-card').getByText('Full evidence analysis',{exact:true}).click();
+  await page.locator('.saved-job-card').getByText('Match preview',{exact:true}).click();
   expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.evaluate(()=>(document.activeElement as HTMLElement)?.blur());
@@ -1243,12 +1243,12 @@ for (const width of [320, 390, 768, 1440, 1920]) test(`premium opportunity and t
   await expect(page.getByRole('button',{name:'Keep this version'})).toBeVisible();
   await page.getByRole('button',{name:'Keep this version'}).click();
   await page.getByRole('button',{name:'Preview resume',exact:true}).click();
-  await page.getByRole('checkbox',{name:/I consent to sending/}).check();
+  await page.getByRole('checkbox',{name:/I agree to send my resume and job description to OpenAI for suggestions/}).check();
   await page.getByRole('button',{name:'Get tailoring suggestions'}).click();
   await expect(page.getByRole('article',{name:'Suggestion 1',exact:true})).toBeVisible();
   await expect(page.getByRole('article',{name:'Suggestion 1',exact:true}).locator('.suggestion-trace')).toContainText('Support customers and document solutions.');
   // No verified requirement/fact link: it needs the person's support and has no one-click Accept.
-  await expect(page.getByRole('article',{name:'Suggestion 2',exact:true}).getByRole('note')).toContainText('Needs your support.');
+  await expect(page.getByRole('article',{name:'Suggestion 2',exact:true}).getByRole('note')).toContainText('Needs more support before use.');
   await expect(page.getByRole('article',{name:'Suggestion 2',exact:true}).getByRole('button',{name:/^Accept/})).toHaveCount(0);
   const documentRatios=await page.locator('.review-document .resume-paper').first().evaluate(paper=>{const heading=paper.querySelector('h2')!;return {heading:parseFloat(getComputedStyle(heading).fontSize)/parseFloat(getComputedStyle(paper).fontSize),weight:getComputedStyle(paper).fontWeight};});
   expect(documentRatios.heading).toBeCloseTo(.9,1);expect(documentRatios.weight).toBe('400');
