@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Check } from 'lucide-react';
 import { ResumePreview } from '../../components/ResumePreview';
-import { example, templates, type Resume } from '../../model';
+import type { TemplateAccessState } from '../../hooks/useTemplateAccess';
+import { example, isPremiumTemplate, templates, type Resume } from '../../model';
 import { PatinaHero } from './PatinaHero';
 import { MatchShowcase } from './MatchShowcase';
 import './landing.css';
@@ -10,9 +11,9 @@ const sample = example();
 // The suggestion reworks the sample's own summary using only experience it already lists.
 const suggested = 'Customer experience specialist who supports customers across email, phone and live chat, simplifies everyday support processes, and helps new team members build confidence.';
 const connected = ['Your resume', 'Find or save a role', 'See the evidence', 'You decide', 'A separate version', 'Review each change', 'PDF or Word', 'Apply on the employer’s site'];
-type Props = { onBuild: () => void; onUpload: () => void; onJobs: () => void; onPro: () => void; onTemplate: (template: Resume['template']) => void };
+type Props = { accessState: TemplateAccessState; onBuild: () => void; onUpload: () => void; onJobs: () => void; onPro: () => void; onTemplate: (template: Resume['template']) => void };
 
-export function HomePage({ onBuild, onUpload, onJobs, onPro, onTemplate }: Props) {
+export function HomePage({ accessState, onBuild, onUpload, onJobs, onPro, onTemplate }: Props) {
  const [previewTemplate, setPreviewTemplate] = useState<Resume['template']>('modern');
  const sheet = useRef<HTMLDivElement>(null);
  // The light sheet rises over the petrol Match section and its fold settles as it
@@ -68,9 +69,15 @@ export function HomePage({ onBuild, onUpload, onJobs, onPro, onTemplate }: Props
    <div className="landing-connected-actions"><button className="text-button" onClick={onBuild}>Build my master resume<ArrowRight size={16} aria-hidden="true"/></button><button className="text-button" onClick={onJobs}>Find opportunities<ArrowRight size={16} aria-hidden="true"/></button></div>
   </section>
   <section className="landing-templates" id="templates">
-   <div className="section-introduction"><p className="section-label">Documents</p><h2>7 layouts.<br/>PDF + Word.</h2><p>All seven templates are Free, with A4, US Letter and right-to-left support.</p></div>
+   <div className="section-introduction"><p className="section-label">Documents</p><h2>27 layouts.<br/>7 free. 20 premium.</h2><p>Preview any design with your resume.</p></div>
    <div className="template-specimen" aria-label={`Fictional sample in the ${previewTemplate} template`}><ResumePreview resume={{...sample,template:previewTemplate}}/></div>
-   <div className="template-gallery" aria-label="Choose a free resume template">{templates.map(t=><button className="template-choice" data-previewing={previewTemplate===t.id} onFocus={()=>setPreviewTemplate(t.id)} onMouseEnter={()=>setPreviewTemplate(t.id)} key={t.id} onClick={()=>onTemplate(t.id)}><span><strong>{t.label}</strong><small>{t.tagline}</small></span><ArrowRight size={16} aria-hidden="true"/></button>)}</div>
+   <div className="template-gallery" aria-label="Preview resume templates">{templates.map(t=>{
+    const premium=isPremiumTemplate(t.id);
+    const active=premium&&accessState.status==='ready'&&accessState.access.activeTemplates.includes(t.id);
+    const accessLabel=!premium?'FREE':accessState.status==='ready'&&accessState.access.isPro?'INCLUDED WITH PRO':active?'ACTIVE':accessState.status==='ready'?'🔒 PREMIUM · $1.99/mo':'PREMIUM · ACCESS UNAVAILABLE';
+    const accessKind=!premium?'free':accessState.status==='ready'&&accessState.access.isPro?'pro':active?'active':accessState.status==='ready'?'locked':'loading';
+    return <button className="template-choice" data-previewing={previewTemplate===t.id} onFocus={()=>setPreviewTemplate(t.id)} onMouseEnter={()=>setPreviewTemplate(t.id)} key={t.id} onClick={()=>onTemplate(t.id)}><span className="template-choice-copy"><span className="template-choice-heading"><strong>{t.label}</strong><span className="template-access-badge" data-access={accessKind}>{accessLabel}</span></span><small>{t.tagline}</small></span><ArrowRight size={16} aria-hidden="true"/></button>;
+   })}</div>
   </section>
   </div>
   <section className="landing-pricing" id="pricing">

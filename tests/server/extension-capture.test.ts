@@ -15,6 +15,7 @@ test('capture contract rejects URL credentials/tracking/protocols, unknown field
   assert.equal(isJobCapture(capture), true)
   for (const change of [
     { sourceUrl: 'javascript:alert(1)' }, { sourceUrl: 'https://user:secret@example.com/job' },
+    { sourceUrl: 'https://127.0.0.1/job' }, { sourceUrl: 'https://service.internal/job' },
     { sourceUrl: 'https://example.com/job?token=private' }, { sourceUrl: 'https://example.com/job#private' },
     { description: 'x'.repeat(12001) }, { title: 'x'.repeat(301) }, { description: 'bad\u0000' },
     { capturedAt: 'invalid' }, { capturedAt: '2026-02-30T00:00:00Z' }, { site: 'techmap' }, { authToken: 'private' },
@@ -32,9 +33,27 @@ test('normalization preserves original/reviewed text, honest source, unknown exp
   assert.equal(normalized.expiry.source, 'unknown')
   assert.equal(normalized.workplace.value, 'unknown')
   assert.equal(normalized.salary, null)
-  assert.equal(normalized.providerJobId, normalizeCapture({ ...capture, title: 'Edited', sourceUrl: capture.sourceUrl + '/' }).providerJobId)
+  assert.equal(normalized.providerJobId, normalizeCapture({ ...capture, title: 'Edited' }).providerJobId)
   assert.throws(() => normalizeCapture({ ...capture, sourceUrl: 'http://localhost/job' }), { status: 400 })
-  assert.throws(() => normalizeCapture({ ...capture, title: '' }), { status: 400 })
+  const urlOnly = normalizeCapture({ ...capture, title: '', company: '', description: '', site: 'linkedin' })
+  assert.equal(urlOnly.title, 'Job details pending')
+  assert.equal(urlOnly.company, 'LinkedIn')
+  assert.equal(urlOnly.descriptionText, '')
+})
+
+test('URL-only save uses authenticated ownership and deduplication without fabricating match evidence', async () => {
+  const calls: string[] = []
+  const urlOnly = { title: '', company: '', description: '', sourceUrl: 'https://www.linkedin.com/jobs/view/123', capturedAt: '2026-09-29T00:00:00Z', site: 'linkedin' as const }
+  const deps = { ...accountDependencies, authenticate: async () => owner,
+    serviceDatabase: (() => ({ rpc: async (name: string, args: Record<string, unknown>) => {
+      calls.push(name); assert.equal(args.p_owner, owner)
+      if (name === 'jobs_save') return { data: { savedJobId: savedId, alreadySaved: true }, error: null }
+      throw new Error(`Unexpected RPC ${name}`)
+    } })) as unknown as typeof accountDependencies.serviceDatabase }
+  const response = await jobsAccount(request({ action: 'capture_save', capture: urlOnly, evidence, owner: 'attacker' }), env, deps)
+  assert.equal(response.status, 200)
+  assert.deepEqual(await response.json(), { savedJobId: savedId, alreadySaved: true })
+  assert.deepEqual(calls, ['jobs_save'])
 })
 
 test('capture save uses authenticated ownership, existing quota save, account context and authoritative duplicate snapshot for match', async () => {

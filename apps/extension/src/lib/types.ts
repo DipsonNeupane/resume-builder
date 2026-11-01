@@ -7,7 +7,7 @@ import type { JobCapture } from './capture.js';
 export type { JobCapture } from './capture.js';
 
 export type ExtractResult =
-  | { supported: true; capture: JobCapture }
-  | { supported: false; reason: string };
+  | { detected: true; capture: JobCapture }
+  | { detected: false; state: 'open_detail' | 'no_job'; reason: string; sourceUrl?: string; canConfirm?: boolean };
 
-export type PendingCaptureEntry = { payload: JobCapture; storedAt: number };
+export type SaveResult = { status: 'saved' | 'already_saved' | 'signed_out' | 'error'; message?: string; tabId?: number };

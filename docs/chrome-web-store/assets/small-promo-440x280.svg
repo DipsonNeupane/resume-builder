@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="440" height="280" viewBox="0 0 440 280" role="img" aria-labelledby="title desc">
+  <title id="title">ResumeStride Job Capture</title>
+  <desc id="desc">ResumeStride approved stride mark with the words Capture, review, save.</desc>
+  <rect width="440" height="280" fill="#0b0a09"/>
+  <rect x="28" y="28" width="64" height="64" rx="12" fill="#171513"/>
+  <path d="M40 78 L53 42 H62 L49 78 Z" fill="#de8044"/>
+  <path d="M58 78 L71 42 H80 L67 78 Z" fill="#6ccfb6"/>
+  <text x="112" y="58" fill="#f4efe8" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">ResumeStride</text>
+  <text x="112" y="83" fill="#b8b1a8" font-family="Arial, Helvetica, sans-serif" font-size="15">Job Capture</text>
+  <text x="28" y="160" fill="#f4efe8" font-family="Arial, Helvetica, sans-serif" font-size="36" font-weight="700">Capture. Review. Save.</text>
+  <text x="28" y="202" fill="#b8b1a8" font-family="Arial, Helvetica, sans-serif" font-size="17">Public job details → ResumeStride</text>
+  <rect x="28" y="230" width="126" height="4" rx="2" fill="#de8044"/>
+  <rect x="160" y="230" width="126" height="4" rx="2" fill="#6ccfb6"/>
+</svg>

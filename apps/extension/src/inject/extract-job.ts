@@ -1,5 +1,5 @@
-// User-clicked isolated-world capture. Local fixture text and exact Greenhouse public
-// Job Board GET endpoints only; never applications, cookies, or arbitrary page scraping.
+// User-clicked isolated-world capture. Stable structured page data plus exact Greenhouse
+// job-page/public Job Board data only; never applications, cookies, or results cards.
 // This classic script returns a Promise which chrome.scripting.executeScript awaits.
 (async function () {
   function sanitizeText(raw: unknown, maxChars: number): string {
@@ -29,12 +29,67 @@
     return template.content.textContent || '';
   }
   const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
+  const uuidPath = /^\/[^/]+\/[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\/?$/;
+
+  type Site = 'greenhouse' | 'lever' | 'ashby' | 'workday' | 'linkedin' | 'indeed' | 'ziprecruiter' | 'jsonld' | 'fixture' | 'confirmed';
+
+  function sourceUrl(): string {
+    const url = new URL(location.href);
+    url.hash = '';
+    const identityKeys = new Set(['id', 'job', 'jobid', 'job_id', 'gh_jid', 'jk', 'vjk', 'lvk', 'reqid', 'position', 'postingid']);
+    const preserved = Array.from(url.searchParams.entries())
+      .filter(([key, item]) => identityKeys.has(key.toLowerCase()) && item.length > 0 && item.length <= 200)
+      .sort(([a], [b]) => a.localeCompare(b));
+    url.search = '';
+    for (const [key, item] of preserved) url.searchParams.append(key, item);
+    if (url.pathname !== '/') url.pathname = url.pathname.replace(/\/+$/, '') || '/';
+    return url.toString();
+  }
+
+  function knownDetailSite(): Site | null {
+    const host = location.hostname.toLowerCase();
+    if ((host === 'www.linkedin.com' || host.endsWith('.linkedin.com')) && /^\/jobs\/view\/(?:[^/]*-)?\d+\/?$/.test(location.pathname)) return 'linkedin';
+    if (/(^|\.)indeed\.[a-z.]+$/.test(host) && /^\/(?:m\/)?viewjob\/?$/i.test(location.pathname) && !!(new URLSearchParams(location.search).get('jk') || new URLSearchParams(location.search).get('vjk'))) return 'indeed';
+    if ((host === 'ziprecruiter.com' || host.endsWith('.ziprecruiter.com')) && (/^\/jobs\/[^/]+\/[^/]+/.test(location.pathname) || /^\/c\/[^/]+\/Job\/[^/]+/.test(location.pathname) || /^[A-Za-z0-9_-]{3,200}$/.test(new URLSearchParams(location.search).get('lvk') || ''))) return 'ziprecruiter';
+    if (['job-boards.greenhouse.io', 'boards.greenhouse.io'].includes(host) && /^\/[A-Za-z0-9_-]{1,100}\/jobs\/[0-9]{1,20}\/?$/.test(location.pathname)) return 'greenhouse';
+    if (['jobs.lever.co', 'jobs.eu.lever.co'].includes(host) && uuidPath.test(location.pathname)) return 'lever';
+    if (host === 'jobs.ashbyhq.com' && uuidPath.test(location.pathname)) return 'ashby';
+    if (host.endsWith('.myworkdayjobs.com') && /\/job\//.test(location.pathname)) return 'workday';
+    if ((host === 'localhost' || host === '127.0.0.1') && /\/extension-fixture\/job-posting/.test(location.pathname)) return 'fixture';
+    return null;
+  }
+
+  function structuredSite(): 'lever' | 'ashby' | 'workday' | 'jsonld' {
+    if (['jobs.lever.co', 'jobs.eu.lever.co'].includes(location.hostname) && uuidPath.test(location.pathname)) return 'lever';
+    if (location.hostname === 'jobs.ashbyhq.com' && uuidPath.test(location.pathname)) return 'ashby';
+    if (location.hostname.endsWith('.myworkdayjobs.com') && /\/job\//.test(location.pathname)) return 'workday';
+    return 'jsonld';
+  }
+
+  function isKnownStableDetailPath(): boolean {
+    return structuredSite() !== 'jsonld';
+  }
+
+  function structuredLocation(value: unknown): string {
+    const places = Array.isArray(value) ? value.slice(0, 20) : [value];
+    const labels: string[] = [];
+    for (const placeValue of places) {
+      if (!record(placeValue)) continue;
+      const address = record(placeValue.address) ? placeValue.address : null;
+      if (!address) continue;
+      const label = ['addressLocality', 'addressRegion', 'addressCountry']
+        .map(key => typeof address[key] === 'string' ? address[key].trim() : '')
+        .filter(Boolean)
+        .join(', ');
+      if (label && !labels.includes(label)) labels.push(label);
+    }
+    return labels.join('; ');
+  }
+
   // Only a single unambiguous JobPosting. Never collect a results list, arbitrary page text,
   // contact fields, embedded account data, or referenced URLs. No network requests here.
   function structuredJob(): RawCapture | null {
-    // Query-only job identity cannot be preserved while stripping private parameters.
     if (location.hash) return null;
-    if (Array.from(new URLSearchParams(location.search).keys()).some(key => !/^(utm_[a-z_]+|gclid|fbclid)$/i.test(key))) return null;
     const scripts = document.querySelectorAll('script[type="application/ld+json"]');
     if (scripts.length > 16) return null;
     const jobs: Record<string, unknown>[] = []; let bytes = 0; let nodes = 0;
@@ -59,12 +114,12 @@
     const description = inertText(job.description);
     if (!job.title.trim() || !job.hiringOrganization.name.trim() || !description.trim()) return null;
     const result: RawCapture = { title: inertText(job.title), company: inertText(job.hiringOrganization.name), description };
-    const place = record(job.jobLocation) ? job.jobLocation : null;
-    const address = place && record(place.address) ? place.address : null;
-    if (address) result.location = ['addressLocality','addressRegion','addressCountry'].map(k => typeof address[k] === 'string' ? address[k] : '').filter(Boolean).join(', ');
+    const locationLabel = structuredLocation(job.jobLocation);
+    if (locationLabel) result.location = locationLabel;
     if (job.jobLocationType === 'TELECOMMUTE') result.workplace = 'remote';
     const employment: Record<string, string> = { FULL_TIME: 'full_time', PART_TIME: 'part_time', CONTRACTOR: 'contract', TEMPORARY: 'temporary', INTERN: 'internship' };
-    if (typeof job.employmentType === 'string') result.employmentType = employment[job.employmentType];
+    const employmentType = Array.isArray(job.employmentType) ? job.employmentType.find(value => typeof value === 'string' && employment[value]) : job.employmentType;
+    if (typeof employmentType === 'string') result.employmentType = employment[employmentType];
     const salary = record(job.baseSalary) ? job.baseSalary : null;
     const amount = salary && record(salary.value) ? salary.value : null;
     if (salary && amount && typeof salary.currency === 'string' && /^[A-Z]{3}$/.test(salary.currency)) {
@@ -75,7 +130,7 @@
     return result;
   }
   function leverJob(): RawCapture | null {
-    if (location.protocol !== 'https:' || !['jobs.lever.co','jobs.eu.lever.co'].includes(location.hostname) || !/^\/[^/]+\/[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\/?$/.test(location.pathname)) return null;
+    if (location.protocol !== 'https:' || !['jobs.lever.co','jobs.eu.lever.co'].includes(location.hostname) || !uuidPath.test(location.pathname)) return null;
     const title = textOf('.posting-headline h2');
     const company = document.querySelector('.main-header-logo img')?.getAttribute('alt') || '';
     const sections = document.querySelectorAll('.section-wrapper .posting');
@@ -99,12 +154,53 @@
     return raw;
   }
 
-  // Greenhouse documents these GET endpoints as public and unauthenticated.
-  // Only the single job explicitly opened by the user is requested; never applications.
+  // Current Greenhouse pages ship the opened job as serialized Remix loader data. Parse
+  // the inert JSON assignment instead of depending on visual selectors or executing page
+  // code. The documented public API remains a compatibility fallback for older boards.
   async function extractGreenhouse(): Promise<RawCapture | null> {
     if (location.protocol !== 'https:' || !['job-boards.greenhouse.io', 'boards.greenhouse.io'].includes(location.hostname)) return null;
     const match = location.pathname.match(/^\/([A-Za-z0-9_-]{1,100})\/jobs\/([0-9]{1,20})\/?$/);
     if (!match) return null;
+    const remixPrefix = 'window.__remixContext = ';
+    for (const script of Array.from(document.scripts).slice(0, 16)) {
+      const source = script.textContent || '';
+      if (!source.startsWith(remixPrefix) || source.length > 524288) continue;
+      try {
+        const serialized = source.slice(remixPrefix.length).trim().replace(/;$/, '');
+        const context: unknown = JSON.parse(serialized);
+        if (!record(context) || !record(context.state) || !record(context.state.loaderData)) continue;
+        const route = context.state.loaderData['routes/$url_token_.jobs_.$job_post_id'];
+        if (!record(route) || String(route.jobPostId) !== match[2] || !record(route.jobPost)) continue;
+        const job = route.jobPost;
+        if (typeof job.title !== 'string' || typeof job.company_name !== 'string' || typeof job.content !== 'string') continue;
+        const description = inertText(job.content);
+        if (!job.title.trim() || !job.company_name.trim() || !description.trim()) continue;
+        return {
+          title: job.title,
+          company: job.company_name,
+          description,
+          location: typeof job.job_post_location === 'string' ? job.job_post_location : '',
+        };
+      } catch { /* Try the documented public endpoint fallback. */ }
+    }
+    // Greenhouse removes its hydration script after the client starts. Its rendered job
+    // document retains scoped semantic job classes; read only that job container and never
+    // the application form or surrounding page.
+    const jobRoot = document.querySelector('main.job-post');
+    const titleElement = jobRoot?.querySelector('.job__title h1');
+    const descriptionElement = jobRoot?.querySelector('.job__description');
+    const title = titleElement?.textContent || '';
+    const renderedDescription = descriptionElement ? inertText(descriptionElement.innerHTML) : '';
+    const documentTitlePrefix = `Job Application for ${title.trim()} at `;
+    const logoCompany = Array.from(jobRoot?.querySelectorAll('img[alt$=" Logo"]') || [])
+      .map(image => image.getAttribute('alt')?.replace(/ Logo$/, '') || '')
+      .find(Boolean) || '';
+    const company = document.title.startsWith(documentTitlePrefix)
+      ? document.title.slice(documentTitlePrefix.length)
+      : logoCompany;
+    if (title.trim() && company.trim() && renderedDescription.trim()) {
+      return { title, company, description: renderedDescription, location: jobRoot?.querySelector('.job__location')?.textContent || '' };
+    }
     async function publicJson(url: string): Promise<Record<string, unknown>> {
       const response = await fetch(url, { credentials: 'omit', redirect: 'error', referrerPolicy: 'no-referrer', signal: AbortSignal.timeout(10000) });
       if (!response.ok || !response.body) throw new Error('Job is unavailable');
@@ -132,26 +228,35 @@
     return { title: job.title, company: board.name, description, location: record(job.location) && typeof job.location.name === 'string' ? job.location.name : '' };
   }
 
-  if (!['http:','https:'].includes(location.protocol) || /(^|\.)(linkedin\.com|indeed\.[a-z.]+)$/.test(location.hostname)) return { supported: false, reason: 'This site is not supported. Enter the job details manually.' };
+  if (!['http:','https:'].includes(location.protocol)) return { detected: false, state: 'no_job', reason: 'No job detected on this page.' };
+  const detailSite = knownDetailSite();
+  const restrictedDetail = detailSite === 'linkedin' || detailSite === 'indeed' || detailSite === 'ziprecruiter';
+  if (restrictedDetail) {
+    return { detected: true, capture: { title: '', company: '', description: '', site: detailSite, sourceUrl: sourceUrl(), capturedAt: new Date().toISOString() } };
+  }
   let raw: RawCapture | null = extractFixtureAdapter();
-  let site = raw ? 'fixture' : 'jsonld';
+  let site: Site = raw ? 'fixture' : structuredSite();
   if (!raw) raw = structuredJob();
   if (!raw) { raw = leverJob(); if (raw) site = 'lever'; }
   if (!raw) {
     try { raw = await extractGreenhouse(); if (raw) site = 'greenhouse'; }
-    catch { return { supported: false, reason: 'The public job details could not be loaded or verified. The posting may have closed. No resume was sent; retry or enter the details below.' }; }
+    catch { /* A recognized detail URL remains saveable without enrichment. */ }
   }
 
   if (!raw) {
-    return {
-      supported: false,
-      reason:
-        "ResumeStride doesn't have a reviewed way to read job details from this page yet (supported: verified JobPosting structured data, public Greenhouse pages, selected Lever pages, and the local test page). Type the title, company, and description yourself below — nothing was read from this page.",
-    };
+    const knownListingPage =
+      (['job-boards.greenhouse.io', 'boards.greenhouse.io'].includes(location.hostname) && !/^\/[A-Za-z0-9_-]{1,100}\/jobs\/[0-9]{1,20}\/?$/.test(location.pathname)) ||
+      (['jobs.lever.co', 'jobs.eu.lever.co'].includes(location.hostname) && !uuidPath.test(location.pathname)) ||
+      (location.hostname === 'jobs.ashbyhq.com' && !uuidPath.test(location.pathname)) ||
+      (location.hostname.endsWith('.myworkdayjobs.com') && !/\/job\//.test(location.pathname));
+    if (detailSite) return { detected: true, capture: { title: '', company: '', description: '', site: detailSite, sourceUrl: sourceUrl(), capturedAt: new Date().toISOString() } };
+    return knownListingPage
+      ? { detected: false, state: 'open_detail', reason: 'Open an individual job page to save it.' }
+      : { detected: false, state: 'no_job', reason: 'No job detected on this page.', sourceUrl: sourceUrl(), canConfirm: true };
   }
 
   return {
-    supported: true,
+    detected: true,
     capture: {
       title: sanitizeText(raw.title, 300),
       company: sanitizeText(raw.company, 300),
@@ -161,7 +266,7 @@
       ...(raw.employmentType ? { employmentType: raw.employmentType } : {}),
       ...(raw.salary ? { salary: raw.salary } : {}),
       site,
-      sourceUrl: location.origin + location.pathname,
+      sourceUrl: sourceUrl(),
       capturedAt: new Date().toISOString(),
     },
   };

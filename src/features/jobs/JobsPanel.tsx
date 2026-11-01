@@ -663,29 +663,32 @@ export function JobsPanel({ resume, ownerId, onSignIn, onViewPro, onBack, onEdit
       {savedJobs.length === 0 ? <div className="empty-state"><strong>Keep the roles worth a second look.</strong><p>Choose “Save job” on a result to keep it and its match evidence here, even if the listing closes{accountIsPro ? ' or your Pro access ends' : ''}.{accountIsPro ? '' : ` Free accounts can save up to ${saveLimit}.`}</p></div> :
         <ul className="jobs-results" aria-label="Saved jobs">{savedJobs.map(saved => {
           const job = saved.snapshot;
+          const hasJobDetails = job.provider !== 'extension'
+            || (typeof job.descriptionText === 'string' && job.descriptionText.trim().length > 0);
+          const hasJobResume = jobResumeVersions.some(version => version.savedJobId === saved.id);
           return <li className="job-card saved-job-card" key={saved.id}>
             <div className="job-card-heading"><div><h3>{job.title}</h3><span>{job.company}</span></div>
               {!saved.providerAvailable && <span className="job-unavailable">No longer available</span>}
             </div>
-            <div className="saved-job-state"><span>{saved.matchAnalysis ? 'Match Analysis available' : 'Match evidence pending'}</span><span>{jobResumeVersions.some(version => version.savedJobId === saved.id) ? 'Tailored resume saved' : 'Master resume unchanged'}</span></div>
+            <div className="saved-job-state"><span>{saved.matchAnalysis ? 'Match Analysis available' : 'Match evidence pending'}</span><span>{hasJobResume ? 'Tailored resume saved' : 'Master resume unchanged'}</span></div>
             {job.provider === 'extension' && <>
-              <p className="field-hint">Captured job · Availability not verified</p>
-              <details><summary>View captured job details</summary>
+              <p className="field-hint">{hasJobDetails ? 'Saved external job · Availability not verified' : 'Saved job URL · Details pending'}</p>
+              {hasJobDetails && <details><summary>View saved job details</summary>
                 <p>{typeof job.portal === 'string' ? job.portal : 'User-reviewed capture'}</p>
                 <pre className="job-description-text">{typeof job.descriptionText === 'string' ? job.descriptionText : ''}</pre>
                 {record(job.capture) && record(job.capture.original) && typeof job.capture.original.description === 'string' && <details>
                   <summary>Original captured description before edits</summary><pre className="job-description-text">{job.capture.original.description}</pre>
                 </details>}
-              </details>
+              </details>}
             </>}
             {saved.analysisCurrent === false && <p className="match-stale" role="status">Saved match analysis needs refreshing because the resume, job, preferences, or clarifications changed.</p>}
             {saved.analysisCurrent === false && <button className="text-button" onClick={() => void refreshSavedAnalysis(saved.id)}>Refresh match analysis</button>}
             {saved.analysisCurrent !== false && saved.matchAnalysis && <MatchAnalysisPanel jobTitle={`Saved: ${job.title} at ${job.company}`} analysis={saved.matchAnalysis} isPro={accountIsPro} onViewPro={onViewPro} onClarify={(id, value) => void clarify(id, value, { savedJobId: saved.id })} />}
             <div className="job-card-actions">
-              <button className="button" onClick={() => void startTailoring(saved)}>
-                {jobResumeVersions.some(version => version.savedJobId === saved.id) ? 'Open tailored resume' : accountIsPro ? 'Tailor my resume for this job' : 'Tailor my resume with Pro'}
-              </button>
-              {saved.providerAvailable && <a className="button outline" href={job.sourceUrl} target="_blank" rel="noopener noreferrer">View job<ExternalLink size={14} /></a>}
+              {(hasJobDetails || hasJobResume) && <button className="button" onClick={() => void startTailoring(saved)}>
+                {hasJobResume ? 'Open tailored resume' : accountIsPro ? 'Tailor my resume for this job' : 'Tailor my resume with Pro'}
+              </button>}
+              {(saved.providerAvailable || job.provider === 'extension') && <a className="button outline" href={job.sourceUrl} target="_blank" rel="noopener noreferrer">View job<ExternalLink size={14} /></a>}
               <button className="button outline remove-saved" onClick={() => void removeSavedJob(saved.id)}>Remove saved job</button>
             </div>
           </li>;

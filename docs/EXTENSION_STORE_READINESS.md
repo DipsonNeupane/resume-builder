@@ -1,4 +1,23 @@
-# Chrome Web Store readiness — Task #61, unpublished draft
+# Chrome Web Store readiness — historical 0.2.0 record
+
+> **0.2.1 superseding candidate (September 29, 2026):** the current prepared update is universal
+> URL-first job save, uses only `activeTab`, `scripting`, and the ResumeStride host permission,
+> and removes the review form, session storage, and alarm. LinkedIn, Indeed, and ZipRecruiter
+> individual job URLs are saveable without content extraction. See
+> `apps/extension/README.md` and `docs/chrome-web-store/RELEASE_PACKET.md`. The remainder of this
+> document is retained as the historical 0.2.0 preparation record and must not be used as the
+> 0.2.1 submission packet.
+
+> **September 27, 2026 update:** The authoritative current listing copy, disclosure
+> mapping, reviewer instructions, artifact fingerprint, and asset paths are in
+> [`chrome-web-store/RELEASE_PACKET.md`](chrome-web-store/RELEASE_PACKET.md). The approved
+> Patina stride mark now supplies the 16/32/48/128 extension icons. Required 440×280 and
+> optional 1400×560 promotional PNGs have been produced from that same mark and visually
+> inspected. Genuine installed-product screenshots remain pending; no mock screenshot may
+> replace them. Two zero-retry installed-extension suites passed 42/42 on the candidate.
+> The live privacy URL is reachable but still serves the September 26 policy without the
+> extension section, so privacy is **not yet production-ready**. Historical statements
+> below describe the earlier Task #61 preparation and are retained as provenance.
 
 Prepared September 25, 2026 from source and a locally rebuilt artifact. **Preparation
 only: no installation, developer-dashboard action, upload, submission, publication or

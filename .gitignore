@@ -17,3 +17,5 @@ experiments/
 .mcp.json
 *.code-workspace
 docs/verification/backup-canary.json
+# Growth demo working files are reproducible and intentionally stay outside the runtime bundle.
+marketing-assets/demos/raw/

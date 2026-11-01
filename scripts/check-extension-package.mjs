@@ -9,7 +9,7 @@ export const packageFiles = [
   'manifest.json', 'popup.html', 'popup.css',
   ...[16, 32, 48, 128].map(size => `icons/icon-${size}.png`),
   'dist/background/worker.js', 'dist/inject/extract-job.js', 'dist/popup/popup.js',
-  ...['capture', 'config', 'delivery', 'diagnostics', 'pending', 'sanitize'].map(name => `dist/lib/${name}.js`),
+  ...['capture', 'config', 'delivery', 'diagnostics'].map(name => `dist/lib/${name}.js`),
 ].sort();
 
 export async function inspectPackage(root) {
@@ -32,7 +32,7 @@ export async function inspectPackage(root) {
   assert.match(manifest.version, /^\d+(\.\d+){0,3}$/);
   assert(manifest.version.split('.').every(part => Number(part) <= 65535));
   assert(manifest.description.length > 0 && manifest.description.length <= 132);
-  assert.deepEqual(manifest.permissions, ['activeTab', 'scripting', 'storage', 'alarms']);
+  assert.deepEqual(manifest.permissions, ['activeTab', 'scripting']);
   assert.deepEqual(manifest.host_permissions, ['https://resumestride.com/*']);
   assert.deepEqual(manifest.background, { service_worker: 'dist/background/worker.js', type: 'module' });
   assert.equal(manifest.minimum_chrome_version, '120');
@@ -76,10 +76,11 @@ export async function inspectPackage(root) {
     assert.equal(config.isAllowedAppUrl(new URL(url)), false, 'Unsafe destination accepted');
   }
   const popup = await readFile(resolve(root, 'dist/popup/popup.js'), 'utf8');
-  assert(popup.includes('This production package sends only to https://resumestride.com/.'));
-  assert(popup.includes('Enter the official app URL: https://resumestride.com/'));
-  assert(popup.includes('Use https://resumestride.com/ with no credentials, query or fragment. Other destinations are not supported.'));
-  assert(popup.includes('Could not open or reach ResumeStride. Check your connection and try again.'));
+  for (const message of ['Save to ResumeStride', 'Saved ✓', 'Already saved', 'No job detected on this page', 'Sign in to ResumeStride', 'Open in ResumeStride']) {
+    assert(popup.includes(message), `Missing universal-save state message: ${message}`);
+  }
+  assert(popup.includes('Could not reach ResumeStride. Check your connection and try again.'));
+  assert(!/Job title|Job description|Salary minimum|Send reviewed details/.test(popup), 'Legacy review form remains in compact popup');
   assert(!/local testing|local server|localhost|127\.0\.0\.1/i.test(popup), 'Development guidance remains in production popup');
   return { name: manifest.name, version: manifest.version, files, totalBytes: files.reduce((sum, file) => sum + file.bytes, 0) };
 }

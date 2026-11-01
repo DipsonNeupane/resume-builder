@@ -2,67 +2,47 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-type Listener = (message: unknown, sender: {id?: string;url?: string}, respond: (value: {received: boolean}) => void) => boolean
+type Response = { status: string; message?: string; tabId?: number }
+type Listener = (message: unknown, sender: {id?: string;url?: string}, respond: (value: Response) => void) => boolean
 let listener: Listener
-const state: Record<string, unknown> = {}
 let tabCount = 0
 let injections = 0
-let success = true
+let injectionResult: { status: string; message?: string } | null = { status: 'saved' }
 Reflect.set(globalThis, 'chrome', {
   runtime: { id: 'extension-fixture', getURL: (path: string) => `chrome-extension://extension-fixture/${path}`, onMessage: { addListener: (value: Listener) => { listener = value } } },
-  alarms: { create: async () => {}, onAlarm: { addListener: () => {} } },
-  storage: { session: {
-    get: async () => structuredClone(state),
-    set: async (value: Record<string, unknown>) => { Object.assign(state, structuredClone(value)) },
-    remove: async (key: string) => { delete state[key] },
-  } },
   tabs: { create: async () => { tabCount++; return { id: 123 } } },
-  scripting: { executeScript: async () => { injections++; return [{ frameId: 0, result: success }] } },
+  scripting: { executeScript: async () => { injections++; return [{ frameId: 0, result: injectionResult }] } },
 })
 await import('../../apps/extension/src/background/worker.ts')
-const { readPending, clearPending } = await import('../../apps/extension/src/lib/pending.ts')
-const capture = { title: 'Role', company: 'Company', description: 'Duties', sourceUrl: 'https://jobs.example/one', capturedAt: new Date().toISOString() }
+const capture = { title: '', company: '', description: '', site: 'linkedin', sourceUrl: 'https://www.linkedin.com/jobs/view/123', capturedAt: new Date().toISOString() }
 const sender = { id: 'extension-fixture', url: 'chrome-extension://extension-fixture/popup.html' }
-const message = { type: 'resumestride:send-reviewed-job', capture, appUrl: 'https://resumestride.com/' }
-const send = (data: unknown) => new Promise<{received: boolean}>(resolve => listener(data, sender, resolve))
+const message = { type: 'resumestride:save-job', capture, appUrl: 'https://resumestride.com/' }
+const send = (data: unknown) => new Promise<Response>(resolve => listener(data, sender, resolve))
 
-test('worker rejects foreign senders, non-popup paths, unsafe destinations and malformed captures before opening a tab', async () => {
+test('worker rejects foreign senders, unsafe destinations, private URLs and malformed captures before opening a tab', async () => {
   for (const badSender of [{ ...sender, id: 'other' }, { ...sender, url: sender.url + '?bad' }, { ...sender, url: 'https://resumestride.com/' }]) {
     assert.equal(listener(message, badSender, () => assert.fail('must not respond to foreign sender')), false)
   }
-  for (const appUrl of ['https://evil.test/','https://resumestride.com.evil.test/','https://user@resumestride.com/','https://resumestride.com/path','https://resumestride.com/?secret=1','http://127.0.0.1:9999/']) assert.deepEqual(await send({ ...message, appUrl }), { received: false })
-  for (const change of [{ description: 'x'.repeat(12001) }, { authToken: 'secret' }, { sourceUrl: 'javascript:alert(1)' }, { originalSourceUrl: 'https://jobs.example/?secret=1' }]) assert.deepEqual(await send({ ...message, capture: { ...capture, ...change } }), { received: false })
+  for (const appUrl of ['https://evil.test/','https://resumestride.com.evil.test/','https://user@resumestride.com/','https://resumestride.com/path','https://resumestride.com/?secret=1','http://127.0.0.1:9999/']) assert.equal((await send({ ...message, appUrl })).status, 'error')
+  for (const change of [{ title: 42 }, { authToken: 'secret' }, { sourceUrl: 'https://127.0.0.1/job' }, { sourceUrl: 'javascript:alert(1)' }]) assert.equal((await send({ ...message, capture: { ...capture, ...change } })).status, 'error')
   assert.equal(tabCount, 0)
-  assert.deepEqual(state, {})
 })
 
-test('worker has exactly three failed attempts and retains only one bounded session capture for explicit retry', async () => {
-  success = false; injections = 0
-  assert.deepEqual(await send(message), { received: false })
+test('worker has exactly three bounded attempts and returns a short recovery error', async () => {
+  injectionResult = null; injections = 0
+  const failed = await send(message)
+  assert.deepEqual(failed, { status: 'error', message: undefined, tabId: 123 })
   assert.equal(injections, 3)
-  assert.deepEqual(await readPending(), capture)
-  assert.deepEqual(Object.keys(state), ['pendingCapture'])
-  success = true; injections = 0
-  assert.deepEqual(await send(message), { received: true })
+  injectionResult = { status: 'saved' }; injections = 0
+  assert.deepEqual(await send(message), { status: 'saved', message: undefined, tabId: 123 })
   assert.equal(injections, 1)
-  assert.equal(await readPending(), null)
 })
 
-test('expired session data is deleted rather than restored or automatically resent', async () => {
-  const initialTabs = tabCount
-  state.pendingCapture = { payload: capture, expiresAt: Date.now() - 1 }
-  assert.equal(await readPending(), null)
-  assert.deepEqual(state, {})
-  assert.equal(tabCount, initialTabs)
+test('worker relays signed-out and duplicate states without tokens or account data', async () => {
+  for (const status of ['signed_out', 'already_saved'] as const) {
+    injectionResult = { status }
+    const result = await send(message)
+    assert.deepEqual(result, { status, message: undefined, tabId: 123 })
+    assert.doesNotMatch(JSON.stringify(result), /token|owner|email/i)
+  }
 })
-
-
-test('successful receipt clears equivalent reordered storage but leaves a newer review intact', async () => {
-  state.pendingCapture = { payload: Object.fromEntries(Object.entries(capture).reverse()), expiresAt: Date.now() + 1000 };
-  await clearPending(capture);
-  assert.equal(await readPending(), null);
-  state.pendingCapture = { payload: { ...capture, description: 'New edit' }, expiresAt: Date.now() + 1000 };
-  await clearPending(capture);
-  assert.equal((await readPending())?.description, 'New edit');
-  await clearPending();
-});

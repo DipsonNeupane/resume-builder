@@ -1,10 +1,12 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cp, lstat, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, lstat, mkdir, mkdtemp, readFile, rm, utimes, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { inspectPackage, packageFiles } from './check-extension-package.mjs';
+
+const reproducibleTimestamp = new Date('2000-01-01T00:00:00.000Z');
 
 export async function packageExtension(source, destination) {
   await rm(destination, { recursive: true, force: true });
@@ -22,15 +24,16 @@ export async function packageExtension(source, destination) {
   }
   for (const [file, before, after] of [
     ['dist/lib/config.js', "const devPorts = ['5173', '5183', '5185'];", 'const devPorts = [];'],
-    ['dist/popup/popup.js', 'Defaults to the production ResumeStride site. For local testing, use http://localhost or http://127.0.0.1 on port 5173, 5183, or 5185.', 'This production package sends only to https://resumestride.com/.'],
-    ['dist/popup/popup.js', 'Enter a valid app URL, e.g. http://localhost:5173/', 'Enter the official app URL: https://resumestride.com/'],
-    ['dist/popup/popup.js', 'Use https://resumestride.com, or for local testing http://localhost or http://127.0.0.1 on port 5173, 5183 or 5185 — with path / and no credentials, query or fragment.', 'Use https://resumestride.com/ with no credentials, query or fragment. Other destinations are not supported.'],
-    ['dist/popup/popup.js', 'Could not open or reach ResumeStride. Check the local server and try again.', 'Could not open or reach ResumeStride. Check your connection and try again.'],
   ]) {
     const path = join(destination, file);
     const text = await readFile(path, 'utf8');
     if (text.split(before).length !== 2) throw new Error(`Production replacement changed; review ${file}`);
     await writeFile(path, text.replace(before, after));
+  }
+  // zip records file modification times even with -X. Normalize every archived file so
+  // rebuilding identical source produces identical archive bytes and checksums.
+  for (const file of packageFiles) {
+    await utimes(join(destination, file), reproducibleTimestamp, reproducibleTimestamp);
   }
   return inspectPackage(destination);
 }

@@ -9,7 +9,7 @@ export type CaptureFields = {
 };
 export type JobCapture = CaptureFields & {
   sourceUrl: string; capturedAt: string; originalSourceUrl?: string;
-  site?: 'greenhouse' | 'lever' | 'jsonld' | 'fixture' | 'manual';
+  site?: 'greenhouse' | 'lever' | 'ashby' | 'workday' | 'linkedin' | 'indeed' | 'ziprecruiter' | 'jsonld' | 'fixture' | 'confirmed';
   original?: CaptureFields;
 };
 const record = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -28,8 +28,20 @@ export function captureSourceUrl(value: string): string | null {
   if (value.length > 2000) return null;
   try {
     const url = new URL(value);
-    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return null;
-    return url.origin + url.pathname;
+    const isDevFixture = url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname) && /\/extension-fixture\/job-posting/.test(url.pathname);
+    if (url.protocol !== 'https:' && !isDevFixture) return null;
+    if (url.username || url.password || (!isDevFixture && url.port) || !url.hostname || url.hostname.includes(':')) return null;
+    const hostname = url.hostname.toLowerCase().replace(/\.$/, '');
+    if (!isDevFixture && (hostname.split('.').length < 2 || /(^|\.)(localhost|local|internal|lan|home)$/.test(hostname) || /^\d+(?:\.\d+){3}$/.test(hostname))) return null;
+    url.hash = '';
+    const identityKeys = new Set(['id', 'job', 'jobid', 'job_id', 'gh_jid', 'jk', 'vjk', 'lvk', 'reqid', 'position', 'postingid']);
+    const preserved = Array.from(url.searchParams.entries())
+      .filter(([key, item]) => identityKeys.has(key.toLowerCase()) && item.length > 0 && item.length <= 200)
+      .sort(([a], [b]) => a.localeCompare(b));
+    url.search = '';
+    for (const [key, item] of preserved) url.searchParams.append(key, item);
+    if (url.pathname !== '/') url.pathname = url.pathname.replace(/\/+$/, '') || '/';
+    return url.toString();
   } catch { return null; }
 }
 export function isJobCapture(value: unknown): value is JobCapture {
@@ -38,7 +50,7 @@ export function isJobCapture(value: unknown): value is JobCapture {
   if (value.originalSourceUrl !== undefined && (!text(value.originalSourceUrl, 2000) || (value.originalSourceUrl && captureSourceUrl(value.originalSourceUrl) !== value.originalSourceUrl))) return false;
   if (!text(value.capturedAt, 40) || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/.test(value.capturedAt) || !Number.isFinite(Date.parse(value.capturedAt))) return false;
   if (new Date(value.capturedAt).toISOString().slice(0, 19) !== value.capturedAt.slice(0, 19)) return false;
-  if (value.site !== undefined && !['greenhouse','lever','jsonld','fixture','manual'].includes(String(value.site))) return false;
+  if (value.site !== undefined && !['greenhouse','lever','ashby','workday','linkedin','indeed','ziprecruiter','jsonld','fixture','confirmed'].includes(String(value.site))) return false;
   if (value.original !== undefined && (!record(value.original) || Object.keys(value.original).some(k => !fieldKeys.includes(k)) || !fields(value.original))) return false;
-  return !!((value.title as string).trim() || (value.company as string).trim() || (value.description as string).trim());
+  return true;
 }

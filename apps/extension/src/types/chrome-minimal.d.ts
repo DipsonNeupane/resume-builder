@@ -6,8 +6,8 @@ declare namespace chrome {
   namespace runtime {
     const id: string;
     function getURL(path: string): string;
-    function sendMessage(message: unknown): Promise<{received?: boolean}>;
-    const onMessage: {addListener(listener: (message: any, sender: {id?: string;url?: string}, respond: (response: {received: boolean})=>void)=>boolean): void};
+    function sendMessage(message: unknown): Promise<{status?: 'saved'|'already_saved'|'signed_out'|'error';message?: string;tabId?: number}>;
+    const onMessage: {addListener(listener: (message: any, sender: {id?: string;url?: string}, respond: (response: {status: string;message?: string;tabId?: number})=>void)=>boolean): void};
   }
   namespace alarms {
     function create(name: string, info: {delayInMinutes: number}): Promise<void>;
@@ -30,6 +30,7 @@ declare namespace chrome {
     }
     function query(queryInfo: QueryInfo): Promise<Tab[]>;
     function create(createProperties: CreateProperties): Promise<Tab>;
+    function update(tabId: number, updateProperties: {active?: boolean}): Promise<Tab>;
   }
   namespace scripting {
     interface InjectionTarget {

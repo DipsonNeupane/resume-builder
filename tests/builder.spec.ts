@@ -232,12 +232,28 @@ test('template gallery previews current data, persists selection, and stays keyb
  await expect(page.getByRole('button',{name:'Templates Ledger',exact:true})).toBeVisible();
  await expect(page.locator('.paper-container .resume-paper').first()).toContainText('CURRENT DATA ONLY');
 });
-test('the templates showcase on the landing page has no Pro badges and every card leads straight into the builder',async({page})=>{
+test('the landing template showcase identifies Free and locked Premium access while keeping previews open',async({page})=>{
  await page.goto('/');
- await expect(page.getByRole('heading',{name:/7 layouts.*PDF \+ Word/})).toBeVisible();
- await expect(page.locator('.template-pro-badge')).toHaveCount(0);
- await page.getByRole('button',{name:'Ledger',exact:false}).click();
+ await expect(page.getByRole('heading',{name:/27 layouts.*7 free\. 20 premium\./i})).toBeVisible();
+ await expect(page.getByText('Preview any design with your resume.',{exact:true})).toBeVisible();
+ await expect(page.locator('.template-access-badge[data-access="free"]')).toHaveCount(7);
+ await expect(page.locator('.template-access-badge[data-access="locked"]')).toHaveCount(20);
+ await expect(page.getByRole('button',{name:/^Boardroom/})).toContainText('🔒 PREMIUM · $1.99/mo');
+ await page.getByRole('button',{name:/^Boardroom/}).click();
  await expect(page.getByRole('textbox',{name:'Full name',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Preview resume',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Templates Boardroom',exact:true})).toBeVisible();
+});
+for(const viewport of [{width:320,height:780},{width:390,height:844},{width:768,height:1024},{width:1440,height:900},{width:1920,height:1080}])test(`the landing template access labels remain complete and contained at ${viewport.width}px`,async({page})=>{
+ await page.setViewportSize(viewport);await page.goto('/');
+ const section=page.locator('.landing-templates');await section.scrollIntoViewIfNeeded();
+ await expect(section.getByRole('heading',{name:/27 layouts.*7 free\. 20 premium\./i})).toBeVisible();
+ await expect(section.locator('.template-access-badge[data-access="free"]')).toHaveCount(7);
+ await expect(section.locator('.template-access-badge[data-access="locked"]')).toHaveCount(20);
+ await expect(section.getByRole('button')).toHaveCount(27);
+ for(const badge of await section.locator('.template-access-badge').all())await expect(badge).toBeVisible();
+ expect(await section.evaluate(node=>node.scrollWidth<=node.clientWidth)).toBe(true);
+ expect((await new AxeBuilder({page}).include('.landing-templates').analyze()).violations).toEqual([]);
 });
 
 test('generated PDF and Word controls are offered together and require sign-in',async({page})=>{

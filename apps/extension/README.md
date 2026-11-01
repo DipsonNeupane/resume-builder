@@ -1,110 +1,85 @@
-# ResumeStride Job Capture — V1 candidate 0.2.0
+# ResumeStride Job Capture — 0.2.1 update candidate
 
-Unpublished integration candidate. **No deployment or Chrome Web Store submission.**
-The app, API and migration in this change must be released together in a later authorized
-release. A package pointing at production does not make this source available there.
+Version 0.2.0 is published. Version 0.2.1 is a prepared universal-job-save update and has
+**not** been uploaded, submitted, or published in the Chrome Web Store.
 
-Click the extension on a public job page → review/edit the fields → send to ResumeStride
-→ sign in there if necessary → **Save job and see how I match** → normal Saved Jobs /
-Match Analysis → Pro creates or reopens the persistent job-specific resume → explicit
-AI consent → review individual Accept/Reject suggestions → manual edits → PDF/Word.
-The extension never receives resume data, sign-in tokens, entitlement or AI credentials.
-The older separate local draft remains a manual-edit option; it cannot invoke AI.
+On a plausible individual job page, click the extension and choose **Save to ResumeStride**.
+The authenticated ResumeStride web app saves the normalized source URL into the same account-owned
+Saved Jobs model used by jobs found inside ResumeStride. Reliable page data is attached when
+available; otherwise the URL is saved with **Details pending**. Duplicate URLs return **Already
+saved**. Match, evidence, job-specific versions, tailoring, and export remain web-app features.
 
-## Supported patterns and evidence
+The extension never receives ResumeStride tokens, resume data, account identity, entitlement,
+payment data, or AI credentials.
 
-| Pattern | Implementation | Acceptance status |
+## Detection and enrichment matrix
+
+| Source | Safe job detection | Optional enrichment |
 | --- | --- | --- |
-| Greenhouse `https://job-boards.greenhouse.io/{board}/jobs/{id}` and `boards.greenhouse.io` | Single JobPosting JSON-LD first; otherwise exact public job + board API, anonymous GET, strict ID/response bounds | Historical live isolated-world capture verified with a test host grant; controlled API fixtures retained. Real toolbar grant test added; human toolbar/live-site acceptance remains required. |
-| Lever `jobs.lever.co` / `jobs.eu.lever.co`, UUID job path | JSON-LD first; partial fallback requires headline, employer logo alt, and scoped posting sections | Controlled extraction fixture added. Partial pattern support, no claim covering all live Lever pages. |
-| Generic JobPosting JSON-LD (including Workday pages that expose it) | One unambiguous JobPosting object, array, or `@graph`; title, employer, description required; matching URL when present | Controlled fixtures added. No Workday-specific scraper or API adapter; absent/ambiguous metadata falls back to manual entry. |
-| Local `/extension-fixture/job-posting.html` | Explicit test selectors | Existing installed-fixture automation retained. |
-| LinkedIn, Indeed | Deliberately unsupported, including generic extraction | Manual entry only. No scraping or host grant. |
-| Job search results, authenticated/private pages, embedded job iframes, browser internal pages, query-only job identity | Unsupported/unverified | No arbitrary full-page extraction. User may enter public job details manually. |
+| LinkedIn | Stable `/jobs/view/...-{numeric id}` detail paths | URL only; no restricted-content scraping |
+| Indeed | `/viewjob` detail paths with a stable `jk`/`vjk` identity | URL only; no restricted-content scraping |
+| ZipRecruiter | Direct `/c/{company}/Job/{title}/...`, `/jobs/...`, or stable `lvk` detail identity | URL only; no restricted-content scraping |
+| Greenhouse | Numeric Greenhouse job-detail paths | Serialized job data, scoped semantic content, then exact anonymous public job endpoint |
+| Lever | Stable UUID posting paths | One reliable JobPosting object or scoped posting content |
+| Ashby | Stable UUID posting paths | One reliable JobPosting object |
+| Workday | `*.myworkdayjobs.com` detail paths containing `/job/` | One reliable JobPosting object when present |
+| Company-hosted pages | One unambiguous JobPosting whose URL matches the page | Structured title, company, location, and description |
 
-Later parent acceptance for tasks #47–#53 recorded two complete controlled installed
-suite passes (42/42 each), including the real toolbar activeTab grant with intercepted
-Greenhouse responses. See `docs/EXTENSION_ACCEPTANCE.md` and HANDOFF for evidence.
-That is not real-site acceptance of the production ZIP. Task #61 does not install it;
-the later owner checklist is `docs/EXTENSION_LIVE_ACCEPTANCE.md`.
+Search/list pages ask the user to open an individual job. Ordinary pages report **No job detected
+on this page**. A restrained **Save job URL manually** action appears only for an explicit user
+confirmation; it still requires a valid public HTTPS URL. Chrome-internal pages and private,
+internal, credential-bearing, IP-literal, or nonstandard-port URLs cannot be saved.
 
-## Capture/privacy boundaries
+Current-page compatibility was checked on two public detail pages each for Greenhouse, Lever,
+Ashby, and Workday, plus current LinkedIn, Indeed, and ZipRecruiter detail URLs. No authentication,
+CAPTCHA, anti-bot mechanism, or access restriction was bypassed. Controlled tests exercise
+JobPosting pages, listings, ordinary non-job pages, duplicates, signed-out behavior, Free and Pro
+accounts, and account ownership isolation.
 
-- Explicit invocation only, top frame, isolated world; no content scripts, navigation
-  listeners, browsing history, continuous scraping, analytics, or remote executable code.
-- Only job title/company/description/location, reliable workplace/employment type and
-  explicit structured salary, source path, capture time, and adapter category. No cookies,
-  passwords, auth tokens, payment data or unrelated page content is read.
-- Descriptions are inert text, capped at **12,000 characters including a truncation mark**;
-  title/company/location 300, source URL 2,000. Original bounded fields and reviewed edits
-  are retained. HTML scripts/forms are removed in detached templates; never executed.
-- Source links drop query/fragment tracking. Generic extraction rejects meaningful query
-  parameters because query-only job identity cannot safely survive this stripping.
-  Save requires a stable public HTTPS URL and non-empty title/company/description.
-- One pending capture in **`chrome.storage.session`**, not local/sync disk storage, expires
-  after 30 minutes of inactivity. An alarm removes expired data; reads check expiry too.
-  Successful delivery or explicit discard clears it. Browser restart clears session
-  storage. It contains no auth or account identity and is never automatically resent.
-- Closing the popup does not cancel the worker's accepted send. Three bounded attempts,
-  each with an eight-second acknowledgment window. A worker/browser shutdown may interrupt
-  delivery: reopen to retry while the session capture exists. No endless/durable queue.
-  Receipt is not an account save: finish the explicit web-app save before closing that tab.
-- Before saving, the web review is tab memory only; it clears on account switch/sign-out.
-  A guest can sign in and explicitly save. Saving uses verified account ownership, existing
-  Free/Pro save limits, server Match Analysis, and existing RLS/RPC boundaries. No search
-  or AI call occurs as a side effect of saving a capture. Captured availability is unknown.
-- URL identity and existing normalized fingerprints deduplicate against saved jobs,
-  including recognized tracking parameters. Duplicate saves keep the existing immutable
-  snapshot and analyze that stored snapshot, rather than replacing it with incoming edits.
+## Privacy and security boundaries
 
-## Build and install
+- Explicit toolbar invocation only, top frame, isolated world. There are no persistent job-board
+  host grants, content scripts, navigation listeners, background searches, or extension analytics.
+- Source URLs are HTTPS, public-host validated, fragment-free, and reduced to stable job-identity
+  parameters. Tracking parameters are removed. The server repeats the URL validation and owns all
+  account, quota, and duplicate decisions.
+- LinkedIn, Indeed, and ZipRecruiter use safe URL-pattern recognition only. The extension does not
+  extract their restricted page content.
+- Enriched descriptions are inert bounded text. Remote scripts are never downloaded or executed.
+- Saving opens an inactive official ResumeStride tab and uses a bounded message bridge. The page
+  performs authenticated saving with its existing session; secrets never enter extension space.
+- URL-only saves do not invent job facts or Match results. They remain **Details pending** until
+  ResumeStride or the user can safely confirm details, and tailoring stays unavailable without a
+  description.
+- Existing Saved Jobs ownership, row security, Free/Pro limits, and deduplication apply unchanged.
 
-From repository root:
+## Build, verify, and install
+
+From the repository root:
 
 ```
-npm run build:extension        # development folder: apps/extension
-npm run package:extension      # production folder: dist/extension
-npm run check:extension-package # artifact security gate and packaging regressions
+npm run build:extension
 npm run test:extension
-npx playwright test --config playwright.capture.config.ts # fixture extraction only
+npm run package:extension
+npm run check:extension-package
 ```
 
-In a disposable Chrome profile, open `chrome://extensions`, enable Developer mode, Load
-unpacked, select the appropriate folder, pin the action, and click it on a job page.
-Development delivery allows only root URLs on `https://resumestride.com` or HTTP
-localhost/127.0.0.1 ports 5173, 5183, 5185. The production artifact removes all localhost
-host permissions **and** disables localhost in its built destination allowlist.
-Never load the development package into the store. Packaging now also writes the local
-`dist/resumestride-extension.zip` and `dist/extension-package-report.json` with file and
-archive hashes. It verifies both the allowlisted folder and extracted ZIP; it never
-installs, uploads or submits. Requires local `zip`/`unzip`. Package after the web build,
-which clears root `dist/`. Source maps, secrets, tests, docs and stale files are excluded;
-the marker scan is a bounded check, not proof against all possible secrets.
-
-For local authenticated API testing follow the jobs/API run instructions in the root
-README and HANDOFF. Plain `npm run dev` serves UI only; it is sufficient for mocked
-browser tests, not a real authenticated save. Do not call paid providers for acceptance.
+Packaging writes `dist/extension/`, `dist/resumestride-extension.zip`, and
+`dist/extension-package-report.json`, verifies the allowlisted folder and extracted ZIP, and never
+installs, uploads, submits, or publishes. Load `dist/extension/` in a disposable Chrome profile for
+acceptance. Never upload the developer folder.
 
 ## Permission rationale
 
-- `activeTab`: temporary access after invoking the action. No job-board host permission.
-- `scripting`: inject the extractor and the destination receipt bridge.
-- `storage`: single bounded session capture, only for review/retry across popup closure.
-- `alarms`: expire that session capture without requiring another popup invocation.
-- Host permissions: production ResumeStride only; local ports only in developer manifest.
+- `activeTab`: temporary access to the page selected by the user's toolbar click.
+- `scripting`: run the packaged detector in that tab and the save bridge in the official app tab.
+- `https://resumestride.com/*`: reach only the official web app for the user-requested save.
 
-No `tabs`, `history`, `cookies`, `webRequest`, `<all_urls>`, clipboard, auth or AI permissions.
-The action popup is the only accepted internal sender. The web bridge is same-window,
-same-origin, bounded and acknowledged; page messages are **untrusted text**, never proof
-of extension identity and never permission to save, create a resume or call AI.
+There is no `tabs`, `storage`, `alarms`, `history`, `cookies`, `webRequest`, `<all_urls>`, clipboard,
+authentication, or AI permission. The extension has no durable capture queue or local job store.
 
-## Disable strategy and store readiness
+## Release boundary
 
-Set server `EXTENSION_CAPTURE_ENABLED=false` to reject new captured-job saves while
-retaining review, existing saved jobs and versions. Existing `save` and tailoring APIs
-retain their normal authorization; this switch is an operational capture-entry disable,
-not a revocation of users' ordinary save capability. Users can disable/remove the extension
-or discard the pending capture in the popup. No remote extension configuration/tracking.
-
-Icons at 16/32/48/128, versioned production manifest and production packaging are included.
-See `docs/EXTENSION_STORE_READINESS.md` for accurate draft disclosures and release gates.
+The 0.2.1 ZIP is a candidate only. Store upload, submission, and publication require explicit owner
+approval. See `docs/chrome-web-store/RELEASE_PACKET.md` for the exact candidate inventory and
+reviewer instructions.

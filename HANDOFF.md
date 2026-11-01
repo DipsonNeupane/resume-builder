@@ -1,3 +1,777 @@
+## September 29 — universal job save 0.2.1 submitted for review
+
+Uploaded the exact verified `dist/resumestride-extension.zip` candidate (SHA-256
+`176575d4f9ab5b6afcf972669c45929c55b5e01c7211d366c48b88dc23542f69`) to Chrome Web Store item
+`hkingihhmkmhnikmcoeeamceoelcbhjn` and submitted version **0.2.1** for review at
+`2026-09-29T16:42:03Z`. The dashboard confirmed **Item submitted** and **Pending review**.
+Automatic publication was explicitly unchecked in the final submission dialog. The currently
+published public version remains **0.2.0** until an owner separately publishes the approved update.
+The submitted draft shows only `activeTab`, `scripting`, and the existing host permission; no
+listing fields, assets, permissions, code, or package contents were changed during submission.
+
+## September 29 — universal job save 0.2.1 candidate prepared
+
+Redesigned the next Chrome Web Store update around **Save to ResumeStride** rather than mandatory
+extraction. Recognized individual LinkedIn, Indeed, and ZipRecruiter pages now save a normalized URL
+without scraping restricted content. Greenhouse, Lever, Ashby, compatible Workday, and reliable
+JobPosting pages attach bounded title/company/location/description enrichment when available.
+Search/list pages ask for an individual job; ordinary pages show **No job detected on this page**
+with a user-confirmed manual URL fallback. Duplicate URLs return **Already saved**.
+
+The compact Patina popup contains only detected, saved, already-saved, no-job, signed-out, and
+recoverable-error states. It has no manual job-detail form. Auth remains inside ResumeStride: the
+extension opens an inactive official app tab, requests an account-owned save, and receives only a
+bounded result. URL-only records use the existing Saved Jobs model, show **Details pending**, do not
+invent Match evidence, and cannot start tailoring until a real description exists. Server URL
+validation rejects credentials, nonstandard ports, IP literals, private/internal/local names, and
+unsafe protocols. Ownership, quotas, row security, and deduplication remain server-authoritative.
+
+Version 0.2.1 requests only `activeTab`, `scripting`, and the existing
+`https://resumestride.com/*` host; unused `storage` and `alarms` permissions were removed. The
+production candidate is 14 files / 49,457 unpacked bytes; ZIP 25,041 bytes; SHA-256
+`176575d4f9ab5b6afcf972669c45929c55b5e01c7211d366c48b88dc23542f69`.
+
+Verification: extension **47/47**, server/billing **398/398**, application browser **86/86**,
+Saved Jobs Free/Pro **54/54** (including universal-save cases **4/4**), package regression **2/2**,
+current-page classifier/enrichment audit **12/12**, server/client TypeScript PASS, production build
+PASS, and focused security acceptance **7/7**. Current pages covered LinkedIn, Indeed, ZipRecruiter,
+two each for Greenhouse, Lever, Ashby, and Workday, plus an ordinary non-job page. No
+authentication, CAPTCHA, anti-bot control, or access restriction was bypassed. The update was
+**not uploaded, submitted, or published**; owner approval is still required.
+
+## September 29 — Chrome Web Store publication complete
+
+Published Chrome Web Store item `hkingihhmkmhnikmcoeeamceoelcbhjn`, ResumeStride Job Capture
+version **0.2.0**, at `2026-09-29T14:47:36Z` (`2026-09-29 09:47:36 CDT`). The developer dashboard
+shows **Published - public**, and the public listing is live at
+`https://chromewebstore.google.com/detail/resumestride-job-capture/hkingihhmkmhnikmcoeeamceoelcbhjn`.
+
+Before publication, reverified the approved artifact in the locked dashboard: version 0.2.0;
+`activeTab`, `scripting`, `storage`, `alarms`, and the ResumeStride host permission; the approved
+truthful listing and five screenshots/promo assets; production homepage and privacy URLs; Public / all
+regions / contains in-app purchases; conservative Website content and Web history disclosures; all
+three Limited Use certifications; and the explicit Greenhouse / stable-UUID Lever / reliable single
+JobPosting JSON-LD boundary with LinkedIn and Indeed unsupported. No package, permission, listing, or
+review change was made.
+
+Downloaded the public store-delivered CRX after publication and unpacked it in a disposable temporary
+directory. Its 16 reviewed runtime files are byte-identical to a freshly reproduced production package
+(ignoring only Google's expected `update_url` and `_metadata/verified_contents.json`). The CRX manifest
+is MV3 version 0.2.0 with the exact approved permissions, production origin and extension CSP. A
+disposable Chromium profile loaded that store-delivered artifact, invoked the real toolbar/`activeTab`
+path on the live Dialpad Greenhouse role, captured AI Transformation Engineer / Dialpad / Bengaluru,
+India with 5,877 description characters, handed the unchanged description to
+`https://resumestride.com/`, and displayed the signed-out `Sign in to save captured job` gate plus the
+job-specific draft entry point. No Saved Job was created and no production account data was changed.
+
+## September 29 — Google homepage indexing rechecked; recrawl requested
+
+Live production and Search Console checks found no technical inconsistency. `www` returns a direct
+308 to `https://resumestride.com/` for the homepage, favicon and robots paths. The canonical homepage
+returns the current title and description, an `index, follow` directive, canonical non-www URL and
+Patina favicon links. `/favicon.ico` returns HTTP 200 as `image/vnd.microsoft.icon`, is a valid
+single-image 64×64 32-bit icon, and both Googlebot and Googlebot-Image receive crawlable HTTP 200
+content. `robots.txt` allows all crawlers and advertises the canonical sitemap.
+
+Search Console reports the canonical homepage **on Google / indexed**, with both the user-declared
+and Google-selected canonical set to `https://resumestride.com/`; its last indexed crawl was
+September 27, 2026 at 3:33:13 PM as Googlebot smartphone, with successful fetch and indexing
+allowed. The crawled HTML already contained the then-current non-www canonical and Patina favicon.
+A fresh live test on September 29, 2026 at 1:27:39 AM reported **URL is available to Google / page
+can be indexed**, successful fetch, crawl allowed and indexing allowed, and saw the latest homepage
+title, description, canonical and favicon markup. Google web search still displayed the stale old
+homepage title/description and a `www` display URL, so this is search-result refresh lag rather than
+a current origin inconsistency. A new indexing request was accepted and the URL was added to
+Google's priority crawl queue. No source change or deployment was made; wait for Google to refresh.
+
+## September 29 — landing showcase verified across every supported viewport
+
+Follow-up verification found a real 320px-only horizontal overflow in the new landing template
+badges. No template was missing from the registry or DOM: the Free/signed-out state rendered all
+27 cards (7 Free + 20 locked Premium), but the two-column narrow-phone grid made the full
+`🔒 PREMIUM · $1.99/mo` badge wider than its column. The <=380px layout now uses one gallery
+column so every name and access badge is fully readable. The 390px, 768px, 1440px and 1920px
+layouts retain their denser grids.
+
+Permanent regression coverage now checks 27 visible cards, exactly 7 Free and 20 locked Premium
+badges, horizontal containment and axe results at 320, 390, 768, 1440 and 1920px. All 6 focused
+landing tests pass. Individual entitlement coverage confirms 1 ACTIVE + 19 locked; Pro coverage
+confirms 20 INCLUDED WITH PRO + 0 locked. TypeScript and `git diff --check` pass. These changes
+remain local and are not deployed.
+
+## September 29 — landing template showcase access states implemented locally
+
+Updated the public landing-page template showcase without changing entitlements, billing, Stripe,
+pricing, subscriptions, exports or template behavior. Its heading now reads **27 layouts. / 7 free.
+20 premium.** with **Preview any design with your resume.** The shared 27-template registry renders
+seven **FREE** badges; signed-out and Free users see twenty **🔒 PREMIUM · $1.99/mo** badges;
+individual subscribers see **ACTIVE** on their entitled template; Pro users see **INCLUDED WITH
+PRO** across every Premium template. Premium cards remain previewable and continue into the
+existing Builder preview path. While signed-in access is loading or unavailable, the public UI
+does not falsely claim that a possibly entitled template is locked.
+
+The landing page now consumes the same owner-scoped server access snapshot as the Builder. Added
+desktop, mobile, locked-preview, active-individual and Pro coverage. Verification: default browser
+suite **82/82 PASS**; paid/billing/export suite **75/75 PASS**; auth/account-switching suite **40/40
+PASS**; server/billing/security suite **398/398 PASS**; focused landing mobile axe and horizontal-
+overflow checks PASS; client TypeScript PASS; production build PASS; `git diff --check` PASS. This
+work is local only: it has not been committed, pushed or deployed.
+
+## September 29 — Premium template-access UX clarified and deployed
+
+Released a focused Builder/template-gallery clarification in commit `16e03e3` without changing
+entitlement, billing, Stripe catalog, pricing, subscription, template, Pro, export-enforcement,
+database or Chrome-extension behavior. The commit was pushed to both
+`feature/premium-template-library` and `master`, packaged with the required x86_64 Chromium/Premium
+renderer checks, and deployed as Vercel production deployment
+`dpl_9FFi7Wzw99Tm5BFisx7abZbSuJhH`
+(`resumestride-w465fdsrq-dipsons-projects.vercel.app`), Ready and aliased to
+`resumestride.com`.
+
+The root UX issue was that clicking a locked Premium card opened checkout instead of selecting a
+full preview, while the surrounding Download UI continued to look normally available. The Builder
+now uses one account-scoped, server-fed access snapshot across the Design selector, 27-template
+gallery, preview and download entry points. Free templates show **Free / Included**; active
+individual templates show **Premium · Active** plus the access-through date; locked templates show
+a lock and **Premium · $1.99/month**; Pro shows **Included with Pro** and suppresses individual
+upsells. Locked cards now select the user's full live preview, state explicitly that preview does
+not grant download/use entitlement, and offer both the individual unlock and Pro. A persistent
+preview banner and locked download panel replace the normal Download path with **Unlock to
+download**. NEW remains a separate release-date label; no Popular or Recommended label was added.
+
+Verification after the final code state: server/billing/export **398/398 PASS**; default browser,
+mobile, accessibility and security **81/81 PASS**; paid/billing/export/account-switching **75/75
+PASS**; configured authentication/account isolation **40/40 PASS**; focused four-state tests cover
+Free, locked, active individual and Pro, locked save/reload, PDF/DOCX behavior, no locked export
+request, desktop/mobile overflow and axe; client/server TypeScript PASS; production build PASS;
+standalone Vercel package, Premium renderer, bundled fonts and Chromium checks PASS; `git diff
+--check` PASS. A read-only live smoke at desktop and 390×844 confirmed the gallery explanation,
+Free and locked labels, persistent Boardroom lock state, both upgrade choices, **Unlock to
+download**, no preview-panel overflow and no console errors. No checkout was opened and no customer,
+Stripe, database, environment-variable or extension state was changed. The existing Mandate
+subscription remains cancellation-scheduled with its already-paid access untouched.
+
+## September 29 — monitored live US$1.99 acceptance complete; renewal stopped
+
+Completed the owner-approved single real-money acceptance purchase for the **Mandate** Premium
+template. Stripe charged **US$1.99** successfully, created the monthly live subscription, and the
+production webhook granted only Mandate access. The app, invoice history and Customer Portal all
+showed the correct product and price. Live Mandate PDF and editable DOCX requests both returned
+HTTP 200 and committed export accounting; no Pro subscription was purchased and no refund was
+issued.
+
+The acceptance purchase exposed and repaired two production-only Premium PDF packaging issues:
+the template renderer is now bundled into an explicit generated Node ESM artifact, and Lambda
+launches Chromium with `@sparticuz/chromium.args`. Commits `306e3c4` and `837aca9` were pushed to
+both `feature/premium-template-library` and `master`. The resulting live PDF and DOCX exports passed.
+
+The owner then confirmed the final financial action and the Stripe Customer Portal stopped future
+renewal. Stripe shows **Cancels Oct 28, 2026** in Chicago time (period end
+`2026-10-29 03:45:15+00`); the already-paid Mandate access remains active through that boundary.
+No resume, job or account content was removed. The portal's current flexible-billing response uses
+`cancel_at=current_period_end` while leaving `cancel_at_period_end=false`; the original webhook
+only mirrored the latter flag. The affected production row was reconciled to Stripe's source of
+truth, its pending three-day reminder was cancelled, and the missing durable cancellation notice
+was enqueued and dispatched. Resend confirms exactly one delivered **Purchase confirmed** message
+and exactly one delivered **Cancellation confirmed** message to the owner's account; the durable
+purchase and cancellation records are both `sent` with one attempt and no error.
+
+Commit `6e11907` permanently normalizes both Stripe end-of-period representations for new offer
+subscriptions and legacy/coexistence subscriptions, fails closed if cancellation/expiration notice
+persistence fails, and adds regressions for the live hosted-portal shape and for a later-than-current-
+period `cancel_at`. It was pushed to the feature branch and `master`, packaged, and deployed as
+Vercel production deployment `dpl_CoJSm3yow3jrx28aoczDh1M5kv8G`
+(`resumestride-c9mq6mb0w-dipsons-projects.vercel.app`), Ready and aliased to `resumestride.com`.
+An idempotent replay of the exact live cancellation event returned HTTP 200 on that deployment,
+preserved the correct database state, and did not create a second email.
+
+Final verification: mandatory isolated PostgreSQL concurrency **10/10 PASS** using the portable
+PostgreSQL 18 ARM wrapper; server/billing/security **398/398 PASS**; default browser/mobile/
+accessibility **81/81 PASS**; server and client TypeScript PASS; production build PASS;
+standalone Vercel packaging/Premium renderer/Chromium checks PASS; `git diff --check` PASS. The
+complete live 21-product catalog, US-only sales gate, 7 Free + 20 Premium template library, Pro
+offer, Terms wording and all prior test-mode acceptance remain in force. The submitted Chrome Web
+Store package/review was not modified.
+
+## September 28 — production subscription rollout staged, no real purchase yet
+
+Production rollout commit `2ea029a` is live and **Ready** on Vercel deployment
+`dpl_4Fm45xtT87eMRoJ4YptvBTqi1xC7`, aliased to `resumestride.com`,
+`www.resumestride.com`, and `resumestride.vercel.app`. The hosted subscription migration was
+applied transactionally and verified. The live Stripe catalog contains the complete 21-product
+allowlist (20 individual Premium templates at US$1.99/month plus Pro at US$19.99/month), and the
+validated live Price mappings are installed in Vercel. New paid subscriptions are enabled only for
+trusted US accounts. No checkout was started, no real charge was made, and the production billing
+ledger remained empty at the final read-only check.
+
+Stripe's production webhook is active at `/api/stripe-webhook` with all 12 required events. The
+Customer Portal is configured for invoice history, payment-method management, and cancellation at
+period end. Resend is configured with a sending-only key restricted to the verified
+`auth.resumestride.com` domain and the factual billing sender; the six-message safe acceptance sink
+still passes without emailing arbitrary addresses. Live Terms expose the approved recurring-price,
+auto-renewal, cancellation, paid-period access, refund, reminder, expiration and US-only wording.
+The production UI shows all 7 Free and 20 Premium templates, recurring consent controls, and the
+approved Premium/Pro disclosures.
+
+The mandatory isolated PostgreSQL concurrency gate was rerun against PostgreSQL 17 and passed all
+10 cases. `scripts/test-database-concurrency.mjs` now supports a relocatable `PGBIN` bundle by
+passing its adjacent PostgreSQL catalog directory to `initdb`. Final regression also passed the full
+database suite (including subscription offers 24/24), server/billing/security 396/396, server and
+client TypeScript, production build, and `git diff --check`. The browser/template/export acceptance
+from the immediately preceding pre-production gate remains unchanged and passed.
+
+The unused temporary Stripe standard secret key named `ResumeStride catalog rollout`, created only
+for rollout troubleshooting and never connected to the app, was explicitly owner-approved for
+revocation and expired in the Stripe UI. The normal production Stripe key was not changed. The next
+product action requires a separate explicit owner approval for one monitored real-money acceptance
+purchase. Do not start that purchase without it.
+
+## September 28 — Premium subscription pre-production acceptance complete
+
+Completed every requested local/test rollout gate without deploying or changing production. The
+mandatory isolated PostgreSQL race suite now runs with PostgreSQL 18 and passes all ten concurrency
+cases. The full database suite passes, including a new regression proving a full refund of a
+template-only subscription revokes template access without ever granting Pro. The fix creates the
+nullable entitlement-ledger anchor required by the existing reversal engine for template-only
+customers.
+
+Provisioned and independently verified the complete Stripe **TEST** catalog in account
+`acct_1QqPbAGGSDSNHj5K`: 21 active Products and 21 active USD monthly Prices, each with one exact
+server-allowlisted `offer_key`. No live-mode Stripe object was created or changed. A reusable
+test-mode acceptance harness now exercises real Stripe Checkout creation and duplicate protection,
+real successful US$1.99 and US$19.99 subscription payments, selective/all-template entitlements,
+Premium PDF and clean DOCX exports, Customer Portal, cancel-at-period-end, paid-period access,
+template-to-Pro disclosure and overlap handling, declined payment, replay/out-of-order delivery,
+actual full refund, account isolation, and Stripe test-clock renewal/expiration. It also verifies
+the durable three-day reminder and renewal-receipt records, Free reversion, and account retention.
+Every case passed; created test subscriptions/clocks are cleaned up best-effort after each run.
+
+Transactional-email acceptance covers purchase, three-day reminder, renewal, cancellation,
+payment failure and expiration through a controlled local delivery sink. It verifies provider
+idempotency keys, successful durable completion calls, and absence of marketing language. The sink
+uses only the reserved `.test` address and sends no external email. The dispatcher now accepts
+dependencies for safe deterministic acceptance while retaining its production defaults.
+
+Final regression PASS: database and pgTAP (including subscription offers 24/24), real PostgreSQL
+concurrency 10/10, server/billing/security 396/396, default browser/mobile/accessibility 81/81,
+paid browser 71/71, authenticated/account-switching 40/40, exhaustive 20-Premium-template × 10
+fixture × A4/Letter/360px preview verification, Premium PDF parity, all seven Free preview/PDF
+parity, DOCX text preservation, client/server TypeScript, production build, Stripe catalog
+verification, and `git diff --check`. The exact proposed Terms diff remains the September 28 wording
+already in `public/terms.html`; no additional legal wording was applied during acceptance.
+
+Production remains unchanged: no hosted migration, live Stripe catalog/customer mutation,
+production environment-variable change, deployment, or Chrome Web Store modification. A separate
+explicit owner approval of the displayed Terms wording and production rollout is still required.
+
+## September 28 — approved Premium-template subscriptions implemented locally
+
+Implemented the owner-approved subscription architecture on `feature/premium-template-library`
+without deploying, applying a hosted migration, or creating/changing any live Stripe object. The
+Builder now has one scalable registry for **7 Free + 20 Premium = 27 templates**, fixed A4/Letter
+preview geometry, bundled fonts, and the approved Premium renderers. The server PDF path dispatches
+to the same Premium renderers; DOCX remains a clean editable content document without a visual-fidelity
+promise. A direct re-check confirmed the former Compact/Clinical Free preview-versus-PDF mismatch is
+now 1 page in both paths.
+
+Added `20260928180000_subscription_offers.sql`: server-only checkout/customer/subscription/grant,
+notice, and entitlement state; account-scoped advisory locking; invoice-period grants; durable
+notice idempotency/retry records; US$1.99 template and US$19.99 Pro monthly subscription support;
+and authoritative Premium export access. Paid access bypasses the Free quota under a 60/hour
+server fair-use ceiling. Expiry/cancellation never deletes resumes, jobs, or content. The checkout
+layer accepts only explicit server offer keys, requires a trusted US territory and recurring consent,
+and requires all 20 template Price mappings before sales can open. Enabling the new catalog now
+fails the historical one-time and legacy recurring checkout entrypoints closed while leaving their
+webhook/coexistence reconciliation code available. Pro overlap requires advance disclosure; only a
+verified first Pro invoice schedules active individual-template subscriptions to stop renewing, and
+their already-paid periods remain intact.
+
+Added test-mode-only, dry-run-first Stripe catalog provisioning (`npm run stripe:catalog`) for one
+Product/one monthly Price per allowlisted offer. Added checkout/status/cancel/Customer Portal APIs,
+monthly webhook reconciliation, purchase/renewal/failure/cancellation/expiration notice creation,
+and a small Resend-backed dispatcher with durable delivery attempts. Terms now state the conservative
+ordinary cancellation/refund rules, mandatory-rights override, US-only new sales, fair use, content
+retention, and PDF/DOCX distinction. Product analytics remain on the existing closed, privacy-safe
+event vocabulary. The submitted Chrome Web Store package/review was not touched by this work.
+
+Read-only existing-customer audit before implementation: Stripe live Subscriptions showed **0**.
+Production Supabase aggregate results were `entitlement_rows=0`, `active_paid_entitlements=0`,
+`subscription_rows=0`, `subscriptions_by_status={}`, `subscriptions_ending=0`,
+`verified_payment_rows=0`, `paid_payment_rows=0`, and `paid_payments_last_90d=0`. Therefore no current
+paying customer needs conversion, no paid-through period can be shortened, and no irreversible
+migration choice was necessary. The audit made no production mutation.
+
+Verification: database suite PASS including subscription offers **20/20**; server/billing/security
+**394/394** PASS; focused template/catalog **18/18** PASS; paid browser **71/71** PASS; default
+browser/mobile/accessibility/security **81/81** PASS; configured-auth and account switching **40/40**
+PASS; client and server TypeScript PASS; production build PASS (existing bundle-size and Vercel
+`use client` warnings only). The full Premium verifier passed 20 templates × 10 fixtures × A4/Letter
+and mobile previews, Premium PDF page parity, and DOCX text preservation. Real-Postgres concurrency
+verification could not run because this machine has no usable PostgreSQL server toolchain: the normal
+path is absent and the only temporary cellar binary aborts on a missing `libpq` symbol. Existing
+database advisory-lock pgTAP coverage passed, but rerun `npm run test:db:concurrency` on a host with
+a working PostgreSQL installation before rollout. `git diff --check` passed before this entry.
+
+Production rollout remains deliberately blocked on owner review/approval of the exact Terms wording,
+test-mode Stripe catalog provisioning and end-to-end test-webhook/email acceptance, a working
+real-Postgres concurrency run, then a separate explicit gate for hosted migration, live catalog/env,
+deployment, and monitored rollout.
+
+## September 28 — Premium template monetization compliance gate and architecture
+
+Completed the brief's required compliance/Stripe/entitlement research first and saved the
+implementation-ready analysis in `PREMIUM_TEMPLATE_MONETIZATION_ARCHITECTURE_2026-09-28.md`.
+No billing, entitlement, template, email, Stripe catalog, hosted database, Chrome Web Store or
+production behavior changed.
+
+Stopped before billing implementation exactly as required by the brief because the intended model
+needs owner/legal decisions: unrestricted worldwide paid sales are not covered by a single 3-day
+renewal reminder; ordinary paid-period access needs an exception for mandatory withdrawal/refund
+rights; and the new “per month” Pro contract conflicts with the current every-30-days implementation.
+Recommended first release is paid subscriptions limited to reviewed territories (US-only initially),
+with Free remaining worldwide; true Stripe calendar-month prices; 3-day customer-friendly reminders
+plus jurisdiction-specific/annual/price-change notices; durable consent/notice evidence; and an
+explicit mandatory-rights/refund process.
+
+The architecture recommends 21 clearly named Stripe Products (Pro plus one per Premium template),
+one immutable active Price per offer version, separate subscriptions, server-owned offer allowlists,
+verified invoice-period grants, an in-app billing summary plus Stripe Customer Portal, and an
+affirmed Pro transition that schedules existing template renewals to stop only after Pro payment is
+verified. Premium-template/Pro exports bypass the Free allowance only for authorized templates and
+remain subject to generous server fair-use controls. The approved `template-library/` work remains
+isolated and unchanged; the plan promotes its 27-template registry/renderers/fonts, moves every
+template to fixed print geometry, preserves template-neutral DOCX, and retains Premium IDs after
+expiry. No implementation tests were run because this session changed documentation only.
+
+## September 28 — landing-page positioning released to production
+
+Released the reviewed landing-page value restructure in production commit `286e8a9`
+(`feat: reposition landing around evidence before effort`), pushed to `origin/master`.
+Git-linked Vercel production deployment `dpl_4QJFKX6weN8uDs3JXPv3HaRXgD4F` is **Ready** and
+aliases `resumestride.com`, `www.resumestride.com` and `resumestride.vercel.app`.
+
+Scope: `src/features/home/{HomePage,PatinaHero,MatchShowcase}.tsx`, `landing.css`, and the
+homepage-related Playwright specs (headline/template-heading/CTA locators only). No SEO metadata,
+analytics, pricing, entitlements, product behavior, Resources, Tools, Patina tokens or Chrome
+extension files changed. The unrelated extension/docs/scripts/marketing working-tree changes and
+this HANDOFF remain uncommitted, as before.
+
+Positioning now live:
+- Hero: kicker "Your job search, with less guesswork"; H1 "Stop searching everywhere. Start with
+  jobs that fit your experience."; deck "ResumeStride helps you find relevant opportunities, see
+  what your experience actually supports, and tailor your resume for the roles you choose."
+- Readable 190+ proof under the deck; one contextual mention above the Match board.
+- Primary CTA "Find relevant jobs" (Jobs); "Upload a resume"; free path "Just need a resume?
+  Build one free" → builder, "7 layouts, PDF or Word. No card needed."
+- Hero proof: four openings → evidence card (clearly demonstrated / worth reviewing / not
+  demonstrated, quoted from the fictional sample) → "Your call" framed as an example decision.
+  The tailored resume is not in the hero.
+- Match: The role asks → Your resume shows → What it means; four evidence states;
+  Strong/Good/Stretch removed from the marketing demo only (unchanged in the product).
+- Tailoring after the decision ("Only after you decide — Worth it? Then tailor it."), with AI
+  review folded in; workflow compressed to one strip; templates demoted to "7 layouts. PDF + Word."
+- Pricing: "Several openings. Limited evenings."; Free card "Just need a resume? Build it free.";
+  Pro framed as the active-search pass, quotas in the note. Price/entitlements unchanged.
+- The hero CTA formerly named "Build my master resume" is now "Build one free"; the connected
+  strip and Free card keep "Build my master resume", so existing test locators still resolve.
+
+Pre-release verification: browser suites 74/74, paid suite 72/72, `test:seo` 16/16, analytics
+(`observability.test.ts`) 12/12, TypeScript, production build and `git diff --check` PASS.
+Live verification at 1920×1080, 1366×768, 390×844 and 320×700: hero copy, 190+ proof, free path,
+evidence → example decision, Match columns and active-search Pro framing present; no horizontal
+overflow; no console errors; SEO title/description unchanged; Vercel Web Analytics and Speed
+Insights scripts load with 200 (verification runs blocked beacons to avoid polluting metrics).
+Production-safe smoke: "Build one free" opens the builder, "Find relevant jobs" shows the
+signed-out Jobs prompt, "View Pro options" shows the Pro page, 320px "How it works" focuses the
+Match section; `/` has no `X-Robots-Tag` and `/?account=1` still returns noindex. No purchase or
+sign-in was performed. The Chrome extension remains under Google review and is not advertised.
+
+## September 28 — pricing, template and extension monetization research
+
+Completed research-only monetization analysis in
+`PRICING_MONETIZATION_RESEARCH_2026-09-28.md`. No product code, Stripe catalog, price,
+entitlement, template, Chrome Web Store submission or production state changed.
+
+Current official competitor evidence supports an intent-based ladder rather than turning
+ResumeStride into a template shop: useful Free; a permanent resume-only upgrade; and the
+existing US$19.99/30-day Pro positioned as active job-search mode. The recommended
+one-time test price is US$4.99, not US$2.99, because Stripe's public US domestic-card
+fixed fee makes a US$2.99 order lose about 12.9% before support, refunds, provider and
+hosting costs. Do not launch the SKU yet: all seven existing templates are currently
+promised Free and should remain Free; first add at least three meaningfully distinct
+premium layouts (technical/projects-first, research/detailed CV, and restrained
+portfolio/design-forward).
+
+Recommended Free retains the current three shared PDF/DOCX downloads per fixed 30-day
+period, 5 Jobs results/one provider refresh per 24 hours, 3 saved jobs, concise Match,
+all current templates and free extension capture. Recommended permanent Resume Upgrade
+unlocks premium layouts and expanded export rights but never full Match, new job-specific
+versions or AI. Pro remains the repeated decision/tailoring workflow. Segment C maps to
+Free/Pro rather than a third extension plan. Keep capture free and let authenticated web
+entitlements govern downstream depth; this matches both current architecture and the
+Teal/Huntr/Simplify/Careerflow/Rezi acquisition pattern.
+
+Repository economics confirmed the existing GPT-4.1 mini benchmark is very low per
+typical call but remains estimated, the AI ledger has a global US$25/month hard cap, and
+Techmap/Vercel/Supabase actual plan and usage costs are unknown. No “unlimited” promise
+or margin claim is justified. Owner decisions and the required qualitative/commercial
+tests are enumerated at the end of the research document.
+
+## September 28 — Chrome Web Store submission pending review
+
+Submitted ResumeStride Job Capture version **0.2.0** to Chrome Web Store review at
+`2026-09-28T15:11:40Z` (`2026-09-28 10:11:40 CDT`). Item ID:
+`hkingihhmkmhnikmcoeeamceoelcbhjn`. The dashboard visibly confirmed **Item submitted** and now shows
+**Pending review**. The submitted package SHA-256 is
+`49fe46c6e12e0dde1303f5dc7eda6128b28b591879c6a0ec35e8e2727ae123f7`.
+
+The submission confirmation's automatic-publication checkbox was explicitly turned **off** before
+submission. If Google approves the review, the item will be staged for manual publication; do not
+publish without the user's explicit `Approve publication.` authorization. Google warns staged items
+expire 30 days after review approval. No reviewer messages or required actions are currently shown.
+
+## September 28 — Chrome Web Store release gate prepared
+
+Google now shows the publisher contact `support@resumestride.com` as verified for publisher
+`dipson.n77`. The three Chrome Web Store Limited Use certifications, conservative Website content
+and Web history disclosures, reviewer instructions, listing, assets, package, and distribution draft
+are saved. The dashboard's **Submit for review** control is enabled for item
+`hkingihhmkmhnikmcoeeamceoelcbhjn`; the item remains **Draft** and has not been submitted or
+published. Do not click it without the user's exact `APPROVE SUBMISSION` authorization.
+
+Published the previously prepared extension/Limited Use privacy disclosure as the only file in
+production commit `3cbd2f4` (`docs: publish extension privacy disclosure`). Git-linked Vercel
+production deployment `dpl_Dn9FqZB5wBFmcH842bZkoUqp4wRj` is **Ready** and aliased to
+`resumestride.com`. The live policy returns 200 and exposes both the `ResumeStride Job Capture
+extension` section and Limited Use language. All pre-submit checks are complete; present the exact
+release gate and wait for the user's exact `APPROVE SUBMISSION` authorization.
+
+## September 28 — Chrome Web Store verified publisher and draft item prepared
+
+Confirmed the verified Chrome Web Store publisher account `dipson.n77` (publisher ID
+`4214c054-9620-4b51-a2f2-5fc075566b14`) and created the ResumeStride draft item. The store item ID is
+`hkingihhmkmhnikmcoeeamceoelcbhjn`; status remains **Draft**, with no submission or publication.
+Uploaded the exact audited `dist/resumestride-extension.zip` candidate, version **0.2.0**, SHA-256
+`49fe46c6e12e0dde1303f5dc7eda6128b28b591879c6a0ec35e8e2727ae123f7` (16 files,
+49,847 unpacked bytes; 26,226-byte ZIP).
+
+The saved store-listing draft now has the evidence-first description from
+`docs/chrome-web-store/DISCOVERY_OPTIMIZATION.md`, Workflow & Planning / English, the verified
+official site, the attributed homepage URL, approved icon, five genuine Patina product screenshots,
+and both promo tiles. Distribution is Public / all regions and truthfully marked as containing
+in-app purchases because the linked web app offers Pro. Privacy purpose/permission text, no-remote-code
+answer, conservative Website content and Web history disclosures, privacy-policy URL, all three
+owner-approved Limited Use certifications, and reviewer instructions are saved. The public publisher
+contact `support@resumestride.com` is verified.
+
+The package builder now normalizes archived file timestamps; two consecutive rebuilds produced the
+same final SHA-256 above. That reproducible ZIP replaced the earlier metadata-equivalent draft upload.
+Final package verification on September 28: extension suite 42/42, focused capture/server/security
+18/18, client build and server TypeScript PASS, package checks 2/2, ZIP integrity PASS, and
+`git diff --check` PASS. A broader paid-flow run exposed a stale responsive CTA test locator after the
+Patina homepage change; the test now accepts the real `Build my master resume` CTA without weakening any
+product assertion. The nine affected Free/Pro/Match/tailoring/mobile flows then passed 9/9, including the
+extension capture → saved job → separate version → suggestion review path. Re-run the full paid suite and
+package checks after this documentation update.
+
+Live public Greenhouse, Lever UUID, Workday-with-reliable-JobPosting, and generic single-JobPosting pages
+still return 200. The exact final unpacked candidate was loaded into a disposable Chromium profile on
+September 28 and the real action/activeTab path captured correct required fields from all four. September 27
+also records truthful LinkedIn/Indeed rejection. Production is currently signed out; production Pro remains
+controlled-suite evidence only, so do not claim a paid live entitlement was exercised.
+
+All pre-gate checks are complete. Do not submit or publish without the user's exact approvals.
+
+## September 27 — workflow-positioning research experiment (research only)
+
+Created `WORKFLOW_POSITIONING.md` after reviewing the live production homepage and signed-in Jobs workspace, current source boundaries, the unpublished extension support matrix, the privacy-closed analytics event vocabulary, the live Vercel Web Analytics dashboard, and current competitor/customer-language research. No production copy, product behavior, Patina styling, deployment, public extension promise, or SEO metadata changed.
+
+The market finding is that workflow is a strong customer-problem frame but not a unique claim: Teal, Huntr, Simplify and Careerflow already sell centralized or end-to-end job-search workflows, several with autofill and post-application tracking. Recommended positioning is therefore **Evidence before effort**: connect one master resume to opportunity evaluation, saved jobs, a protected job-specific version and reviewable tailoring. The truthful promise ends at a reviewed/downloadable resume and outbound employer link; ResumeStride does not submit or track applications.
+
+Vercel Production / last 24 hours showed 17 visitors, 27 page views and 71% bounce rate. Only `landing_page_view` (7 visitors / 10 total), `content_page_view` (5 / 6) and `tool_viewed` (2 / 3) were populated. This is not enough for conventional A/B testing. The brief recommends qualitative message-comprehension and task testing first, followed only by a time-boxed sequential live test interpreted directionally. Homepage metadata remains frozen while the recent Google recrawl settles.
+
+## September 27 — focused homepage SEO and favicon crawlability production correction
+
+Updated only the homepage metadata and public favicon crawler policy in production commit
+`fdca6be` (`fix: make favicon crawlable and refresh homepage SEO`). The title is now
+`ResumeStride — Resume Builder, Job Match & Tailoring`; the description is the approved
+master-resume / jobs / evidence / truthful job-specific version copy. The existing Patina
+favicon artwork was not changed. Production middleware now omits `X-Robots-Tag` for the
+public favicon suite on the canonical production host while retaining the existing noindex
+policy for previews, private query/application states, APIs and 404s.
+
+Verification: SEO **16/16 PASS**, server TypeScript PASS, production build PASS and
+`git diff --check` PASS. `graphify update .` rebuilt the AST graph. Git-linked Vercel
+production deployment `dpl_8o59rUWoxXAzv4kYc679y1S5tR4G` is Ready and aliases
+`resumestride.com`. Live Googlebot/Googlebot-Image probes returned 200 for `/` and
+`/favicon.ico` without `X-Robots-Tag`; the homepage exposes the approved title/description,
+canonical and unchanged 64x64 ICO reference. Live private-query, API and missing-route probes
+still returned `noindex, nofollow, noarchive`. Search Console's fresh 5:18 PM CDT live test
+reported `URL is available to Google` / `Page can be indexed`; the follow-up request was
+accepted and the homepage was added to the priority crawl queue. Existing unrelated
+extension, privacy and marketing working-tree changes were not committed or deployed.
+
+## September 27 — growth task 6: safe web-growth production release
+
+Released only the reviewed web-growth scope from tasks 1–3. Checkpoint `0814c76`
+(`feat: release web growth foundations`) contains privacy-closed product analytics,
+Vercel Speed Insights, technical SEO/canonical repairs, `/resources/` plus eight
+guides, `/tools/` plus three browser-only tools, internal links, generated metadata,
+sitemap entries and tests. Search Console verification commit `a922e64` adds only
+the public homepage verification meta tag. Both commits are on `origin/master`.
+
+The production growth deployment `dpl_4k34szRZ4HjTqsu3soAEux8xr43d` became Ready at
+**2026-09-27 15:20:05.920 CDT** (`2026-09-27T20:20:05.920Z`); this is the growth
+experiment baseline timestamp. A second one-file verification deployment
+`dpl_23zixx9CM5wwF1cPQoQTstd6RQtR` is Ready and aliases `resumestride.com`, `www`
+and the Vercel domains. Do not interpret results yet. Later compare SOURCE →
+RESOURCE/TOOL → BUILDER → JOBS → MATCH → TAILOR → PRO after meaningful traffic.
+
+Release verification: SEO 16/16, deterministic tool/security 7/7, focused tool
+browser 5/5, default Chromium/accessibility 81/81, server/billing/security 386/386,
+client and server TypeScript, production build and `git diff --check` all PASS.
+Live mobile smoke passed for the homepage, nine resource URLs and four tool URLs;
+all returned 200 with correct canonicals/OG metadata, no horizontal overflow or
+console-breaking errors. Robots, the 16-URL sitemap, UTM canonical behavior,
+private-route HTTP/DOM noindex, a real 404, Analytics and Speed Insights collectors
+all passed. Public probes for extension/store/marketing source paths returned 404.
+
+Google Search Console URL-prefix property `https://resumestride.com/` is verified by
+HTML tag without DNS changes. `sitemap.xml` was submitted; the homepage was already
+indexed; `/resources/` and `/tools/` were inspected and added to the priority crawl
+queue. No private application route was submitted. Bing Webmaster Tools is blocked
+only at Microsoft sign-in; import/submission remains an owner action after sign-in.
+
+Deferred work is preserved outside both commits: extension icons and acceptance/store
+docs remain modified, Task 4 files remain under `docs/chrome-web-store/`, Task 5 files
+remain under `marketing-assets/`, and the combined extension privacy disclosure is
+restored as an unstaged `public/privacy.html` change. A safety stash named
+`preserve combined extension and analytics privacy work before growth release` remains.
+
+## September 27 — growth task 5: product demos and distribution asset kit
+
+Prepared a reusable, local-only growth library under `marketing-assets/`; nothing was
+deployed, published, posted, advertised, purchased or added to the runtime bundle. The
+Chrome extension package, pending store submission, dashboard state and existing store
+promo files were not modified.
+
+- Added exact 8–15 second short-demo and 4–7 second micro-loop shot lists for all five
+  approved stories: unchanged master → separate opportunity version; requirement → real
+  evidence and clearly/partially/not-demonstrated states; source-grounded AI suggestion →
+  accept/reject/manual edit; Jobs → Save → Match → job-specific resume → Tailor; and one
+  resume across all seven real templates. Every script uses the current Patina UI and
+  forbids ATS scores, hiring predictions, fabricated qualifications or an implied apply
+  action.
+- Added a reproducible Playwright capture runner using only fictional Alex Morgan / Example
+  Learning Co. data and the real product components with bounded local API fixtures. It
+  produced 15 reviewed PNG hero stills: five stories at 1600×900, 1080×1080 and 1080×1920.
+  Vertical assets were independently recomposed: all three evidence states, Accept/Reject,
+  and all seven templates remain visible rather than being center-cropped away.
+- Video exports are deliberately labelled **capture-ready**, not complete. The environment
+  can record Playwright WebM but has no installed, verified MP4 encoder. The manifest records
+  exact dimensions, timing, start/end states, interactions, overlays, naming and delivery
+  checks so reviewed MP4/WebM files can be captured without inventing UI behavior.
+- Added concise draft-only copy for X, LinkedIn, Product Hunt, Indie Hackers, Show HN and
+  Chrome Web Store; no Reddit draft. Added six Task-1-compatible campaign URLs with bounded
+  `utm_source`, `utm_medium`, `utm_campaign` and `utm_content`, retaining clean canonical
+  destinations. The Chrome URL preserves the existing `chrome_web_store` / `extension` /
+  `extension_launch` convention.
+- Added a SOURCE → LANDING → optional TOOL/RESOURCE → BUILDER → JOBS → MATCH → TAILOR → PRO
+  measurement plan using only the existing privacy-closed Vercel event vocabulary. It treats
+  tiny samples as directional at most, keeps content out of analytics and recognizes both
+  suggestion acceptance and rejection as valid user control.
+- Added a restrained placement plan for the landing workflow, evidence section, selected
+  resources/articles, the comparison tool completion CTA, Pricing and eventual Chrome Store
+  screenshots. It explicitly avoids video on every page and does not relabel marketing stills
+  as the genuine 1280×800 screenshots still required for the pending listing.
+- Raw captures are excluded through `marketing-assets/demos/raw/` in `.gitignore`; the asset
+  library is outside `src/`/`public/` and therefore outside the production client bundle.
+
+Capture verification produced 15/15 expected dimensions, zero page errors, zero unexpected
+external requests, zero visible localhost/debug/design-lab/protection text, and fictional-data
+disclosure on every frame. The five 16:9 stories and the recomposed vertical evidence,
+tailoring and template frames were visually inspected. No real account, customer resume,
+private job search, secret, testimonial, user count or traction claim appears. Capture-script
+syntax, 6/6 UTM validation, raw/bundle boundary and `git diff --check` PASS. `graphify update .`
+PASS, rebuilding the AST graph to 2,388 nodes / 4,696 edges / 172 communities. No app build or
+runtime suite was needed because this task changed only the out-of-bundle asset library,
+`.gitignore` and this handoff.
+
+## September 27 — growth task 4: Chrome Web Store discovery optimization
+
+Completed a read-only listing/market audit and prepared the post-approval optimization
+plan in `docs/chrome-web-store/DISCOVERY_OPTIMIZATION.md`. No dashboard field, package,
+permission, extension behavior, review, submission, or publication state was changed.
+
+The user reports the extension is submitted and awaiting review, but the accessible
+Chrome profile showed publisher `dipson.n77` / `4214c054-9620-4b51-a2f2-5fc075566b14`
+with **0/2 items**, “There are no items yet,” and trader verification pending. The
+current submitted listing and review state therefore could not be independently
+inspected. The repository release packet remains the candidate record, not dashboard
+proof. This account/item mismatch is the owner blocker.
+
+Current market research found crowded “AI-powered,” percentage match/ATS, missing-keyword,
+auto-apply, and broad “works everywhere” positioning. Recommended copy instead leads
+with Save opportunity → evidence-based Match → separate job-specific resume → reviewed
+AI suggestions, while preserving exact Greenhouse/stable-UUID Lever/single reliable
+JSON-LD boundaries and explicit LinkedIn/Indeed non-support. The existing Patina icon,
+440×280 promo, and 1400×560 marquee are correctly sized and remain unchanged. Store-ready
+screenshots are still absent; the plan combines six story beats into Chrome's five-image
+limit and requires genuine 1280×800 current UI captures only.
+
+Attribution should use the listing homepage URL with
+`utm_source=chrome_web_store&utm_medium=extension&utm_campaign=extension_launch` only
+after approval. Keep the privacy link and extension delivery URL clean. Existing bounded
+session-first-touch analytics can measure attributed website/account/Match/Tailor/Pro
+events without extension telemetry or personal/job/resume content. Chrome Web Store
+impressions, installs/uninstalls and weekly-user reports remain an adjacent aggregate
+funnel, not person-level account attribution.
+
+## September 27 — growth task 3: free acquisition tools
+
+Built three public, no-signup Patina tools locally; nothing was deployed and no Chrome-extension,
+pricing, paid-entitlement, advertising or community-posting work was changed. Current search-result
+research supported durable user-language paths: `/tools/job-requirement-extractor/`,
+`/tools/resume-job-match/` and `/tools/resume-bullet-checker/`, plus `/tools/` as the hub.
+
+- All analysis is deterministic and runs entirely in the browser. There is no anonymous server/AI
+  endpoint, provider cost, credential exposure or content log. Job descriptions are capped at 20,000
+  characters, resumes at 30,000 and bullets at 600; requirement output is capped at 24 and the free
+  comparison at 12. Submitted content is not persisted or placed in URLs, analytics, logs or error
+  reports; page clear/navigation removes it. Session storage remains attribution-only.
+- The requirement extractor preserves required/preferred/other distinctions, classifies responsibilities,
+  technology, experience, education and location signals, and keeps an exact source excerpt for every
+  result. Negated requirements and common employer boilerplate are not promoted.
+- The resume comparison uses the same category/status vocabulary and evidence philosophy as paid Match,
+  but is intentionally shallower: limited language comparison, exact job and resume excerpts, and no
+  clarifications, saved context, overall Match label, deep analysis or tailoring. Absence stays “not
+  demonstrated”; the anonymous checker never invents a confirmed incompatibility.
+- The bullet checker explains action, specificity, context, result, readability and filler independently.
+  It has no overall ATS score; any stronger structure only removes filler from the supplied text and
+  never adds metrics, tools, scope, responsibility or outcomes.
+- Added unique metadata, canonicals, OG/Twitter tags, sitemap and public-route policy for all four URLs;
+  crawlable limitations/explanation content; links to Resources; homepage/tool/resource navigation; and
+  relevant links from the tailoring, comparison, keyword and honest-tailoring guides.
+- Added closed `tool_viewed`, `tool_started`, `tool_completed` and `tool_cta_clicked` analytics with only
+  tool id, success/failure, CTA destination and existing safe attribution. Tool text is never read by the
+  analytics module. `docs/GROWTH_MEASUREMENT.md` documents the resulting ARTICLE → TOOL → PRODUCT path.
+
+Verification for this work: deterministic tool/security/abuse tests **7/7 PASS**; focused tool browser
+suite **5/5 PASS**; combined tools/resources/security browser suite **14/14 PASS**; responsive coverage at
+1920, 1366, 390 and 320 plus axe checks PASS; desktop and 390px Patina pages visually inspected. SEO
+suite **16/16 PASS**; full server/billing suite **386/386 PASS**; production build and both TypeScript
+checks PASS; `git diff --check` PASS. Existing analytics-directive and main-chunk warnings remain
+non-failing. No deployment or external publication occurred.
+
+## September 27 — growth task 2: high-intent organic search resources
+
+Built the first public organic-acquisition layer locally without deployment, pricing,
+entitlement, database, Jobs/Match/Tailoring logic, free-tool, paid-marketing, community or
+Chrome-extension changes. Current search-result research across all eight requested intents
+showed a crowded pattern of keyword/score-led advice and recurring user questions about time,
+qualification and honesty. ResumeStride's eight guides instead use a consistent
+requirement-to-evidence method: understand the work, separate hard requirements from
+preferences, map real evidence, preserve gaps, tailor emphasis and keep the master resume.
+
+- Added `/resources/` plus eight clean, trailing-slash guide URLs. The typed source is
+  `src/content/guides.ts`; `scripts/render-resources.ts` generates complete static HTML so
+  useful content and metadata exist before JavaScript. `public/resources.css` provides a
+  reusable Patina editorial system; this extends rather than redesigns Patina.
+- Each guide has a direct answer, practical framework, scenarios or before/after examples,
+  mistakes/checklists, three deliberate sibling links and a restrained product next step.
+  The hub, home footer and resource footer form a crawlable internal-link layer. Product
+  destinations use the existing private/noindex SPA entry boundary (`?builder=1`, `?jobs=1`,
+  `?pro=1`) while templates and pricing retain homepage anchors.
+- Added unique title, meta description, canonical, Open Graph/Twitter metadata, truthful
+  article/website OG types, heading hierarchy, sitemap inclusion, canonical-host indexing
+  policy and safe direct-fragment handling. FAQ structured data was intentionally omitted:
+  the guides contain no FAQ markup and current Google eligibility does not fit this site.
+- Added content-only analytics for `content_page_view` and `content_cta_clicked`, with closed
+  `article_slug`, `cta_destination` and existing first-touch attribution fields. No resume,
+  job, contact, query or account content is collected; session UTM/referrer attribution is
+  preserved when readers continue into the SPA.
+- Added browser coverage for every resource page at 1920, 1366, 390 and 320 with no horizontal
+  overflow, plus axe coverage across the hub and all eight guides. Visual inspection passed
+  on the desktop hub and 390px tailoring guide. SEO now validates every public URL and all
+  generated artifacts. Build/server TypeScript passed; existing analytics-directive and main
+  chunk-size warnings remain non-failing. No deployment or external publication occurred.
+
+## September 27 — task #78: extension final acceptance (owner authentication gate)
+
+Audited the Manifest V3 candidate end to end without broadening its functionality or
+permissions. Version 0.2.0 uses only `activeTab`, `scripting`, `storage`, `alarms`, and the
+exact `https://resumestride.com/*` destination host. It has no manifest content scripts,
+external messaging, web-accessible resources, optional permissions, remote code, telemetry,
+browsing-history access, job-board host grants, or packaged secrets. Runtime boundaries
+remain strict: exact extension popup sender, exact HTTPS app root, isolated top-frame
+injection, bounded schema/field sizes, safe URLs, one session capture with 30-minute
+expiry, three acknowledged delivery attempts, and fail-closed extraction. LinkedIn and
+Indeed remain explicitly unsupported. Workday remains metadata-only; Greenhouse and stable
+UUID Lever support remain narrowly worded.
+
+Replaced the old extension artwork with the approved current Patina stride mark at
+16/32/48/128. Added `docs/chrome-web-store/RELEASE_PACKET.md` with final conservative
+listing copy, permissions, disclosures, reviewer instructions, release notes, and artifact
+fingerprint. Added visually inspected approved-brand 440×280 required promo and 1400×560
+optional marquee PNG/SVG assets. Genuine product screenshots are intentionally still
+missing; do not use marketing mockups as screenshots.
+
+Added the extension/Limited Use disclosure to source `public/privacy.html`. A read-only
+production check returned HTTP 200 but the live page still served the September 26 policy,
+so the compliant source text is not yet public. The linked Vercel project is
+`dipsons-projects/resumestride`; CLI identity is `dipsonneupane`. Do not bypass the normal
+Git-linked release by deploying an untracked working tree. A push/deploy remains an owner
+gate under the deployment workflow.
+
+Verification: two full installed-extension runs **42/42 PASS with zero retries**; focused
+extension worker/capture/jobs/security server tests **18/18 PASS**; server TypeScript PASS;
+web production build PASS with only the existing analytics directive and chunk warnings;
+package build/check and ZIP integrity PASS; focused security checks all pass (the combined
+run had two resource timeouts, both passed immediately alone with one worker); `git diff
+--check` PASS before documentation additions. Final ZIP is
+`dist/resumestride-extension.zip`, unpacked build `dist/extension/`, 16 files / 49,847 bytes,
+SHA-256 `6a6e35940cadd69a242d726465c39e0dbbe032d8bf14dcc8e073b4f38e47014c`.
+
+The owner approved installation. The exact unpacked candidate is now installed and enabled in
+the normal Chrome profile as extension ID `dbpfaphnieebgkoenbdgcjajncgjnhfp`; Chrome shows
+version 0.2.0 and the expected description. Actual toolbar invocations passed on current public
+examples: Greenhouse/Dialpad (`8700100002`, title/company/location/description correct), stable
+UUID Lever (`065f4538-7347-4207-909f-4ea68f63b4af`, scoped fields correct), Workday/Flex
+(`WD223983-1`, reliable JSON-LD only, legal employer and metadata location retained), and generic
+JSON-LD/Ashby/Mutiny (`abe9348f-b758-4456-a8e7-31bd4710dce4`). Missing workplace or salary data
+remained empty; no visible-page inference was fabricated. LinkedIn and Indeed both returned the
+truthful unsupported/manual-entry state. Chrome-internal-page failure was also controlled.
+
+The Greenhouse capture was sent through the production handoff. The app received the exact
+reviewed fields and displayed `Review and save captured job`; the signed-in `dipson.n77` Free
+account then truthfully enforced its existing three-job limit and preserved the review. This
+proves the live handoff and Free limit failure state, but not a new Saved Job, duplicate save,
+guest, Pro, or account-switch journey. Expiry, malformed/ambiguous metadata, duplicate behavior,
+delivery/network failures, and strict security boundaries remain covered by the passing
+controlled suites; do not relabel those rows as live production evidence.
+
+Google reauthentication completed and the developer publisher account is accessible. The owner
+submitted Google's required identity information; the dashboard now states **Verification in
+progress** and says review may take a few days. Publisher ID is
+`4214c054-9620-4b51-a2f2-5fc075566b14`. Do not attempt to bypass or resubmit verification; wait
+for Google's decision. The Settings page also shows that a public contact email and trader/address
+configuration will be required before publication, but no legal classification or public address
+was chosen or changed during this session. No ZIP has been uploaded and no store item,
+submission, purchase, agreement acceptance, or publication has occurred. Authentic store
+screenshots are still pending. The updated privacy source is still not deployed, so the public
+policy remains a release blocker. After identity approval, resume dashboard setup and remaining
+acceptance; before the final store submission ask the exact required approval question. Public
+publication requires separate approval unless explicitly included.
+
+Follow-up verification later on September 27 used the authoritative live publisher dashboard.
+Publisher `dipson.n77` still shows **Your verification is currently pending**. Its Items page
+shows **0/2 extension limit**, **There are no items yet**, and no alternate publisher account is
+available in the account switcher. Therefore ResumeStride has no Chrome Web Store item ID, no
+submitted version, no item review status, and no publication status. Do not describe the unpacked
+Chrome extension ID as a store item ID. The locally prepared listing optimization was not applied;
+creating the first item and uploading the ZIP will start an initial review, not update an approved
+listing. No store mutation or publication occurred during this check.
+
 ## September 27 — task #77: public favicon identity
 
 Replaced the weak 32px-only fallback setup with a complete public favicon asset suite using
@@ -3832,3 +4606,72 @@ rows, so it has no present material data effect. All eight later migrations (16�
 absent. Production's validator permits only modern/classic/minimal, so compact/bold/executive/ledger
 cloud writes fail. It is safe to take the pre-migration backup next, but not to apply migrations
 until history reconciliation and the historical migration-5 source discrepancy are resolved.
+## September 27 — task #79: growth measurement + technical SEO foundation (local release candidate)
+
+Audited the existing live and repository state without adding a second analytics vendor. Vercel Web Analytics was already deployed and its production dashboard showed 28 visitors, 51 page views and 75% bounce rate for the last seven days; `/` was the only page shown and `google.com` accounted for 4 visitors. The owner's earlier launch observation was about 26 visits / 39 page views. This tiny sample includes owner/test traffic and is not statistically meaningful. Vercel Speed Insights was enabled in the project dashboard but had no collector/data. Google Search Console's signed-in property list did not contain ResumeStride (only `spendpulse.us`); Bing Webmaster Tools was not signed in/configured. No property, DNS record, sitemap submission or indexing request was created.
+
+Implemented a privacy-closed Vercel product event layer in `src/services/analytics.ts`, with a fixed event vocabulary and coarse property allowlist only. It covers landing/first-touch acquisition, builder/resume/template/completion, Jobs/search/save/saved views, Match visibility/completion, tailoring and suggestion decisions, job-specific completion, exports, pricing/upgrade, checkout and Pro activation. Event URLs are reconstructed to the production root, all calls are failure-isolated, and no content, raw searches/URLs, identities, tokens, Stripe IDs, prompts/responses or extension payloads can be passed. First-touch UTM/referrer-host attribution is bounded and sessionStorage-only. Added the official `@vercel/speed-insights` React collector; no replay, advertising tracker, fingerprinting or new analytics provider.
+
+Repaired campaign canonical behavior: strictly validated UTM-only URLs retain the clean page canonical/schema and are eligible for sanitized page measurement; mixed, unknown or sensitive queries remain private/no-store + noindex and lose canonical/schema metadata. `robots.txt` and `sitemap.xml` no longer receive the unnecessary `X-Robots-Tag: noindex`. Existing HTTPS, apex preference, `www` and `/index.html` redirects, public titles/descriptions/OG/social/favicon, truthful WebSite schema, three-URL sitemap, public/private boundaries and real 404 passed live/source audit. No Patina redesign or public-route expansion.
+
+Documentation: `docs/GROWTH_MEASUREMENT.md` records the stack, canonical funnel, full event taxonomy, privacy/UTM rules, exact owner dashboard locations, Search Console/Bing status and dated baseline. Privacy and technical SEO documentation were reconciled. Production privacy currently includes the separately pending extension disclosure; preserve those unrelated edits.
+
+Verification: SEO 14/14 PASS; focused analytics/privacy tests 12/12 PASS; full server/billing/security 384/384 PASS; client and server TypeScript PASS; production build PASS (only existing large-entry and Vercel `use client` warnings, plus the analogous Speed Insights warning); default Chromium Playwright 74/74 PASS including 320/390 responsive coverage; `git diff --check` PASS before this handoff addition. No production deploy, commit or push was performed because the working tree also contains the in-progress Chrome extension release and privacy changes. Funnel events, Speed Insights data and the UTM/crawler-header repair remain inactive until a normal reviewed production release. After deployment, visit production once, confirm `/speed-insights/script.js`/dashboard data and Vercel Analytics Events, then create/verify the Search Console property with owner-approved DNS (or a separately deployed URL-prefix verification artifact), submit the sitemap, and import/configure Bing.
+## September 29 — post-launch extension compatibility audit; 0.2.1 prepared locally
+
+Audited the actual store-installed ResumeStride extension 0.2.0 (`hkingihhmkmhnikmcoeeamceoelcbhjn`)
+against current public job pages and confirmed the installed extractor matches the 0.2.0 source.
+Prepared version 0.2.1 without changing permissions. It adds robust current Greenhouse page-data and
+scoped-job fallbacks, tight stable-path recognition for Lever/Ashby/Workday, multiple structured
+locations, and plain-language states: **Supported — job detected**, **Open the individual job
+page**, and **Manual capture required**. Search-result cards are never captured.
+
+Live candidate extraction passed 10/10 current detail pages: two each for Greenhouse, Lever, Ashby,
+Workday, and generic company-hosted JobPosting pages. LinkedIn, Indeed, and ZipRecruiter deliberately
+remain manual-only because of site terms or lack of a stable reviewed public extraction contract;
+no authentication, anti-bot control, CAPTCHA, or access restriction was bypassed. Controlled
+extension tests pass 48/48. Full server/security/build/package verification is recorded in the
+release packet and `docs/EXTENSION_LIVE_ACCEPTANCE.md`. The 0.2.1 ZIP is prepared only; do not upload,
+submit, or publish it without owner approval.
+
+## October 30 — APWICO tracker production acceptance review
+
+Read-only production verification now confirms the tracker is deployed and database-ready. Supabase migration history reaches `20261029050415 fill_missing_posting`; live schema includes `job_application_workflows`, `job_application_events`, and `job_application_documents`, with RLS enabled. Production also has the free application limit set to 100, one tailoring trial, and three AI trial runs. Do not repeat the earlier staging-only migration conclusion.
+
+Using the already signed-in Chrome session, confirmed live homepage navigation, active account details and Free plan, and loaded `/workspace/applications` and `/workspace/today`. My applications displays the current 1/100 allowance, CSV import/export controls, stage counts and a quick-add form requiring only company, role and stage; the account already contains one Preparing application. No records were changed. Today route navigation succeeded; the computer bridge did not return its page AX tree in the follow-up call, so detailed Today content was not independently inspected.
+
+The requested resume was found at `/Users/dipson/Desktop/Dipson's Doc/1ResumeForTechStaff/ResumeUsedForMarketingFromConsultancy.docx`. It was not uploaded or opened in APWICO; no production writes were necessary for this review. Production guest journey was only partly exercised: homepage loaded in an existing signed-in Chrome profile, so a clean signed-out first visit and signup/email confirmation were not simulated. Local fixture verification from the tracker worktree passed: application/jobs suite **14/14**, auth suite **42/42**, and first-visit/home/navigation suite **9/9**; these remain controlled local tests. Stripe connector still requires reauthentication. Source review confirms promotion codes are disabled in checkout and recurring invoice validation rejects zero-amount invoices, so lifetime 100%-off coupons are not supported by the current app flow. No deploy, Stripe object, database mutation, or account-data mutation occurred.
+
+## October 30 — APWICO live first-visit and signed-in journey follow-up
+
+Corrected the prior browser limitation by using Chrome's Incognito window for a genuinely signed-out first visit. The production homepage displayed the signed-out “Sign in / Sign up” control and the “No resume or quiz needed to track applications” message. The real account page defaults to Create your account and offers a separate Sign in mode. Direct `/workspace/applications` and `/workspace/today` both load a signed-out explanation and “Sign in or create a free account” action; neither asks for a resume. Used the owner-provided APWICO credentials in the Incognito sign-in form; sign-in succeeded and the account loaded as Active/Free. Did not create an account or submit legal terms.
+
+Authenticated production checks: Today showed 1 Preparing application, no due or upcoming actions, an Add application action and a Discover jobs action. Discover loaded saved-job data and four results, displayed its evidence-based match language and Free refresh guidance. Did not trigger a refresh, toggle the pre-existing Auto Refresh preference, save/pass a job, or change billing. The saved QA Software Engineer record had pending match evidence and a saved tailored resume; its app record and exported versions were accessible. The request to refresh match evidence remains in the UI because the saved resume/job/preferences/clarifications changed previously; this was left untouched.
+
+Exercised the production submission-confirmation path on that explicitly fictional browser-audit record, which started in Preparing with no recorded applied date. Confirming the already-exported DOCX set the stage to Applied, recorded Oct 30, and attached the Submitted version marker plus a Preparing → Applied timeline event. Then used the stage control to restore Preparing. Reload verified the record remains Preparing, with its original next action, and the stage-change event history intact. **The UI has no way to clear the applied date after confirming it**; therefore the fixture now retains an Oct 30 applied date and the Applied → Preparing event even though its current stage is Preparing. This is a live product limitation found during the test, not a clean rollback. No other application record was changed.
+
+No resume was uploaded: the user file was identified but unnecessary for testing tracking and would create additional account state. Signup/email-confirmation with a new identity was not attempted. Real phone viewport validation could not be run through the connected browser override; local browser acceptance has already passed at 320, 390 and 768px. The live application-detail view showed the saved DOCX/PDF and document provenance. Stripe connector still requires reauthentication; checkout disables promotion codes and recurring billing rejects zero-dollar invoices. No deploy, coupon, new account, job application to an employer, or other production data change was performed.
+
+## October 30 — Stripe dashboard opened in Chrome
+
+Opened Stripe in the user's Chrome session. The dashboard was initially in a sandbox (Glaucous Freestyle / FitnessCoachAI), then switched to live mode for the same merchant account and displayed the FitnessCoachAI live dashboard. This was navigation only; no Stripe data was changed. The Stripe app connector independently still returns `UNAUTHORIZED: This app connection requires reauthentication`; Dashboard browser authentication does not refresh that connector. The APWICO application still disables promotion codes and rejects zero-dollar recurring invoices, so do not issue live tester codes until the app can accept and fulfill them.
+
+## October 30 — APWICO production end-to-end browser review
+
+Ran a read-only production journey in a clean signed-out IAB session and the owner's already signed-in Chrome session. No new account, subscription, application record, job action, resume upload, or employer submission was created. The only content entered was clearly fictional Alex Morgan resume text in the guest tab and a fictional resume/job pair in the browser-only evidence checker; both remained tab-local.
+
+Guest path: homepage loaded and exposed the three starting paths; `/templates/` rendered all 27 designs (the no-trailing-slash guess `/templates` returns the normal 404 page, while all actual navigation uses `/templates/`); template details include fictional sample content; `/pricing/` showed Free and Pro limits, renewal/cancellation/data disclosures, and checkout explanation; `/tools/resume-job-match/` accepted a fictional resume and job description and returned requirement-level evidence labels; `/workspace/applications` showed the sign-in gate without requiring a resume. The account flow starts on Create account and offers Sign in, but no signup was submitted.
+
+Resume builder: a tab-only draft moved through personal details, profile/skills, experience (including the no-experience choice), education, design and preview. Confirming the draft showed the expected sign-in requirement for PDF/Word export and the Free 7-download rolling-window allowance. The draft never left the tab. Pricing links to `/start/build`, which begins with a clear “Start your master resume” screen.
+
+Signed-in path: Chrome recognized the active account. `/workspace/applications` loaded the current 1/100 application state, stages, quick-add form and filters; `/workspace/today` showed the Preparing record and empty due/upcoming lists; `/workspace/preferences` showed the saved Java Full Stack Developer role; `/workspace/discover` loaded four existing results and the saved fictional QA job; the application detail loaded document copies, next action, notes and timeline; `/workspace/resume` rendered the tab-only guest draft without replacing account data. Profile showed the active email account. No account records or preferences were changed in this run.
+
+Observed limitation: the already-existing fictional QA record is currently Preparing but its overview also displays “Applied Oct 30, 2026,” with Applied → Preparing in its timeline. This matches the known historical confirmation and stage reset recorded above; the application detail UI does not offer a way to clear that historical applied date. Discover also displays “Match evidence pending” for this saved fixture and offers a refresh; refresh was not clicked because it would consume usage and mutate account state. The direct `/templates` URL without its canonical trailing slash is a 404, but the public site link correctly points to `/templates/`.
+
+Mobile: a live narrow-viewport override was not available through the connected browser API in this session, so this run does not claim device-level mobile responsiveness verification. Previous local Playwright responsive coverage at 320/390/768px is not a substitute for testing the current production build on a device. Stripe checkout/promo code, paid purchase, usage-consuming job refresh, and external job application were deliberately not submitted. No build or source test was needed because this was production-only acceptance; no source files were changed. The recent production copy/build/deployment remains documented in the preceding handoff entry.
+
+## October 31 — pilot access code feedback check
+
+Inspected production `/workspace/pro` in both a fresh guest and the already signed-in owner session. Guests see “Sign in to continue” and cannot enter a code before authentication. Signed-in Free users see a “Pilot access code (optional)” text field, static helper copy (“A valid pilot code discounts the monthly subscription…”), recurring-consent checkbox and a disabled “Review price in secure checkout” button until consent is checked. Entering a deliberately invalid QA string and tabbing away produced no validation, applied/invalid state, price change, or other feedback. Cleared the test string afterward. Did not check consent or create a Stripe Checkout session.
+
+The current checkout path gives no visible confirmation at the point where a user enters a pilot code; a user cannot tell if it has been accepted. Proposed fix: an explicit “Apply code” action (or validated-on-blur) with loading and success/error feedback, show original and discounted recurring price plus duration/renewal, and block checkout on invalid code; repeat the verified discount in the pre-checkout summary and hosted checkout. Do not claim lifetime/free access unless the server and recurring invoice fulfillment path explicitly support it. Local billing source in this checkout still sets `allow_promotion_codes: false` and documents no discounts in the payment policy, while production renders a pilot-code field; this is a source/deployment consistency issue to resolve before issuing tester codes.

@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { inspectPackage } from '../check-extension-package.mjs';
+import { inspectPackage, packageFiles } from '../check-extension-package.mjs';
 import { packageExtension } from '../package-extension.mjs';
 
 test('packaging excludes stale compiler output, secrets, maps and unused type-only modules', async () => {
@@ -13,8 +13,10 @@ test('packaging excludes stale compiler output, secrets, maps and unused type-on
     await cp(resolve('apps/extension'), source, { recursive: true });
     for (const file of ['dist/stale.js', 'dist/stale.js.map', 'dist/.env', 'icons/.DS_Store']) await writeFile(join(source, file), 'synthetic unwanted file');
     const result = await packageExtension(source, join(temp, 'output'));
-    assert.equal(result.files.length, 16);
+    assert.equal(result.files.length, 14);
     assert(!result.files.some(file => /stale|\.env|DS_Store|types\.js/.test(file.path)));
+    const mtimes = await Promise.all(packageFiles.map(async file => Math.floor((await stat(join(temp, 'output', file))).mtimeMs / 1000)));
+    assert.deepEqual([...new Set(mtimes)], [946684800]);
     await rm(join(source, 'dist/lib/config.js'));
     await symlink(resolve('apps/extension/dist/lib/config.js'), join(source, 'dist/lib/config.js'));
     await assert.rejects(packageExtension(source, join(temp, 'output')), /symlink/);

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="560" viewBox="0 0 1400 560" role="img" aria-labelledby="title desc">
+  <title id="title">ResumeStride Job Capture</title>
+  <desc id="desc">ResumeStride approved stride mark with conservative job capture messaging.</desc>
+  <rect width="1400" height="560" fill="#0b0a09"/>
+  <rect x="104" y="92" width="128" height="128" rx="24" fill="#171513"/>
+  <path d="M128 192 L154 120 H172 L146 192 Z" fill="#de8044"/>
+  <path d="M164 192 L190 120 H208 L182 192 Z" fill="#6ccfb6"/>
+  <text x="272" y="146" fill="#f4efe8" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="700">ResumeStride</text>
+  <text x="274" y="198" fill="#b8b1a8" font-family="Arial, Helvetica, sans-serif" font-size="30">Job Capture</text>
+  <text x="104" y="344" fill="#f4efe8" font-family="Arial, Helvetica, sans-serif" font-size="76" font-weight="700">Capture. Review. Save.</text>
+  <text x="108" y="416" fill="#b8b1a8" font-family="Arial, Helvetica, sans-serif" font-size="34">Bring one supported public job into ResumeStride.</text>
+  <rect x="108" y="466" width="286" height="8" rx="4" fill="#de8044"/>
+  <rect x="410" y="466" width="286" height="8" rx="4" fill="#6ccfb6"/>
+</svg>
