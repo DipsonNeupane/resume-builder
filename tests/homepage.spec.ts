@@ -11,16 +11,16 @@ test('homepage presents the two primary paths, three truthful starts and bounded
  await expect(page.getByRole('link', { name: 'Organize my applications', exact: true })).toBeInViewport();
  await expect(page.getByRole('button', { name: 'Build a resume free', exact: true }).first()).toBeVisible();
 
- const starts = page.getByRole('region', { name: 'Three clear ways in.' });
- await expect(starts.getByRole('heading', { level: 3 })).toHaveText(['Upload my resume', 'Build from scratch', 'Start with a job']);
- await expect(starts.getByText('read in your browser and requires your review')).toBeVisible();
- await expect(starts.getByText('7 Free templates, PDF, and editable Word export')).toBeVisible();
- await expect(starts.getByText('Paste a job description and compare each requirement')).toBeVisible();
+ const starts = page.getByRole('region', { name: 'Start where you are.' });
+ await expect(starts.getByRole('heading', { level: 3 })).toHaveText(['Bring a resume', 'Build from scratch', 'Start with a job']);
+ await expect(starts.getByText('Upload a Word file or text PDF. Review it before saving.')).toBeVisible();
+ await expect(starts.getByText('Choose a free layout and download PDF or Word.')).toBeVisible();
+ await expect(starts.getByText('Compare job requirements with your resume.')).toBeVisible();
 
  const proof = page.getByRole('list', { name: 'Product facts' });
  await expect(proof.getByRole('listitem')).toHaveCount(4);
- await expect(proof).toContainText('Your master stays unchanged');
- await expect(proof).toContainText('A4, Letter and right-to-left');
+ await expect(proof).toContainText('Tailored versions stay separate');
+ await expect(proof).toContainText('A4, US Letter, and right-to-left');
  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

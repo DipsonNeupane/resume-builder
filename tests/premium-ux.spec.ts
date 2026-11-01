@@ -34,7 +34,7 @@ for (const width of [320, 390, 768, 1440, 1920]) test(`premium public and docume
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
  await page.getByRole('button',{name:'APWICO home'}).click();
- await page.getByRole('button',{name:'View Pro options',exact:true}).click();
+ await page.getByRole('button',{name:'Explore Pro',exact:true}).click();
  expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:`/tmp/rs-premium-pro-${width}.png`});

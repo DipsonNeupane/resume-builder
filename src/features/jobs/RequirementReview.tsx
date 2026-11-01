@@ -43,7 +43,7 @@ export function RequirementReview({ requirements, edits, busy, onSave }: Props) 
 
   return <section className="requirement-review" aria-labelledby="requirement-review-title">
     <h3 id="requirement-review-title">1. Check what this job asks for</h3>
-    <p className="field-hint">Correct anything APWICO extracted wrongly. The posting’s own wording is kept; your corrections are labelled and only affect this application.</p>
+    <p className="field-hint">Edit the list for this application. Original wording is kept.</p>
     <ul className="requirement-review-list">
       {posting.map(item => {
         const isRemoved = removed.includes(item.id);

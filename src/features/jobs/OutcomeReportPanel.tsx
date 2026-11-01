@@ -36,16 +36,16 @@ export function OutcomeReportPanel({ reports, busy, available, onReport }: Props
     setConsent(false);
   };
   return <details className="job-workflow outcome-report">
-    <summary>Share an outcome voluntarily</summary>
-    <p className="field-hint">This self-report is optional. APWICO records it separately from platform-observed actions and will not claim it caused an interview, offer or other result. No resume text, job text, job URL, notes or contact details are included.</p>
-    {!available&&<p className="field-hint" role="alert">Voluntary outcome reporting is temporarily unavailable. Your saved job and application update are unaffected.</p>}
+    <summary>Share an outcome (optional)</summary>
+    <p className="field-hint">Only your answers are saved—not your resume or contact details.</p>
+    {!available&&<p className="field-hint" role="alert">Outcome reports are unavailable right now.</p>}
     <div className="job-workflow-grid">
       <label className="field"><span>Outcome</span><select value={outcome} onChange={event=>setOutcome(event.target.value as ProductOutcome)}>{Object.entries(outcomeLabels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
       <label className="field"><span>Date (optional)</span><input type="date" max={new Date().toISOString().slice(0,10)} value={occurredOn} onChange={event=>setOccurredOn(event.target.value)}/></label>
       <label className="field"><span>Estimated time saved (optional)</span><select value={timeSaved} onChange={event=>setTimeSaved(event.target.value as TimeSavedBucket|'none')}><option value="none">Prefer not to say</option>{Object.entries(timeLabels).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
       <label className="field"><span>Clarity after using APWICO (optional)</span><select value={clarity} onChange={event=>setClarity(Number(event.target.value))}><option value={0}>Prefer not to say</option>{[1,2,3,4,5].map(value=><option key={value} value={value}>{value} of 5</option>)}</select></label>
       <label className="field"><span>Confidence in my next step (optional)</span><select value={confidence} onChange={event=>setConfidence(Number(event.target.value))}><option value={0}>Prefer not to say</option>{[1,2,3,4,5].map(value=><option key={value} value={value}>{value} of 5</option>)}</select></label>
-      <label className="checkbox-field full"><input type="checkbox" checked={consent} onChange={event=>setConsent(event.target.checked)}/>I choose to save this self-reported outcome and optional bounded feedback for product learning.</label>
+      <label className="checkbox-field full"><input type="checkbox" checked={consent} onChange={event=>setConsent(event.target.checked)}/>Save my report to help improve APWICO.</label>
     </div>
     <button className="button outline" disabled={!available||busy||!consent} onClick={()=>void submit()}>{busy?'Saving…':'Save voluntary outcome'}</button>
     {sorted.length>0&&<div><h4>Outcomes I reported</h4><ul>{sorted.map(report=><li key={report.id}>{outcomeLabels[report.outcome]}{report.occurredOn?` · ${new Intl.DateTimeFormat(undefined,{dateStyle:'medium'}).format(new Date(`${report.occurredOn}T00:00:00`))}`:''} <small>Self-reported</small></li>)}</ul></div>}

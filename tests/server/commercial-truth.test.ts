@@ -13,8 +13,8 @@ test('the commercial contract exposes Free and Pro with the prepared V2 price', 
  assert.equal(commercialPlans[0].recurring, false);
  assert.equal(commercialPlans[1].recurring, true);
  assert.equal(commercialPlans[1].recurring, true);
- assert.ok(commercialPlans[0].includes.some(item => item.includes(`${freeTemplates.length} Free templates`)));
- assert.ok(commercialPlans[1].includes.some(item => item.includes(`${freeTemplates.length + premiumTemplates.length} templates`)));
+ assert.ok(commercialPlans[0].includes.some(item => item.includes(`${freeTemplates.length} free templates`)));
+ assert.ok(commercialPlans[1].includes.some(item => item.includes(`All ${freeTemplates.length + premiumTemplates.length} resume templates`)));
  assert.match(commercialPolicy.templateAfterCancellation, /preview/);
  assert.match(commercialPolicy.templateAfterCancellation, /not deleted/);
  assert.match(commercialPolicy.docx, /does not promise visual parity/);
@@ -45,10 +45,12 @@ test('pricing and trust are stable public pages with truthful policy links', () 
  assert.ok(publicPages['/pricing/']);
  assert.ok(publicPages['/trust/']);
  const pricing = read('public/pricing/index.html');
- for (const phrase of ['Plans and pricing', 'Free', 'Pro', 'US$14.99', 'renew monthly until cancelled', 'PDF preserves the selected resume design', 'Word (.docx) is a clean, editable content document']) assert.match(pricing, new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+ for (const phrase of ['Plans and pricing', 'Free', 'Pro', 'US$14.99', 'monthly until cancelled', 'PDF preserves the selected resume design', 'Word (.docx) is a clean, editable content document']) assert.match(pricing, new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
  assert.doesNotMatch(pricing, /US\$1\.99|One Premium template/);
  assert.match(pricing, /href="\/trust\/"/);
  assert.match(pricing, /href="\/terms.html"/);
+ assert.doesNotMatch(pricing, /\bAI\b/);
+ assert.match(pricing, /Review and edit resume suggestions/);
 });
 
 test('the only new checkout trigger is Pro and it requires explicit recurring consent', () => {
@@ -56,7 +58,9 @@ test('the only new checkout trigger is Pro and it requires explicit recurring co
  assert.match(pro, /useState\(false\)/);
  assert.match(pro, /renewalConsent:\s*true/);
  assert.match(pro, /disabled=\{!consent/);
- assert.match(pro, /continues through the paid/);
- assert.match(pro, /US\$14\.99 monthly subscription/);
- assert.match(pro, /available only in the United States/i);
+ assert.match(pro, /renewalConsent:true/);
+ assert.match(pro, /disabled=\{!consent/);
+ assert.match(pro, /Paid access continues through each billing period/);
+ assert.match(pro, /Cancel before the trial ends/);
+ assert.match(pro, /US only · Cancel anytime/);
 });

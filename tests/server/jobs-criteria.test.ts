@@ -33,6 +33,12 @@ test('location is a bounded optional human-readable field, distinct from country
   assert.throws(() => parseSearchCriteria({ title: 'engineer', location: 'x'.repeat(201) }), { status: 400 })
 })
 
+test('industry profile is an optional, closed role-starter choice', () => {
+  assert.equal(parseSearchCriteria({ title: 'Warehouse associate', industry: 'warehouse' }).industry, 'warehouse')
+  assert.throws(() => parseSearchCriteria({ title: 'Associate', industry: 'invented-sector' }), { status: 400 })
+  assert.throws(() => parseSearchCriteria({ title: 'Associate', industry: 'constructor' }), { status: 400 })
+})
+
 test('rejects malformed employment type and workplace values', () => {
   assert.throws(() => parseSearchCriteria({ title: 'engineer', employmentType: 'gig' }), { status: 400 })
   assert.throws(() => parseSearchCriteria({ title: 'engineer', workplace: 'anywhere' }), { status: 400 })

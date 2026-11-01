@@ -1,4 +1,5 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
+import { writeKeepingSeoBlock } from './seo-block';
 import ts from 'typescript';
 import { publicTools, toolsPath, type PublicTool } from '../src/content/tools';
 import { TOOL_LIMITS } from '../src/tools/analysis';
@@ -77,7 +78,7 @@ function output(file: string, value: string): void {
   mkdirSync(file.slice(0, file.lastIndexOf('/')), { recursive: true });
   if (check) {
     if (withoutSeo(readFileSync(file, 'utf8')) !== withoutSeo(value)) throw new Error(`Tool output stale: ${file}. Run npm run tools:generate.`);
-  } else writeFileSync(file, value);
+  } else writeKeepingSeoBlock(file, value);
 }
 
 function compile(source: string, target: string, imports: Record<string, string> = {}): void {

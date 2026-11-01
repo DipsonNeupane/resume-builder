@@ -53,6 +53,38 @@ test('failed monthly payment records an action-required notice without granting 
  assert.ok(calls.some(call=>call.name==='billing_enqueue_notice'&&call.args.p_kind==='payment_failed'))
 })
 
+test('a zero-dollar Pro invoice grants only when the trusted lifetime pilot promotion is still attached',async()=>{
+ const calls:Array<{name:string;args:Record<string,unknown>}> = []
+ const db={rpc:async(name:string,args:Record<string,unknown>)=>{calls.push({name,args});if(name==='billing_owner_subscription_summary')return{error:null,data:[]};return{error:null,data:null}}} as never
+ const stripe={subscriptions:{retrieve:async()=>({id:'sub_pro',discounts:[{id:'di_pilot',object:'discount',promotion_code:{id:'promo_pilot'}}]})}} as unknown as Stripe
+ const invoice={...paidInvoice(),amount_paid:0,lines:{has_more:false,data:[{pricing:{price_details:{price:'price_pro'}},quantity:1,amount:0,period:{start:1790812800,end:1793491200}}]},payments:{has_more:false,data:[]}} as unknown as Stripe.Invoice
+ const response=await applyOfferInvoice(invoice,1790812800,'invoice.paid',stripe,db,{...trusted,pilot_promotion_code_id:'promo_pilot'},env)
+ assert.equal(response.status,200)
+ assert.ok(calls.some(call=>call.name==='billing_apply_offer_invoice'&&call.args.p_payment_intent===null&&call.args.p_amount===0&&call.args.p_pilot_promotion_code_id==='promo_pilot'))
+ assert.ok(calls.some(call=>call.name==='billing_enqueue_notice'&&call.args.p_payload&&JSON.stringify(call.args.p_payload).includes('"amount":0')))
+})
+
+test('a zero-dollar Pro invoice without a trusted matching pilot discount never grants access',async()=>{
+ let writes=0
+ const db={rpc:async(name:string)=>{if(name==='billing_apply_offer_invoice')writes++;return{error:null,data:null}}} as never
+ const stripe={subscriptions:{retrieve:async()=>({id:'sub_pro',discounts:[]})}} as unknown as Stripe
+ const invoice={...paidInvoice(),amount_paid:0,lines:{has_more:false,data:[{pricing:{price_details:{price:'price_pro'}},quantity:1,amount:0,period:{start:1790812800,end:1793491200}}]},payments:{has_more:false,data:[]}} as unknown as Stripe.Invoice
+ await assert.rejects(applyOfferInvoice(invoice,1790812800,'invoice.paid',stripe,db,{...trusted,pilot_promotion_code_id:'promo_pilot'},env),/Pilot discount is not applied/)
+ assert.equal(writes,0)
+ await assert.rejects(applyOfferInvoice(invoice,1790812800,'invoice.paid',stripe,db,trusted,env),/Unpaid zero-value/)
+ assert.equal(writes,0)
+})
+
+test('a zero-dollar invoice during an active Pro trial is not treated as paid coverage',async()=>{
+ const calls:Array<string>=[]
+ const db={rpc:async(name:string)=>{calls.push(name);return{error:null,data:null}}} as never
+ const stripe={subscriptions:{retrieve:async()=>({id:'sub_pro',status:'trialing',trial_end:1793491200,discounts:[]})}} as unknown as Stripe
+ const invoice={...paidInvoice(),amount_paid:0,lines:{has_more:false,data:[{pricing:{price_details:{price:'price_pro'}},quantity:1,amount:0,period:{start:1790812800,end:1793491200}}]},payments:{has_more:false,data:[]}} as unknown as Stripe.Invoice
+ const response=await applyOfferInvoice(invoice,1790812800,'invoice.paid',stripe,db,trusted,env)
+ assert.equal(response.status,200)
+ assert.deepEqual(calls,[])
+})
+
 test('terminal subscription status preserves the paid period and queues expiration',async()=>{
  const calls:Array<{name:string;args:Record<string,unknown>}>=[]
  const db={rpc:async(name:string,args:Record<string,unknown>)=>{calls.push({name,args});return{error:null,data:null}}} as never

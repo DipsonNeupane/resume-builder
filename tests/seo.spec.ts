@@ -40,7 +40,7 @@ test('editor, jobs, pro and callback states remove public canonical and structur
  await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);
  await page.goto('/');
  await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
- await page.getByRole('button', { name: 'View Pro options', exact: true }).click();
+ await page.getByRole('button', { name: 'Explore Pro', exact: true }).click();
  await expect(page).toHaveTitle('Pro options | APWICO');
  await expect(page.locator('link[rel="canonical"], script[data-seo-schema]')).toHaveCount(0);
  for (const suffix of ['?account=1', '?account=1&reset=1&code=fake', '#access_token=fake&type=recovery']) {

@@ -80,8 +80,8 @@ test('a Free user organizes 100 records: find, change stage, undo, reopen, next 
   await seed(page, stores);
   await page.goto('/workspace/applications', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { level: 1, name: 'My applications' })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText('100 of 100 Free applications used.', { exact: false })).toBeVisible();
-  await expect(page.getByText(/the Free limit\. Every existing record stays available/)).toBeVisible();
+  await expect(page.getByText('100 of 100 applications.', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Free limit reached\. Your saved applications remain available/)).toBeVisible();
   const counts = page.getByRole('list', { name: 'Applications by stage' });
   await expect(counts.getByRole('button', { name: /Applied/ })).toContainText(String(stores[owner].apps.filter(app => app.stage === 'applied').length));
 
@@ -134,7 +134,10 @@ test('Today shows recorded due actions as suggestions and pipeline counts that m
   await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole('navigation', { name: 'Workspace' }).getByRole('link', { name: 'Today' })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByText(/Suggested — was due .*: Send portfolio link/)).toBeVisible();
-  await expect(page.getByText(/No email, push or calendar notifications are sent/)).toBeVisible();
+  await expect(page.getByText('Mark a next step done here, or open it to change the date.')).toBeVisible();
+  await page.locator('.today-list').getByRole('button', { name: 'Mark done' }).first().click();
+  await expect(page.getByText(/Send portfolio link/)).toHaveCount(0);
+  expect(stores[owner].apps.find(app => app.savedJobId === uuid(7))?.nextAction).toBe('');
   for (const stage of ['saved', 'preparing', 'applied', 'interviewing', 'offer', 'closed'] as const) {
     const expected = stores[owner].apps.filter(app => app.stage === stage).length;
     await expect(page.getByRole('list', { name: 'Applications by stage' }).locator('li').filter({ hasText: new RegExp(stage, 'i') }).locator('strong')).toHaveText(String(expected));

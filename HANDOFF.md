@@ -1,3 +1,55 @@
+## October 31 — Site-wide UI copy cleanup and compact saved-job cards (deployed)
+
+Worktree: `.claude/worktrees/apwico-launch`, branch `feat/apwico-launch-tracker`.
+
+- Simplified visible copy across the homepage and pricing cards, sign-in/reset, resume setup, job preferences,
+  search and saved jobs, match analysis, application tracking, tailoring, downloads, Pro checkout, and template
+  access. Long-form policy details remain on the pricing/terms pages; consent, privacy, limits, and renewal facts
+  stay visible where users need them.
+- Saved-job match previews now start collapsed behind “Match preview”; open them when needed. Shortened redundant
+  explanation and status copy and used compact labels for match evidence and next actions.
+- Updated the public Free/Pro pricing-card copy from `commercialPlans`; generated pages refreshed by the build.
+- Verification: `npm run check:server`, `npm run build`, commercial-truth unit suite (4/4), homepage E2E (2/2),
+  focused job/match E2E (7/7), application/checkout/export E2E (9/9), Pro template preview E2E (1/1), and
+  mobile Pro preview E2E (1/1) passed. Initial attempts found stale test copy; the assertions were updated.
+  `git diff --check` passed.
+- `graphify update .` completed: 4,045 nodes / 8,469 edges / 291 communities.
+- Vercel production deployment `dpl_2tNUtWhyreXA8XnJw8jmBHX5GrfV` is Ready and aliased to `apwico.com`,
+  `www.apwico.com`, and the existing ResumeStride aliases. Cache-busted live checks returned HTTP 200 for home
+  and pricing; the pricing page and app bundles contain the updated plan copy.
+- Changes are uncommitted and deployed directly from this worktree. The primary checkout at
+  `/Users/dipson/ResumeStride` remains on `feature/premium-template-library` with unrelated dirty extension work;
+  do not overwrite it. The active worktree is the source used for this deployment.
+
+## November 1 — Pro trial, work profiles, Today reminder actions (deployed)
+
+In progress in `feat/apwico-launch-tracker` at `.claude/worktrees/apwico-launch`.
+
+- Added optional occupation starters across technology, healthcare, logistics, service, operations, trades,
+  construction, education, hospitality, finance, retail, creative work, public service, manufacturing,
+  transport, science, agriculture and safety. A selected profile suggests editable job titles; only selected
+  titles become search criteria, so profile selection never asserts qualifications or narrows results by itself.
+- Today now lets a user mark a dated next action done or open the application to change its date.
+- Pro checkout is being changed to a 30-day Stripe trial followed by US$14.99/month. Checkout consent explains
+  the charge; Stripe cancels a trial that reaches its end without a payment method. Access checks now include a
+  verified trialing Pro subscription, and zero-dollar trial invoices do not masquerade as paid periods.
+- New additive migration: `20261101012316_pro_trial_access.sql`; local replay and production application passed.
+- Release: Vercel deployment `dpl_GVk1bXv5VCiHGVBvFqWhutBSF1ry` is Ready and aliased to `apwico.com`,
+  `www.apwico.com`, `apwico.vercel.app`, and legacy ResumeStride domains. The live `/workspace/pro` page
+  confirms the 30-day trial, US$14.99/month renewal, cancellation disclosure, and consent text after a
+  cache-busted reload. The live signed-in application dashboard and Today page load; Today explains that
+  reminders are in-app only and offers a next-step action. No reminder email, push, or native mobile app ships.
+- Production Supabase ledger records version `20261101012316 pro_trial_access`; a read-only function check
+  confirmed `billing_effective_access` grants Pro only for a trusted, unexpired `trialing` Pro subscription.
+  Existing Supabase security/performance advisor findings were also returned; no unrelated schema changes made.
+- Verification: `npm run check:server` + `npm run build` PASS; database replay PASS; 150 server/billing tests
+  PASS; application dashboard E2E 8/8; preference-to-Discover journey PASS; paid-flow browser suite 27/27
+  PASS after updating one stale test assertion that expected pre-trial pricing copy.
+- `graphify update .` completed at 4,044 nodes / 8,469 edges / 285 communities.
+- Work remains uncommitted and was deployed directly from this local worktree. The primary checkout at
+  `/Users/dipson/ResumeStride` is on branch `feature/premium-template-library` with unrelated dirty extension
+  work; do not overwrite or reset it. Continue from `.claude/worktrees/apwico-launch` unless reconciled.
+
 ## October 28 (fourth pass) — Provenance, AI safeguards, checkpoint commit, staging review (local, not pushed or deployed)
 
 Branch `feat/apwico-launch-tracker`, one local checkpoint commit over `1a883b6` (not pushed). Package:
@@ -4477,3 +4529,276 @@ Prepared the owner-approved two-plan commercial model on `feat/apwico-v2-pricing
 Free now receives up to 10 relevant results once every 24 hours from exactly one provider page, plus 10 saved/tracked applications; browser-only evidence checking and 3 generated downloads per fixed 30-day period are unchanged. The cost audit recommends a 500-request global Free ceiling (maximum US$24 Basic-plan overage) but leaves the choice to the owner; no arbitrary global cap or unverified export-cost claim was introduced. Full evidence, alternatives, release sequencing, and provider/storage boundaries are in `docs/V2_PRICING_FREE_EXPERIENCE_2026-10-13.md`.
 
 No Stripe object, price, subscription, entitlement, DNS, Supabase production schema, provider configuration, deployment, merge, or push was changed. Controlled release still requires the owner-selected global provider ceiling, an additive live US$14.99 Stripe Price, test-mode billing acceptance, and separate deployment authorization.
+
+## October 28 — APWICO staging release continuation (blocked on staging credentials)
+
+Continued `docs/launch-review/STAGING.md` on `feat/apwico-launch-tracker` at checkpoint
+`9bdc44f`. Updated the runbook for the owner-reported migration state: the existing Supabase
+**ResumeStride Recovery Drill** staging project (`ntrqseoiwyrvdsobwxaj`) is already at migrations
+1–39; production is at 1–30. Removed the migration 16–39 application loops, production catalog
+comparison, production migration plan, and project-creation/Preview-on-production alternatives.
+The runbook now requires read-only staging ledger/preflight checks, prohibits `supabase db push`
+and all production access, and documents deployment only to the existing staging Vercel target.
+Updated `docs/launch-review/README.md` with the same status.
+
+Execution stopped before remote staging checks or deployment because this environment does not
+provide the required staging-only `STAGING_DB_URL`; `psql` is also unavailable on PATH. Vercel CLI
+is authenticated, but the visible Vercel project is production-linked `resumestride`; its
+Production-scoped values were not inspected, decoded or used, and no staging target credentials
+were available. No Supabase query, staging mutation, provider/billing action, project creation,
+push, or deployment occurred. Resume when the owner supplies `STAGING_DB_URL` and credentials for
+the existing staging Vercel target. Production remains untouched.
+
+## October 30 — Pilot promotion support and pricing language (local release candidate)
+
+On `feat/apwico-launch-tracker`, added a Pro-only pilot code field and server validation for
+one marked Stripe promotion code. The accepted code must be active, match the configured
+Stripe mode, have exactly three total redemptions, no customer restriction or expiry, and
+point to a valid 100%-off forever coupon. Both Stripe objects must carry metadata
+`apwico_pilot_access=three_friend_lifetime`. Checkout still disables arbitrary promotion-code
+entry and passes only the validated promotion-code ID. Checkout intent, trusted subscription,
+and zero-value invoice ledger persist that ID. A zero-dollar invoice grants only when the
+trusted subscription retains the same expanded Stripe discount; it records no fabricated
+PaymentIntent. Paid invoice reversal mapping and normal paid invoice checks are preserved.
+
+Updated the generated pricing page and signed-in Pro surfaces to describe reviewable,
+job-specific suggestions without leading with “AI.” The pricing page no longer uses AI
+terminology in plan labels or limits. Processing/provider disclosures outside pricing remain
+explicit. Checkout copy explains recurring monthly billing and that a valid pilot code changes
+the amount shown in Stripe Checkout. Fixed the comparison source-date check to evaluate due
+dates in the repository owner/editorial timezone (America/Chicago); this keeps a fact valid
+through its stated review date even when UTC has rolled into the next day.
+
+Verification: `npm run check:server` passed; the two focused offer test files passed 18/18;
+`npm run test:server` passed 526/526; the paid-flow Playwright suite passed 25/25; comparison
+date test passed; `npm run build` passed. The full `npm run test:db` run applied the new
+migration and the pilot SQL tests passed, but the overall command still exits 1 because the
+existing `v2_allowance_override.test.sql` assertion reports 499 remaining requests instead of
+its expected 498 (same unrelated failure before/after the contract). Graphify rebuilt 4,008
+nodes / 8,357 edges.
+
+No hosted Supabase migration, Stripe object, Vercel environment change, deployment, account,
+subscription, or live charge was created or changed. A live tester code cannot work until this
+migration and app code are deployed, and Stripe creates the coupon/promotion with the two
+metadata markers above. See the migration and focused tests before release.
+
+## October 31 — APWICO pilot production release in progress
+
+Following the owner's explicit request to prepare production for three friends, applied the
+additive `pilot_promotion_codes` migration to the production ResumeStride Supabase project
+`ggwwzwqykkncgupdimxp`. The hosted migration ledger recorded it as `20261031022708`; the local
+migration filename now matches that deployed version. Read-only postflight confirmed all three new promo-ID columns and
+all three replacement billing RPC signatures. Before applying, the production ledger matched
+the prior migration set through `fill_missing_posting`; the relevant billing tables/columns and
+old RPCs were present. No user rows were read or changed by the preflight.
+
+The web app and Stripe promotion are **not yet live**. Vercel CLI authentication expired. A
+`vercel login` device flow was started and its authorization page opened in the owner's Chrome;
+the owner must approve that Vercel CLI login before production deployment can continue. Stripe's
+Codex connector also requires reauthentication. The signed-in Stripe Dashboard is open to the
+FitnessCoachAI account, where the APWICO Pro product was identified, but no coupon or promotion
+code was created. Do not give friends a code until the production app deploy and matching Stripe
+objects (100% forever coupon, max 3, APWICO Pro only, both metadata markers) have been verified.
+
+Production Supabase security/performance advisors were read before migration; their findings are
+pre-existing project lints, not introduced by this additive migration. Continue after the owner
+completes Vercel device authorization and Stripe connector reauthentication. Then inspect
+production-scoped environment variable names (never values), deploy the current release, create
+and verify the Stripe coupon/promotion, and smoke-check the deployed flow.
+
+## October 30 — APWICO friends pilot code created in live Stripe
+
+After the owner reauthorized Stripe with write permission, created and retrieved the live
+coupon `apwico-friends-lifetime-pro` and the live pilot promotion code in account
+`acct_1QqPbAGGSDSNHj5K`. The coupon is 100% off forever, valid, and capped at 3 redemptions;
+the promo code is active, has the same 3-redemption cap, no expiration/customer restriction,
+and the exact `apwico_pilot_access=three_friend_lifetime` marker required by the app. Both are
+live mode; both currently show zero redemptions. The coupon was created for the APWICO Pro
+product (`prod_VR8UJ8gE0PedOZ`; $14.99/month price `price_1UQGD3GGSDSNHj5KyD9Llyid`).
+The code path is implemented in the current APWICO release: it validates the marker and
+100%-forever terms server-side, and checkout attaches only a submitted pilot code to the
+Pro subscription while arbitrary Stripe promotion entry remains disabled.
+
+Vercel reports production deployment `dpl_McSJ7qeyHzKCxJfJxQnmR9LfvTxW` Ready at
+`https://apwico-gw4yu7e61-dipsons-projects.vercel.app`, with aliases including `apwico.com`
+and `resumestride.com`. No pilot subscription or live charge was created to smoke-test
+redemption, so an end-to-end zero-dollar Checkout redemption remains unverified. Friends
+should create/sign into their own accounts, open Pro, enter the code, and verify Checkout
+shows $0 due before completing. Do not represent completed redemption testing as fact.
+
+## October 30 — Homepage, plan and template wording refresh deployed
+
+Replaced the homepage's “Three clear ways in” entry block with a clearer “Start where you are”
+path and simplified the descriptions of upload, build and job comparison. Rewrote the Free and
+Pro homepage summaries and public pricing-plan copy in plain language while keeping the current
+limits, renewal terms and US-only paid availability accurate. Simplified descriptions for all 27
+templates in the shared model and gallery registry, including their gallery use cases and detail
+page explanations. Regenerated `/templates/`, all 27 detail pages, `/pricing/`, and the bundled
+template registry from those sources. No prices, entitlements or billing behavior changed.
+
+`npm run build` passed (TypeScript and Vite production build; existing third-party `use client`
+and large-chunk warnings remain). `graphify update .` completed at 4,011 nodes / 8,360 edges.
+Deployed to Vercel production as `dpl_2nihUxgz71vH482z31af6Z3te22J`; `vercel inspect` reports
+Ready. The production alias listing maps `apwico.com`, `www.apwico.com`, `resumestride.com`,
+and `www.resumestride.com` to `https://apwico-kcde6o13r-dipsons-projects.vercel.app`.
+No post-deploy browser journey or screenshot was run; only the Vercel Ready state and aliases
+were checked. No Stripe, Supabase, pricing, or account data was changed in this copy release.
+
+## October 31 — pilot access code feedback fix deployed
+
+Added an authenticated, read-only pilot-code validation endpoint with same-origin checks, the existing subscription-attempt throttling, US territory enforcement, and server-side verification of the exact three-redemption, 100%-forever pilot terms. It does not create a Stripe Checkout session or reserve a use. Checkout still revalidates the code and fails closed if it is no longer available.
+
+The Pro page now has an explicit Apply code action and accessible pending/success/error messages. A verified code changes the displayed price to US$0/month, shows the verified discount and remaining uses, and says that applying does not reserve a redemption. Editing the code clears the verified state and monthly-consent checkbox; checkout stays disabled until the new code is applied or removed. Signed-out visitors are told to sign in to enter a pilot code. A separate price display avoids showing US$14.99 alongside the verified US$0 price.
+
+Verification: `npm run check:server` passed; focused billing handler tests passed **11/11**; focused paid browser journeys passed **2/2**; `npm run build` passed. `graphify update .` completed at 4,018 nodes / 8,383 edges. Existing Vercel `use client` and large-chunk warnings remain. Deployed to production as `dpl_FAjNkQkFbwnFMbgGSxa9RDXwrdkT`; Vercel reports Ready and production aliases include `apwico.com`, `www.apwico.com`, `resumestride.com`, and their Vercel aliases.
+
+Live browser check on `/workspace/pro` applied the actual code and showed “Code accepted,” US$0/month, and **3 of 3 uses remain**. No consent was checked and no checkout session or subscription was created. Read-only Stripe checks before and after still report `times_redeemed: 0`. That proves nobody has completed a redemption; Stripe's redemption counter cannot show whether someone entered the code or opened an abandoned checkout. The form was cleared after the smoke check. No other billing or user data changed.
+
+## October 31 — Pro checkout blocked by stale pending intent
+
+Investigated the user's screenshot from the production Pro checkout page. Supabase production
+Postgres logs at 2026-10-31 18:53 UTC show `billing_begin_offer_checkout` failing with
+`Offer checkout already pending`; the browser translated this into the generic “Unable to start
+this checkout” message. A read-only production query confirmed the signed-in owner's Pro intent
+from 2026-10-31 03:59 UTC is still incomplete and has no Stripe Checkout session ID. It is about
+15 hours old, so the SQL function's 24-hour pending-intent guard rejects new request IDs. A
+separate unbound Pro intent exists for another owner. No checkout session or subscription was
+created. No billing rows were changed. This is a stale pending-intent recovery bug and the UI
+error is too vague; next work should safely recover/expire intents only after confirming there
+is no bound Stripe session, while preserving idempotent retries, then improve user-facing
+feedback. This issue was fixed in the October 31 checkout recovery release below.
+
+## October 31 — Stripe promotion checkout fix deployed
+
+The live Stripe API activity log identified why the recovered checkout still failed:
+`POST /v1/checkout/sessions` returned HTTP 400 because the request included both `discounts`
+and `allow_promotion_codes`, which Stripe does not allow together. Updated checkout creation
+so a validated pilot discount sends only `discounts`; regular checkout without a pilot code
+continues to send `allow_promotion_codes: false`. Added a regression test for each case.
+
+The earlier recovery fix reuses an owner's existing pending Pro intent only when its price,
+live/test mode, and promotion code match; it returns the actual intent ID for Stripe metadata,
+client reference, idempotency, and session binding. This prevents old pending intents from
+blocking checkout while keeping code changes from silently reusing a stale intent. The
+`resume_pending_offer_checkout` migration is applied to production Supabase.
+
+Verification: offer catalog tests passed 12/12; server TypeScript check passed; checkout
+Playwright tests passed 2/2; TypeScript plus Vite production build passed. The full prebuilt
+Vercel production build succeeded. The normal project build remains blocked by an unrelated
+stale-date editorial guard for a teal claim; the deployment used the established prebuilt
+build override that runs TypeScript and Vite directly. Graphify updated to 4,022 nodes / 8,384
+edges.
+
+Deployed to Vercel production as `dpl_2S5xA96bSriPhHfAYY9CJkp9H6Aa` from the laptop worktree
+`/Users/dipson/ResumeStride/.claude/worktrees/apwico-launch`. Live browser smoke test applied
+the live pilot code, showing 100% off and 3 of 3 uses remaining, then opened Stripe Checkout. The
+Stripe page showed the $14.99 monthly subtotal, the 100% discount, and $0.00 due today. The
+test stopped before Subscribe, so it created no subscription/payment and consumed no pilot use.
+
+The primary checkout `/Users/dipson/ResumeStride` is on a different branch and has its own
+uncommitted work. It was not overwritten or reset. Production was built from the laptop
+worktree named above; continue this release from that checkout unless those other changes are
+first reviewed and reconciled.
+
+## October 31 — Claude launch report follow-up and production release
+
+The Claude report at `apwico-audit-2026-10-31/APWICO_LAUNCH_FIXES_REPORT.md` said its fixes
+were source-only and claimed no live sign-in was possible. This session used the previously
+authorized APWICO test account in the browser; no password is recorded here. Signed-out
+application tracking showed the free-account gate and both account modes. Sign-in succeeded.
+The signed-in account page, Today, My applications, Discover and Pro checkout loaded. The
+account contained a fictional QA record and a cancelled Mandate subscription whose paid access
+had ended; no record or subscription was changed.
+
+Rechecked the official competitor pricing sources and refreshed the dated comparison facts in
+`src/content/comparisons.ts`; pricing claims now expire November 30 and feature evidence retains
+its December 29 review deadline. `comparisonReviewedOn` and generated comparison pages say
+October 31. The Pro consent now reads “I agree to US$14.99/month, renewing until cancelled.”
+With the pilot discount it says US$0 while discounted, then US$14.99/month until cancelled.
+Historical $1.99/$19.99 billing compatibility remains because the test account still has legacy
+subscription history; do not remove those paths until all legacy subscribers are reconciled.
+
+Verification: normal `npm run build` PASS; `npm test` PASS 117/117; `npm run test:server`
+PASS 534/534; `npm run test:auth` PASS 42/42; `npm run test:paid` PASS 100/100;
+`npm run check:server` PASS; `npm run test:seo` PASS 30/30. Graphify update completed.
+
+Deployed to production as `dpl_CusjVmBEWmwvbZcDLBd794EyLDos`, Vercel Ready, with `apwico.com`
+and `www.apwico.com` aliases. Production checkout visibly shows the updated renewal wording.
+The comparison and occupation pages return HTTP 200 with canonical tags, JSON-LD and working
+route-specific social images. The live pilot code validates without reserving a use; its current
+Stripe coupon shows 1/3 redeemed (2 remaining). This session did not accept subscription
+consent, submit a subscription, or create a payment.
+
+Follow-up: while validating the pilot code, the disabled checkout CTA briefly displayed
+“Opening secure checkout…” during code validation. This was a shared busy-state label, not an
+actual checkout request. Added a distinct busy action, an in-flight regression assertion, and
+verified the live production page keeps “Review price in secure checkout” while “Checking
+code…” is shown. Focused paid-flow suite passes 27/27; Vite/TypeScript production build passes.
+Graphify was refreshed to 4,034 nodes / 8,447 edges / 290 communities.
+
+The follow-up is live in Vercel deployment `dpl_79bsVdEc2xvuLHwzeb69WA3SwAYj`, status Ready,
+aliased to `apwico.com` and `www.apwico.com`. The pilot code still reports 2 of 3 uses remaining;
+the Stripe coupon shows 1 of 3 redeemed. Applying the code did not create or reserve a
+redemption.
+
+Still open: the three high `zod` advisories nested under Puppeteer (defer the Puppeteer update
+until hosted PDF smoke coverage exists); review and refresh README/Copilot/env/checklist stale
+documentation; remove `scripts/verify-stripe-test-catalog.ts` only if still unreferenced after
+the current Stripe setup is rechecked. The currently deployed feature set is source/build
+verified, but this worktree remains dirty and was deployed directly through Vercel; nothing was
+committed or pushed. The original checkout at `/Users/dipson/ResumeStride` remains untouched.
+
+## October 31 — homepage hero wrapping correction deployed
+
+Compared the owner's mobile screenshot with the production homepage and current source. The
+wine-and-gold treatment and circular background glow were still present, so this was not a
+production rollback. The longest third headline line was forced to `white-space: nowrap`,
+causing it to run beneath the example card at desktop widths and clip at the phone edge.
+Allowed that line to wrap inside the copy column through 1440px and removed its decorative
+indent at those widths. Added a focused Playwright regression check at 390, 1024, 1280, and
+1440px; it passes at all four widths.
+
+TypeScript and Vite production builds passed. Deployed to Vercel production as
+`dpl_2F6C4mLbGYJCkkkB5JkZvA237fTY`; Vercel reports Ready with the `apwico.com` and
+`www.apwico.com` aliases. Reloaded the production homepage and visually confirmed the complete
+headline remains in the hero copy area beside the example card. `graphify update .` completed
+at 4,024 nodes / 8,386 edges. The normal SEO-generating build remains separately blocked by
+the expired comparison-source review guard noted above; this focused prebuilt deployment did
+not regenerate or change comparison content.
+
+## October 31 — launch-defect fixes, test refresh, dependency patch (local only, not deployed)
+
+Fixed in the `apwico-launch` worktree; **no production deployment, Stripe, Supabase or DNS change**.
+
+- **Occupation SEO heads (live defect).** Root cause: `render-search-hubs.ts` writes pages with an
+  empty provisional `<!-- seo:start --><!-- seo:end -->` block and threw on the expired Teal
+  comparison date only after the occupation pages were written, so `generate-seo.ts` never ran.
+  The same partial-chain failure had also reverted 14 resources/regions/compare pages to
+  provisional heads (no font preload, JSON-LD or page social image). Restored all by running
+  `generate-seo.ts` alone (bodies were identical to HEAD). Prevention: new `scripts/seo-block.ts`
+  (`writeKeepingSeoBlock`) keeps a page's existing complete block when any of the five page
+  generators rewrites its body, and `render-search-hubs.ts` now validates every regional,
+  occupation and comparison review date before writing anything. Test: `tests/server/seo-block.test.ts`.
+  A failed `npm run build` now leaves the working tree unchanged (verified).
+- **Signed-out Today** now has its own description; the resume-only header **Download** button is
+  no longer rendered on Today / My applications (it acted on an off-screen resume draft). Test:
+  `tests/tracker-signed-out.spec.ts` (fails against the previous code).
+- **Obsolete-copy tests updated** after confirming the current behavior: commercial-truth (free and
+  Pro template counts, review-before-keep, paid-through access, consent label plus the
+  "until cancelled" disclosure), builder Pro card renewal note, templates heading, homepage
+  "Explore Pro" CTA, paid consent label (now also asserts the until-cancelled disclosure).
+- **Pilot-code-like literal** in `tests/paid/flows.spec.ts` and `tests/billing/offer-catalog.test.ts`
+  replaced with fictional `FRIENDTEST`. It was never committed. The live code was not rotated.
+- **Dependencies:** vite 7.3.6 → 7.3.7 (dev-server advisories) and source-map-js 1.2.1 → 1.2.2.
+  Left alone: zod 3.25.76 via `puppeteer-core` → `chromium-bidi`. Not reachable (PDF rendering
+  launches over CDP; BiDi is unused). Fix = `puppeteer-core` 25.16.0 after a hosted PDF smoke test.
+
+Checks: tsc and server tsc PASS; vite build PASS; server 534/534; auth 42/42; paid 100/100;
+default 116/117 (`quality.spec.ts` modern preview intermittently misses the 5 s builder-start wait;
+1/21 on repeat; it failed before these changes too); all `--check` generators PASS except
+`render-search-hubs --check`. `npm run build` / `npm run test:seo` remain blocked by
+`Teal evidence expired on 2026-10-30` (all five comparisons share that pricing review date).
+Owner decision required: re-verify the five vendors' pricing sources and update `checkedAt`, or
+remove the pricing-kind claims. Live signed-in journeys were **not** tested: no test-account
+credentials are available in this session, and the agent does not enter passwords on production.
+Graphify: 4,032 nodes / 8,444 edges.

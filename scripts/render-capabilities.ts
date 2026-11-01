@@ -1,4 +1,5 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
+import { writeKeepingSeoBlock } from './seo-block';
 import { capabilities, capabilitiesPath, type Capability } from '../src/content/capabilities';
 
 const check = process.argv.includes('--check');
@@ -9,7 +10,7 @@ function output(file: string, value: string) {
   mkdirSync(file.slice(0, file.lastIndexOf('/')), { recursive: true });
   if (check) {
     if (withoutSeo(readFileSync(file, 'utf8')) !== withoutSeo(value)) throw new Error(`Capability output stale: ${file}. Run npm run capabilities:generate.`);
-  } else writeFileSync(file, value);
+  } else writeKeepingSeoBlock(file, value);
 }
 
 const navigation = `<header class="resource-header"><a class="resource-brand" href="/" aria-label="APWICO home"><span class="stride-mark" aria-hidden="true"><i></i><i></i></span><span>APWICO</span></a><nav aria-label="Main navigation"><a href="/workspace/resume">Resume Builder</a><a href="/start/job">Jobs</a><a href="/features/" aria-current="page">How It Works</a><a href="/tools/">Free Tools</a><a href="/templates/">Templates</a><a href="/resources/">Resources</a><a href="/pricing/">Pricing</a></nav></header>`;

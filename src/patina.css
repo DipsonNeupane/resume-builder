@@ -297,7 +297,11 @@ button:disabled { color:#6f6962; background:#eeece8; border-color:#dcd8d2; }
 .pro-checkout-card::after { content:''; position:absolute; top:0; right:0; width:34px; height:34px; background:linear-gradient(to bottom left,transparent 50%,#cfc6b9 50%,#ece6dd 64%,#fbf9f5); filter:drop-shadow(-3px 4px 4px #281a0a47); }
 .pro-checkout-card h2 { font:800 22px/1.1 var(--pt-display); }
 .pro-checkout-price strong { font:800 44px/1 var(--pt-display); letter-spacing:-.03em; }
+.pro-checkout-price del { color:var(--rs-slate); font:500 16px/1 var(--pt-mono); }
 .pro-checkout-card .price-tag { color:var(--pt-on-copper); }
+.pilot-code-feedback { margin-top:-7px; }
+.pilot-code-feedback.is-success { color:#14614f; font-weight:600; }
+.pilot-code-feedback.is-error { color:#a52d32; font-weight:600; }
 
 /* ---------- modals ---------- */
 

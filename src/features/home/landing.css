@@ -708,6 +708,14 @@ body:has(.landing-approved-wine) .site-header .stride-mark i:nth-child(2) { back
 body:has(.landing-approved-wine) .site-header .header-cta { background:#f2c84b; border-color:#f2c84b; color:#261c00; }
 body:has(.landing-approved-wine) .site-header .header-cta:hover { background:#ffe38b; border-color:#ffe38b; }
 
+/* Let the longest line wrap before it collides with the example card or phone edge. */
+@media (max-width:1440px) {
+ .landing-approved-c .pt-hero-approved .pt-hero-title>span:nth-child(3) {
+  padding-left:0;
+  white-space:normal;
+ }
+}
+
 @media (max-width:1000px) {
  .landing-approved-c .pt-hero-approved { grid-template-columns:minmax(0,.88fr) minmax(420px,1fr); gap:36px; }
  .landing-approved-c .pt-hero-approved .pt-hero-title { font-size:clamp(48px,6.1vw,70px); }

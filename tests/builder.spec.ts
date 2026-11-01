@@ -285,10 +285,10 @@ test('Pricing presents Free and Pro together without a first-party Print/PDF act
  await expect(cards).toHaveCount(2);
  const free=cards.first();
  await expect(free).toContainText('Free');
- await expect(free).toContainText('The complete builder and all 7 Free templates');
- await expect(free).toContainText('7 PDF or Word downloads per rolling 7 days');
+ await expect(free).toContainText('Resume builder and all 7 free templates');
+ await expect(free).toContainText('7 PDF or Word downloads in any 7-day period');
  await expect(free).toContainText('Track up to 100 applications');
- await expect(free).toContainText('One complete tailoring trial for one application');
+ await expect(free).toContainText('Try tailoring a resume for one application, with up to 3 suggestion runs');
  await expect(free).not.toContainText('up to 10 applications');
  await expect(free).not.toContainText('3 generated PDF downloads');
  await expect(free).not.toContainText('Print');
@@ -298,10 +298,10 @@ test('Pricing presents Free and Pro together without a first-party Print/PDF act
  await expect(pro).toContainText('Pro');
  await expect(pro).toContainText('US$14.99');
  await expect(pro).toContainText('/month');
- await expect(pro).toContainText('Renews until cancelled');
- await expect(pro.locator('li')).toHaveCount(4);
+ await expect(pro).toContainText('Renews monthly until you cancel.');
+ await expect(pro.locator('li')).toHaveCount(5);
  await expect(pro).not.toContainText('Free accounts get 3');
- await expect(pro.getByRole('button',{name:'View Pro options',exact:false})).toBeVisible();
+ await expect(pro.getByRole('button',{name:'Explore Pro',exact:true})).toBeVisible();
  await expect(page.getByRole('button',{name:'Print / PDF',exact:true})).toHaveCount(0);
 });
 
@@ -331,7 +331,7 @@ test('Pricing cards stay balanced on desktop and readable without price wrapping
   expect(proBox!.y).toBeGreaterThanOrEqual(freeBox!.y+freeBox!.height-1);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
   await expect(cards.first().getByRole('button',{name:'Build my master resume',exact:true})).toBeVisible();
-  await expect(cards.last().getByRole('button',{name:'View Pro options',exact:false})).toBeVisible();
+  await expect(cards.last().getByRole('button',{name:'Explore Pro',exact:true})).toBeVisible();
  }
 });
 

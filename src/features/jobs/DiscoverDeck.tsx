@@ -158,7 +158,7 @@ export function DiscoverDeck({ ownerId, jobs, savedIds, onSave, onUndoSave, rend
         <p className="field-hint">On touch screens you can also swipe the card: right to save, left to pass.</p>
         {detailsOpen(current.id) && <div className="deck-details">{renderDetails(current.id)}<a className="text-link" href={current.sourceUrl} target="_blank" rel="noopener noreferrer">View job<span className="visually-hidden"> on the original site (opens a new tab; does not apply)</span></a></div>}
       </article>
-        : <div className="empty-state" role="status"><strong>You’ve reviewed this batch.</strong><p>Saved roles are in My applications. Passed roles stay hidden only for this session. Run a new search for more roles.</p>
+        : <div className="empty-state" role="status"><strong>You’ve reviewed these jobs.</strong><p>Saved jobs are in My applications. Passed jobs return with your next search.</p>
           <div className="job-card-actions"><button className="button" onClick={onOpenApplications}>Go to My applications</button><button className="button outline" onClick={() => setIndex(0)}>Review this batch again</button></div></div>}
   </section>;
 }

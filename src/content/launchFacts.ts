@@ -11,6 +11,7 @@ export const launchFacts = {
  freeManualRefreshes: { count: 3, windowHours: 24 },
  freeResultsPerRefresh: 10,
  proMonthlyPrice: 'US$14.99',
+ proTrialDays: 30,
  /** Pro ceilings: `applications_owner_limit`, PRO_JOB_LIMIT and `begin_ai_request`. */
  proApplicationCeiling: 10000,
  proResultsPerSearch: 20,

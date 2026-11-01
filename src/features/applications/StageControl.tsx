@@ -1,6 +1,6 @@
 import './applications.css';
 import { useId, useState } from 'react';
-import { CLOSED_REASONS, CLOSED_REASON_LABELS, STAGES, STAGE_HINTS, STAGE_LABELS, localDay, type ApplicationPatch, type ApplicationRecord, type ClosedReason, type Stage } from '../../lib/applications';
+import { CLOSED_REASONS, CLOSED_REASON_LABELS, STAGES, STAGE_LABELS, localDay, type ApplicationPatch, type ApplicationRecord, type ClosedReason, type Stage } from '../../lib/applications';
 
 type Props = {
   application: ApplicationRecord;
@@ -26,7 +26,7 @@ export function StageControl({ application, busy, onChange, label = 'Stage' }: P
   return <div className="stage-control">
     <label className="field compact" htmlFor={`${id}-stage`}><span>{label}</span>
       <select id={`${id}-stage`} value={pending ?? application.stage} disabled={busy} onChange={event => choose(event.target.value as Stage)}>
-        {STAGES.map(stage => <option key={stage} value={stage}>{STAGE_LABELS[stage]} — {STAGE_HINTS[stage]}</option>)}
+        {STAGES.map(stage => <option key={stage} value={stage}>{STAGE_LABELS[stage]}</option>)}
       </select>
     </label>
     {pending === 'applied' && <form className="stage-confirm" onSubmit={event => { event.preventDefault(); setPending(null); onChange({ stage: 'applied', appliedOn }); }}>
@@ -41,7 +41,7 @@ export function StageControl({ application, busy, onChange, label = 'Stage' }: P
           {CLOSED_REASONS.map(item => <option key={item} value={item}>{CLOSED_REASON_LABELS[item]}</option>)}
         </select>
       </label>
-      <small className="field-hint">“No response” is kept separate from “Rejected”. APWICO never marks an application rejected on its own.</small>
+      <small className="field-hint">No response is different from rejected.</small>
       <div className="stage-confirm-actions"><button className="button" type="submit" disabled={busy}>Close application</button><button className="text-button" type="button" onClick={() => setPending(null)}>Cancel</button></div>
     </form>}
   </div>;

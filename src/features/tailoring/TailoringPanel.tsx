@@ -188,12 +188,12 @@ export function TailoringPanel({ resume, ownerId, onSignIn, onViewPro, versionId
    const currentSession = await supabase.auth.getSession();
    if (!active.current || controller.signal.aborted) return;
    if (currentSession.data.session?.user.id !== ownerId) throw new Error('Please sign in again and retry.');
-   if (JSON.stringify(currentResume.current) !== JSON.stringify(snapshot)) { setMessage('Your resume changed while suggestions were loading. Get new suggestions for the updated version.'); return; }
+   if (JSON.stringify(currentResume.current) !== JSON.stringify(snapshot)) { setMessage('Your resume changed. Run suggestions again.'); return; }
    sourceSignature.current = JSON.stringify(snapshot);
    requestIdentity.current = null;
    setDraftBoth(snapshot);
    setItems(suggestions.map(suggestion => ({ ...suggestion, status: 'pending', aiText: suggestion.suggestedText, factDraft: '', userFacts: '' })));
-   if (suggestions.length === 0) setMessage('No tailoring suggestions were found for this job description. Review the match evidence and your resume; you can still make your own edits and download it.');
+   if (suggestions.length === 0) setMessage('No suggestions found. You can still edit and download your resume.');
   } catch (error) {
    if (controller.signal.aborted || !active.current) return;
    // Reuse the same request id only when no server response arrived. This lets
@@ -286,12 +286,12 @@ export function TailoringPanel({ resume, ownerId, onSignIn, onViewPro, versionId
  if (!ownerId) return null;
  if (!versionId || !savedJobId) {
   return <div className="notice" role="status">
-   AI suggestions are available only from a saved job-specific resume. Save a job and choose “Prepare my application” to begin.
+   Save a job and choose “Prepare my application” to get suggestions.
   </div>;
  }
 
  return <section className="field tailoring-panel" aria-label="Job tailoring">
-  <div className="tailoring-heading"><div><span className="section-label">From match to application</span><h3>AI tailoring suggestions</h3><p className="field-hint">Make the connection clearer. Keep the experience yours.</p></div><span>AI suggests. You decide.</span></div>
+  <div className="tailoring-heading"><div><span className="section-label">Your application</span><h3>Resume suggestions</h3><p className="field-hint">Review each change before keeping it.</p></div></div>
   <ol className="tailoring-flow" aria-label="How tailoring keeps you in control">
    <li><strong>Master resume</strong>Remains unchanged</li>
    <li><strong>Job-specific version</strong>A separate document</li>
@@ -299,18 +299,18 @@ export function TailoringPanel({ resume, ownerId, onSignIn, onViewPro, versionId
    <li><strong>You</strong>Accept, reject or edit</li>
   </ol>
   <ol className="review-progress" aria-label="Tailoring progress"><li aria-current={!draft?'step':undefined}>01 / Get suggestions</li><li aria-current={draft&&items.some(item=>item.status==='pending')?'step':undefined}>02 / Review each change</li><li aria-current={draft&&!items.some(item=>item.status==='pending')?'step':undefined}>03 / Your resume</li></ol>
-  {!jobDescriptionAvailable && <p className="notice" role="status">This saved job has no description available, so APWICO cannot generate grounded tailoring suggestions.</p>}
+  {!jobDescriptionAvailable && <p className="notice" role="status">Add a job description to get suggestions.</p>}
   <div className="field checkbox-field">
    <label>
     <input type="checkbox" checked={consent} disabled={busy} onChange={event => setConsent(event.target.checked)} />
-    I consent to sending this saved job-specific resume and job description to APWICO for tailoring suggestions.
+    I agree to send my resume and job description to OpenAI for suggestions.
    </label>
   </div>
   <button className="button" disabled={busy || !consent || !jobDescriptionAvailable} onClick={fetchSuggestions}>
    {busy ? 'Getting suggestions…' : 'Get tailoring suggestions'}
   </button>
-  <p className="field-hint">APWICO sends your headline, summary, skills, section entries and relevant Match Analysis evidence to OpenAI. Dedicated contact fields are excluded; contact details you write in summaries or entries may still be included.</p>
-  <p className="field-hint">Requires Pro, or your one Free tailoring trial for this application. Suggestions are designed to rework only what your resume already says, so check each one before you accept it. {onAcceptedResume ? 'Accept applies a change to this job-specific resume only. Reject leaves it as it is. You can still edit any wording yourself in the editor. Your master never changes.' : 'Accepted changes go into a separate draft; your original stays unchanged.'}</p>
+  <details className="tailoring-data-details"><summary>What gets sent</summary><p>Your resume details and job description go to OpenAI. Contact fields are excluded; details in your writing may be included.</p></details>
+  <p className="field-hint">{ownerId ? 'Pro or one free trial for this job.' : 'Sign in to continue.'} Suggestions change a separate resume; your original stays unchanged.</p>
   {message && <p role="status" className="field-hint">{message}</p>}
   {items.length > 0 && <p role="status" className="field-hint">{items.filter(item=>item.status!=='pending').length} of {items.length} suggestions reviewed · {items.filter(item=>item.status==='accepted').length} accepted</p>}
   {items.map((item, index) => { const { assessment, acceptable } = review(item, jobText); const edited = item.suggestedText !== item.aiText;
@@ -323,28 +323,28 @@ export function TailoringPanel({ resume, ownerId, onSignIn, onViewPro, versionId
    return <article className="suggestion-card" tabIndex={-1} data-status={item.status} data-supported={acceptable ? 'true' : 'false'} key={`${item.field}-${item.sectionId ?? ''}-${item.entryId ?? ''}`} aria-label={`Suggestion ${index + 1}`}>
    <header><span>Suggestion {index + 1} / {item.field}</span><span>{item.status==='pending'?(acceptable?'Your decision':'Needs your support'):item.status==='accepted'?AUTHORSHIP_LABEL[item.authorship ?? 'ai']:'Rejected'}</span></header>
    <div className="pro-preview-compare"><div><span>Original wording</span><p>{item.originalText || 'No text yet'}</p></div><div><span>{item.status === 'accepted' && item.authorship === 'edited' ? 'Your wording' : 'Proposed wording'}</span><p>{item.status === 'accepted' ? item.suggestedText : item.aiText}</p></div></div>
-   {(item.targetRequirements.length > 0 || assessment.quotes.length > 0) && <dl className="suggestion-trace">
-    {item.targetRequirements.length > 0 && <div><dt>Targets job requirement{item.targetRequirements.length > 1 ? 's' : ''}</dt>{item.targetRequirements.map(requirement => <dd key={requirement.id}>{requirement.text} <small>({CATEGORY_LABEL[requirement.category] ?? 'Other'}{requirement.status && STATUS_LABEL[requirement.status] ? ` · ${STATUS_LABEL[requirement.status]}` : ''})</small></dd>)}</div>}
+   {(item.targetRequirements.length > 0 || assessment.quotes.length > 0) && <details className="suggestion-support"><summary>See supporting evidence</summary><dl className="suggestion-trace">
+    {item.targetRequirements.length > 0 && <div><dt>Job requirements</dt>{item.targetRequirements.map(requirement => <dd key={requirement.id}>{requirement.text} <small>({CATEGORY_LABEL[requirement.category] ?? 'Other'}{requirement.status && STATUS_LABEL[requirement.status] ? ` · ${STATUS_LABEL[requirement.status]}` : ''})</small></dd>)}</div>}
     {assessment.quotes.length > 0 && <div><dt>Supported by your resume</dt>{item.supportingFacts.filter(fact => assessment.quotes.includes(fact.quote)).map(fact => <dd key={fact.quote}>“{fact.quote}” <small>— {fact.location}</small></dd>)}</div>}
     {assessment.userFactUsed && acceptable && <div><dt>Fact you added</dt><dd>“{item.userFacts}” <small>— written by you, not from your resume</small></dd></div>}
-   </dl>}
-   {showIssues && <div className="notice suggestion-ungrounded" role="note"><div><p><strong>Needs your support.</strong> APWICO found {issues.length === 1 ? 'a problem' : 'problems'} with the proposed wording, so it cannot be accepted as it is:</p>
+   </dl></details>}
+   {showIssues && <div className="notice suggestion-ungrounded" role="note"><div><p><strong>Needs more support before use.</strong></p>
     <ul>{issues.map((issue, i) => <li key={i}>{describeIssue(issue)}</li>)}</ul>
-    <small>These checks catch common overstatements. They cannot confirm that any wording is true.</small></div></div>}
-   {ownWordingKept ? <p className="tailoring-why"><strong>Your wording:</strong> written by you, so APWICO does not check it as an AI claim. Make sure it is true.</p>
-    : <p className="tailoring-why"><strong>{acceptable ? 'Why this helps:' : 'Model’s note (unverified):'}</strong> {item.why}</p>}
-   {item.status === 'pending' && !acceptable && <details className="suggestion-support"><summary>Add a fact that supports this</summary>
-    <label className="field compact"><span>What in your experience supports the proposed wording?</span><textarea rows={3} maxLength={600} value={item.factDraft} onChange={event => setFactDraft(index, event.target.value)} /></label>
-    <small className="field-hint">Write it in your own words. It is used only to check this suggestion; it is not added to your resume.</small>
+    <small>Check each claim before using it.</small></div></div>}
+   {ownWordingKept ? <p className="tailoring-why"><strong>Your wording:</strong> Check every claim for accuracy.</p>
+    : <p className="tailoring-why"><strong>Why:</strong> {item.why}</p>}
+   {item.status === 'pending' && !acceptable && <details className="suggestion-support"><summary>Add a supporting fact</summary>
+    <label className="field compact"><span>What experience supports this?</span><textarea rows={3} maxLength={600} value={item.factDraft} onChange={event => setFactDraft(index, event.target.value)} /></label>
+    <small className="field-hint">Used to check this suggestion, not added to your resume.</small>
     <div className="section-actions"><button className="button outline" type="button" disabled={item.factDraft.trim().length < 12} onClick={() => checkFact(index)}>Check again</button></div>
-    {item.userFacts && !acceptable && <p className="field-hint" role="status">Your fact does not cover everything flagged above. Add more detail, or write your own wording instead.</p>}
+    {item.userFacts && !acceptable && <p className="field-hint" role="status">Add more support or edit the wording.</p>}
    </details>}
-   {item.status === 'pending' && <details {...(!acceptable ? { className: 'suggestion-rewrite' } : {})}><summary>{acceptable ? 'Edit before accepting' : 'Write your own wording instead'}</summary><label className="field compact"><span>Your wording</span><textarea rows={3} maxLength={2000} value={item.suggestedText} onChange={event => editSuggestion(index, event.target.value)} /></label><small className="field-hint">Keep it true to what you did. Do not add tools, numbers, credentials or responsibility you cannot support. Changed wording is marked as yours.</small>
+   {item.status === 'pending' && <details {...(!acceptable ? { className: 'suggestion-rewrite' } : {})}><summary>{acceptable ? 'Edit wording' : 'Write your own wording'}</summary><label className="field compact"><span>Your wording</span><textarea rows={3} maxLength={2000} value={item.suggestedText} onChange={event => editSuggestion(index, event.target.value)} /></label><small className="field-hint">Keep claims accurate. Your edits are marked as yours.</small>
     {yours.length > 0 && <ul className="field-hint" aria-label="Check your wording">{yours.map((issue, i) => <li key={i}>{describeIssue(issue).replace(/^It /, 'Your wording ')}</li>)}</ul>}</details>}
    {item.status === 'pending' && <div className="section-actions"><button className="text-button" onClick={event => { focus(event); reject(index); }}>Reject</button>
     {edited ? <button className="button" disabled={!item.suggestedText.trim() || item.suggestedText === item.originalText} onClick={event => { focus(event); accept(index); }}>Use my wording</button>
      : acceptable && <button className="button" onClick={event => { focus(event); accept(index); }}>{assessment.userFactUsed && !item.grounded ? 'Accept with your fact' : 'Accept'}</button>}</div>}
-   {item.status === 'accepted' && <p className="field-hint">{onAcceptedResume ? 'Accepted and saved to this job-specific resume. Edit it any time in the editor.' : 'Accepted into the draft below.'} <button className="text-button" onClick={() => undo(index)}>Undo</button></p>}
+   {item.status === 'accepted' && <p className="field-hint">{onAcceptedResume ? 'Saved to this job resume.' : 'Added to your draft.'} <button className="text-button" onClick={() => undo(index)}>Undo</button></p>}
    {item.status === 'rejected' && <p className="field-hint">Rejected — your draft is unchanged.</p>}
   </article>; })}
   {onAcceptedResume && <ProvenanceList entries={provenance} resume={resume} heading="Tailoring record for this version" />}
@@ -353,8 +353,8 @@ export function TailoringPanel({ resume, ownerId, onSignIn, onViewPro, versionId
    <strong>{onAcceptedResume ? 'Your saved job-specific resume' : 'Your reviewed draft'}</strong><div className="paper-container"><PaginatedResumePreview resume={draft}/></div>
     {/* A saved job-specific version is exported by the page's own download controls, so
         there is one export path for it (after the same preview confirmation). */}
-    {onAcceptedResume ? <><p>Accepted suggestions are saved to this job-specific version only. Rejected suggestions make no change.</p>{onDownload && <button className="button outline" type="button" onClick={onDownload}>Review and download this version</button>}</>
-     : <><GeneratedDocumentControls resume={draft} ownerId={ownerId} documentScope="job_specific" jobResumeVersionId={versionId} onSignIn={onSignIn} onViewPro={onViewPro}/><p>This is a separate copy — it never changes your saved resume. Download it as PDF or Word to keep any accepted changes.</p></>}
+    {onAcceptedResume ? <>{onDownload && <button className="button outline" type="button" onClick={onDownload}>Review and download this version</button>}</>
+     : <><GeneratedDocumentControls resume={draft} ownerId={ownerId} documentScope="job_specific" jobResumeVersionId={versionId} onSignIn={onSignIn} onViewPro={onViewPro}/><p>This copy won’t change your master resume.</p></>}
    </div>
   </div>}
  </section>;

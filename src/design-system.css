@@ -464,5 +464,8 @@ h1[id],h2[id],section[id],:focus-visible{scroll-margin-block:90px}
 @media(max-width:560px){.template-specimen{height:220px}.document-save-label{display:block;color:var(--rs-slate);font-size:11px;margin-top:3px}}
 .nav a,.nav-account{transition:none}
 .document-save-label{display:block;font-size:11px;color:var(--rs-slate);margin-top:3px}
+.saved-match-preview{margin-block:12px;border-top:1px solid var(--rs-line);padding-top:10px}
+.saved-match-preview>summary{cursor:pointer;font-weight:650;color:var(--rs-action)}
+.saved-match-preview[open]>.match-analysis{margin-top:10px}
 
 @media(max-width:560px){.builder-sidebar .sidebar-tools{flex-direction:row;gap:4px 12px}.builder-sidebar .sidebar-tools .back-link{width:auto;padding:0}}

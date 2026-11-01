@@ -22,15 +22,15 @@ export type CommercialPlan = {
 export const commercialPlans: readonly CommercialPlan[] = [
  {
   id: 'free', name: 'Free', price: '$0', cadence: 'No subscription', recurring: false,
-  summary: `Build with all ${freeTemplates.length} Free templates, review evidence, and organize a focused job search.`,
-  includes: [`All ${freeTemplates.length} Free templates`, 'Browser-only evidence checker', `Up to ${launchFacts.freeResultsPerRefresh} relevant results per refresh; ${launchFacts.freeManualRefreshes.count} manual refreshes per rolling ${launchFacts.freeManualRefreshes.windowHours} hours`, 'Optional fresh automatic refresh about every 24 hours', `Track up to ${launchFacts.freeApplications} applications`, `${launchFacts.freeTailoringTrials} complete tailoring trial`, freeDownloadsSummary.charAt(0).toUpperCase() + freeDownloadsSummary.slice(1)],
-  action: { label: 'Start with Free', href: '/start/build' },
+  summary: 'Build a resume, find jobs and track applications for free.',
+  includes: [`Resume builder and ${freeTemplates.length} free templates`, 'Match a pasted job in your browser', `${launchFacts.freeManualRefreshes.count} searches per ${launchFacts.freeManualRefreshes.windowHours} hours · up to ${launchFacts.freeResultsPerRefresh} results each`, 'Optional daily refresh', `Track up to ${launchFacts.freeApplications} applications`, `Tailor one resume for one job · up to ${launchFacts.freeTrialAiRuns} suggestions`, `${launchFacts.freeDownloads.count} PDF or Word downloads per ${launchFacts.freeDownloads.windowDays} days`],
+  action: { label: 'Start for free', href: '/start/build' },
  },
  {
   id: 'pro', name: 'Pro', price: launchFacts.proMonthlyPrice, cadence: 'per month', recurring: true,
-  summary: 'Unlock every Premium template, expanded job search, full Match Analysis, and job-specific tailoring.',
-  includes: [`All ${freeTemplates.length + premiumTemplates.length} templates`, 'Full requirement-level Match Analysis', 'Up to 20 job results per search without the Free daily search limit', 'A separate resume for each saved job', 'AI suggestions you accept, reject or edit', 'Fair-use PDF and editable Word downloads while access is active'],
-  action: { label: 'Review Pro in workspace', href: '/workspace/pro' },
+  summary: `${launchFacts.proTrialDays} days free, then ${launchFacts.proMonthlyPrice}/month. Get full match details and a separate resume for each job.`,
+  includes: [`All ${freeTemplates.length + premiumTemplates.length} resume templates`, 'Full match details', `Up to ${launchFacts.proResultsPerSearch} results per search`, 'A separate resume for each job', 'Review and edit resume suggestions', 'PDF and Word downloads'],
+  action: { label: 'Explore Pro', href: '/workspace/pro' },
  },
 ] as const;
 
@@ -40,10 +40,11 @@ export const commercialPolicy = {
  paymentMethods: 'Stripe Checkout shows only payment methods enabled for the configured account and compatible with the buyer, device, USD price and subscription. APWICO does not promise a particular method before checkout displays it.',
  taxesAndInvoices: 'Review any taxes, currency conversion, invoice, and receipt details in Stripe Checkout before paying. Tax-inclusive pricing and invoice availability are not promised.',
  refunds: 'Purchases are generally non-refundable except where mandatory consumer, unauthorized-charge, duplicate-charge or non-supply rights apply. The terms and refund policy control.',
- renewal: 'Paid subscriptions renew monthly until cancelled.',
+ renewal: `Pro starts with a ${launchFacts.proTrialDays}-day free trial, then renews at ${launchFacts.proMonthlyPrice} monthly until cancelled. Cancel before the trial ends to avoid the monthly charge.`,
+ proTrial: `Pro is free for ${launchFacts.proTrialDays} days, then ${launchFacts.proMonthlyPrice} per month. Checkout collects a payment method; cancel before the trial ends to avoid the monthly charge.`,
  cancellation: 'Cancellation stops future renewal. Paid access continues through the current billing period.',
- proLimits: `Pro is not unlimited: up to ${launchFacts.proApplicationCeiling.toLocaleString('en-US')} tracked applications, up to ${launchFacts.proResultsPerSearch} results per job search, fair-use downloads, and up to ${launchFacts.aiRequestsPerHour} AI tailoring requests per hour per account. AI suggestions can pause for everyone when the monthly AI spending limit is reached; everything else keeps working.`,
- freeTrial: `The Free tailoring trial covers the first application you prepare with it, including up to ${launchFacts.freeTrialAiRuns} successful AI suggestion runs. Failed runs do not count, and the trial does not renew.`,
+ proLimits: `Pro is not unlimited: up to ${launchFacts.proApplicationCeiling.toLocaleString('en-US')} tracked applications, up to ${launchFacts.proResultsPerSearch} results per job search, fair-use downloads, and up to ${launchFacts.aiRequestsPerHour} tailoring requests per hour per account. Resume suggestions may pause when the monthly service budget is reached; other features keep working.`,
+ freeTrial: `The Free tailoring trial covers the first application you prepare with it, including up to ${launchFacts.freeTrialAiRuns} successful tailoring suggestion runs. Failed runs do not count, and the trial does not renew.`,
  dataAccess: `Your resumes, job-specific versions, application records and kept document copies stay in your account on Free and Pro and after Pro ends. Above the Free limit of ${launchFacts.freeApplications} applications, every existing record stays available to open, edit, export as CSV and remove; only adding new ones waits.`,
  templateAfterCancellation: 'After Pro ends, Premium designs remain available to preview, but new downloads in a Premium design require active Pro. Resume content and application records are not deleted, and files already downloaded remain yours.',
  pdf: 'PDF preserves the selected resume design.',

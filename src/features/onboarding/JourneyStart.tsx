@@ -23,8 +23,8 @@ export function JourneyStart({ journey, onChooseFile, onStartBuilding, onUseReal
  if (journey === 'import_first') return <main id="main-content" className="journey-start" aria-labelledby="import-start-title">
   <div className="journey-start-icon"><Upload aria-hidden="true" /></div>
   <div><span className="section-label">Step 1 of 2</span><h1 id="import-start-title">Upload your resume</h1>
-   <p>Choose a Word (.docx) or text-based PDF under 8 MB. The file is read in your browser. Columns, graphics, scanned pages, and some fields may not import correctly.</p>
-   <ul><li>Your current draft is not replaced until you approve the import.</li><li>Review the recovered master resume section by section before confirming it.</li><li>The imported draft stays in this browser session unless you choose to save it to your account.</li></ul>
+   <p>Upload a Word file or text PDF, up to 8 MB. Review before replacing your draft.</p>
+   <ul><li>Scanned or complex resumes may need edits.</li><li>Save to your account when you’re ready.</li></ul>
    <div className="journey-start-actions"><button className="button" onClick={onChooseFile}>Choose a resume file</button><button className="button outline" onClick={onStartBuilding}>Build instead</button></div>
   </div>
  </main>;
@@ -32,8 +32,8 @@ export function JourneyStart({ journey, onChooseFile, onStartBuilding, onUseReal
  if (journey === 'build_first') return <main id="main-content" className="journey-start" aria-labelledby="build-start-title">
   <div className="journey-start-icon"><FileText aria-hidden="true" /></div>
   <div><h1 id="build-start-title">Start your master resume</h1>
-   <p>Add your name, target role, and one contact method. Then add the experience that matters to you.</p>
-   <ul><li>Examples are prompts only; APWICO never inserts qualifications for you.</li><li>Your progress stays in this browsing session unless account saving is explicitly enabled and accepted.</li><li>Choose a template after adding your essentials.</li></ul>
+   <p>Add your experience, then choose a layout.</p>
+   <ul><li>Examples are prompts; your draft stays on this device until saved.</li></ul>
    <div className="journey-start-actions"><button className="button" onClick={onStartBuilding}>Start building</button><button className="button outline" onClick={onChooseFile}>Import instead</button></div>
   </div>
  </main>;

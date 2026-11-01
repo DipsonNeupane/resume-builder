@@ -1,8 +1,9 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { comparisonReviewedOn, comparisonReviewer, comparisons, evidenceIsCurrent, resumeStrideComparisonBoundaries, type ComparisonPage } from '../src/content/comparisons';
 import { occupationNextReviewAt, occupations, type OccupationPage } from '../src/content/occupations';
 import { formatBoundaries, regionalGuidance, regionalNextReviewAt } from '../src/content/regionalGuidance';
 import { searchHubs, type SearchHub } from '../src/content/searchHubs';
+import { writeKeepingSeoBlock } from './seo-block';
 
 const check = process.argv.includes('--check');
 const escape = (value: string) => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
@@ -21,15 +22,15 @@ const releaseChrome = (html: string) => html
   .replaceAll('Template to inspect—not a hiring promise', 'Suggested template')
   .replaceAll('APWICO facts and boundaries', 'About APWICO')
   .replaceAll('This page compares current, vendor-described public facts with APWICO’s published boundaries. Verify the purchase screen before paying.', 'This comparison uses current public information from each vendor. Verify the purchase screen before paying.')
-  .replaceAll('<p><strong>Editorial review:</strong> APWICO evidence review; reviewed 2026-09-30; next source review 2026-12-29. This is source-scope review, not professional credential or regulator approval.</p>', '<p>Sources reviewed September 30, 2026; next review December 29, 2026. This is not professional or regulatory approval.</p>')
+  .replaceAll('<p><strong>Editorial review:</strong> APWICO evidence review; reviewed 2026-09-30; next source review 2026-12-29. This is source-scope review, not professional credential or regulator approval.</p>', '<p>Sources reviewed October 31, 2026. This is not professional or regulatory approval.</p>')
   .replaceAll('<p class="section-label">Use your own evidence</p>', '')
   .replaceAll(' This page does not claim that every employer uses these requirements or that this is a top APWICO search.', '')
   .replaceAll('<p>Primary public sources are dated individually below. Employer and regulator instructions take precedence.</p>', '')
   .replace(/<p>The (?:fictional example|example is fictional)[^<]*<\/p>/g, '')
   .replaceAll('Represents technical work, while official US, England and Canadian sources make title and requirement differences visible.', 'Uses official sources from the United States, England, and Canada. Employer requirements vary, so always check the actual job.')
-  .replaceAll('Dated factual comparison', 'Reviewed September 30, 2026')
-  .replaceAll('<strong>Editorial review:</strong> APWICO evidence review; reviewed 2026-09-30.', 'Reviewed September 30, 2026.')
-  .replaceAll('<a href="/pricing/">Pricing and recurring terms</a>, <a href="/trust/">product boundaries</a> and <a href="/features/job-match/">Match behavior</a> were reviewed 2026-09-30 under the same evidence standard.', 'APWICO facts were reviewed September 30, 2026. <a href="/trust/">Review Trust and privacy</a> for the full product boundaries.')
+  .replaceAll('Dated factual comparison', 'Reviewed October 31, 2026')
+  .replaceAll('<strong>Editorial review:</strong> APWICO evidence review; reviewed 2026-09-30.', 'Reviewed October 31, 2026.')
+  .replaceAll('<a href="/pricing/">Pricing and recurring terms</a>, <a href="/trust/">product boundaries</a> and <a href="/features/job-match/">Match behavior</a> were reviewed 2026-09-30 under the same evidence standard.', 'APWICO facts were reviewed October 31, 2026. <a href="/trust/">Review Trust and privacy</a> for the full product boundaries.')
   .replaceAll('<p>Pricing facts expire after 30 days; feature facts after 90 days. An expired fact must be rechecked or removed.</p>', '');
 
 function page(hub: SearchHub): string {
@@ -90,24 +91,29 @@ function comparisonPage(item: ComparisonPage): string {
   return detailShell(`compare/${item.slug}`, 'Dated factual comparison', `${item.vendor} and APWICO`, item.description, body, 'Try the evidence workflow');
 }
 
+// Validate every dated evidence source before writing any page, so an expired source cannot
+// leave some pages regenerated and the rest of the SEO chain unrun.
+if (searchHubs.some(hub => hub.path === '/regions/') && !evidenceIsCurrent(regionalNextReviewAt)) throw new Error(`Regional evidence expired on ${regionalNextReviewAt}; recheck before generation.`);
+if (occupations.length && !evidenceIsCurrent(occupationNextReviewAt)) throw new Error(`Occupation evidence expired on ${occupationNextReviewAt}; recheck before generation.`);
+for (const comparison of comparisons) {
+  const expired = comparison.sources.find(source => !evidenceIsCurrent(source.nextReviewAt));
+  if (expired) throw new Error(`${comparison.vendor} evidence expired on ${expired.nextReviewAt}; recheck or remove the claim before generation.`);
+}
+
 for (const hub of searchHubs) {
-  if (hub.path === '/regions/' && !evidenceIsCurrent(regionalNextReviewAt)) throw new Error(`Regional evidence expired on ${regionalNextReviewAt}; recheck before generation.`);
   const file = `public${hub.path}index.html`;
   mkdirSync(file.slice(0, file.lastIndexOf('/')), { recursive: true });
   const html = releaseChrome(page(hub));
   if (check) {
     if (withoutSeo(readFileSync(file, 'utf8')) !== withoutSeo(html)) throw new Error(`Search hub output stale: ${file}. Run npm run search:generate.`);
-  } else writeFileSync(file, html);
+  } else writeKeepingSeoBlock(file, html);
 }
 for (const occupation of occupations) {
-  if (!evidenceIsCurrent(occupationNextReviewAt)) throw new Error(`Occupation evidence expired on ${occupationNextReviewAt}; recheck before generation.`);
   const file = `public/occupations/${occupation.slug}/index.html`; mkdirSync(file.slice(0, file.lastIndexOf('/')), { recursive: true });
-  const html = releaseChrome(occupationPage(occupation)); if (check) { if (withoutSeo(readFileSync(file, 'utf8')) !== withoutSeo(html)) throw new Error(`Occupation output stale: ${file}.`); } else writeFileSync(file, html);
+  const html = releaseChrome(occupationPage(occupation)); if (check) { if (withoutSeo(readFileSync(file, 'utf8')) !== withoutSeo(html)) throw new Error(`Occupation output stale: ${file}.`); } else writeKeepingSeoBlock(file, html);
 }
 for (const comparison of comparisons) {
-  const expired = comparison.sources.find(source => !evidenceIsCurrent(source.nextReviewAt));
-  if (expired) throw new Error(`${comparison.vendor} evidence expired on ${expired.nextReviewAt}; recheck or remove the claim before generation.`);
   const file = `public/compare/${comparison.slug}/index.html`; mkdirSync(file.slice(0, file.lastIndexOf('/')), { recursive: true });
-  const html = releaseChrome(comparisonPage(comparison)); if (check) { if (withoutSeo(readFileSync(file, 'utf8')) !== withoutSeo(html)) throw new Error(`Comparison output stale: ${file}.`); } else writeFileSync(file, html);
+  const html = releaseChrome(comparisonPage(comparison)); if (check) { if (withoutSeo(readFileSync(file, 'utf8')) !== withoutSeo(html)) throw new Error(`Comparison output stale: ${file}.`); } else writeKeepingSeoBlock(file, html);
 }
 console.log(check ? 'Search pages match their content sources.' : `Generated ${searchHubs.length} hubs, ${occupations.length} occupations and ${comparisons.length} comparisons.`);

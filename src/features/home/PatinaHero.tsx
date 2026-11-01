@@ -15,7 +15,7 @@ export function PatinaHero({ onBuild, onFindJobs, onOrganize }: Props) {
   <div className="pt-hero-copy">
    <p className="pt-hero-kicker"><span className="pt-dot" aria-hidden="true"/>Job search, organized</p>
    <h1 className="pt-hero-title"><span>Find jobs you like.</span> <span><em>Apply with confidence.</em></span> <span>Know what happens next.</span></h1>
-   <p className="hero-deck">Save roles you find here or anywhere else, see what each one asks for against your own resume, and keep every application, date and next step in one place.</p>
+   <p className="hero-deck">Find roles, compare them with your resume, and track every application.</p>
    <div className="hero-actions">
     <a className="button large" href="/workspace/preferences" onClick={event => { event.preventDefault(); onFindJobs(); }}>Find my jobs<ArrowRight size={18} aria-hidden="true"/></a>
     <a className="button large outline" href="/workspace/applications" onClick={event => { event.preventDefault(); onOrganize(); }}>Organize my applications<ArrowRight size={18} aria-hidden="true"/></a>

@@ -112,17 +112,17 @@ function QuickAdd({ onCreate, atLimit, limit }: { onCreate: (input: Record<strin
     setCompany(''); setTitle(''); setStage('saved'); setUrl(''); setLocation(''); setAppliedOn(''); setNextAction(''); setNextDue(''); setNotes(''); setMore(false);
   };
 
-  if (atLimit) return <div className="tracker-card" role="note"><h2>Add application</h2><p>You are tracking {limit} applications, the Free limit. Every existing record stays available to view, update and export. Pro adds more.</p></div>;
+  if (atLimit) return <div className="tracker-card" role="note"><h2>Add application</h2><p>Free limit reached. Your saved applications remain available.</p></div>;
   return <form className="tracker-card quick-add" onSubmit={submit} aria-labelledby="quick-add-title">
     <h2 id="quick-add-title">Add application</h2>
-    <p className="field-hint">Only company, role and stage are needed. No resume required.</p>
+    <p className="field-hint">Add a company, role and stage.</p>
     <div className="quick-add-grid">
       <label className="field compact"><span>Company</span><input required maxLength={APPLICATION_LIMITS.company} value={company} onChange={event => setCompany(event.target.value)} autoComplete="organization" /></label>
       <label className="field compact"><span>Role</span><input required maxLength={APPLICATION_LIMITS.title} value={title} onChange={event => setTitle(event.target.value)} autoComplete="off" /></label>
       <label className="field compact"><span>Stage</span><select value={stage} onChange={event => setStage(event.target.value as Stage)}>{STAGES.map(item => <option key={item} value={item}>{STAGE_LABELS[item]}</option>)}</select></label>
     </div>
     <label className="field compact"><span>Job link (optional)</span><input type="url" inputMode="url" placeholder="https://" maxLength={APPLICATION_LIMITS.url} value={url} onChange={event => setUrl(event.target.value)} aria-invalid={Boolean(urlProblem)} aria-describedby="quick-add-url-hint" /></label>
-    <small id="quick-add-url-hint" className={urlProblem ? 'field-error' : 'field-hint'}>{urlProblem ?? 'APWICO keeps the link for you and does not fetch the page. Add any details yourself.'}</small>
+    <small id="quick-add-url-hint" className={urlProblem ? 'field-error' : 'field-hint'}>{urlProblem ?? 'The link is saved; job details aren’t imported.'}</small>
     <button type="button" className="text-button" aria-expanded={more} onClick={() => setMore(value => !value)}>{more ? 'Fewer details' : 'More details (optional)'}</button>
     {more && <div className="quick-add-grid">
       <label className="field compact"><span>Location</span><input maxLength={APPLICATION_LIMITS.location} value={location} onChange={event => setLocation(event.target.value)} /></label>
@@ -172,7 +172,7 @@ function ImportPanel({ ownerId, onDone }: { ownerId: string; onDone: () => void 
 
   return <section className="tracker-card" aria-labelledby="import-title">
     <h2 id="import-title">Import from a spreadsheet</h2>
-    <p className="field-hint">Export your sheet as CSV (up to {APPLICATION_LIMITS.importRows} rows, 1 MB). Columns are matched for you; adjust them before previewing. The file is read in this browser and only the mapped fields are sent.</p>
+    <p className="field-hint">CSV · up to {APPLICATION_LIMITS.importRows} rows / 1 MB. Review fields before importing.</p>
     <label className="field compact"><span>CSV file</span><input type="file" accept=".csv,text/csv" onChange={event => void readFile(event.target.files?.[0])} /></label>
     {error && <p className="field-error" role="alert">{error}</p>}
     {rows && !result && <>
@@ -261,8 +261,10 @@ export function ApplicationsWorkspace(props: Props) {
   </div>;
 
   if (props.sessionLoading) return <section className="tracker" aria-busy="true"><h1 className="visually-hidden">Loading</h1><p className="route-loading" role="status">Loading your workspace…</p></section>;
-  if (!ownerId) return <section className="tracker">{header(view.kind === 'today' ? 'Today' : 'My applications', 'Keep every application, stage and next step in one private list.')}
-    <div className="empty-state"><strong>Sign in to track applications.</strong><p>Applications are stored in your account so they are available after reload and on other devices. No resume is needed to start.</p><button className="button" onClick={props.onSignIn}>Sign in or create a free account</button></div></section>;
+  if (!ownerId) return <section className="tracker">{view.kind === 'today'
+    ? header('Today', 'See which recorded next steps are due, coming up or waiting across your applications.')
+    : header('My applications', 'Track applications and follow-ups.')}
+    <div className="empty-state"><strong>Sign in to track applications.</strong><p>Your list syncs to your account. No resume needed.</p><button className="button" onClick={props.onSignIn}>Sign in or create a free account</button></div></section>;
   if (data.loading && !data.snapshot) return <section className="tracker" aria-busy="true">{header(view.kind === 'today' ? 'Today' : 'My applications', '')}<p className="route-loading" role="status">Loading your applications…</p></section>;
   if (data.loadError || !data.snapshot) return <section className="tracker">{header(view.kind === 'today' ? 'Today' : 'My applications', '')}
     <div className="empty-state" role="alert"><strong>Your applications could not be loaded.</strong><p>{data.loadError ?? 'Please try again.'} Nothing was changed.</p><button className="button" onClick={data.reload}>Try again</button></div></section>;
@@ -272,7 +274,7 @@ export function ApplicationsWorkspace(props: Props) {
 
   if (view.kind === 'detail') {
     const row = rows.find(item => item.application.savedJobId === view.savedJobId);
-    if (!row) return <section className="tracker">{header('Application', '')}<div className="empty-state" role="status"><strong>This application is unavailable.</strong><p>It may have been removed or belong to another account. No application content was loaded.</p><button className="button" onClick={props.onOpenList}>Back to My applications</button></div></section>;
+    if (!row) return <section className="tracker">{header('Application', '')}<div className="empty-state" role="status"><strong>This application is unavailable.</strong><p>Your application details were not loaded.</p><button className="button" onClick={props.onOpenList}>My applications</button></div></section>;
     return <ApplicationDetail row={row} ownerId={ownerId} busy={data.status.kind === 'saving'} statusLine={statusLine(row.application.savedJobId)} headingRef={headingRef}
       onUpdate={patch => update(row.application.savedJobId, patch)} onBack={props.onOpenList} onPrepare={() => props.onPrepare(row.application.savedJobId)} onReplaced={data.reload} />;
   }
@@ -285,20 +287,23 @@ export function ApplicationsWorkspace(props: Props) {
     const soon = rows.filter(row => dueState(row.application) === 'soon').sort((a, b) => Date.parse(a.application.nextActionDue!) - Date.parse(b.application.nextActionDue!));
     const preparing = rows.filter(row => row.application.stage === 'preparing');
     const interviewing = rows.filter(row => row.application.stage === 'interviewing' && !row.application.nextActionDue);
-    const item = (row: Row, detail: string) => <li key={row.application.savedJobId}><button className="today-item" onClick={() => props.onOpenDetail(row.application.savedJobId)}><strong>{row.job.title}</strong><span>{row.job.company} · {STAGE_LABELS[row.application.stage]}</span><small>{detail}</small></button></li>;
+    const item = (row: Row, detail: string, hasAction = true) => <li key={row.application.savedJobId}>
+      <button className="today-item" onClick={() => props.onOpenDetail(row.application.savedJobId)}><strong>{row.job.title}</strong><span>{row.job.company} · {STAGE_LABELS[row.application.stage]}</span><small>{detail}</small></button>
+      {hasAction && <div className="today-item-actions"><button className="text-button" disabled={data.status.kind === 'saving'} onClick={() => update(row.application.savedJobId, { nextAction: '', nextActionDue: null })}>Mark done</button><button className="text-button" onClick={() => props.onOpenDetail(row.application.savedJobId)}>Change date</button>{statusLine(row.application.savedJobId)}</div>}
+    </li>;
     return <section className="tracker" aria-labelledby="today-title">
-      <div className="tracker-heading"><div><span className="section-label">Private workspace</span><h1 id="today-title" ref={headingRef} tabIndex={-1}>Today</h1><p>What needs your attention, from what you have recorded. Times use {timeZone}.</p></div>
+      <div className="tracker-heading"><div><span className="section-label">Private workspace</span><h1 id="today-title" ref={headingRef} tabIndex={-1}>Today</h1><p>Your next steps · {timeZone}</p></div>
         <div className="tracker-heading-actions"><button className="button" onClick={props.onOpenList}>Add application</button><button className="button outline" onClick={props.onDiscover}>Discover jobs</button></div></div>
       {pipeline}
-      {rows.length === 0 ? <div className="empty-state"><strong>Nothing to do yet.</strong><p>Add an application you are already working on, or find roles to save. You do not need a resume or quiz to start.</p>
+      {rows.length === 0 ? <div className="empty-state"><strong>Nothing to do yet.</strong><p>Add an application or find jobs to save. No resume needed.</p>
         <div className="job-card-actions"><button className="button" onClick={props.onOpenList}>Add your first application</button><button className="button outline" onClick={props.onDiscover}>Find jobs</button></div></div>
         : <div className="today-grid">
-          <section aria-labelledby="today-due"><h2 id="today-due">Due today or overdue</h2>{due.length ? <ul className="today-list">{due.map(row => item(row, `${dueState(row.application) === 'overdue' ? 'Suggested — was due' : 'Due'} ${dateTimeFormat.format(new Date(row.application.nextActionDue!))}: ${row.application.nextAction}`))}</ul> : <p className="field-hint">No next actions are due. Add one to any application to see it here.</p>}</section>
-          <section aria-labelledby="today-soon"><h2 id="today-soon">Coming up this week</h2>{soon.length ? <ul className="today-list">{soon.map(row => item(row, `${dateTimeFormat.format(new Date(row.application.nextActionDue!))}: ${row.application.nextAction}`))}</ul> : <p className="field-hint">Nothing scheduled in the next seven days.</p>}</section>
-          <section aria-labelledby="today-preparing"><h2 id="today-preparing">Preparing</h2>{preparing.length ? <ul className="today-list">{preparing.map(row => item(row, row.application.documents.length ? 'Document exported — confirm when you submit' : 'Materials in progress'))}</ul> : <p className="field-hint">No applications are being prepared.</p>}</section>
+          <section aria-labelledby="today-due"><h2 id="today-due">Due today or overdue</h2>{due.length ? <ul className="today-list">{due.map(row => item(row, `${dueState(row.application) === 'overdue' ? 'Suggested — was due' : 'Due'} ${dateTimeFormat.format(new Date(row.application.nextActionDue!))}: ${row.application.nextAction}`))}</ul> : <p className="field-hint">No follow-ups due.</p>}</section>
+          <section aria-labelledby="today-soon"><h2 id="today-soon">Coming up this week</h2>{soon.length ? <ul className="today-list">{soon.map(row => item(row, `${dateTimeFormat.format(new Date(row.application.nextActionDue!))}: ${row.application.nextAction}`))}</ul> : <p className="field-hint">Nothing due this week.</p>}</section>
+          <section aria-labelledby="today-preparing"><h2 id="today-preparing">Preparing</h2>{preparing.length ? <ul className="today-list">{preparing.map(row => item(row, row.application.documents.length ? 'Document exported — confirm when you submit' : 'Materials in progress', false))}</ul> : <p className="field-hint">No applications in progress.</p>}</section>
           {interviewing.length > 0 && <section aria-labelledby="today-interviewing"><h2 id="today-interviewing">Interviewing without a next step</h2><ul className="today-list">{interviewing.map(row => item(row, 'Add the next interview or follow-up date'))}</ul></section>}
         </div>}
-      <p className="field-hint">Reminders appear here in APWICO only. No email, push or calendar notifications are sent. An overdue item is a suggestion, not an instruction to send a message.</p>
+      <p className="field-hint">Mark a next step done here, or open it to change the date.</p>
     </section>;
   }
 
@@ -323,7 +328,7 @@ export function ApplicationsWorkspace(props: Props) {
 
   return <section className="tracker" aria-labelledby="applications-title">
     <div className="tracker-heading"><div><span className="section-label">Private workspace</span><h1 id="applications-title" ref={headingRef} tabIndex={-1}>My applications</h1>
-      <p>{isPro ? `${savedCount} tracked.` : `${savedCount} of ${saveLimit} Free applications used. Status updates never use AI or your allowance.`}</p></div>
+      <p>{isPro ? `${savedCount} tracked.` : `${savedCount} of ${saveLimit} applications.`}</p></div>
       <div className="tracker-heading-actions"><button className="button outline" onClick={() => setShowImport(value => !value)} aria-expanded={showImport}>Import CSV</button><button className="button outline" onClick={exportCsv} disabled={!rows.length}>Export CSV</button></div></div>
     {pipeline}
     <div className="tracker-columns">
@@ -341,7 +346,7 @@ export function ApplicationsWorkspace(props: Props) {
         </form>
         {statusLine()}
         <p className="visually-hidden" role="status" aria-live="polite">{visible.length} {visible.length === 1 ? 'application' : 'applications'} shown</p>
-        {rows.length === 0 ? <div className="empty-state"><strong>No applications yet.</strong><p>Add one with the form, import a spreadsheet, or save a job from Discover.</p></div>
+        {rows.length === 0 ? <div className="empty-state"><strong>No applications yet.</strong><p>Add one or save a job from Discover.</p></div>
           : visible.length === 0 ? <div className="empty-state" role="status"><strong>No applications match these filters.</strong><button className="text-button" onClick={() => { setQuery(''); setStageFilter('all'); setAttentionOnly(false); setFrom(''); setTo(''); }}>Clear filters</button></div>
             : <ul className="application-list">{visible.map(({ job, application }) => {
               const state = dueState(application);
@@ -406,7 +411,7 @@ function ApplicationDetail({ row, ownerId, busy, statusLine, headingRef, onUpdat
         {application.documents.length ? <ul className="document-list">{application.documents.map(doc => <li key={doc.id}><strong>{doc.format === 'pdf' ? 'PDF (keeps the design)' : 'Word (editable content)'}</strong><span>{doc.sourceKind === 'job_version' ? 'Job-specific version' : 'Master resume'} · {doc.template} · exported {dateTimeFormat.format(new Date(doc.exportedAt))}</span>{doc.submittedAt && <span className="stage-chip">Submitted version</span>}
           <button className="text-button" aria-expanded={viewing === doc.id} onClick={() => setViewing(current => current === doc.id ? null : doc.id)}>{viewing === doc.id ? 'Hide this version' : 'View exact version'}</button>
           {viewing === doc.id && <StoredDocumentView ownerId={ownerId} documentId={doc.id} />}</li>)}</ul>
-          : <p className="field-hint">No document is attached yet. Exports made while preparing this application are kept here exactly as downloaded.</p>}
+          : <p className="field-hint">No resume files saved here yet.</p>}
         {application.stage !== 'closed' && <button className="button outline" onClick={onPrepare}>{application.stage === 'saved' ? 'Prepare my application' : 'Continue preparing'}</button>}
         <SubmitPrompt ownerId={ownerId} row={row} onSaved={onReplaced} />
       </section>
@@ -414,7 +419,7 @@ function ApplicationDetail({ row, ownerId, busy, statusLine, headingRef, onUpdat
         <form onSubmit={event => { event.preventDefault(); onUpdate({ nextAction: nextAction.trim(), nextActionDue: nextAction.trim() ? dueIso : null }); }}>
           <label className="field compact"><span>What is next?</span><input maxLength={APPLICATION_LIMITS.nextAction} value={nextAction} onChange={event => setNextAction(event.target.value)} placeholder="e.g. Send thank-you note" /></label>
           <label className="field compact"><span>Due ({timeZone})</span><input type="datetime-local" value={nextDue} disabled={!nextAction.trim()} onChange={event => setNextDue(event.target.value)} /></label>
-          <small className="field-hint">Shown on Today. APWICO does not send email or push reminders.</small>
+          <small className="field-hint">Shown on Today · no email or push reminders.</small>
           <div className="job-card-actions"><button className="button outline" type="submit" disabled={busy || !dirtyNext}>Save next action</button>{application.nextAction && <button className="text-button" type="button" onClick={() => onUpdate({ nextAction: '', nextActionDue: null })}>Clear</button>}</div>
         </form>
       </section>

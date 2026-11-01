@@ -78,9 +78,9 @@ export function GeneratedDocumentControls({ resume, ownerId, documentScope, jobR
     if (disposed || request !== generation || current?.user.id !== ownerId) return;
     const { count, windowDays } = launchFacts.freeDownloads;
     const resets = data.resetsAt ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(data.resetsAt)) : null;
-    setAllowance(data.hasPaidAccess ? 'Generous document downloads are included with your active subscription. Fair-use protection applies.'
-     : data.remaining > 0 ? `${data.remaining} of ${count} Free downloads remain in your rolling ${windowDays}-day window.${resets && data.remaining < count ? ` Your next used download returns ${resets}.` : ''} Failed downloads do not count.`
-     : `Your Free download allowance is used.${resets ? ` One becomes available ${resets}.` : ''}`);
+    setAllowance(data.hasPaidAccess ? 'Downloads included with your plan.'
+     : data.remaining > 0 ? `${data.remaining} of ${count} free downloads left${resets && data.remaining < count ? ` · next available ${resets}` : ''}.`
+     : `Free downloads used${resets ? ` · next available ${resets}` : ''}.`);
     setExhausted(!data.hasPaidAccess && data.remaining === 0);
     setAvailabilityUnknown(false);
    } catch {
@@ -166,20 +166,20 @@ export function GeneratedDocumentControls({ resume, ownerId, documentScope, jobR
  }
 
  if (!ownerId) return <div className="notice" role="status">
-  Sign in to download your resume as PDF or Word. A free account includes {launchFacts.freeDownloads.count} downloads in a rolling {launchFacts.freeDownloads.windowDays}-day window.
+  Sign in to download your resume as PDF or Word. Free accounts get {launchFacts.freeDownloads.count} downloads every {launchFacts.freeDownloads.windowDays} days.
   <button className="text-button" onClick={onSignIn}>Sign in</button>
  </div>;
 
  return <><div ref={downloadGroup} role="group" aria-label="Document downloads" tabIndex={-1} className="field checkbox-field">
   <label><input type="checkbox" checked={consent} disabled={busyFormat !== null} onChange={event => setConsent(event.target.checked)} />I consent to uploading my resume content to APWICO’s server to generate my document.</label>
-  {canAttach && <label><input type="checkbox" checked={keepWithApplication} disabled={busyFormat !== null} onChange={event => setKeepWithApplication(event.target.checked)} />Keep a copy of this exact version with the application in my account, so I can retrieve what I submitted.</label>}
-  <p className="field-hint">PDF and Word share your download allowance. PDF keeps the template design; Word is an editable content document. Downloading never marks an application as submitted.</p>
-  {availabilityUnknown?<p className="field-hint" aria-live="polite">We couldn’t check your download allowance. Free accounts include {launchFacts.freeDownloads.count} downloads in a rolling {launchFacts.freeDownloads.windowDays}-day window. Free downloads exhausted? <button className="text-button" onClick={()=>{setUpgradeConfirmed(false);setUpgradeOpen(true);}}>View Pro options</button></p>:<p className="field-hint" aria-live="polite">{allowance}</p>}
+  {canAttach && <label><input type="checkbox" checked={keepWithApplication} disabled={busyFormat !== null} onChange={event => setKeepWithApplication(event.target.checked)} />Save this exact file to the application record.</label>}
+  <p className="field-hint">PDF keeps the layout; Word is editable. Downloads don’t mark jobs as applied.</p>
+  {availabilityUnknown?<p className="field-hint" aria-live="polite">Download allowance unavailable. <button className="text-button" onClick={()=>{setUpgradeConfirmed(false);setUpgradeOpen(true);}}>View Pro</button></p>:<p className="field-hint" aria-live="polite">{allowance}</p>}
   <div className="document-download-actions">
    <button className="button" disabled={!consent || busyFormat !== null || exhausted} onClick={() => download('pdf')}><Download size={16} />{busyFormat === 'pdf' ? 'Generating PDF…' : 'Download PDF'}</button>
    <button className="button outline" disabled={!consent || busyFormat !== null || exhausted} onClick={() => download('docx')}><Download size={16} />{busyFormat === 'docx' ? 'Generating Word…' : 'Download Word (.docx)'}</button>
   </div>
-  {exhausted && <p className="field-hint">Need it sooner? <button className="text-button" onClick={onViewPro}>View Pro options</button> to download now.</p>}
+  {exhausted && <p className="field-hint">Need more downloads? <button className="text-button" onClick={onViewPro}>View Pro</button>.</p>}
   {message && <p role="status" className="field-hint">{message}</p>}
- </div>{upgradeOpen&&<Modal fallbackFocus={downloadGroup} className="upgrade-modal" labelledBy="upgrade-title" describedBy="upgrade-description" onClose={()=>setUpgradeOpen(false)}><span className="price-tag">PRO</span><h2 id="upgrade-title">Keep downloading with Pro</h2><p id="upgrade-description">{upgradeConfirmed?'Your Free download allowance has been used for this period. ':"If you’ve used your Free downloads for this period, "}Pro (US$14.99/month) includes PDF and editable Word downloads across every template, plus full Match Analysis and tailoring for saved jobs. It renews until cancelled.</p><div className="upgrade-modal-actions"><button className="button" onClick={onViewPro}>View Pro options</button><button className="button outline" onClick={()=>setUpgradeOpen(false)}>Not now</button></div></Modal>}</>;
+ </div>{upgradeOpen&&<Modal fallbackFocus={downloadGroup} className="upgrade-modal" labelledBy="upgrade-title" describedBy="upgrade-description" onClose={()=>setUpgradeOpen(false)}><span className="price-tag">PRO</span><h2 id="upgrade-title">More downloads with Pro</h2><p id="upgrade-description">{launchFacts.proTrialDays} days free, then {launchFacts.proMonthlyPrice}/month. Cancel before the trial ends.</p><div className="upgrade-modal-actions"><button className="button" onClick={onViewPro}>View Pro</button><button className="button outline" onClick={()=>setUpgradeOpen(false)}>Not now</button></div></Modal>}</>;
 }

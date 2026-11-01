@@ -300,7 +300,7 @@ function parseJobCards(body: unknown): { jobs: JobCard[]; isPro: boolean; availa
 }
 
 const CATEGORY_LABELS = { required: 'Required', preferred: 'Preferred', nice_to_have: 'Nice to have' } as const;
-const STATUS_LABELS = { demonstrated: 'Evidence found', partially_demonstrated: 'Related evidence — review', not_demonstrated: 'No evidence found in this resume', confirmed_incompatible: 'Confirmed incompatibility' } as const;
+const STATUS_LABELS = { demonstrated: 'Evidence found', partially_demonstrated: 'Related evidence', not_demonstrated: 'Not in resume', confirmed_incompatible: 'You marked a mismatch' } as const;
 
 function RequirementLedger({ requirements, scope, onReviewed }: { requirements: Requirement[]; scope: 'limited'|'full'; onReviewed: (scope: 'limited'|'full') => Promise<boolean> }) {
   const ledger = useRef<HTMLDivElement>(null);
@@ -321,8 +321,8 @@ function RequirementLedger({ requirements, scope, onReviewed }: { requirements: 
   }, [onReviewed, scope]);
   return <div ref={ledger} className="match-requirements" data-review-scope={scope}>{requirements.map(req => <article key={req.id}>
     <div><span className={`requirement-category requirement-${req.category}`}>{CATEGORY_LABELS[req.category]}</span><span className={`requirement-status status-${req.status}`}>{STATUS_LABELS[req.status]}</span></div>
-    <strong className="requirement-source-label">Job wording</strong><p>{req.text}</p>
-    <strong className="requirement-source-label">Resume evidence</strong>{req.evidence.length ? req.evidence.map((item, index) => <small key={index}>{item}</small>) : <small>{req.status === 'confirmed_incompatible' ? 'You explicitly marked this requirement as incompatible.' : 'No supporting wording found in this review. That is unknown, not proof that you lack the qualification.'}</small>}
+    <strong className="requirement-source-label">Job asks</strong><p>{req.text}</p>
+    <strong className="requirement-source-label">Your resume</strong>{req.evidence.length ? req.evidence.map((item, index) => <small key={index}>{item.replace(/^(Resume evidence|Related resume wording):\s*/i, '')}</small>) : <small>{req.status === 'confirmed_incompatible' ? 'You marked this as a mismatch.' : 'Not found in your resume.'}</small>}
   </article>)}</div>;
 }
 
@@ -345,29 +345,29 @@ function MatchAnalysisPanel({ analysis, isPro, onViewPro, onClarify, onEvidenceR
     return () => observer.disconnect();
   }, [isPro]);
   return <section ref={panel} className="match-analysis" role="group" aria-label={`Match analysis — ${jobTitle}`}>
-    <div className="match-analysis-header"><h3>What your resume shows</h3><span>Resume evidence · Match Analysis</span></div>
-    <p>{analysis.whyPromising}</p><p className="field-hint">Based only on what your resume shows, not a prediction of hiring. “No evidence found in this resume” doesn’t mean you don’t have it.</p>
+    <div className="match-analysis-header"><h3>What your resume shows</h3><span>Match details</span></div>
+    <p>{analysis.whyPromising}</p><p className="field-hint">Based on your resume, not a hiring prediction. Missing evidence doesn’t mean you lack it.</p>
     <ul>{analysis.observations.slice(0, 3).map((item, index) => <li key={index}>{item}</li>)}</ul>
-    {analysis.importantWarning && <div className="match-warning" role="note"><strong>Important requirement</strong><span>{analysis.importantWarning}</span></div>}
+    {analysis.importantWarning && <div className="match-warning" role="note"><strong>{analysis.importantWarning.startsWith('Confirmed incompatibility:') ? 'You marked a mismatch' : 'Required for this job'}</strong><span>{analysis.importantWarning.replace(/^(Confirmed incompatibility|Important required qualification not demonstrated):\s*/i, '')}</span></div>}
     {analysis.seniorityMessage && <p className="match-seniority">{analysis.seniorityMessage}</p>}
     {analysis.clarification && <fieldset className="match-clarification">
-      <legend>Help APWICO understand this requirement</legend>
+      <legend>Does this apply to you?</legend>
       <span>{analysis.clarification.text}</span>
-      <div><button className="text-button" onClick={() => onClarify(analysis.clarification!.requirementId, 'demonstrated')}>I can demonstrate this</button><button className="text-button" onClick={() => onClarify(analysis.clarification!.requirementId, 'not_have')}>I don’t have this</button><button className="text-button" onClick={() => onClarify(analysis.clarification!.requirementId, 'unsure')}>Not sure</button></div>
+      <div><button className="text-button" onClick={() => onClarify(analysis.clarification!.requirementId, 'demonstrated')}>I have this</button><button className="text-button" onClick={() => onClarify(analysis.clarification!.requirementId, 'not_have')}>I don’t have this</button><button className="text-button" onClick={() => onClarify(analysis.clarification!.requirementId, 'unsure')}>Not sure</button></div>
     </fieldset>}
-    {!full && analysis.limitedAnalysis && <div className="match-limited-analysis"><h4>Requirement evidence preview</h4><p className="field-hint">A limited evidence view from this role. Review the requirement, source wording, and what your resume demonstrates.</p><RequirementLedger requirements={analysis.limitedAnalysis.requirements} scope="limited" onReviewed={onEvidenceReviewed}/></div>}
+    {!full && analysis.limitedAnalysis && <div className="match-limited-analysis"><h4>Job requirements</h4><RequirementLedger requirements={analysis.limitedAnalysis.requirements} scope="limited" onReviewed={onEvidenceReviewed}/></div>}
     {!full && <div className="match-upgrade">
       {analysis.additionalAreasAnalyzed > 0 && <span>{analysis.additionalAreasAnalyzed} additional {analysis.additionalAreasAnalyzed === 1 ? 'area' : 'areas'} analyzed</span>}
       <button className="text-button" onClick={onViewPro}>View the full evidence analysis with Pro</button>
     </div>}
-    {full && <details className="match-details" {...(fullAnalysisInitiallyOpen ? { open: true } : {})}><summary>Full evidence analysis</summary>
+    {full && <details className="match-details" {...(fullAnalysisInitiallyOpen ? { open: true } : {})}><summary>See all requirements</summary>
       <p>{full.deeperExplanation}</p>
       <RequirementLedger requirements={full.requirements} scope="full" onReviewed={onEvidenceReviewed}/>
       {full.strengths.length > 0 && <><h4>Strengths</h4><ul>{full.strengths.map((item,index)=><li key={index}>{item}</li>)}</ul></>}
       {full.buriedEvidence.length > 0 && <><h4>Relevant experience that may be buried</h4><ul>{full.buriedEvidence.map((item,index)=><li key={index}>{item}</li>)}</ul></>}
       {full.areasWorthStrengthening.length > 0 && <><h4>Areas worth strengthening</h4><ul>{full.areasWorthStrengthening.map((item,index)=><li key={index}>{item}</li>)}</ul></>}
       {full.constraints.length > 0 && <><h4>Important constraints</h4><ul>{full.constraints.map((item,index)=><li key={index}>{item}</li>)}</ul></>}
-      <p className="field-hint">{saved ? 'Choose “Prepare my application” to start a separate job-specific resume.' : 'Save this job to start a separate job-specific resume.'} Your master resume stays unchanged, and no AI suggestion is applied without your review.</p>
+      <p className="field-hint">{saved ? 'Choose “Prepare my application” to create a separate resume.' : 'Save this job to create a separate resume.'} Your master stays unchanged.</p>
     </details>}
   </section>;
 }
@@ -653,11 +653,11 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
     try {
       await accountRequest({ action: 'preferences', criteria: withExtras(lastCriteriaRef.current), autoRefresh: next, ...(next ? { evidence: buildResumeEvidence(resume) } : {}) });
       if (currentOwnerRef.current !== requestedOwner) return;
-      setMessage(next ? 'Auto Refresh is on. APWICO will request fresh listings about every 24 hours, even when this browser is closed.' : 'Auto Refresh is off.');
+      setMessage(next ? 'Daily refresh is on, even when you’re away.' : 'Daily refresh is off.');
     } catch (error) {
       if (currentOwnerRef.current !== requestedOwner) return;
       setAutoRefresh(!next);
-      setMessage(error instanceof Error ? error.message : 'Unable to save Auto Refresh preference.');
+      setMessage(error instanceof Error ? error.message : 'Could not save this preference.');
     }
   }
 
@@ -854,7 +854,7 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
   const trialAppliesTo = (savedJobId: string) => Boolean(trial?.available && (!trial.savedJobId || trial.savedJobId === savedJobId));
   const prepareLabel = (savedJobId: string) => accountIsPro ? 'Prepare my application' : trialAppliesTo(savedJobId) ? 'Prepare my application (free trial)' : 'Prepare my application with Pro';
   const trialHint = (savedJobId: string) => !accountIsPro && trialAppliesTo(savedJobId) && !jobResumeVersions.some(version => version.savedJobId === savedJobId)
-    ? <p className="field-hint">Your account includes one complete free tailoring trial: one job-specific resume with up to {trial?.runsAllowed ?? 3} AI suggestion runs, using the same consent and review steps. A failed run does not use it.</p> : null;
+    ? <p className="field-hint">One free resume trial for this job · up to {trial?.runsAllowed ?? 3} suggestion runs.</p> : null;
 
   async function startTailoring(saved: SavedJob) {
     if (!ownerId) return;
@@ -888,25 +888,25 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
   if (!ownerId) {
     return <section className="field jobs-panel" aria-label="Job search">
       <div className="jobs-panel-heading">
-        <div>{target.kind !== 'jobs'&&<span className="section-label">Private opportunity workspace</span>}<h1>{privateHeading}</h1><p>{target.kind === 'jobs' ? 'Sign in to search for jobs and save opportunities.' : 'Sign in to restore this workspace state. APWICO verifies ownership before showing any saved job, evidence, or job-specific document.'}</p></div>
+        <div>{target.kind !== 'jobs'&&<span className="section-label">Private opportunity workspace</span>}<h1>{privateHeading}</h1><p>{target.kind === 'jobs' ? 'Sign in to search and save jobs.' : 'Sign in to view this saved job and resume.'}</p></div>
         <button className="back-link" onClick={onBack}>Back</button>
       </div>
       <div className="notice" role="status">
-        Sign in to search and save jobs. Free includes three manual refreshes in a rolling 24-hour window, with up to 10 relevant results each.
+        Free includes 3 searches per 24 hours, with up to 10 results each.
         <button className="text-button" onClick={onSignIn}>Sign in or create account</button>
       </div>
     </section>;
   }
 
   if (!masterReady && (target.kind === 'match' || target.kind === 'job_resume')) return <section className="field jobs-panel" aria-label="Opportunity workspace restoration">
-    <div className="jobs-panel-heading"><div><span className="section-label">Private workspace</span><h1>{privateHeading}</h1><p>Finish the master-resume recovery, storage choice, or account conflict shown above before using job evidence.</p></div><button className="back-link" onClick={onBack}>Back</button></div>
+    <div className="jobs-panel-heading"><div><span className="section-label">Private workspace</span><h1>{privateHeading}</h1><p>Restore your resume to use job matches.</p></div><button className="back-link" onClick={onBack}>Back</button></div>
     <p className="route-loading" role="status">Waiting for your master resume to be ready…</p>
   </section>;
 
   const retryAccountLoad = () => setAccountLoadRevision(value => value + 1);
   if ((target.kind === 'match' || target.kind === 'job_resume') && accountLoadFailed) return <section className="field jobs-panel" aria-label="Workspace restoration">
     <div className="jobs-panel-heading"><div><span className="section-label">Private workspace</span><h1>{privateHeading}</h1></div><button className="back-link" onClick={onOpenSavedJobs}>Back to My applications</button></div>
-    <div className="empty-state" role="alert"><strong>This workspace item is temporarily unavailable.</strong><p>APWICO could not verify and restore the owner-scoped item. No job or resume content was loaded.</p><button className="button" onClick={retryAccountLoad}>Retry</button></div>
+    <div className="empty-state" role="alert"><strong>This item is unavailable.</strong><p>Your private job and resume details were not loaded.</p><button className="button" onClick={retryAccountLoad}>Try again</button></div>
   </section>;
 
 
@@ -920,9 +920,9 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
     return <section className="field jobs-panel" aria-label="Job-specific resume restoration">
       <div className="jobs-panel-heading"><div><span className="section-label">Private workspace</span><h1>Job-specific resume</h1></div><button className="back-link" onClick={onOpenSavedJobs}>Back to My applications</button></div>
       {!accountLoaded || !masterReady ? <p className="route-loading" role="status">Restoring your master resume and owner-scoped version…</p>
-        : exists && !restoreFailure ? <p className="route-loading" role="status">Opening your job-specific resume. Your master resume remains unchanged.</p>
-        : exists && restoreFailure === 'transient' ? <div className="empty-state" role="alert"><strong>This version is temporarily unavailable.</strong><p>APWICO could not complete the owner-scoped restore. No resume content was loaded.</p><button className="button" onClick={retryVersionRestore}>Retry</button></div>
-        : <div className="empty-state" role="status"><strong>This workspace item is unavailable.</strong><p>It may have been removed, belong to another account, or no longer be accessible. No resume content was loaded.</p><button className="button" onClick={onOpenSavedJobs}>Go to My applications</button></div>}
+        : exists && !restoreFailure ? <p className="route-loading" role="status">Opening your separate resume…</p>
+        : exists && restoreFailure === 'transient' ? <div className="empty-state" role="alert"><strong>This resume is unavailable.</strong><p>Your resume details were not loaded.</p><button className="button" onClick={retryVersionRestore}>Try again</button></div>
+        : <div className="empty-state" role="status"><strong>This item is unavailable.</strong><p>Your resume details were not loaded.</p><button className="button" onClick={onOpenSavedJobs}>My applications</button></div>}
     </section>;
   }
 
@@ -931,29 +931,29 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
     if (!accountLoaded || !masterReady) return <section className="field jobs-panel" aria-label="Match Analysis restoration"><h1>Match Analysis</h1><p className="route-loading" role="status">Restoring your master resume and owner-scoped evidence…</p></section>;
     if (!saved) return <section className="field jobs-panel" aria-label="Match Analysis restoration">
       <div className="jobs-panel-heading"><div><span className="section-label">Private workspace</span><h1>Match Analysis</h1></div><button className="back-link" onClick={onOpenSavedJobs}>Back to My applications</button></div>
-      <div className="empty-state" role="status"><strong>This workspace item is unavailable.</strong><p>It may have been removed, belong to another account, or no longer be accessible. No job or resume content was loaded.</p><button className="button" onClick={onOpenSavedJobs}>Go to My applications</button></div>
+      <div className="empty-state" role="status"><strong>This job is unavailable.</strong><button className="button" onClick={onOpenSavedJobs}>My applications</button></div>
     </section>;
     const job = saved.snapshot;
     const application = applications.find(item => item.savedJobId === saved.id) ?? emptyApplication(saved.id);
     return <section className="field jobs-panel" aria-label="Match Analysis">
       <div className="jobs-panel-heading"><div><span className="section-label">Saved job · Private workspace</span><h1>Match Analysis</h1><p>{job.title} at {job.company}</p></div><button className="back-link" onClick={onOpenSavedJobs}>Back to My applications</button></div>
       {message && <p role="status" className="field-hint">{message}</p>}
-      {saved.analysisCurrent === false && <><p className="match-stale" role="status">This analysis needs refreshing because its saved context changed.</p><button className="button" onClick={() => void refreshSavedAnalysis(saved.id)}>Refresh Match Analysis</button></>}
+      {saved.analysisCurrent === false && <><p className="match-stale" role="status">Saved details changed. Refresh this match.</p><button className="button" onClick={() => void refreshSavedAnalysis(saved.id)}>Refresh match</button></>}
       {saved.analysisCurrent !== false && saved.matchAnalysis
         ? <MatchAnalysisPanel saved jobTitle={`${job.title} at ${job.company}`} analysis={saved.matchAnalysis} isPro={accountIsPro} onViewPro={onViewPro} onClarify={(id, value) => void clarify(id, value, { savedJobId: saved.id })} onEvidenceReviewed={scope => recordEvidenceReview(job.dedupeKey as string, saved.matchAnalysis!.contextHash, scope)} />
-        : <div className="empty-state"><strong>Evidence is not available yet.</strong><p>Compare this role with your current master resume to see what it shows.</p><button className="button" onClick={() => void refreshSavedAnalysis(saved.id)}>Show what my resume shows</button></div>}
+        : <div className="empty-state"><strong>No match yet.</strong><p>Compare this job with your resume.</p><button className="button" onClick={() => void refreshSavedAnalysis(saved.id)}>Show match</button></div>}
       {saved.analysisCurrent !== false && saved.matchAnalysis?.fullAnalysis && <RequirementReview requirements={saved.matchAnalysis.fullAnalysis.requirements} edits={application.requirementEdits ?? null} busy={stageBusyId === saved.id} onSave={edits => saveRequirementEdits(saved.id, edits)} />}
       <div className="job-stage"><StageControl application={application} busy={stageBusyId === saved.id || !applicationsAvailable} onChange={patch => void saveStage(saved.id, patch)} label="Application stage" /><a className="text-button" href={`/workspace/applications/${saved.id}`}>Open application record</a></div>
       <OutcomeReportPanel reports={outcomeReports.filter(item=>item.savedJobId===saved.id)} busy={outcomeBusyId===saved.id} available={outcomeReportsAvailable} onReport={report=>saveOutcome(saved.id,report)}/>
       <div className="job-card-actions"><button className="button" disabled={!jobResumeVersions.some(version => version.savedJobId === saved.id) && application.stage === 'closed'} onClick={() => void startTailoring(saved)}>{jobResumeVersions.some(version => version.savedJobId === saved.id) ? 'Open job-specific resume' : prepareLabel(saved.id)}</button></div>
       {trialHint(saved.id)}
-      <p className="field-hint">Preparing creates a separate job-specific resume. Your master resume stays unchanged.</p>
+      <p className="field-hint">Your original resume stays unchanged.</p>
     </section>;
   }
 
   return <section className="field jobs-panel" aria-label="Job search">
     <div className="jobs-panel-heading">
-        <div><span className="section-label">Your opportunity workspace</span><h1>{target.kind === 'saved_jobs' ? 'Saved jobs' : 'Find jobs'}</h1><p>{target.kind === 'saved_jobs' ? 'Roles and evidence you explicitly chose to keep.' : 'Opportunities sourced across 190+ job portals and employer career sites. See what each role asks for, and what your resume already shows.'}</p></div>
+        <div><span className="section-label">Your opportunity workspace</span><h1>{target.kind === 'saved_jobs' ? 'Saved jobs' : 'Find jobs'}</h1><p>{target.kind === 'saved_jobs' ? 'Jobs you want to revisit.' : 'Search 190+ job sites and compare roles with your resume.'}</p></div>
       <button className="back-link" onClick={onBack}>Back</button>
     </div>
     <div className={`opportunity-desk ${target.kind === 'saved_jobs' ? 'saved-only' : ''}`}>{target.kind === 'jobs' && <aside className="opportunity-search" aria-label="Search preferences"><h2>Find your next fit</h2>
@@ -986,30 +986,26 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
         <div className="field"><label htmlFor="jobs-salary-max">Maximum {salaryPeriod === 'year' ? 'annual' : 'hourly'} salary (optional)</label><input name="jobs-salary-max" autoComplete="off" id="jobs-salary-max" type="number" min={0} value={salaryMax} onChange={event => setSalaryMax(event.target.value)} /></div>
       </>}
     </div>
-    <p className="field-hint">
-      {salaryPeriod
-        ? `Comparing ${salaryPeriod === 'year' ? 'annual' : 'hourly'} salary only against postings listing an amount in the exact same currency and period; jobs with an unlisted or differently formatted salary stay eligible.`
-        : 'No salary preference set — jobs with any salary, or none listed, stay eligible.'}
-    </p>
-    {accountLoaded && !accountIsPro && !freeRefreshBlocked && <p className="field-hint">Free accounts get three manual refreshes in a rolling 24-hour window, with up to 10 relevant results each. Set your criteria first.</p>}
-    {!masterReady && <p className="field-hint" role="status">Saved jobs remain available, but search and Match updates pause until your master resume recovery or account check is resolved.</p>}
+    {salaryPeriod && <p className="field-hint">Only listed salaries in the same currency and period count.</p>}
+    {accountLoaded && !accountIsPro && !freeRefreshBlocked && <p className="field-hint">Free: 3 searches per 24 hours · up to 10 results each.</p>}
+    {!masterReady && <p className="field-hint" role="status">Restore your resume to search and refresh matches. Saved jobs remain available.</p>}
     <button className="button" disabled={busy || freeRefreshBlocked || !masterReady} onClick={search}><Search size={16} />{busy ? 'Searching…' : 'Search jobs'}</button>
-    {freeRefreshBlocked && <p className="field-hint" role="status">Your three Free manual refreshes are used. One becomes available {formatRefreshTime(nextFreeRefreshAt)}. Current results and saved jobs stay available. <button className="text-button" onClick={onViewPro}>View Pro options</button></p>}
+    {freeRefreshBlocked && <p className="field-hint" role="status">Free searches used · one opens {formatRefreshTime(nextFreeRefreshAt)}. <button className="text-button" onClick={onViewPro}>View Pro</button></p>}
 
     <div className="jobs-toolbar">
       {results && <button className="text-button" disabled={busy || freeRefreshBlocked || !masterReady} onClick={refresh}><RefreshCw size={14} />Refresh</button>}
-      <label className="jobs-auto-refresh"><input type="checkbox" checked={autoRefresh} onChange={event => void toggleAutoRefresh(event.target.checked)} />Auto Refresh (fresh listings about every 24 hours)</label>
-      <p className="field-hint">When on, APWICO stores bounded, non-contact resume evidence with your account so the server can rank fresh listings while your browser is closed. Turning it off removes that background-refresh evidence.</p>
+      <label className="jobs-auto-refresh"><input type="checkbox" checked={autoRefresh} onChange={event => void toggleAutoRefresh(event.target.checked)} />Refresh jobs daily</label>
+      <p className="field-hint">Uses resume details, not contact info. Turn off anytime.</p>
     </div>
 
     </aside>}<div className="opportunity-content">
     {message && <p role="status" className="field-hint">{message}</p>}
-    {busy && <div className="jobs-skeleton" role="status"><strong>Looking for opportunities…</strong><span aria-hidden="true"/><span aria-hidden="true"/><p className="field-hint">Checking each role against your preferences and the evidence in your resume.</p></div>}
-    {target.kind === 'jobs' && !results && !busy && savedJobs.length === 0 && <div className="empty-state"><strong>Your experience is the starting point.</strong><p>Choose a suggested role or enter your own criteria, then search. You’ll see why each opportunity may fit before deciding what to save.</p></div>}
+    {busy && <div className="jobs-skeleton" role="status"><strong>Looking for jobs…</strong><span aria-hidden="true"/><span aria-hidden="true"/><p className="field-hint">Comparing jobs with your resume and preferences.</p></div>}
+    {target.kind === 'jobs' && !results && !busy && savedJobs.length === 0 && <div className="empty-state"><strong>Ready when you are.</strong><p>Choose a role and search. Review each match before saving.</p></div>}
 
     <section className="saved-jobs-section" aria-labelledby="saved-jobs-heading">
       <div className="saved-jobs-heading"><h2 id="saved-jobs-heading">Saved to My applications</h2><span>{savedJobs.length}{accountIsPro ? '' : ` of ${saveLimit}`}</span></div>
-      {savedJobs.length === 0 ? <div className="empty-state"><strong>Keep the roles worth a second look.</strong><p>Choose “Save job” on a result to keep it and its match evidence here, even if the listing closes{accountIsPro ? ' or your Pro access ends' : ''}.{accountIsPro ? '' : ` Free accounts can save up to ${saveLimit}.`}</p></div> :
+      {savedJobs.length === 0 ? <div className="empty-state"><strong>Save jobs to revisit them here.</strong>{!accountIsPro && <p>Free accounts can save up to {saveLimit} jobs.</p>}</div> :
 	        <ul className="jobs-results" aria-label="Saved jobs">{savedJobs.map(saved => {
 	          const job = saved.snapshot;
 	          const application = applications.find(item => item.savedJobId === saved.id) ?? emptyApplication(saved.id);
@@ -1017,7 +1013,6 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
             <div className="job-card-heading"><div><h3>{job.title}</h3><span>{job.company}</span></div>
               {!saved.providerAvailable && <span className="job-unavailable">No longer available</span>}
             </div>
-	            <div className="saved-job-state"><span>{saved.matchAnalysis ? 'Match Analysis available' : 'Match evidence pending'}</span><span>{jobResumeVersions.some(version => version.savedJobId === saved.id) ? 'Tailored resume saved' : 'Master resume unchanged'}</span></div>
 	            {application.nextAction && <p className="field-hint" role="status">{application.nextActionDue && Date.parse(application.nextActionDue) <= Date.now() ? 'Suggested follow-up' : 'Next'}: {application.nextAction}{application.nextActionDue ? ` · ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(application.nextActionDue))}` : ''}</p>}
             {job.provider === 'extension' && <>
               <p className="field-hint">Captured job · Availability not verified</p>
@@ -1029,9 +1024,9 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
                 </details>}
               </details>
             </>}
-            {saved.analysisCurrent === false && <p className="match-stale" role="status">Saved match analysis needs refreshing because the resume, job, preferences, or clarifications changed.</p>}
-            {saved.analysisCurrent === false && <button className="text-button" onClick={() => void refreshSavedAnalysis(saved.id)}>Refresh match analysis</button>}
-            {saved.analysisCurrent !== false && saved.matchAnalysis && <MatchAnalysisPanel saved jobTitle={`Saved: ${job.title} at ${job.company}`} analysis={saved.matchAnalysis} isPro={accountIsPro} onViewPro={onViewPro} onClarify={(id, value) => void clarify(id, value, { savedJobId: saved.id })} onEvidenceReviewed={scope=>recordEvidenceReview(job.dedupeKey as string,saved.matchAnalysis!.contextHash,scope)} fullAnalysisInitiallyOpen={false} />}
+            {saved.analysisCurrent === false && <p className="match-stale" role="status">Saved details changed. Refresh this match.</p>}
+            {saved.analysisCurrent === false && <button className="text-button" onClick={() => void refreshSavedAnalysis(saved.id)}>Refresh match</button>}
+            {saved.analysisCurrent !== false && saved.matchAnalysis && <details className="saved-match-preview"><summary>Match preview</summary><MatchAnalysisPanel saved jobTitle={`Saved: ${job.title} at ${job.company}`} analysis={saved.matchAnalysis} isPro={accountIsPro} onViewPro={onViewPro} onClarify={(id, value) => void clarify(id, value, { savedJobId: saved.id })} onEvidenceReviewed={scope=>recordEvidenceReview(job.dedupeKey as string,saved.matchAnalysis!.contextHash,scope)} fullAnalysisInitiallyOpen={false} /></details>}
 	            <div className="job-stage"><StageControl application={application} busy={stageBusyId === saved.id || !applicationsAvailable} onChange={patch => void saveStage(saved.id, patch)} label={`Application stage for ${job.title}`} /><a className="text-button" href={`/workspace/applications/${saved.id}`}>Open application record</a></div>
 	            <OutcomeReportPanel reports={outcomeReports.filter(item=>item.savedJobId===saved.id)} busy={outcomeBusyId===saved.id} available={outcomeReportsAvailable} onReport={report=>saveOutcome(saved.id,report)}/>
 	            <div className="job-card-actions">
@@ -1045,14 +1040,13 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
           </li>;
         })}</ul>}
       {!accountIsPro && savedJobs.length >= saveLimit && <p className="field-hint">
-        You’re tracking {saveLimit} applications, the Free limit. Every saved record stays available to view, update and export; Pro adds more and tailors a separate resume for each.{' '}
+        Free limit reached · saved jobs stay available.{' '}
         <button className="text-button" onClick={onViewPro}>View Pro options</button>
       </p>}
     </section>
 
     {jobResumeVersions.some(version => !version.savedJobExists) && <section className="saved-jobs-section" aria-labelledby="job-resumes-heading">
       <div className="saved-jobs-heading"><h2 id="job-resumes-heading">Job-specific resumes</h2></div>
-      <p className="field-hint">These documents are preserved even though their original saved-job bookmark was removed.</p>
       <ul className="jobs-results" aria-label="Job-specific resumes">{jobResumeVersions.filter(version => !version.savedJobExists).map(version => <li className="job-card saved-job-card" key={version.id}>
         <div className="job-card-heading"><div><h3>{version.jobSnapshot.title}</h3><span>{version.jobSnapshot.company}</span></div><span className="job-unavailable">Saved job removed</span></div>
         <div className="job-card-actions"><button className="button" onClick={() => void openJobResume(version)}>Open tailored resume</button></div>
@@ -1061,9 +1055,9 @@ export function JobsPanel({ resume, ownerId, masterReady, target, onSignIn, onVi
 
     {target.kind === 'jobs' && results && <>
       <div className="saved-jobs-heading"><h2>Opportunities worth your attention</h2></div>
-      {results.jobs.length === 0 && <div className="empty-state"><strong>No matching roles in this search.</strong><p>Try a broader title or location, or remove a preference. Your saved jobs are still here.</p></div>}
+      {results.jobs.length === 0 && <div className="empty-state"><strong>No jobs found.</strong><p>Try a different title or location.</p></div>}
       <p className="field-hint" role="status">
-        {`Showing ${results.jobs.length} of ${results.availableCount} matching jobs.`}{' '}
+        {`Showing ${results.jobs.length} of ${results.availableCount} jobs.`}{' '}
         {!results.isPro && results.availableCount > results.jobs.length && <>{`Pro shows up to ${results.proLimit} per search. `}<button className="text-button" onClick={onViewPro}>View Pro options</button></>}
       </p>
       {ownerId && <DiscoverDeck ownerId={ownerId} jobs={results.jobs.map(job => deckJob(job, withExtras(lastCriteriaRef.current)))}

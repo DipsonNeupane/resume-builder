@@ -10,7 +10,7 @@ export function ProvenanceList({ entries, resume, heading }: { entries: Provenan
  if (entries.length === 0) return null;
  return <details className="provenance-list">
   <summary>{heading} ({entries.length})</summary>
-  <p className="field-hint">Your record of how each accepted change was made and what it was checked against. It does not show that any wording is true.</p>
+   <p className="field-hint">See what supported each change. This record doesn’t verify the claim.</p>
   <ol>{entries.map(item => { const state = provenanceState(item, resume); return <li key={item.id} data-origin={item.origin} data-state={state}>
    <p><strong>{FIELD_LABEL[item.field]}</strong> · {ORIGIN_LABEL[item.origin]} · <span>{STATE_LABEL[state]}</span> <small>· accepted {dateTime.format(new Date(item.acceptedAt))}</small></p>
    <p className="provenance-text">“{item.keptText}”</p>

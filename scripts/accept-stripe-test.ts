@@ -86,7 +86,7 @@ async function paidSubscription(owner:string,offerKey:string,price:string,clock?
   createdSubscriptions.push(subscription.id)
   const period=subscriptionPeriod(subscription)
   const templateId=offerKey.startsWith('template:')?offerKey.slice(9):null
-  await rpc('billing_record_offer_subscription',{p_owner:owner,p_subscription:subscription.id,p_price:price,p_live:false,p_status:subscription.status,p_cancel_at_period_end:subscription.cancel_at_period_end,p_period_start:period.start,p_period_end:period.end,p_offer_key:offerKey,p_offer_kind:templateId?'template':'pro',p_template_id:templateId})
+  await rpc('billing_record_offer_subscription',{p_owner:owner,p_subscription:subscription.id,p_price:price,p_live:false,p_status:subscription.status,p_cancel_at_period_end:subscription.cancel_at_period_end,p_period_start:period.start,p_period_end:period.end,p_offer_key:offerKey,p_offer_kind:templateId?'template':'pro',p_template_id:templateId,p_pilot_promotion_code_id:null})
   const invoice=typeof subscription.latest_invoice==='string'
     ? await stripe.invoices.retrieve(subscription.latest_invoice,{expand:['payments']})
     : await stripe.invoices.retrieve(subscription.latest_invoice!.id,{expand:['payments']})
@@ -196,7 +196,7 @@ try{
   const failedSub=await stripe.subscriptions.create({customer:failedCustomer.id,items:[{price:templatePrices.mandate}],default_payment_method:failedMethod.id,payment_behavior:'allow_incomplete',metadata:{offer_key:'template:mandate',acceptance_run:runTag},expand:['latest_invoice']})
   createdSubscriptions.push(failedSub.id)
   const failedPeriod=subscriptionPeriod(failedSub)
-  await rpc('billing_record_offer_subscription',{p_owner:owners.failure,p_subscription:failedSub.id,p_price:templatePrices.mandate,p_live:false,p_status:failedSub.status,p_cancel_at_period_end:false,p_period_start:failedPeriod.start,p_period_end:failedPeriod.end,p_offer_key:'template:mandate',p_offer_kind:'template',p_template_id:'mandate'})
+  await rpc('billing_record_offer_subscription',{p_owner:owners.failure,p_subscription:failedSub.id,p_price:templatePrices.mandate,p_live:false,p_status:failedSub.status,p_cancel_at_period_end:false,p_period_start:failedPeriod.start,p_period_end:failedPeriod.end,p_offer_key:'template:mandate',p_offer_kind:'template',p_template_id:'mandate',p_pilot_promotion_code_id:null})
   const failedInvoice=typeof failedSub.latest_invoice==='string'?await stripe.invoices.retrieve(failedSub.latest_invoice):failedSub.latest_invoice!
   await applyOfferInvoice(failedInvoice,Math.floor(Date.now()/1000),'invoice.payment_failed',stripe,db as never,{owner_id:owners.failure,subscription_id:failedSub.id,offer_key:'template:mandate',price_id:templatePrices.mandate,cancel_at_period_end:false,current_period_end:failedPeriod.end},env)
   assert.equal((await access(owners.failure,'mandate')).has_template,false)

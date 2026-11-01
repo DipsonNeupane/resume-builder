@@ -31,7 +31,7 @@ test('mobile navigation has sequential keyboard access, Escape, and destination 
   page.waitForURL(/\/templates\/$/, { timeout: 30_000 }),
   page.keyboard.press('Enter'),
  ]);
- await expect(page.getByRole('heading', { level: 1, name: 'Browse resume templates.' })).toBeVisible();
+ await expect(page.getByRole('heading', { level: 1, name: 'Choose a layout that fits your story.' })).toBeVisible();
  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
@@ -86,7 +86,7 @@ test('builder fields expose input purpose and a visible keyboard focus ring', as
 
 test('lazy route transitions focus the destination heading', async ({ page }) => {
  await page.goto('/');
- await page.getByRole('button', { name: 'View Pro options', exact: true }).click();
+ await page.getByRole('button', { name: 'Explore Pro', exact: true }).click();
  await expect(page.getByRole('heading', { level: 1, name: 'Get APWICO Pro' })).toBeFocused();
  await page.getByRole('button', { name: 'Sign in or create account' }).click();
  await expect(page.getByRole('heading', { level: 1, name: 'Create your account' })).toBeFocused();
@@ -101,7 +101,7 @@ test('delayed lazy route focuses only its loaded heading and cached routes still
  });
  try {
   await page.goto('/');
-  await page.getByRole('button', { name: 'View Pro options', exact: true }).click();
+  await page.locator('.plan-pro').getByRole('button', { name: 'Explore Pro', exact: true }).click();
   const proHeading = page.getByRole('heading', { level: 1, name: 'Get APWICO Pro' });
   await expect(proHeading).toBeFocused();
   await page.getByRole('button', { name: 'Sign in or create account' }).click();
@@ -118,7 +118,7 @@ test('delayed lazy route focuses only its loaded heading and cached routes still
   await expect(page.getByRole('heading', { level: 1, name: 'Find jobs' })).toBeFocused();
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Find jobs you like. Apply with confidence. Know what happens next.', exact: true })).toBeFocused();
-  await page.getByRole('button', { name: 'View Pro options', exact: true }).click();
+  await page.locator('.plan-pro').getByRole('button', { name: 'Explore Pro', exact: true }).click();
   await expect(proHeading).toBeFocused();
   await page.getByRole('button', { name: 'Sign in or create account' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Create your account' })).toBeFocused();

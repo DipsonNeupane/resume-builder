@@ -138,10 +138,10 @@ test('saved Match keeps job wording and resume evidence connected while the owne
     return route.fulfill({ json: { isPro: false, saveLimit: 100, savedJobs: [saved], jobResumeVersions: [], applications: [], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } } });
   });
   await page.goto(`/workspace/jobs/${savedJobId}/match`, { waitUntil: 'domcontentloaded' });
-  await expect(page.getByText('Job wording', { exact: true })).toBeVisible();
+  await expect(page.getByText('Job asks', { exact: true })).toBeVisible();
   await expect(page.getByText('Must hold an active support certification.', { exact: true }).first()).toBeVisible();
-  await expect(page.getByText('Resume evidence', { exact: true })).toBeVisible();
-  await expect(page.getByText(/unknown, not proof/i)).toBeVisible();
+  await expect(page.getByText('Your resume', { exact: true })).toBeVisible();
+  await expect(page.getByText(/missing evidence doesn’t mean you lack it/i)).toBeVisible();
 
   // Applied is recorded only through an explicit choice that collects the submission date.
   await page.getByLabel('Application stage').selectOption('applied');
@@ -374,7 +374,7 @@ test('Free match analysis shows a bounded evidence preview, important unknown wa
   await openJobs(page);
   await page.getByRole('button', { name: 'Search jobs' }).click();
   await expect(page.getByRole('heading', { name: 'What your resume shows' })).toBeVisible();
-  await expect(page.getByText(/required qualification not demonstrated/i)).toBeVisible();
+  await expect(page.getByText('Required for this job', { exact: true })).toBeVisible();
   await expect(page.getByText('3 additional areas analyzed')).toBeVisible();
   await expect(page.getByText('Required', { exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'View the full evidence analysis with Pro' })).toBeVisible();
@@ -391,9 +391,9 @@ test('Pro match analysis exposes classified evidence depth and a truthful saved-
   await expect(full.getByText('Required', { exact: true })).toBeVisible();
   await expect(full.getByText('Preferred', { exact: true })).toBeVisible();
   await expect(full.getByText('Nice to have', { exact: true })).toBeVisible();
-  await expect(full.getByText('No evidence found in this resume', { exact: true })).toBeVisible();
-  await expect(page.getByText(/Save this job to start a separate job-specific resume/i)).toBeVisible();
-  await expect(page.getByText(/master resume stays unchanged/i)).toBeVisible();
+  await expect(full.getByText('Not in resume', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Save this job to create a separate resume/i)).toBeVisible();
+  await expect(page.getByText(/Your master stays unchanged/i)).toBeVisible();
   const axe = await new AxeBuilder({ page }).include('.match-analysis').analyze();
   expect(axe.violations).toEqual([]);
 });
@@ -408,6 +408,7 @@ test('current Pro saved analysis restores and renders complete evidence depth af
   }) }));
   await openJobs(page);
   const savedCard = page.locator('.saved-job-card');
+  await savedCard.locator('details.saved-match-preview > summary').click();
   const full = savedCard.locator('details.match-details');
   await expect(full).not.toHaveAttribute('open', '');
   await full.locator('summary').click();
@@ -426,12 +427,14 @@ test('Free saved analysis reload renders only the bounded preview and never Pro 
   }) }));
   await openJobs(page);
   const savedCard = page.locator('.saved-job-card');
+  await expect(savedCard.getByRole('heading', { name: 'What your resume shows' })).toBeHidden();
+  await savedCard.getByText('Match preview', { exact: true }).click();
   await expect(savedCard.getByRole('heading', { name: 'What your resume shows' })).toBeVisible();
   await expect(savedCard.getByText('Required', { exact: true })).toHaveCount(0);
   await expect(savedCard.getByRole('button', { name: 'View the full evidence analysis with Pro' })).toBeVisible();
   // A Free account is told up front that tailoring is a Pro step, rather than being redirected unexpectedly.
   await expect(savedCard.getByRole('button', { name: 'Prepare my application with Pro' })).toBeVisible();
-  await expect(page.getByText('Free accounts get three manual refreshes in a rolling 24-hour window, with up to 10 relevant results each.', { exact: false })).toBeVisible();
+  await expect(page.getByText('Free: 3 searches per 24 hours · up to 10 results each.', { exact: true })).toBeVisible();
 });
 
 test('stale saved analysis has a manual deterministic refresh path with zero provider searches', async ({ page }) => {
@@ -447,7 +450,8 @@ test('stale saved analysis has a manual deterministic refresh path with zero pro
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isPro: false, saveLimit: 10, savedJobs: [stale], preferences: { criteria: null, autoRefresh: false, lastProviderRefreshAt: null } }) });
   });
   await openJobs(page);
-  await page.getByRole('button', { name: 'Refresh match analysis' }).click();
+  await page.getByRole('button', { name: 'Refresh match' }).click();
+  await page.locator('.saved-match-preview > summary').click();
   await expect(page.getByRole('heading', { name: 'What your resume shows' })).toBeVisible();
   await expect(page.getByText(/didn.t use a job search/i)).toBeVisible();
   expect(searchCalls).toBe(0);
@@ -689,15 +693,15 @@ test('Auto Refresh defaults off and persists an explicit opt-in, scoped to the s
   });
   await page.route('**/api/jobs-search', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(sampleResponse) }));
   await openJobs(page);
-  const toggle = page.getByRole('checkbox', { name: 'Auto Refresh (fresh listings about every 24 hours)' });
+  const toggle = page.getByRole('checkbox', { name: 'Refresh jobs daily' });
   await expect(toggle).not.toBeChecked();
   await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toHaveCount(0);
   await toggle.check();
   await expect.poll(() => savedPreference?.autoRefresh).toBe(true);
-  await expect(page.getByText(/even when this browser is closed/i)).toBeVisible();
+  await expect(page.getByText(/Daily refresh is on, even when you’re away/i)).toBeVisible();
   await page.getByRole('button', { name: 'Search jobs' }).click();
   await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeEnabled();
-  await expect(page.getByText(/three manual refreshes in a rolling 24-hour window/i)).toBeVisible();
+  await expect(page.getByText(/Free: 3 searches per 24 hours/i)).toBeVisible();
 });
 
 test('Pro has no Free manual-refresh restriction while retaining server-side background refresh', async ({ page }) => {

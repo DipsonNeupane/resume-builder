@@ -7,8 +7,8 @@ values
  ('c2c2c2c2-c2c2-4c2c-8c2c-c2c2c2c2c2c2','00000000-0000-0000-0000-000000000000','authenticated','authenticated','cancelled@example.com','x',now(),now()-interval '60 days',now(),'{}','{}',false);
 
 -- Runs as the database owner: grants are covered by subscription_offers.test.sql.
-select lives_ok($$select public.billing_record_offer_subscription('a1a1a1a1-a1a1-4a1a-8a1a-a1a1a1a1a1a1','sub_renews','price_pro',false,'active',false,now()-interval '20 days',now()+interval '10 days','pro:monthly','pro',null)$$,'records a renewing Pro subscription');
-select lives_ok($$select public.billing_record_offer_subscription('c2c2c2c2-c2c2-4c2c-8c2c-c2c2c2c2c2c2','sub_cancelled','price_pro',false,'active',true,now()-interval '20 days',now()+interval '10 days','pro:monthly','pro',null)$$,'records a Pro subscription set to cancel');
+select lives_ok($$select public.billing_record_offer_subscription('a1a1a1a1-a1a1-4a1a-8a1a-a1a1a1a1a1a1','sub_renews','price_pro',false,'active',false,now()-interval '20 days',now()+interval '10 days','pro:monthly','pro',null,null)$$,'records a renewing Pro subscription');
+select lives_ok($$select public.billing_record_offer_subscription('c2c2c2c2-c2c2-4c2c-8c2c-c2c2c2c2c2c2','sub_cancelled','price_pro',false,'active',true,now()-interval '20 days',now()+interval '10 days','pro:monthly','pro',null,null)$$,'records a Pro subscription set to cancel');
 
 select is(public.billing_schedule_renewal_notices(now()),1,'one reminder is scheduled, only for the renewing subscription');
 select is((select due_at from public.billing_transactional_notices where subscription_id='sub_renews' and kind='renewal_reminder'),

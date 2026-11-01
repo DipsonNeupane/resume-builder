@@ -39,7 +39,7 @@ export function FictionalSample({ onUseResume, onUseJobDescription }: Props) {
    {decision === 'tailor' && !created && <button className="button" onClick={() => setCreated(true)}>Create a separate version</button>}
    {created && <section className="sample-version" aria-labelledby="sample-version-heading"><h2 ref={versionHeading} tabIndex={-1} id="sample-version-heading">Separate fictional job-specific version</h2>
     <div className="sample-version-state"><p><strong>Master resume</strong><span>Unchanged · 3 original evidence points</span></p><p><strong>Northstar Commons version</strong><span>Separate · suggestions require Jordan’s choice</span></p></div>
-    <h3>Suggestions</h3><p>Each suggestion is limited to facts already present in the fictional source resume. Jordan can accept or reject each one.</p>
+    <h3>Suggestions</h3><p>Suggestions use only the fictional resume. Review each before accepting.</p>
     <ul className="sample-suggestions">{suggestions.map(item => <li key={item.id}><p>{item.text}</p><small>{item.source}</small><button className="button outline" aria-pressed={accepted.includes(item.id)} onClick={() => setAccepted(current => current.includes(item.id) ? current.filter(id => id !== item.id) : [...current, item.id])}>{accepted.includes(item.id) ? <><CheckCircle2 size={15} />Accepted in separate version</> : 'Accept in separate version'}</button></li>)}</ul>
     <p className="field-hint" role="status">{accepted.length} of {suggestions.length} suggestions accepted in the fictional job-specific version. The fictional master remains unchanged.</p>
    </section>}

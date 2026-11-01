@@ -127,6 +127,8 @@ test('Journey A (browser, connected): preferences → discovery → save → cor
   await expect(page.getByRole('heading', { level: 1, name: 'Which roles are you looking for?' })).toBeVisible({ timeout: 60_000 });
   await page.getByLabel('Role title').fill('Customer Support Specialist');
   await page.getByRole('button', { name: 'Add role' }).click();
+  await page.getByLabel('What kind of work are you looking for? (optional)').selectOption('customer_service');
+  await page.getByRole('button', { name: '+ Customer service representative' }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByLabel('Remote').check();
   await page.getByRole('button', { name: 'Continue' }).click();
@@ -318,7 +320,7 @@ test('Journey B (browser, connected): tracker-first from home → quick add → 
   await page.getByRole('button', { name: 'Import applications' }).click();
   await expect(page.getByText('2 imported.')).toBeVisible({ timeout: 30_000 });
   // Closed records are hidden from the default list but counted and kept.
-  await expect(page.getByText('3 of 100 Free applications used.')).toBeVisible();
+  await expect(page.getByText('3 of 100 applications.')).toBeVisible();
   await expect(page.locator('.application-row')).toHaveCount(2);
   const closed = (await pg.query<{ stage: string; closed_reason: string }>(`select w.stage, w.closed_reason from public.job_application_workflows w join public.saved_jobs j on j.id = w.saved_job_id where j.snapshot->>'company' = 'Sample Works'`)).rows[0];
   expect(closed).toEqual({ stage: 'closed', closed_reason: 'no_response' });

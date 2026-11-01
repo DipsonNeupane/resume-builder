@@ -1,4 +1,5 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
+import { writeKeepingSeoBlock } from './seo-block';
 import { clusterByGuideSlug, contentClusters, guideBySlug, guides, resourcesPath, type Guide } from '../src/content/guides';
 
 const check = process.argv.includes('--check');
@@ -98,7 +99,7 @@ function output(file: string, html: string) {
  mkdirSync(file.slice(0, file.lastIndexOf('/')), { recursive: true });
  if (check) {
   if (withoutSeo(readFileSync(file, 'utf8')) !== withoutSeo(html)) throw new Error(`Resource output stale: ${file}. Run npm run resources:generate.`);
- } else writeFileSync(file, html);
+ } else writeKeepingSeoBlock(file, html);
 }
 
 output('public/resources/index.html', hub());

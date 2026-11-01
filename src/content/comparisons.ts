@@ -12,13 +12,18 @@ export type ComparisonPage = {
   sources: Array<{ label: string; url: string; kind: 'pricing' | 'feature'; locale: string; currency: string | null; checkedAt: `${number}-${number}-${number}`; nextReviewAt: `${number}-${number}-${number}` }>;
 };
 
-const pricingReview = '2026-10-30' as const;
+const pricingReview = '2026-11-30' as const;
 const featureReview = '2026-12-29' as const;
-const source = (label: string, url: string, kind: 'pricing' | 'feature', locale = 'English-language public source', currency: string | null = null) => ({ label, url, kind, locale, currency, checkedAt: '2026-09-30' as const, nextReviewAt: kind === 'pricing' ? pricingReview : featureReview });
+const source = (label: string, url: string, kind: 'pricing' | 'feature', locale = 'English-language public source', currency: string | null = null) => ({ label, url, kind, locale, currency, checkedAt: kind === 'pricing' ? '2026-10-31' as const : '2026-09-30' as const, nextReviewAt: kind === 'pricing' ? pricingReview : featureReview });
 
-export const comparisonReviewedOn = '2026-09-30' as const;
+export const comparisonReviewedOn = '2026-10-31' as const;
 export const comparisonReviewer = 'APWICO evidence review' as const;
-export const evidenceIsCurrent = (nextReviewAt: string, today = new Date().toISOString().slice(0, 10)) => nextReviewAt >= today;
+export function editorialReviewDate(at = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(at);
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find(item => item.type === type)?.value ?? '';
+  return `${part('year')}-${part('month')}-${part('day')}`;
+}
+export const evidenceIsCurrent = (nextReviewAt: string, today = editorialReviewDate()) => nextReviewAt >= today;
 export const resumeStrideComparisonBoundaries = [] as const;
 
 // Vendor-described public facts only. These pages do not test private behavior,
@@ -29,22 +34,22 @@ export const comparisons: ComparisonPage[] = [
     slug: 'teal', vendor: 'Teal', description: 'A factual comparison of Teal and APWICO across resume creation, job tracking, matching, payment and evidence control.',
     strengths: ['Teal publishes an integrated job tracker and resume workflow.', 'Its official pricing page describes unlimited resumes on Free and Teal+ and multiple subscription durations.', 'Its help center documents builder, matcher, import, analysis and export workflows.'],
     boundaries: ['Teal describes keyword matching and a Match Score; APWICO centers requirement-level source wording and evidence states without a dominant percentage.', 'Vendor pages cannot establish private processing behavior or applicant outcomes.', 'Pricing and plan limits can change and must be rechecked after the displayed review date.'],
-    freeAccess: 'The official US/English pricing page displayed a Free plan with unlimited resumes and job tracking, 10 resume templates and a limited top-five keyword view.',
-    paidAccess: 'The same page displayed Teal+ weekly, 30-day and 90-day recurring options with full keyword analysis and additional paid features.',
+    freeAccess: 'The official US/English pricing page currently lists unlimited resumes and job tracking, 10 resume templates and a top-five keyword view on Free.',
+    paidAccess: 'Teal+ adds full keyword analysis and additional paid features. The current US pricing page lists weekly, 30-day and 90-day subscription options.',
     workflow: 'Teal combines resume creation, matching and job tracking. APWICO combines a master resume, requirement-level evidence review, a user pursue decision and separate job-specific versions.',
     evidenceMethod: 'Teal publicly describes keywords and Match Score. APWICO shows the requirement, employer source wording and resume evidence together, including “not demonstrated” as an unknown rather than a hiring verdict.',
-    billing: 'Teal’s checked pricing/help sources describe recurring access and cancellation at the end of the billing period. Confirm the current displayed terms at purchase.',
+    billing: 'Teal’s current US pricing page lists weekly, 30-day and 90-day plans. Its terms say subscriptions renew automatically unless cancelled; confirm the renewal date and terms at purchase.',
     sources: [source('Teal — Pricing', 'https://www.tealhq.com/pricing', 'pricing', 'United States / English', 'USD'), source('Teal Help — Teal versus Teal+', 'https://help.tealhq.com/en/articles/9530153-teal-vs-teal', 'feature'), source('Teal Help — Resume Builder collection', 'https://help.tealhq.com/en/collections/9568976-resume-builder', 'feature')],
   },
   {
     slug: 'huntr', vendor: 'Huntr', description: 'A factual comparison of Huntr and APWICO across base and tailored resumes, application tracking, matching and payment.',
-    strengths: ['Huntr publishes a job-search CRM with job, contact and application tracking.', 'Its help center distinguishes base resumes from tailored resumes.', 'Its checked pricing page described free PDF export and all templates on the Free tier.'],
+    strengths: ['Huntr publishes a job-search CRM with job, contact and application tracking.', 'Its help center distinguishes base resumes from tailored resumes.', 'Its current pricing page lists free PDF export and all templates on the Free tier.'],
     boundaries: ['Huntr describes resume scoring and keyword matching; APWICO uses requirement-level evidence states and leaves the pursue decision to the user.', 'The official pricing response was locale-specific and can change; users should verify the live page.', 'No claim is made about either product’s private systems or hiring outcomes.'],
-    freeAccess: 'The checked official pricing response described unlimited base resumes, free PDF export, all templates, two tailored resume/application packets and tracking up to 100 jobs.',
+    freeAccess: 'The current official pricing page lists unlimited base resumes, free PDF export, all templates, two tailored resume/application packets and tracking up to 100 jobs.',
     paidAccess: 'The same source described recurring Pro access with unlimited tailored resumes, AI features and job tracking; verify current price, locale and cadence on the live page.',
     workflow: 'Huntr presents base and tailored resumes inside a broader job tracker. APWICO preserves one master and creates a separate job-specific version after evidence review and user decision.',
     evidenceMethod: 'Huntr publicly describes match/scoring tools. APWICO does not present a hiring probability or ATS pass score.',
-    billing: 'The checked official page displayed recurring monthly, quarterly and six-month options in the US/English view. Exact prices are intentionally omitted here because the current response is locale-dependent.',
+    billing: 'The current official page lists monthly, quarterly and six-month Pro billing. Exact amounts vary by billing period; check the vendor’s current checkout before subscribing.',
     sources: [source('Huntr — Pricing', 'https://huntr.co/pricing', 'pricing', 'United States / English view', 'USD'), source('Huntr Help — Understanding the Resume Builder', 'https://help.huntr.co/en/articles/12824077-understanding-huntr-s-resume-builder', 'feature'), source('Huntr Help — Job Tracker', 'https://help.huntr.co/en/collections/10297189-job-tracker', 'feature')],
   },
   {
@@ -66,18 +71,18 @@ export const comparisons: ComparisonPage[] = [
     paidAccess: 'Premium documentation describes unlimited resumes, cover letters and PDF downloads, with Word export available for some templates.',
     workflow: 'Resume.io focuses on document creation and templates. APWICO links the master document to job evidence, a user decision and a separate tailored version.',
     evidenceMethod: 'This comparison did not establish a public requirement-level evidence workflow in Resume.io. That means “not established,” not that no feature exists.',
-    billing: 'Resume.io’s help center says the seven-day trial auto-renews, location affects price, and cancellation retains premium access until the end of the paid period; documents remain available afterward.',
+    billing: 'Resume.io’s help center says the seven-day trial auto-renews to a paid plan if not cancelled. It also documents four-week billing and says resumes and cover letters remain accessible after cancellation; check the current checkout for local prices and terms.',
     sources: [source('Resume.io Help — Premium features and pricing', 'https://help.resume.io/en/articles/3785856', 'pricing'), source('Resume.io Help — Free features', 'https://help.resume.io/en/articles/3785088', 'feature'), source('Resume.io Help — Billing', 'https://help.resume.io/en/articles/3785664', 'pricing'), source('Resume.io Help — Cancel a subscription', 'https://help.resume.io/en/articles/3784896', 'feature'), source('Resume.io Help — Export formats', 'https://help.resume.io/en/articles/3784704', 'feature')],
   },
   {
     slug: 'enhancv', vendor: 'Enhancv', description: 'A factual comparison of Enhancv and APWICO across design, content guidance, recurring access and post-cancellation editing.',
     strengths: ['Enhancv publishes multiple resume designs and customizable sections.', 'Its Pro documentation describes content suggestions and an ATS check.', 'Its help center states recurring plan and post-cancellation editing behavior.'],
     boundaries: ['The checked pricing page did not provide a stable locale-independent numerical price, so none is repeated here.', 'Vendor-described ATS checks are not treated as proof of hiring or system acceptance.', 'No private behavior or applicant outcome is inferred.'],
-    freeAccess: 'The official pricing surface describes a seven-day free experience with branding and limits; verify current details on the live page.',
+    freeAccess: 'The current pricing page describes a seven-day free plan with branding, basic sections and a 12-item limit. Check the signup screen for the terms shown to your location.',
     paidAccess: 'Enhancv’s help article describes monthly, quarterly and semiannual Pro plans with resume/cover-letter features and content guidance.',
     workflow: 'Enhancv emphasizes document design and guidance. APWICO emphasizes requirement evidence, user authority and master/job-specific version separation.',
     evidenceMethod: 'Enhancv describes an ATS check and content suggestions. APWICO avoids a dominant ATS percentage and keeps source requirement, evidence and unknowns connected.',
-    billing: 'The checked help article says plans recur automatically and that, after cancellation, existing documents can be downloaded but cannot be edited without resubscribing. Verify live terms at purchase.',
+    billing: 'Enhancv’s help center says monthly, quarterly and semiannual plans renew automatically unless cancelled. It says existing documents can be downloaded after cancellation, but editing requires an active plan. Pricing varies by location; confirm the current terms at purchase.',
     sources: [source('Enhancv — Pricing', 'https://enhancv.com/pricing/', 'pricing'), source('Enhancv Help — Pro plans', 'https://help.enhancv.com/en/articles/1195346-understanding-the-enhancv-pro-plans', 'feature')],
   },
 ];

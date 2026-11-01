@@ -6,6 +6,7 @@
 import { HttpError } from '../http/security.ts'
 import type { EmploymentType, SalaryPeriod, Workplace } from './types.ts'
 import { EXPERIENCE_LEVELS, PRIORITIES, type ExperienceLevel, type Priority } from '../../src/lib/jobPreferences.ts'
+import { INDUSTRY_PROFILES, type IndustryProfile } from '../../src/lib/industryProfiles.ts'
 export { EXPERIENCE_LEVELS, PRIORITIES, type ExperienceLevel, type Priority }
 
 const MAX_TITLE_CHARS = 200
@@ -34,6 +35,8 @@ export type SearchCriteria = {
   /** Discovery preferences (never qualification evidence and never sent to the provider).
    * `title` stays the role searched; `roles` are further target roles the owner can pick. */
   roles?: string[]
+  /** Optional user-selected role starter profile. Never forwarded as a job qualification. */
+  industry?: IndustryProfile
   experienceLevel?: ExperienceLevel
   priorities?: Priority[]
   dealbreakers?: Dealbreaker[]
@@ -110,6 +113,10 @@ export function parseSearchCriteria(value: unknown): SearchCriteria {
     if (!Array.isArray(value.roles) || value.roles.length > 4 || !value.roles.every(role => typeof role === 'string' && role.trim() && role.length <= MAX_TITLE_CHARS)) throw new HttpError(400, 'Target roles are invalid')
     const roles = [...new Set((value.roles as string[]).map(role => role.trim().replace(/\s+/g, ' ')))].filter(role => role.toLowerCase() !== normalizedTitle.toLowerCase())
     if (roles.length) criteria.roles = roles
+  }
+  if (value.industry !== undefined) {
+    if (typeof value.industry !== 'string' || !Object.hasOwn(INDUSTRY_PROFILES, value.industry)) throw new HttpError(400, 'Industry profile is invalid')
+    criteria.industry = value.industry as IndustryProfile
   }
   if (value.experienceLevel !== undefined) {
     if (typeof value.experienceLevel !== 'string' || !(EXPERIENCE_LEVELS as readonly string[]).includes(value.experienceLevel)) throw new HttpError(400, 'Experience level is invalid')

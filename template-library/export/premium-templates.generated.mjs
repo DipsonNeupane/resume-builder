@@ -1,34 +1,34 @@
 // src/model.ts
 var freeTemplates = [
-  { id: "modern", label: "Modern", tagline: "Clean lines with an accent-led header", tier: "free", releasedAt: null },
-  { id: "classic", label: "Classic", tagline: "Traditional type with balanced spacing", tier: "free", releasedAt: null },
-  { id: "minimal", label: "Minimal", tagline: "Open spacing with quiet section dividers", tier: "free", releasedAt: null },
-  { id: "compact", label: "Compact", tagline: "Tighter spacing for information-rich resumes", tier: "free", releasedAt: null },
-  { id: "bold", label: "Bold", tagline: "High-contrast header and strong section markers", tier: "free", releasedAt: null },
-  { id: "executive", label: "Executive", tagline: "Refined headings with restrained rules", tier: "free", releasedAt: null },
-  { id: "ledger", label: "Ledger", tagline: "Structured bands and detailed section labels", tier: "free", releasedAt: null }
+  { id: "modern", label: "Modern", tagline: "A clean layout with a clear header", tier: "free", releasedAt: null },
+  { id: "classic", label: "Classic", tagline: "A familiar, traditional layout", tier: "free", releasedAt: null },
+  { id: "minimal", label: "Minimal", tagline: "Simple headings and room to breathe", tier: "free", releasedAt: null },
+  { id: "compact", label: "Compact", tagline: "Fit more detail without shrinking the text", tier: "free", releasedAt: null },
+  { id: "bold", label: "Bold", tagline: "A strong header and easy-to-scan sections", tier: "free", releasedAt: null },
+  { id: "executive", label: "Executive", tagline: "A polished look for experienced professionals", tier: "free", releasedAt: null },
+  { id: "ledger", label: "Ledger", tagline: "Clear bands help readers find each section", tier: "free", releasedAt: null }
 ];
 var premiumTemplates = [
-  ["boardroom", "Boardroom", "Employer-grouped progression for senior leadership"],
-  ["mandate", "Mandate", "Career overview for board and fractional leadership"],
-  ["stackline", "Stackline", "Projects and technical stack first"],
-  ["kernel", "Kernel", "Systems-heavy experience with precise structure"],
-  ["casebook", "Casebook", "Selected work presented as editorial case studies"],
-  ["atelier", "Atelier", "Recognition and client-led creative leadership"],
-  ["scholar", "Scholar", "Research-first CV with numbered publications"],
-  ["bench", "Bench", "Methods-forward scientific and research work"],
-  ["charter", "Charter", "Credentials-first traditional register"],
-  ["rounds", "Rounds", "Licensure and clinical setting first"],
-  ["meridian", "Meridian", "Modern hierarchy with hanging section rails"],
-  ["crossover", "Crossover", "Strengths and skills shown in context"],
-  ["almanac", "Almanac", "Dense date-rail layout for long histories"],
-  ["roster", "Roster", "Compact organization and outcome rows"],
-  ["primer", "Primer", "Education and projects first for early careers"],
-  ["pyramid", "Pyramid", "Answer-first consulting accomplishments"],
-  ["quartile", "Quartile", "Data results and tools given clear emphasis"],
-  ["waypoint", "Waypoint", "Continuous operations timeline"],
-  ["cadence", "Cadence", "Product work nested beneath the role that shipped it"],
-  ["plainsong", "Plainsong", "Black-only traditional hierarchy without decoration"]
+  ["boardroom", "Boardroom", "Group roles by employer to show how your work grew"],
+  ["mandate", "Mandate", "Show a career overview alongside concurrent roles"],
+  ["stackline", "Stackline", "Bring projects and technical skills forward"],
+  ["kernel", "Kernel", "Give a long technical career more structure"],
+  ["casebook", "Casebook", "Lead with selected projects and links to your work"],
+  ["atelier", "Atelier", "Put creative work and recognition up front"],
+  ["scholar", "Scholar", "Make room for research, teaching, and publications"],
+  ["bench", "Bench", "Highlight research methods, tools, and selected work"],
+  ["charter", "Charter", "Put licences and qualifications before experience"],
+  ["rounds", "Rounds", "Lead with clinical work, credentials, and training"],
+  ["meridian", "Meridian", "Guide readers with clear labels along the side"],
+  ["crossover", "Crossover", "Show where your skills appear across different roles"],
+  ["almanac", "Almanac", "Fit a long work history into a compact layout"],
+  ["roster", "Roster", "Make short projects and engagements easy to scan"],
+  ["primer", "Primer", "Lead with education, projects, and early experience"],
+  ["pyramid", "Pyramid", "Put the point of each accomplishment first"],
+  ["quartile", "Quartile", "Bring numbers, results, and tools into view"],
+  ["waypoint", "Waypoint", "Show roles and locations along a timeline"],
+  ["cadence", "Cadence", "Group projects under the roles where you did the work"],
+  ["plainsong", "Plainsong", "A plain, traditional layout without decoration"]
 ].map(([id, label, tagline]) => ({ id, label, tagline, tier: "premium", releasedAt: null }));
 var templates = [...freeTemplates, ...premiumTemplates];
 var templateIds = templates.map((t) => t.id);

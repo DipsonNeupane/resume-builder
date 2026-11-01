@@ -52,7 +52,7 @@ export function CapturedJobReview({ capture, resume, ownerId, loading, onSignIn,
   return <details className="job-description-details" open>
     <summary>Review and save captured job</summary>
     <div className="field captured-job-review">
-      <p>Save to your signed-in account to see how you match, then use the normal saved-job resume and tailoring workflow. The original capture and your edits are retained. Saving does not call an AI or job-search provider.</p>
+      <p>Save this job to compare it with your resume. Your edits are saved; no AI runs.</p>
       <label>Captured job title<input name="captured-title" autoComplete="off" value={review.title} maxLength={300} onChange={event => setReview({ ...review, title: event.target.value })} /></label>
       <label>Captured company<input name="captured-company" autoComplete="off" value={review.company} maxLength={300} onChange={event => setReview({ ...review, company: event.target.value })} /></label>
       <label>Captured location<input name="captured-location" autoComplete="off" value={review.location || ''} maxLength={300} onChange={event => setReview({ ...review, location: event.target.value })} /></label>

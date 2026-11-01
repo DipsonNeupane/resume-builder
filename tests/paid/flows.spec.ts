@@ -16,25 +16,48 @@ async function builder(page:Page,signedIn=true){await page.goto('/workspace/resu
 test('monthly Pro requires explicit consent and retries with the same server-owned offer and request ID',async({page})=>{
  await seed(page);const bodies:Record<string,unknown>[]=[];
  await page.route('**/api/subscription-checkout',async route=>{bodies.push(route.request().postDataJSON());await route.fulfill({status:503,json:{error:'Checkout could not open.'}});});
- await page.goto('/',{waitUntil:'commit'});await page.getByRole('button',{name:'View Pro options',exact:true}).click();
- const checkbox=page.getByRole('checkbox',{name:/recurring US\$14\.99 monthly subscription/});const button=page.getByRole('button',{name:'Start Pro — US$14.99/month'});
+ await page.goto('/',{waitUntil:'commit'});await page.getByRole('button',{name:'Explore Pro',exact:true}).click();
+ const checkbox=page.getByRole('checkbox',{name:/30-day free trial, then US\$14\.99\/month until cancelled/});await expect(page.getByText('30 days free, then US$14.99/month',{exact:false}).first()).toBeVisible();const button=page.getByRole('button',{name:'Review price in secure checkout'});
  await expect(checkbox).not.toBeChecked();await expect(button).toBeDisabled();await checkbox.check();await button.click();await button.click();await expect.poll(()=>bodies.length).toBe(2);
  expect(bodies[0]).toEqual({requestId:bodies[0].requestId,offerKey:'pro:monthly',renewalConsent:true,overlapConsent:false});expect(bodies[1].requestId).toBe(bodies[0].requestId);
+});
+test('pilot code shows its verified price before checkout and must be applied again after edits',async({page})=>{
+ await seed(page);const bodies:Record<string,unknown>[]=[];let checks=0;
+ await page.route('**/api/validate-pilot-code',async route=>{checks++;expect(String(route.request().postDataJSON().code).toLowerCase()).toBe('friendtest');await new Promise(resolve=>setTimeout(resolve,200));await route.fulfill({json:{valid:true,code:'FRIENDTEST',discountPercent:100,duration:'forever',maxRedemptions:3,timesRedeemed:0}});});
+ await page.route('**/api/subscription-checkout',async route=>{bodies.push(route.request().postDataJSON());await route.fulfill({status:503,json:{error:'Checkout could not open.'}});});
+ await page.goto('/workspace/pro',{waitUntil:'commit'});
+ const code=page.getByRole('textbox',{name:'Pilot access code (optional)'});await code.fill('friendtest');
+ const apply=page.getByRole('button',{name:'Apply code',exact:true});const checkout=page.getByRole('button',{name:'Review price in secure checkout'});await apply.click();await expect(checkout).toBeDisabled();await expect(checkout).toHaveText('Review price in secure checkout');
+ await expect(page.locator('.pilot-code-feedback')).toContainText('100% off accepted');
+ await expect(page.locator('.pilot-code-feedback')).toContainText('3 of 3 uses left');
+ await expect(page.locator('.billing-panel .pro-checkout-price')).toContainText('US$0');
+ const consent=page.getByRole('checkbox',{name:/30-day free trial, then US\$0\/month/});
+ await expect(consent).not.toBeChecked();await expect(checkout).toBeDisabled();await consent.check();await expect(checkout).toBeEnabled();
+ await code.fill('FRIENDTEST2');await expect(page.getByRole('checkbox',{name:/US\$14\.99\/month/})).not.toBeChecked();await expect(checkout).toBeDisabled();await expect(page.locator('.pilot-code-feedback')).toContainText('Apply a code to see your price');
+ await code.fill('FRIENDTEST');await apply.click();await expect.poll(()=>checks).toBe(2);const renewedConsent=page.getByRole('checkbox',{name:/30-day free trial, then US\$0\/month/});await renewedConsent.check();await checkout.click();
+ await expect.poll(()=>bodies.length).toBe(1);expect(bodies[0].promotionCode).toBe('FRIENDTEST');
+});
+test('an invalid pilot code shows an error and cannot silently use the regular price',async({page})=>{
+ await seed(page);await page.route('**/api/validate-pilot-code',route=>route.fulfill({status:400,json:{error:'That pilot access code is invalid or no longer available'}}));let checkouts=0;
+ await page.route('**/api/subscription-checkout',route=>{checkouts++;return route.fulfill({status:503,json:{error:'Unexpected checkout'}});});
+ await page.goto('/workspace/pro',{waitUntil:'commit'});await page.getByRole('textbox',{name:'Pilot access code (optional)'}).fill('NOT-A-CODE');await page.getByRole('button',{name:'Apply code',exact:true}).click();
+ await expect(page.locator('.pilot-code-feedback')).toContainText('That pilot access code is invalid or no longer available');
+ await page.getByRole('checkbox',{name:/30-day free trial, then US\$14\.99\/month until cancelled/}).check();await expect(page.getByRole('button',{name:'Review price in secure checkout'})).toBeDisabled();expect(checkouts).toBe(0);
 });
 test('Pro requires a separate confirmation for the individual-template overlap transition',async({page})=>{
  await seed(page);await page.route('**/api/subscription-status',route=>route.fulfill({json:{isPro:false,activeTemplates:['boardroom'],subscriptions:[],salesAvailable:true}}));let body:Record<string,unknown>|undefined;
  await page.route('**/api/subscription-checkout',async route=>{body=route.request().postDataJSON();await route.fulfill({status:503,json:{error:'Retry later.'}});});
- await page.goto('/?account=1',{waitUntil:'commit'});await expect(page.getByText('After Pro’s first payment succeeds',{exact:false}).first()).toBeVisible();const start=page.getByRole('button',{name:'Start Pro — US$14.99/month'});await page.getByRole('checkbox',{name:/recurring US\$14\.99 monthly subscription/}).check();await expect(start).toBeDisabled();await page.getByRole('checkbox',{name:/future renewals for my individual template subscriptions/}).check();await start.click();expect(body?.overlapConsent).toBe(true);
+ await page.goto('/?account=1',{waitUntil:'commit'});await expect(page.getByText(/After your first Pro payment/i).first()).toBeVisible();const start=page.getByRole('button',{name:'Review price in secure checkout'});await page.getByRole('checkbox',{name:/30-day free trial, then US\$14\.99\/month until cancelled/}).check();await expect(start).toBeDisabled();await page.getByRole('checkbox',{name:/stop renewals for my 1 individual template plan/}).check();await start.click();expect(body?.overlapConsent).toBe(true);
 });
 test('an active Pro subscription shows monthly renewal state and opens customer billing management',async({page})=>{
  await seed(page);await page.route('**/api/subscription-status',route=>route.fulfill({json:{isPro:true,activeTemplates:[],salesAvailable:false,subscriptions:[{subscriptionId:'sub_pro',offerKey:'pro:monthly',kind:'pro',templateId:null,status:'active',cancelAtPeriodEnd:false,currentPeriodEnd:'2026-11-01T00:00:00Z'}]}}));
- await page.route('**/api/customer-portal',route=>route.fulfill({status:429,json:{error:'Too many requests. Try again later.'}}));await page.goto('/?account=1',{waitUntil:'commit'});await expect(page.getByText('Renews monthly until cancelled',{exact:false})).toBeVisible();await page.getByRole('button',{name:'Manage billing and cancellation'}).click();await expect(page.getByText('Too many requests. Try again later.')).toBeVisible();
+ await page.route('**/api/customer-portal',route=>route.fulfill({status:429,json:{error:'Too many requests. Try again later.'}}));await page.goto('/?account=1',{waitUntil:'commit'});await expect(page.getByText(/Renews monthly · next/)).toBeVisible();await page.getByRole('button',{name:'Manage billing'}).click();await expect(page.getByText('Too many requests. Try again later.')).toBeVisible();
 });
 test('a Premium template preview offers Pro and never starts an individual-template checkout',async({page})=>{
  await seed(page);let checkoutCalls=0;await page.route('**/api/subscription-checkout',async route=>{checkoutCalls++;await route.abort();});
  await page.goto('/',{waitUntil:'commit'});await page.getByRole('button',{name:'Continue my resume',exact:true}).first().click();await page.getByRole('button',{name:'Preview resume'}).click();await page.getByRole('button',{name:'Templates Modern'}).click();await page.getByRole('dialog',{name:'Choose your layout'}).getByRole('button',{name:/^Boardroom/}).click();
  await expect(page.getByText('Previewing Boardroom — Premium',{exact:true})).toBeVisible();await page.getByRole('button',{name:'Use with Pro',exact:true}).click();
- const unlock=page.getByRole('dialog',{name:'Use Boardroom with Pro'});await expect(unlock).toContainText('US$14.99/month');await expect(unlock.getByRole('checkbox')).toHaveCount(0);await expect(unlock.getByRole('button',{name:'Review Pro'})).toBeVisible();expect(checkoutCalls).toBe(0);
+ const unlock=page.getByRole('dialog',{name:'Use Boardroom with Pro'});await expect(unlock).toContainText('30 days free, then US$14.99/month.');await expect(unlock.getByRole('checkbox')).toHaveCount(0);await expect(unlock.getByRole('button',{name:'Review Pro'})).toBeVisible();expect(checkoutCalls).toBe(0);
 });
 test('locked Premium is a persistent preview-only state and never calls PDF or DOCX',async({page})=>{
  await seed(page);let exports=0;
@@ -115,7 +138,7 @@ test('PDF and Word use shared server availability, format-specific endpoints, an
  await page.route('**/api/export-status*',route=>{statusRequests++;return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:false,hasPaidAccess:false,remaining,resetsAt:'2026-10-19T12:00:00Z'})});});
  const requests:{format:'pdf'|'docx';requestId:string}[]=[];
  for(const format of ['pdf','docx'] as const)await page.route(`**/api/export-${format}`,async route=>{const body=route.request().postDataJSON();requests.push({format,requestId:body.requestId});remaining=5;await route.fulfill({status:503,contentType:'application/json',body:'{}'});});
- await builder(page);await expect(page.getByText(/^6 of 7 Free downloads remain in your rolling 7-day window\. Your next used download returns .+\. Failed downloads do not count\.$/)).toBeVisible();
+ await builder(page);await expect(page.getByText(/^6 of 7 free downloads left · next available .+\.$/)).toBeVisible();
  await page.getByRole('checkbox',{name:'I consent to uploading my resume content',exact:false}).check();
  await page.getByRole('button',{name:'Download PDF',exact:true}).click();
  await expect.poll(()=>statusRequests).toBeGreaterThan(1);
@@ -149,10 +172,10 @@ test('an exhausted free allowance shows a clear upgrade path to Pro',async({page
  await seed(page);
  await page.route('**/api/export-status*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({isPro:false,hasPaidAccess:false,remaining:0,resetsAt:'2026-10-19T12:00:00Z'})}));
  await builder(page);
- await expect(page.getByText(/^Your Free download allowance is used\. One becomes available .+\.$/)).toBeVisible();
+ await expect(page.getByText(/^Free downloads used · next available .+\.$/)).toBeVisible();
  await expect(page.getByRole('button',{name:'Download PDF',exact:true})).toBeDisabled();
  await expect(page.getByRole('button',{name:'Download Word (.docx)',exact:true})).toBeDisabled();
- await page.getByRole('button',{name:'View Pro options',exact:true}).click();
+ await page.getByRole('button',{name:'View Pro',exact:true}).click();
  await expect(page.getByRole('heading',{name:'Get APWICO Pro'})).toBeVisible();
 });
 test('a download-time allowance rejection opens the Pro upgrade prompt',async({page})=>{
@@ -162,18 +185,18 @@ test('a download-time allowance rejection opens the Pro upgrade prompt',async({p
  await builder(page);
  await page.getByRole('checkbox',{name:'I consent to uploading my resume content',exact:false}).check();
  await page.getByRole('button',{name:'Download PDF',exact:true}).click();
- const dialog=page.getByRole('dialog',{name:'Keep downloading with Pro'});
+ const dialog=page.getByRole('dialog',{name:'More downloads with Pro'});
  await expect(dialog).toBeVisible();
  await expect(dialog).toContainText('US$14.99');
- await dialog.getByRole('button',{name:'View Pro options',exact:true}).click();
+ await dialog.getByRole('button',{name:'View Pro',exact:true}).click();
  await expect(page.getByRole('heading',{name:'Get APWICO Pro'})).toBeVisible();
 });
 test('invalid allowance never invents remaining downloads',async({page})=>{
  await seed(page);await page.route('**/api/export-status*',route=>route.fulfill({status:200,contentType:'application/json',body:'{"isPro":false,"hasPaidAccess":false,"remaining":99,"resetsAt":"bad"}'}));
- await builder(page);const fallback=page.getByText('Free downloads exhausted?',{exact:false});await expect(fallback).toBeVisible();
+ await builder(page);const fallback=page.getByText('Download allowance unavailable.',{exact:false});await expect(fallback).toBeVisible();
  await expect(page.getByText('99 of 7',{exact:false})).toHaveCount(0);
- await fallback.getByRole('button',{name:'View Pro options',exact:true}).click();
- await expect(page.getByRole('dialog',{name:'Keep downloading with Pro'})).toContainText('If you’ve used your Free downloads');
+ await fallback.getByRole('button',{name:'View Pro',exact:true}).click();
+ await expect(page.getByRole('dialog',{name:'More downloads with Pro'})).toContainText('30 days free');
 });
 test('signed-in builder header links to a profile with plan management and omits the local-save label',async({page})=>{
  await seed(page);
